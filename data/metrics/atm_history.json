@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-11-01T16:15:57Z",
+ "generated_at": "2026-11-01T17:00:32Z",
  "model": {
   "formula": "ATM = G * S * (1 - V)",
   "trust": {
@@ -205,9 +205,9 @@
   }
  },
  "summary": {
-  "n_items": 1470,
-  "atm_mean": 0.0143,
-  "atm_p90": 0.0449,
+  "n_items": 1501,
+  "atm_mean": 0.0144,
+  "atm_p90": 0.045,
   "by_region": {
    "AT-1": {
     "n": 116,
@@ -216,22 +216,22 @@
     "s_mean": 0.064
    },
    "HU-NAT": {
-    "n": 569,
+    "n": 595,
     "atm_mean": 0.0157,
-    "v_mean": 0.52,
-    "s_mean": 0.036
+    "v_mean": 0.521,
+    "s_mean": 0.037
    },
    "HU-VA": {
-    "n": 133,
+    "n": 134,
     "atm_mean": 0.0198,
-    "v_mean": 0.53,
+    "v_mean": 0.531,
     "s_mean": 0.045
    },
    "INT": {
-    "n": 596,
-    "atm_mean": 0.0105,
-    "v_mean": 0.612,
-    "s_mean": 0.046
+    "n": 600,
+    "atm_mean": 0.0107,
+    "v_mean": 0.609,
+    "s_mean": 0.047
    },
    "SI-1": {
     "n": 56,
@@ -255,29 +255,29 @@
  },
  "insights": {
   "trend": {
+   "INT": {
+    "now": 0.0106,
+    "prev": 0.0113,
+    "delta": -0.0007,
+    "n": 515
+   },
    "HU-NAT": {
-    "now": 0.0167,
-    "prev": 0.0125,
-    "delta": 0.0042,
-    "n": 423
+    "now": 0.016,
+    "prev": 0.0147,
+    "delta": 0.0013,
+    "n": 436
    },
    "HU-VA": {
-    "now": 0.0299,
+    "now": 0.0298,
     "prev": 0.0166,
-    "delta": 0.0133,
+    "delta": 0.0132,
     "n": 20
    },
-   "INT": {
-    "now": 0.0104,
-    "prev": 0.0112,
-    "delta": -0.0008,
-    "n": 495
-   },
    "AT-1": {
-    "now": 0.0219,
-    "prev": 0.0143,
-    "delta": 0.0076,
-    "n": 23
+    "now": 0.0215,
+    "prev": 0.0152,
+    "delta": 0.0063,
+    "n": 22
    },
    "SI-1": {
     "now": 0.0,
@@ -287,6 +287,14 @@
    }
   },
   "anomalies": [
+   {
+    "id": "b4abf0cbe17ed416",
+    "title": "Horror fatal car crash sparks chaos on major California freeway",
+    "source": "New York Post",
+    "region": "INT",
+    "S": 0.378,
+    "z": 5.5
+   },
    {
     "id": "9cad0675b58f89cc",
     "title": "Mindeközben - Összeállt ByeAlex és Solére élő show-s csapata, ezt a három-három versenyzőt választották",
@@ -298,13 +306,28 @@
   ],
   "bursts": [
    {
-    "term": "will",
+    "term": "news",
     "recent": 12,
-    "expected": 0.2
+    "expected": 0.3
    },
    {
     "term": "prediction",
     "recent": 9,
+    "expected": 0.0
+   },
+   {
+    "term": "shooting",
+    "recent": 10,
+    "expected": 0.2
+   },
+   {
+    "term": "will",
+    "recent": 10,
+    "expected": 0.3
+   },
+   {
+    "term": "raiders",
+    "recent": 8,
     "expected": 0.0
    },
    {
@@ -313,28 +336,13 @@
     "expected": 0.3
    },
    {
-    "term": "magyarország",
-    "recent": 12,
-    "expected": 0.7
+    "term": "after",
+    "recent": 19,
+    "expected": 1.6
    },
    {
-    "term": "shooting",
+    "term": "time",
     "recent": 8,
-    "expected": 0.2
-   },
-   {
-    "term": "kormány",
-    "recent": 31,
-    "expected": 3.5
-   },
-   {
-    "term": "code",
-    "recent": 6,
-    "expected": 0.0
-   },
-   {
-    "term": "college",
-    "recent": 7,
     "expected": 0.2
    }
   ],
@@ -347,9 +355,9 @@
    },
    {
     "domain": "wbasket.hu",
-    "n": 8,
-    "mean_S": 0.136,
-    "mean_ATM": 0.0673
+    "n": 9,
+    "mean_S": 0.146,
+    "mean_ATM": 0.0723
    },
    {
     "domain": "facebook.com",
@@ -382,12 +390,6 @@
     "mean_ATM": 0.0247
    },
    {
-    "domain": "apnews.com",
-    "n": 5,
-    "mean_S": 0.127,
-    "mean_ATM": 0.0228
-   },
-   {
     "domain": "mno.hu",
     "n": 11,
     "mean_S": 0.045,
@@ -400,24 +402,30 @@
     "mean_ATM": 0.0206
    },
    {
-    "domain": "origo.hu",
-    "n": 27,
-    "mean_S": 0.074,
-    "mean_ATM": 0.02
-   },
-   {
     "domain": "azuzlet.hu",
     "n": 7,
     "mean_S": 0.04,
     "mean_ATM": 0.0198
+   },
+   {
+    "domain": "apnews.com",
+    "n": 6,
+    "mean_S": 0.108,
+    "mean_ATM": 0.0194
+   },
+   {
+    "domain": "vaol.hu",
+    "n": 6,
+    "mean_S": 0.067,
+    "mean_ATM": 0.0194
    }
   ],
   "events": [
    {
-    "label": "Mit tartalmaz a jövő évi költségvetés tervezete?",
-    "n": 3,
+    "label": "Benyújtotta a kormány a jövő évi költségvetés tervezetét",
+    "n": 4,
     "spread": 0.25,
-    "atm": 0.0413,
+    "atm": 0.0309,
     "sources": [
      {
       "id": "6d5fc483e902edba",
@@ -439,35 +447,85 @@
       "source": "https://www.globalhir.hu/",
       "S": 0.0,
       "title": "Mit tartalmaz a jövő évi költségvetés tervezete?"
+     },
+     {
+      "id": "a31ef1e97ccd5af9",
+      "domain": "hirnavigator.hu",
+      "source": "Hirnavigator",
+      "S": 0.0,
+      "title": "Benyújtotta a kormány a jövő évi költségvetés tervezetét"
      }
     ]
    },
    {
-    "label": "Spirit Halloween shopper recounts heart-stopping escape from California store as 1 killed, 6 hurt in shooting",
-    "n": 3,
-    "spread": 0.201,
-    "atm": 0.0241,
+    "label": "Alaska Senate candidate denies knowing about alleged plot to put two Dan Sullivans on ballot",
+    "n": 4,
+    "spread": 0.23,
+    "atm": 0.0155,
     "sources": [
      {
-      "id": "f2a881deed68d3c4",
-      "domain": "sfgate.com",
-      "source": "SFGATE",
-      "S": 0.201,
-      "title": "Pregnant mom killed in mass shooting inside Bay Area Spirit Halloween store"
-     },
-     {
-      "id": "124997c9add31d20",
+      "id": "d3b488202cd0325b",
       "domain": "cnn.com",
       "source": "CNN",
-      "S": 0.031,
-      "title": "Pregnant woman killed, 6 others wounded in targeted shooting at California Spirit Halloween store, police say"
+      "S": 0.23,
+      "title": "Sullivan says he’ll accept Alaska Senate results but slams Peltola over alleged ballot scheme"
      },
      {
-      "id": "4ff0e72bc0b7adb1",
+      "id": "01953b6c2c7048fd",
+      "domain": "edition.cnn.com",
+      "source": "CNN",
+      "S": 0.036,
+      "title": "Sen. Dan Sullivan says he will accept election results of Alaska Senate race"
+     },
+     {
+      "id": "9513d1329393fffd",
+      "domain": "bbc.co.uk",
+      "source": "BBC News",
+      "S": 0.0,
+      "title": "Alaska Senate candidate denies knowing about alleged plot to put two Dan Sullivans on ballot"
+     }
+    ]
+   },
+   {
+    "label": "Clashes erupt in Hamburg and Frankfurt after German peaceful protests turn violent",
+    "n": 6,
+    "spread": 0.208,
+    "atm": 0.0156,
+    "sources": [
+     {
+      "id": "0250617b44407d9a",
+      "domain": "postregister.com",
+      "source": "Post Register",
+      "S": 0.208,
+      "title": "APTOPIX Germany Protest"
+     },
+     {
+      "id": "2c8e36d52e274ef4",
+      "domain": "cnn.com",
+      "source": "CNN",
+      "S": 0.056,
+      "title": "Germany blames infiltrators as Gen Z protests turn violent"
+     },
+     {
+      "id": "4b3c8370d910b0a2",
+      "domain": "ft.com",
+      "source": "Financial Times",
+      "S": 0.047,
+      "title": "Gen Z protests turn violent in Germany"
+     },
+     {
+      "id": "de77300dcc63145a",
+      "domain": "bbc.co.uk",
+      "source": "BBC News",
+      "S": 0.0,
+      "title": "Shops looted as German cost-of-living protests turn violent"
+     },
+     {
+      "id": "becf033088cbcb85",
       "domain": "nypost.com",
       "source": "New York Post",
       "S": 0.0,
-      "title": "Spirit Halloween shopper recounts heart-stopping escape from California store as 1 killed, 6 hurt in shooting"
+      "title": "Clashes erupt in Hamburg and Frankfurt after German peaceful protests turn violent"
      }
     ]
    },
@@ -504,7 +562,7 @@
     "label": "FBI blames North Korea for stealing $6.3B from Binance in biggest crypto heist in history",
     "n": 3,
     "spread": 0.19,
-    "atm": 0.0532,
+    "atm": 0.0528,
     "sources": [
      {
       "id": "99e140d5cb43eb74",
@@ -517,7 +575,7 @@
       "id": "fe9a6ec2b57b5e87",
       "domain": "thehackernews.com",
       "source": "The Hacker News",
-      "S": 0.22,
+      "S": 0.217,
       "title": "FBI Links North Korea's TraderTraitor to Record $6.43 Billion Binance Crypto Heist"
      },
      {
@@ -530,31 +588,38 @@
     ]
    },
    {
-    "label": "Alaska Senate candidate denies knowing about alleged plot to put two Dan Sullivans on ballot",
+    "label": "Pregnant woman killed, 6 others wounded in targeted shooting at California Spirit Halloween store, police say",
     "n": 4,
-    "spread": 0.188,
-    "atm": 0.0135,
+    "spread": 0.183,
+    "atm": 0.038,
     "sources": [
      {
-      "id": "d3b488202cd0325b",
+      "id": "c850cc0ad5d23654",
+      "domain": "kcra.com",
+      "source": "KCRA",
+      "S": 0.214,
+      "title": "31-year-old pregnant woman identified as killed in Fairfield shooting at Spirit Halloween"
+     },
+     {
+      "id": "f2a881deed68d3c4",
+      "domain": "sfgate.com",
+      "source": "SFGATE",
+      "S": 0.201,
+      "title": "Pregnant mom killed in mass shooting inside Bay Area Spirit Halloween store"
+     },
+     {
+      "id": "130f1cf48f8b3c65",
+      "domain": "nypost.com",
+      "source": "New York Post",
+      "S": 0.052,
+      "title": "Frantic hunt for gunman on the loose after mass shooting killed pregnant woman at California Spirit Halloween"
+     },
+     {
+      "id": "124997c9add31d20",
       "domain": "cnn.com",
       "source": "CNN",
-      "S": 0.188,
-      "title": "Sullivan says he’ll accept Alaska Senate results but slams Peltola over alleged ballot scheme"
-     },
-     {
-      "id": "01953b6c2c7048fd",
-      "domain": "edition.cnn.com",
-      "source": "CNN",
-      "S": 0.036,
-      "title": "Sen. Dan Sullivan says he will accept election results of Alaska Senate race"
-     },
-     {
-      "id": "9513d1329393fffd",
-      "domain": "bbc.co.uk",
-      "source": "BBC News",
-      "S": 0.0,
-      "title": "Alaska Senate candidate denies knowing about alleged plot to put two Dan Sullivans on ballot"
+      "S": 0.031,
+      "title": "Pregnant woman killed, 6 others wounded in targeted shooting at California Spirit Halloween store, police say"
      }
     ]
    },
@@ -601,35 +666,6 @@
       "title": "Bhutan Mindfulness City"
      }
     ]
-   },
-   {
-    "label": "Heidi Klum reveals a giant severed hand as 2026 Halloween costume",
-    "n": 3,
-    "spread": 0.145,
-    "atm": 0.0141,
-    "sources": [
-     {
-      "id": "63401d82373666bc",
-      "domain": "bbc.co.uk",
-      "source": "BBC News",
-      "S": 0.167,
-      "title": "Watch: Heidi Klum as giant severed hand for Halloween bash"
-     },
-     {
-      "id": "da91c69cf00c1ea8",
-      "domain": "cnn.com",
-      "source": "CNN",
-      "S": 0.049,
-      "title": "Heidi Klum dresses as her left hand for Halloween"
-     },
-     {
-      "id": "c707ee0f97efe302",
-      "domain": "cbsnews.com",
-      "source": "CBS News",
-      "S": 0.022,
-      "title": "Heidi Klum reveals a giant severed hand as 2026 Halloween costume"
-     }
-    ]
    }
   ]
  },
@@ -647,16 +683,16 @@
    "mA": 0.0
   },
   "cnn.com": {
-   "n": 101,
-   "mS": 0.08087128712871286,
-   "M2S": 0.38106132673267334,
-   "mA": 0.014841584158415841
+   "n": 103,
+   "mS": 0.08007766990291261,
+   "M2S": 0.38436937864077675,
+   "mA": 0.01470388349514563
   },
   "hirnavigator.hu": {
-   "n": 35,
-   "mS": 0.016057142857142853,
-   "M2S": 0.09235788571428571,
-   "mA": 0.007888571428571429
+   "n": 39,
+   "mS": 0.014410256410256407,
+   "M2S": 0.0932834358974359,
+   "mA": 0.007079487179487179
   },
   "informat.ro": {
    "n": 3,
@@ -665,10 +701,10 @@
    "mA": 0.014466666666666666
   },
   "penzcentrum.hu": {
-   "n": 19,
-   "mS": 0.013421052631578946,
-   "M2S": 0.032210631578947366,
-   "mA": 0.006626315789473684
+   "n": 20,
+   "mS": 0.01275,
+   "M2S": 0.032381749999999994,
+   "mA": 0.006295
   },
   "haaretz.com": {
    "n": 1,
@@ -677,10 +713,10 @@
    "mA": 0.0
   },
   "origo.hu": {
-   "n": 27,
-   "mS": 0.07374074074074075,
-   "M2S": 0.15552918518518516,
-   "mA": 0.020000000000000004
+   "n": 31,
+   "mS": 0.06887096774193548,
+   "M2S": 0.1605894838709677,
+   "mA": 0.018719354838709682
   },
   "mno.hu": {
    "n": 11,
@@ -695,10 +731,10 @@
    "mA": 0.010763636363636364
   },
   "24.hu": {
-   "n": 14,
-   "mS": 0.019714285714285715,
-   "M2S": 0.04033485714285714,
-   "mA": 0.005321428571428571
+   "n": 16,
+   "mS": 0.01725,
+   "M2S": 0.041014999999999996,
+   "mA": 0.00465625
   },
   "edition.cnn.com": {
    "n": 28,
@@ -707,16 +743,16 @@
    "mA": 0.01933214285714285
   },
   "hvg.hu": {
-   "n": 15,
-   "mS": 0.05826666666666666,
-   "M2S": 0.1508849333333333,
-   "mA": 0.01572
+   "n": 16,
+   "mS": 0.0650625,
+   "M2S": 0.16196893749999997,
+   "mA": 0.01755
   },
   "portfolio.hu": {
-   "n": 32,
-   "mS": 0.017656250000000002,
-   "M2S": 0.10519921875,
-   "mA": 0.004625
+   "n": 34,
+   "mS": 0.016617647058823532,
+   "M2S": 0.10578602941176471,
+   "mA": 0.004352941176470588
   },
   "kecskemet365.hu": {
    "n": 1,
@@ -725,13 +761,13 @@
    "mA": 0.0
   },
   "postregister.com": {
-   "n": 43,
-   "mS": 0.01972093023255814,
-   "M2S": 0.1295286511627907,
-   "mA": 0.006304651162790698
+   "n": 47,
+   "mS": 0.018042553191489362,
+   "M2S": 0.13095191489361702,
+   "mA": 0.00576808510638298
   },
   "wvnews.com": {
-   "n": 33,
+   "n": 35,
    "mS": 0.0,
    "M2S": 0.0,
    "mA": 0.0
@@ -791,10 +827,10 @@
    "mA": 0.0
   },
   "hirstart.hu": {
-   "n": 19,
-   "mS": 0.006736842105263158,
-   "M2S": 0.015521684210526318,
-   "mA": 0.003342105263157895
+   "n": 20,
+   "mS": 0.0064,
+   "M2S": 0.015564800000000002,
+   "mA": 0.0031750000000000003
   },
   "theportugalnews.com": {
    "n": 1,
@@ -809,10 +845,10 @@
    "mA": 0.0223
   },
   "magyarhirlap.hu": {
-   "n": 1,
-   "mS": 0.0,
-   "M2S": 0.0,
-   "mA": 0.0
+   "n": 3,
+   "mS": 0.03966666666666667,
+   "M2S": 0.009440666666666667,
+   "mA": 0.019633333333333336
   },
   "idahopress.com": {
    "n": 5,
@@ -845,16 +881,16 @@
    "mA": 0.0145
   },
   "usnews.com": {
-   "n": 5,
-   "mS": 0.0,
-   "M2S": 0.0,
-   "mA": 0.0
+   "n": 6,
+   "mS": 0.010333333333333333,
+   "M2S": 0.003203333333333333,
+   "mA": 0.0034000000000000002
   },
   "vietnam.vn": {
-   "n": 51,
-   "mS": 0.010294117647058825,
-   "M2S": 0.058728588235294144,
-   "mA": 0.0050274509803921565
+   "n": 54,
+   "mS": 0.009722222222222226,
+   "M2S": 0.05902883333333336,
+   "mA": 0.004748148148148148
   },
   "globalhir.hu": {
    "n": 18,
@@ -929,16 +965,16 @@
    "mA": 0.1238
   },
   "nypost.com": {
-   "n": 195,
-   "mS": 0.02933846153846154,
-   "M2S": 0.6240476615384616,
-   "mA": 0.005181538461538462
+   "n": 204,
+   "mS": 0.031715686274509804,
+   "M2S": 0.7957055098039217,
+   "mA": 0.005592647058823529
   },
   "theguardian.com": {
-   "n": 5,
-   "mS": 0.0068000000000000005,
-   "M2S": 0.0004188,
-   "mA": 0.00124
+   "n": 6,
+   "mS": 0.005666666666666667,
+   "M2S": 0.00045733333333333335,
+   "mA": 0.0010333333333333334
   },
   "telex.hu": {
    "n": 13,
@@ -959,16 +995,16 @@
    "mA": 0.0
   },
   "privatbankar.hu": {
-   "n": 3,
+   "n": 4,
    "mS": 0.0,
    "M2S": 0.0,
    "mA": 0.0
   },
   "nytimes.com": {
-   "n": 10,
-   "mS": 0.08220000000000001,
-   "M2S": 0.0757676,
-   "mA": 0.0148
+   "n": 11,
+   "mS": 0.08018181818181819,
+   "M2S": 0.07621563636363637,
+   "mA": 0.014427272727272728
   },
   "infostart.hu": {
    "n": 6,
@@ -977,10 +1013,10 @@
    "mA": 0.0
   },
   "wbasket.hu": {
-   "n": 8,
-   "mS": 0.136,
-   "M2S": 0.026012000000000004,
-   "mA": 0.0672875
+   "n": 9,
+   "mS": 0.1461111111111111,
+   "M2S": 0.033372888888888896,
+   "mA": 0.07231111111111112
   },
   "promotions.hu": {
    "n": 2,
@@ -1025,10 +1061,10 @@
    "mA": 0.0
   },
   "kcra.com": {
-   "n": 1,
-   "mS": 0.213,
-   "M2S": 0.0,
-   "mA": 0.0703
+   "n": 2,
+   "mS": 0.2135,
+   "M2S": 5.000000000000009e-07,
+   "mA": 0.07039999999999999
   },
   "tozsdeforum.hu": {
    "n": 1,
@@ -1043,10 +1079,10 @@
    "mA": 0.0083
   },
   "apnews.com": {
-   "n": 5,
-   "mS": 0.1268,
-   "M2S": 0.024198800000000003,
-   "mA": 0.02284
+   "n": 6,
+   "mS": 0.10766666666666666,
+   "M2S": 0.035181333333333335,
+   "mA": 0.019383333333333332
   },
   "szocikk.hu": {
    "n": 1,
@@ -1331,10 +1367,10 @@
    "mA": 0.0688
   },
   "fool.com": {
-   "n": 1,
-   "mS": 0.023,
-   "M2S": 0.0,
-   "mA": 0.0076
+   "n": 2,
+   "mS": 0.0115,
+   "M2S": 0.0002645,
+   "mA": 0.0038
   },
   "eszakhirnok.com": {
    "n": 2,
@@ -1559,10 +1595,10 @@
    "mA": 0.0045
   },
   "reuters.com": {
-   "n": 3,
-   "mS": 0.04133333333333333,
-   "M2S": 0.004320666666666667,
-   "mA": 0.0074333333333333335
+   "n": 4,
+   "mS": 0.0555,
+   "M2S": 0.006729000000000001,
+   "mA": 0.009975000000000001
   },
   "politico.com": {
    "n": 1,
@@ -1613,10 +1649,10 @@
    "mA": 0.0196
   },
   "bbc.co.uk": {
-   "n": 25,
-   "mS": 0.011720000000000001,
-   "M2S": 0.030139040000000006,
-   "mA": 0.0020999999999999994
+   "n": 26,
+   "mS": 0.01226923076923077,
+   "M2S": 0.03033511538461539,
+   "mA": 0.0021923076923076918
   },
   "abcnews.com": {
    "n": 8,
@@ -1745,7 +1781,7 @@
    "mA": 0.0
   },
   "karpatinfo.net": {
-   "n": 2,
+   "n": 3,
    "mS": 0.0,
    "M2S": 0.0,
    "mA": 0.0
@@ -1985,10 +2021,10 @@
    "mA": 0.0048
   },
   "vaol.hu": {
-   "n": 4,
-   "mS": 0.07375,
-   "M2S": 0.00311075,
-   "mA": 0.021724999999999998
+   "n": 6,
+   "mS": 0.06666666666666667,
+   "M2S": 0.003737333333333333,
+   "mA": 0.01943333333333333
   },
   "hatharom.com": {
    "n": 1,
@@ -2003,10 +2039,10 @@
    "mA": 0.042
   },
   "theverge.com": {
-   "n": 1,
-   "mS": 0.012,
-   "M2S": 0.0,
-   "mA": 0.004
+   "n": 2,
+   "mS": 0.006,
+   "M2S": 7.2e-05,
+   "mA": 0.002
   },
   "meinbezirk.at": {
    "n": 2,
@@ -2231,10 +2267,10 @@
    "mA": 0.0
   },
   "esport1.hu": {
-   "n": 1,
-   "mS": 0.111,
-   "M2S": 0.0,
-   "mA": 0.055
+   "n": 2,
+   "mS": 0.1805,
+   "M2S": 0.009660500000000002,
+   "mA": 0.08940000000000001
   },
   "napi.hu": {
    "n": 1,
@@ -2261,10 +2297,10 @@
    "mA": 0.0129
   },
   "ksat.com": {
-   "n": 1,
-   "mS": 0.04,
-   "M2S": 0.0,
-   "mA": 0.0131
+   "n": 2,
+   "mS": 0.038,
+   "M2S": 8.000000000000015e-06,
+   "mA": 0.01255
   },
   "sports.yahoo.com": {
    "n": 2,
@@ -2331,9 +2367,678 @@
    "mS": 0.026,
    "M2S": 0.0,
    "mA": 0.0084
+  },
+  "wtmj.com": {
+   "n": 1,
+   "mS": 0.044,
+   "M2S": 0.0,
+   "mA": 0.0145
+  },
+  "ktvo.com": {
+   "n": 1,
+   "mS": 0.064,
+   "M2S": 0.0,
+   "mA": 0.0212
+  },
+  "ottumwacourier.com": {
+   "n": 1,
+   "mS": 0.0,
+   "M2S": 0.0,
+   "mA": 0.0
+  },
+  "henryherald.com": {
+   "n": 1,
+   "mS": 0.0,
+   "M2S": 0.0,
+   "mA": 0.0
+  },
+  "pcguru.hu": {
+   "n": 1,
+   "mS": 0.072,
+   "M2S": 0.0,
+   "mA": 0.0359
+  },
+  "cbssports.com": {
+   "n": 1,
+   "mS": 0.043,
+   "M2S": 0.0,
+   "mA": 0.0141
+  },
+  "weather.com": {
+   "n": 1,
+   "mS": 0.013,
+   "M2S": 0.0,
+   "mA": 0.0042
+  },
+  "timesofisrael.com": {
+   "n": 1,
+   "mS": 0.0,
+   "M2S": 0.0,
+   "mA": 0.0
   }
  },
  "items": [
+  {
+   "id": "99270b16e4a7b78d",
+   "region": "INT",
+   "title": "Jets’ David Bailey, Breece Hall inactive for game vs. Raiders",
+   "summary": "Since Week 3, the Jets entered Sunday’s game having allowed 153 rushing yards per game, which ranked 31st in the NFL in the span.",
+   "link": "https://nypost.com/2026/11/01/sports/jets-david-bailey-breece-hall-inactive-for-game-vs-raiders/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:55:33Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.875
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.03,
+   "S": 0.03,
+   "G": 0.6,
+   "ATM": 0.0052
+  },
+  {
+   "id": "d6ee5cbe364c9522",
+   "region": "HU-NAT",
+   "title": "ÉLŐ: Vasas Akadémia – Sopron Basket",
+   "summary": "ÉLŐ: Vasas Akadémia – Sopron Basket WBASKET",
+   "link": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5TY2dtOTlGdE1ORU1tT0Y5TEFnbkxIeVFBU0dfeTNfV3pfNVZtMFdvQWFJNnlyWUh2MEZ6ZS1jSTlQczRSZ3ZJa0RIWXhfak56ZHk1MW14TWQ4WnZXMlFvWkhR?oc=5",
+   "source": "WBASKET",
+   "source_domain": "wbasket.hu",
+   "published": "2026-11-01T16:55:06Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.227,
+   "S": 0.227,
+   "G": 0.9,
+   "ATM": 0.1125,
+   "lat": 47.436,
+   "lng": 19.09
+  },
+  {
+   "id": "a423a673beaadaa6",
+   "region": "INT",
+   "title": "President Trump reveals how he’ll still be able to get things done if Dems take over after midterms",
+   "summary": "President Trump has a simple answer for stopping Democrats if they take control of both houses of Congress Tuesday.",
+   "link": "https://nypost.com/2026/11/01/us-news/trump-reveals-how-hell-still-be-able-to-get-things-done-if-dems-take-over-after-midterms/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:51:49Z",
+   "body": {
+    "ok": true,
+    "len": 763,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.917
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "bf0e8f9df61fcdb7",
+   "region": "INT",
+   "title": "The World Champion Effect and more Milwaukee business news",
+   "summary": "The World Champion Effect and more Milwaukee business news WTMJ",
+   "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNUVZrZzUxQ0hhbHFBaTZXaERsbTNvWEdrMUdxYzN5Z3NhbnlBUlFpOTlsRkJYbDllVHZZS19JVFN2bmlraktISjlEclI1b3p2Z093amtuSjc2RXpERjRHRzd4Mmx4Qkg4c0RyeS1uSUk4aVFNU19PQUY0YVlQdnhhVFNhTTlxRDQ3bndGLXBQc09zdV82bnRUV3NTWE9TQ2dRWGJaU25iU1puOG9DdWJwbjB3MFJrX1dGQlhDMnRJemdrTzA?oc=5",
+   "source": "WTMJ",
+   "source_domain": "wtmj.com",
+   "published": "2026-11-01T16:51:11Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.044,
+   "S": 0.044,
+   "G": 0.6,
+   "ATM": 0.0145
+  },
+  {
+   "id": "fd8fe7153e38f02d",
+   "region": "INT",
+   "title": "Can odors from our bodies signal Alzheimer’s, cancer and other diseases?",
+   "summary": "Can odors from our bodies signal Alzheimer’s, cancer and other diseases? The Washington Post",
+   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNb1FWV0xBZWNVUmdsckVicHNObWVSOUt3bXBoSlFRVVozZlV6cml6Y3hGSGhhYlVuUjNJM2QyOFM2STVqMnB6UGtzUko5bVM1c01Mb3pCY2tNZFV6T1FvdTB3ajdvQ0g1dzQ5ZGpxamhnOGNlMzF0UjNyZnJGTmhsVGFNYmNfRXgyOGpOU2tNZXVXVHByRm1nbWVGSnM4bEVwU2xqeWg4WmRUZDZnQlE?oc=5",
+   "source": "The Washington Post",
+   "source_domain": "washingtonpost.com",
+   "published": "2026-11-01T16:49:19Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "1d43d0ae4e062845",
+   "region": "INT",
+   "title": "Major global news moments of October, in AP photos",
+   "summary": "Major global news moments of October, in AP photos KTVO",
+   "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQRzJ6SEw1TGRVcE5uOG5GM09Rd0xlbHN6ZnNRTG5RSW9ndjkzalQ0eFhIWENEWnJPdXNKTnNlV0NLMXhGN0h3SmxjNl9IMEpWd25La040R3FOMDhoa0x3S3Y1bGY5czJ0ZnA1UXUwYlh6VURtdm1BRW5YVl9BQ1Jtckt5VURtZ3VvVXh0QWMtd3kxOXo1REpsMUdCOFJ6REZBeDBWNWJ4Sm11cVV6Tld3LVNFM2o0NGJFenU2S2ktc1dHRHM0eDFxN3BXS1RXX08xM3M2aw?oc=5",
+   "source": "KTVO",
+   "source_domain": "ktvo.com",
+   "published": "2026-11-01T16:46:52Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.064,
+   "S": 0.064,
+   "G": 0.6,
+   "ATM": 0.0212
+  },
+  {
+   "id": "b6d976e48c377ea4",
+   "region": "INT",
+   "title": "Major global news moments of October, in AP photos",
+   "summary": "Major global news moments of October, in AP photos Ottumwa Courier",
+   "link": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxQendMQUsyaXRWUUYyLTU0TmtFNW9uUktTbTNyRFJPSW1MenZuSFEtdFdnd3lRQ3BEZ0ZtaVI1SWtOM1pvOHN0YlJFUzAySFNlQ3IwRFNvVGdhaU9UMFlNTjZhNXBwSzFsRGdwaGliRHF3NW84bTVFNkhyWXg1M00yeWVWaF9NdGNoc2loZHgyRURPQ0tMVkl2bFdyWE9BSm5fLWkyNmRrWU55Zmw0YnM3anNHdkRjOVNMb0t2b2dqRUFsWHBJRmRWcmpTVHZJX1dINzNCeWptc0xGMkxMLThNXzRoMA?oc=5",
+   "source": "Ottumwa Courier",
+   "source_domain": "ottumwacourier.com",
+   "published": "2026-11-01T16:46:52Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "2f58e033957d16fb",
+   "region": "INT",
+   "title": "Major global news moments of October, in AP photos",
+   "summary": "Major global news moments of October, in AP photos WV News",
+   "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxNdTFxYzJPaS1NazdDbGdZcEVLTnVEcW5jeG42Y2tMcHdBM3loUE5zT1Q3QTZxVFZyQU1SUHRiLUh2dlItTllfODROYkI5SXQ2bTJFWVpYUHl1S2VoRzFqOHYwdWt1NTk2bTV0bmJGRXhtdTRQeVZqdkYwSkZQWWQyMTc1X0R4SGlQam1yU0pHNmFkaHZwMTM1RGxhVmhLcGw2Q1VtUTRGSnl5TWN4RWpOYTdnT3BsZjFmek95WUVPVGZkdnZKbkJrVnNvRzVxSTg?oc=5",
+   "source": "WV News",
+   "source_domain": "wvnews.com",
+   "published": "2026-11-01T16:46:52Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.468,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "7be984424d761be4",
+   "region": "INT",
+   "title": "Major global news moments of October, in AP photos",
+   "summary": "Major global news moments of October, in AP photos Post Register",
+   "link": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOMWJjRHQ2M1c1Mm81UTcyM05SZ3dSNjZmd2tXX1I5clJoaGxXMGluWmp6TzhjUThQUU10Q25RTWFJSk5pSWdUaHBwa0xwT3hzb2NqV3FBclhEZEFHSHU5OEc0emxTZGZ6LWotOEFqNVhZVDdjSTJjWDV5ajBfMG1QUVJweERyZUFrSzR2ZTJ1b2F5cXlZUDRoOG80ZUpsR2JhUjk4X01ZRkpud29Dd3h2RXpqaFpoYzdYSkIyNUNfT0g2T016M3RFVWpIMDNTeFpjMWlv?oc=5",
+   "source": "Post Register",
+   "source_domain": "postregister.com",
+   "published": "2026-11-01T16:46:27Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.461,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "ee926b343c028807",
+   "region": "HU-NAT",
+   "title": "Itt nyugszanak a magyar történelem legnagyobb alakjai – különleges helyet rejt Budapest szíve",
+   "summary": "Itt nyugszanak a magyar történelem legnagyobb alakjai – különleges helyet rejt Budapest szíve ORIGO",
+   "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOSV9HVXpfVW1WNEFxZGV5anlrb280bWxkQXFhV05hbmp6MG5MS0hzTmRTNlBvajJIVWdKeDBxVjZPSmVUNG1LWGd1dXA3U18xOFpkTmJmTjJkTURhc0R6TWNub2wzUThwSjdIczFTRWktWGsxR00tTVdSeFhhSnRubVZpN0xRM2F2amoyZnpUekNvbzBZaXJOVlY4SjlDdlgzWWZpZjZUZFM0Vnp6RC01eExkYklfc1hHOG9DcXVUYnE5MkR2NHc?oc=5",
+   "source": "ORIGO",
+   "source_domain": "origo.hu",
+   "published": "2026-11-01T16:45:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.689,
+   "S0": 0.036,
+   "S": 0.036,
+   "G": 0.9,
+   "ATM": 0.0101,
+   "lat": 47.623,
+   "lng": 19.162
+  },
+  {
+   "id": "e964cf16b195a98b",
+   "region": "INT",
+   "title": "When and where to watch the F1 Mexico City Grand Prix live for free",
+   "summary": "A new F1 champion could be crowned today.",
+   "link": "https://nypost.com/2026/11/01/sports/where-to-watch-f1-mexico-city-grand-prix-2026-live-for-free/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:45:00Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.556
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0,
+   "lat": 24.127,
+   "lng": -102.391
+  },
+  {
+   "id": "11323959c0f15827",
+   "region": "INT",
+   "title": "After the Midterms, What Israel’s Vote Revealed, Lula’s Surprise",
+   "summary": "After the Midterms, What Israel’s Vote Revealed, Lula’s Surprise CNN",
+   "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOX1p5TFdJd01ObUs5WWpFNXhsTFE3ZHJfVHJsTGhiZi1ZdkhjYUtwWVBGRTdOcDgxOHhaUTE5UzBMcFJicFB3eUIyWUVla2padjJ3cUx4eWlXM0JoYlNrSXRPeTZ2eDhqYVhNSXJkM1ZScDJRX3diQTJWb1JmYlhiT3NiaTFWY25TV0FwVk5NeTZhUndqRjVtNThHZmxvSjhv?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-01T16:43:51Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.677,
+   "S0": 0.044,
+   "S": 0.044,
+   "G": 0.6,
+   "ATM": 0.0085,
+   "lat": 29.97,
+   "lng": 34.502
+  },
+  {
+   "id": "0a3843ecb79c9ca7",
+   "region": "INT",
+   "title": "Lebanon Hezbollah",
+   "summary": "Lebanon Hezbollah Post Register",
+   "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQRWdZMjA5Wlh3bU03TU9mTi00S0RabjVNeVhfVTlJY1M0Vm5lZ0ZCR2VxSVk0N2JIekh4SVJueFVzYmJEekxLTGg4S3JZeS00MVIzYndzNlVFeVcwTEtGNlEyUkhpSFVqbU1QeGI5M2FWMUlKWFY5V3h6eU1KcmtZZGVQN0h6VUtWaXRWV0FQVVpVbGI3VER3YUFvQjNzdkYyeWUwemxzbUQ?oc=5",
+   "source": "Post Register",
+   "source_domain": "postregister.com",
+   "published": "2026-11-01T16:43:39Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.461,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0,
+   "lat": 32.811,
+   "lng": 33.622
+  },
+  {
+   "id": "130f1cf48f8b3c65",
+   "region": "INT",
+   "title": "Frantic hunt for gunman on the loose after mass shooting killed pregnant woman at California Spirit Halloween",
+   "summary": "Law enforcement officials in Fairfield, California, have not yet released the identity of the shooter who opened fire inside the Spirit Halloween store at the Solano Town Center Friday night.",
+   "link": "https://nypost.com/2026/11/01/us-news/cops-hunt-gunman-who-killed-constance-hages-in-fairfield-spirit-halloween-mass-shooting/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:38:54Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 2,
+    "ex": 0,
+    "ov": 0.692
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.052,
+   "G": 0.6,
+   "ATM": 0.0091,
+   "lat": 38.263,
+   "lng": -119.131
+  },
+  {
+   "id": "aa8f4f86f99db481",
+   "region": "HU-NAT",
+   "title": "HungaroMet – Magyarország: Kritériumok szerinti veszélyes időjárási jelenség nem várható.",
+   "summary": "Figyelmeztető előrejelzés Magyarország területére 2026.11.02 hétfő éjfélig",
+   "link": "https://www.met.hu/idojaras/veszelyjelzes/figyelmezteto_elorejelzes_mara/akadalymentes/index.php",
+   "source": "HungaroMet",
+   "source_domain": "met.hu",
+   "published": "2026-11-01T16:38:00Z",
+   "alert": false,
+   "official": true,
+   "V0": 0.95,
+   "V": 0.95,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 46.446,
+   "lng": 18.879
+  },
+  {
+   "id": "7d5719e715533528",
+   "region": "HU-VA",
+   "title": "HungaroMet – Vas vármegye: Nincs érvényben figyelmeztetés",
+   "summary": "Figyelmeztető előrejelzés Magyarország területére 2026.11.02 hétfő éjfélig",
+   "link": "https://www.met.hu/idojaras/veszelyjelzes/figyelmezteto_elorejelzes_mara/akadalymentes/index.php?v=18",
+   "source": "HungaroMet",
+   "source_domain": "met.hu",
+   "published": "2026-11-01T16:38:00Z",
+   "alert": false,
+   "official": true,
+   "V0": 0.95,
+   "V": 0.95,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 1.0,
+   "ATM": 0.0,
+   "lat": 47.039,
+   "lng": 16.611
+  },
+  {
+   "id": "850fea99f63512d4",
+   "region": "HU-NAT",
+   "title": "Nem változtatna a decemberi olajkitermelési kvótákon az OPEC+",
+   "summary": "Nem változtatna a decemberi olajkitermelési kvótákon az OPEC+ Magyar Hírlap",
+   "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQRzFfbzJEQkRXWFBOdEM5dnQ3eDc0MjV6ZDY0MnZHc3pGanNab2x0MlpyUHpYdnB2dnlJVHpETGh5aXdHWXloTXRWX1N1SXM5THJwR2ZOV2RmLWRkeWUtYkVMbm81LU9mVnlKaXJnRF83VmJCVGhhZFVoNDVoT2NDNjc3VHFnM3hjdms3WkZWQ1BhTTZmTGRJb3NOVWZaQjR6TU8yNQ?oc=5",
+   "source": "Magyar Hírlap",
+   "source_domain": "magyarhirlap.hu",
+   "published": "2026-11-01T16:36:28Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.119,
+   "S": 0.119,
+   "G": 0.9,
+   "ATM": 0.0589,
+   "lat": 47.083,
+   "lng": 19.294
+  },
+  {
+   "id": "b533868ae6167fd7",
+   "region": "INT",
+   "title": "Influencer fighting for her life in ICU after contracting ‘terrifying’ brain infection on vacation",
+   "summary": "Gold Coast influencer Khiana Smith, 23, is fighting for her life in a Bali ICU after suddenly contracting bacterial and viral meningitis.",
+   "link": "https://nypost.com/2026/11/01/lifestyle/influencer-fighting-for-her-life-in-icu-after-contracting-terrifying-brain-infection-on-vacation/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:35:34Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 1,
+    "ex": 0,
+    "ov": 0.778
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.222,
+   "S": 0.248,
+   "G": 0.6,
+   "ATM": 0.0432
+  },
+  {
+   "id": "b4abf0cbe17ed416",
+   "region": "INT",
+   "title": "Horror fatal car crash sparks chaos on major California freeway",
+   "summary": "A rollover victim was thrown to their death across a California freeway in a violent Sunday morning that triggered a total shutdown.",
+   "link": "https://nypost.com/2026/11/01/us-news/fatal-car-crash-sparks-chaos-on-405-freeway-overnight-sunday/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:35:20Z",
+   "body": {
+    "ok": true,
+    "len": 1019,
+    "kw": 0,
+    "ex": 4,
+    "ov": 0.5
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.333,
+   "S": 0.378,
+   "G": 0.6,
+   "ATM": 0.0658,
+   "lat": 36.759,
+   "lng": -117.563
+  },
+  {
+   "id": "c270b0f11b57270e",
+   "region": "HU-NAT",
+   "title": "Felfigyeltek a magyar állampapírokra a nemzetközi piacon: komoly nyereséget hozhat az euróbevezetés",
+   "summary": "Felfigyeltek a magyar állampapírokra a nemzetközi piacon: komoly nyereséget hozhat az euróbevezetés Pénzcentrum",
+   "link": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxPZ2NuOU4xUWI3VnF2aWp4QkRndDdVM2kzR0FiUHNUV25ReGJoOFRSS1VjVVJBUENDNlJZejUzdGdLVl8zZTRLbHh6Ymx2R1JfVXdfblpTOExGZFQ2S3RVQzBOLUgtQkV3RXpsN3hnSDFkMHNSZ0VTeXlsajZ0YUcxbE94MUx3Y010ZWhfLUk3U0VVS1R3eHQ0OTVucUpkdXFpaE5RSm5JM0RNUDNleDNwVW5KbEFjQzR5akZwYWxDazlRN1BVMkZnUzltUk1KYU5qamh3dmRVc1hqS1J0RkhxTlZpdFkySXNYOThJ0gHwAUFVX3lxTE1TMHFJbUx4eTlZb2tPN2JlUXk4bm10Ri00cHN5VS1LSXV4V1VzaVFFalBFeEk3RWlnM1o1S0lqMWtwRlBZZ090SWFZLTc4dFBrM1dGZEpDNl90ZDc1ckRTRmxxUl9ZMVgzZlp4RjFHZmdyeFdseFlEcE16ajcyZUdUQTVLNzFOM0dPem1IVHJNcTN4bUJpYmJFU1RQZUVDbXBRemVYbzZFS2E1QXJnY2F3ZnkxSXd3b2ZTZV9jVm1ZUTl5Mk1TMS1XbGhNYTdBSG10eG9yeF9NRTVoQ3hibGpTYVZQaWFXSG5LNzQ5UzVGQw?oc=5",
+   "source": "Pénzcentrum",
+   "source_domain": "penzcentrum.hu",
+   "published": "2026-11-01T16:34:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.074,
+   "lng": 19.626
+  },
+  {
+   "id": "15fd22f1bde19478",
+   "region": "HU-VA",
+   "title": "Óriási a forgalom a szombathelyi Jáki úti temető környékén - fotók",
+   "summary": "Óriási a forgalom a szombathelyi Jáki úti temető környékén - fotók VAOL",
+   "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxNeU1NNlotUWc1bHBVaFlMMFJqem0zb0RwZXNmVURMM2EtSlM2UkhXN0s4SktPYU9DMTdHQlZDaUM1aGV2Z05GSTRRUHJSWlFYN0tRaXBwSXFXU0JncnlkdHZ1NmlnbklwNzlURmlmNmtyYk93LTFTUDVLUUhJbGlPX18yREdzaXl4VDZ1SElISE1ScmhzWXVvQzZYclNDQQ?oc=5",
+   "source": "VAOL",
+   "source_domain": "vaol.hu",
+   "published": "2026-11-01T16:33:36Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.049,
+   "S": 0.049,
+   "G": 1.0,
+   "ATM": 0.0147,
+   "lat": 47.281,
+   "lng": 16.668
+  },
+  {
+   "id": "54300c7453fe9427",
+   "region": "HU-NAT",
+   "title": "Újraindulhat az elkaszált Prince of Persia: The Sands of Time Remake fejlesztése egy rajongónak hála?!",
+   "summary": "Újraindulhat az elkaszált Prince of Persia: The Sands of Time Remake fejlesztése egy rajongónak hála?! Esport1",
+   "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNZnFKWjEtVFZ5UXBpRU1RcnU1YTQ4YmFTd01xd0g5dmcxNEdyc2VrMUNwZEVCYWN0REVjOW5QdUZlN2ItTGZ3Q3hQYkowNXpVSlJiNXVPWWI2ZGh0c19uTXNTV01wYzBLdW1JNXB1eVZnblprUW9ZY3FaNGtXd2hqUjE5S2xVcDB0WXZfdGRYNFZoLWdrZFVNTVZZTlVieHhJdFFfd2xJN1NsZ01GRUlvLW9kREFBb1dwbDJLTWVvcGYwNE0zTldNQmRpWlA3UWo1d21wN2lB?oc=5",
+   "source": "Esport1",
+   "source_domain": "esport1.hu",
+   "published": "2026-11-01T16:30:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.25,
+   "S": 0.25,
+   "G": 0.9,
+   "ATM": 0.1238,
+   "lat": 47.19,
+   "lng": 19.515
+  },
+  {
+   "id": "8cb6ed11f9d599fd",
+   "region": "INT",
+   "title": "Raiders’ Maxx Crosby plans revealed as star makes trade stance clear after offseason drama",
+   "summary": "Maxx Crosby doesn’t want another trade away from the Raiders.",
+   "link": "https://nypost.com/2026/11/01/sports/raiders-maxx-crosby-plans-revealed-as-star-makes-trade-stance-clear/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:28:59Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.462
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.011,
+   "G": 0.6,
+   "ATM": 0.002
+  },
+  {
+   "id": "677cbc503de5e4ff",
+   "region": "INT",
+   "title": "Popular snack may protect the aging brain when eaten every day: study",
+   "summary": "It may sound nutty, but a hefty handful of one common food can boost memory and protect our brain power as we age.",
+   "link": "https://nypost.com/2026/11/01/health/popular-snack-may-protect-the-aging-brain-when-eaten-every-day/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:28:45Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.667
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
+   "id": "96a242f04e8ea1a7",
+   "region": "INT",
+   "title": "Israeli strikes in Gaza kill eight including child, hospitals say",
+   "summary": "Five officers from the Hamas-run police have been killed in Khan Younis and three people, including a child, killed in Gaza City, officials say.",
+   "link": "https://www.bbc.co.uk/news/articles/cmqln14rrzxvo?at_medium=RSS&at_campaign=rss",
+   "source": "BBC News",
+   "source_domain": "bbc.co.uk",
+   "published": "2026-11-01T16:25:33Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 1,
+    "ex": 0,
+    "ov": 0.875
+   },
+   "V0": 0.7,
+   "V": 0.712,
+   "S0": 0.0,
+   "S": 0.026,
+   "G": 0.6,
+   "ATM": 0.0045,
+   "lat": 30.239,
+   "lng": 35.394
+  },
+  {
+   "id": "53df87b7cc8b8b4b",
+   "region": "INT",
+   "title": "Iran's top diplomat hopes US shows 'rationality,' and other Mideast news",
+   "summary": "Iran's top diplomat hopes US shows 'rationality,' and other Mideast news Henry Herald",
+   "link": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxPbHUxVEltakJXVkVnSWJ6eGk1OFZGd21na182ZEdNRmQ4WkFKN1RwWUNqTDlOcVlLLUpQa1BFbmxaMC1ORkR2cDdDaXBaUGFVN1FlWlNZVDM1MG93NjNaTGk3YzNia0doQkNUREc0UlVjRkhIcURKMnFEbHlLWkVCRDEyUHZoOE5jVzV0QjRkWG9URUw1T1dBeGxKRnpPNXEzRlNsWVdsN1ZVNUtXTWpLNlZNOVRHWUdlNWF1NFF1UEdqNFBXLVpUYXNiUkpYMUJJeWhoeXNtM3dDNE9kSUJIV0gyMTl4dkZiVzJCbTNuWkgtWHlfdmpJ?oc=5",
+   "source": "Henry Herald",
+   "source_domain": "henryherald.com",
+   "published": "2026-11-01T16:24:26Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0,
+   "lat": 32.081,
+   "lng": 54.379
+  },
+  {
+   "id": "2334657e3f3b8767",
+   "region": "INT",
+   "title": "Ex-Gov. Pataki reveals why Blakeman could win NY’s top office despite some polls — and he should know",
+   "summary": "Pataki said the only poll that counts is the one from the voters at the ballot box Tuesday.",
+   "link": "https://nypost.com/2026/11/01/us-news/ex-gov-pataki-reveals-why-blakeman-could-win-nys-top-office-despite-some-polls-and-he-should-know/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-01T16:19:39Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.4
+   },
+   "V0": 0.7,
+   "V": 0.71,
+   "S0": 0.0,
+   "S": 0.03,
+   "G": 0.6,
+   "ATM": 0.0052
+  },
+  {
+   "id": "f6cf2cc6c23ad70f",
+   "region": "HU-NAT",
+   "title": "A büszke bejelentés után kijózanító valóság – Nagy Ervint a saját kommentelői szembesítették az ország helyzetével",
+   "summary": "A büszke bejelentés után kijózanító valóság – Nagy Ervint a saját kommentelői szembesítették az ország helyzetével ORIGO",
+   "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPOTd3dHlQMHNFTzVyRUdXVlQ0WVR5QXVzeG9tamZhQVd4eWhmTHlKbVY5Z29EREVncUpsZWllREd5aGt0VnZES3NvTkJKQy1YeFpuX19iTnE4VjdNX2RGazM2cXhqSUh3SllENUdNcS1aNWF0aXE1LXJLZFl2WEJSUWp5c19mZWMzY3c?oc=5",
+   "source": "ORIGO",
+   "source_domain": "origo.hu",
+   "published": "2026-11-01T16:15:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.689,
+   "S0": 0.033,
+   "S": 0.033,
+   "G": 0.9,
+   "ATM": 0.0093,
+   "lat": 47.433,
+   "lng": 19.316
+  },
+  {
+   "id": "0777ed961294d529",
+   "region": "INT",
+   "title": "2026 Time100 Next",
+   "summary": "2026 Time100 Next WV News",
+   "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPZ1JwX1FQUTZ3UEVycUdaMFJwRDVWeENIemVuNi1BYjJnejBaU1Z0bHdHYVVMWVBHRnptMTc3WEJ3UUkyMlRfZTk2c0JVUE5YeW5sSm0tWkNzWWQ0Z0NPQUxWdEhCTUhyd2ZmQWtJQmRTZWZUUXV3MzNuRlc5Q2NaYzZBR3FBOEtiU01STzZvY1ZfcWZjN3pBenptRDQyUURUbWc?oc=5",
+   "source": "WV News",
+   "source_domain": "wvnews.com",
+   "published": "2026-11-01T16:13:48Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.468,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
   {
    "id": "8b7222abfb6786e8",
    "region": "HU-NAT",
@@ -2354,6 +3059,25 @@
    "ATM": 0.0,
    "lat": 47.082,
    "lng": 19.303
+  },
+  {
+   "id": "9d5ab698841d8171",
+   "region": "INT",
+   "title": "Michigan Democrats’ unity push falters as Stevens is asked to skip event with El-Sayed",
+   "summary": "Michigan Democrats’ unity push falters as Stevens is asked to skip event with El-Sayed AP News El-Sayed Doesn’t Want Haley Stevens to Join Him at Sunday Event The New York Times US Senate candidate El-Sayed wants Democratic rival to stay away, source says Reuters Midterm elections: Rift grows between Democrats Abdul El-Sayed and Haley Stevens in Michigan CNN Haley Stevens appears at Detroit church with Mike Rogers The Detroit News",
+   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNZTZaeEZ3WHhrS2s0VVVXSWpRLVVLb185QTR6djh1R3UtZ1F0SFJCS1BWbDBaUmZxeEI4ekkyMVBObTV3R1RyZktuX0dISE9rTmFVd2tVY3NnMm8xTUQ5SGo1VFc1bWoySVdkNHp2c2JmR0g4a2hQOEJfdFVVaFZTQ2hSZWwwMHc1Sm81clYxelpTN1JGbFJZOEpEMlRVWkRBSTdCU0RzX1VWdDRrQXc?oc=5",
+   "source": "AP News",
+   "source_domain": "apnews.com",
+   "published": "2026-11-01T16:10:09Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.012,
+   "S": 0.012,
+   "G": 0.6,
+   "ATM": 0.0021
   },
   {
    "id": "670de6a8a704e454",
@@ -2413,25 +3137,6 @@
    "S": 0.011,
    "G": 0.6,
    "ATM": 0.0019
-  },
-  {
-   "id": "fd8fe7153e38f02d",
-   "region": "INT",
-   "title": "Can odors from our bodies signal Alzheimer’s, cancer and other diseases?",
-   "summary": "Can odors from our bodies signal Alzheimer’s, cancer and other diseases? The Washington Post",
-   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNb1FWV0xBZWNVUmdsckVicHNObWVSOUt3bXBoSlFRVVozZlV6cml6Y3hGSGhhYlVuUjNJM2QyOFM2STVqMnB6UGtzUko5bVM1c01Mb3pCY2tNZFV6T1FvdTB3ajdvQ0g1dzQ5ZGpxamhnOGNlMzF0UjNyZnJGTmhsVGFNYmNfRXgyOGpOU2tNZXVXVHByRm1nbWVGSnM4bEVwU2xqeWg4WmRUZDZnQlE?oc=5",
-   "source": "The Washington Post",
-   "source_domain": "washingtonpost.com",
-   "published": "2026-11-01T16:02:05Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
   },
   {
    "id": "c05ba8e36fc5b3aa",
@@ -2529,19 +3234,19 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.033,
    "S": 0.033,
    "G": 0.6,
-   "ATM": 0.0064
+   "ATM": 0.0065
   },
   {
    "id": "2076f247f69b28ba",
    "region": "HU-NAT",
    "title": "Sávos kiegészítő nyugdíjemelést és SZÉP-kártyát vezet be a kormány 2027-ben",
-   "summary": "Sávos kiegészítő nyugdíjemelést és SZÉP-kártyát vezet be a kormány 2027-ben www.globalhir.hu",
+   "summary": "Sávos kiegészítő nyugdíjemelést és SZÉP-kártyát vezet be a kormány 2027-ben https://www.globalhir.hu/",
    "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPY3ByM2ZGQ0UzbU1ZbTVlWllmMUNrS0taQjNfaWlrdkgteU84M3N4Sjl1YWNuck9Wd09YMlVrSktmSmVaeURtNjN4RnUyWEFTb1o0SWtTTWJ5RVlLZURjY2JiNmdReVI1X1lYRVlrdFQ3Y3RHckdwWjBnN2lhcXRUZkdrMUQtMjRDVnNkUVFHNTd0dTBIclZ5eVpmZG1MNWNadmpfdG4wM3FpZTJQeHQ4MHJB?oc=5",
-   "source": "www.globalhir.hu",
+   "source": "https://www.globalhir.hu/",
    "source_domain": "globalhir.hu",
    "published": "2026-11-01T15:45:54Z",
    "body": {
@@ -2549,10 +3254,10 @@
    },
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.093,
-   "S": 0.093,
+   "S0": 0.088,
+   "S": 0.088,
    "G": 0.9,
-   "ATM": 0.0458,
+   "ATM": 0.0434,
    "lat": 47.378,
    "lng": 19.47
   },
@@ -2597,6 +3302,27 @@
    "ATM": 0.0,
    "lat": -28.711,
    "lng": 23.081
+  },
+  {
+   "id": "6accb6fde8192fd1",
+   "region": "INT",
+   "title": "South Africa Zuma",
+   "summary": "South Africa Zuma Post Register",
+   "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxOS2dLV1Bud1NlOWNBSl9saHhyVGt1clRMdEcxRDl3ZGlLaUdQc2xBYjVFVlZlUklQLTFCZGlXUWNLaW5nVXpZOXFpVUY0Z29kX1NyaVpsOExoWFFHTWNzY3ZPVEhFU1JGVmxBSWFJYzFIZXlGdEJibFNaRlJUS0w5RE9RTUFXbm1hYnEzbE5TMFFuRHJYVmN4N19JSnBxN05ncWQ1aUpVcUo?oc=5",
+   "source": "Post Register",
+   "source_domain": "postregister.com",
+   "published": "2026-11-01T15:45:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.461,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0,
+   "lat": -32.553,
+   "lng": 22.936
   },
   {
    "id": "a3be4a749908807b",
@@ -2704,6 +3430,25 @@
    "lng": 19.436
   },
   {
+   "id": "c850cc0ad5d23654",
+   "region": "INT",
+   "title": "31-year-old pregnant woman identified as killed in Fairfield shooting at Spirit Halloween",
+   "summary": "31-year-old pregnant woman identified as killed in Fairfield shooting at Spirit Halloween KCRA New video captures terrifying moments inside Fairfield Spirit Halloween store during deadly shooting KCRA Pregnant mom killed in mass shooting inside Bay Area Spirit Halloween store SFGATE Fairfield police continue search for Halloween store shooting suspect as new details emerge ABC10 Shooting at Spirit Halloween in California Kills Pregnant Mother of 4 The New York Times",
+   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNQ2VEU1VYa3FhenA2OGF2UWsxcXR6S1dzME1PMERCQ1hQMU92cTY4Z0VzcmVhWTd0Rl90NWpVU2puWUVQd0tWZE04aThWenNhdXh1dlJIQ3BYVnd2SnJrQ1pHR2d0ekxVUWxOdlczX2lzUjlyYjlyTlBZcU9UcmpHV2JsOXdXMHNMZzJlZ3M3bkdjSUpUTE9Sd1lPeGQ2MXVPTTRFNV9aMFppS3M?oc=5",
+   "source": "KCRA",
+   "source_domain": "kcra.com",
+   "published": "2026-11-01T15:36:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.214,
+   "S": 0.214,
+   "G": 0.6,
+   "ATM": 0.0705
+  },
+  {
    "id": "96dd732ef7900a0d",
    "region": "INT",
    "title": "Antigua Britain Royal Visit",
@@ -2760,11 +3505,51 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
    "ATM": 0.006
+  },
+  {
+   "id": "6c34be4e594ad3dd",
+   "region": "INT",
+   "title": "Senator Warnock calls Senator Cruz’s remarks on Muslims ‘bigotry, pure and simple’",
+   "summary": "Senator Warnock calls Senator Cruz’s remarks on Muslims ‘bigotry, pure and simple’ CNN",
+   "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPY3FkZlhyeU5VUlZZdElscWJQUFlxaXhOZ3d3U3liZU1lMV82N0NTOHVqT3NPZGt4SU1sLXlZaDNzaGMyRkZERmozSy1tVXNpek1JVXJXb01sZGZwLTJHUjZqVmw0Y3hrQk1EQlFNa1ZqNERXWGdtOU1FcjR1R3ZHeG02Y3ZpNkJ0dFE5bg?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-01T15:32:05Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.677,
+   "S0": 0.036,
+   "S": 0.036,
+   "G": 0.6,
+   "ATM": 0.007
+  },
+  {
+   "id": "acd3de77682157f4",
+   "region": "HU-NAT",
+   "title": "Élet+Stílus: Szöget találtak a gyerekek halloweeni csokijában Gyömrőn",
+   "summary": "Élet+Stílus: Szöget találtak a gyerekek halloweeni csokijában Gyömrőn | hvg.hu Szöget rejtettek a halloweeni édességbe Gyömrőn, feljelentést tettek 24.hu Szöget rejtettek a gyerekek Halloween-édességében a magyar településen – fotók Infostart Szöget találtak a gyerekeknek osztogatott, halloweeni édességben Gyömrőn 444 Borzalmas tett: valaki szöget rejtett halloweenező kisgyerekek édességébe Gyömrőn – Nyomoz a rendőrség Blikk",
+   "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5hZEplQmpnM3Z1b0xIN1ppTXk5d1dCcWw2bTVrdkFMWHVDcDgzWWF2NVZMdVJQOFVYenhmWjV6ZXpOSXpKLTl2V1pldnNGZ0xfQWdpR1NkRWRPeHJNLWh5bkl6OVdhN01FUFJv?oc=5",
+   "source": "| hvg.hu",
+   "source_domain": "hvg.hu",
+   "published": "2026-11-01T15:31:49Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.167,
+   "S": 0.167,
+   "G": 0.9,
+   "ATM": 0.045,
+   "lat": 47.201,
+   "lng": 19.665
   },
   {
    "id": "83df79c11015b3ac",
@@ -2805,6 +3590,27 @@
    "ATM": 0.0,
    "lat": 47.225,
    "lng": 19.642
+  },
+  {
+   "id": "c7ce96f0d7af477c",
+   "region": "INT",
+   "title": "Tributes paid to ‘inspiring’ Cambridge scientist who died in Spain train crash",
+   "summary": "Tributes paid to ‘inspiring’ Cambridge scientist who died in Spain train crash The Guardian",
+   "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNY05SSE9STENXVVFxdDVzRHZLQXFEQ1N6Nm5zTlA1VUNaVDI4Yk0yS2Y5OTdHVnZBbkJqdmw1Qm9qVUdNQTlrWVJGaHN3c2VCWlRkQ1JMLTk5eWgzaU53a0RQQ3RNVDRqMHFLMW5lel9CTnEtZDFTZFoyaGJCYzBGRnE0M0l1Sy1zN2FMTEtlMUZFVTNHa2djV2Y4OG5XbEIwQzZxc3d0dVJ3Y3c1S1BSMC12QTZHNGhZWmM2TEc3R3Y?oc=5",
+   "source": "The Guardian",
+   "source_domain": "theguardian.com",
+   "published": "2026-11-01T15:31:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0,
+   "lat": 38.918,
+   "lng": -6.148
   },
   {
    "id": "f3a86f5a46b6410c",
@@ -2916,6 +3722,48 @@
    "ATM": 0.0107
   },
   {
+   "id": "d9e3f7123e38cab5",
+   "region": "HU-NAT",
+   "title": "Takács Péter az Origónak: Súlyos hiba azt gondolni, hogy ez a meccs le van fújva. Nincs lefújva.",
+   "summary": "Takács Péter az Origónak: Súlyos hiba azt gondolni, hogy ez a meccs le van fújva. Nincs lefújva. ORIGO",
+   "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNODZ4ZDNTc3BOV0t2NF94LXVzT3ZXd2wweWozZHpSRGVhX1A2ZV8zNHJDZFpKUFR0SGR4aDkwdjZXVjBQbjBGamVwUktwb0xQeWxWSUZ6MGxDZjhuWTRDZEdad2t6MGpxMzZTa0NPNHVVcGlGVjFWQ2IzR1dnQkk4RFZhU042SWxsaVZCQmNDa3FpZw?oc=5",
+   "source": "ORIGO",
+   "source_domain": "origo.hu",
+   "published": "2026-11-01T15:30:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.689,
+   "S0": 0.031,
+   "S": 0.031,
+   "G": 0.9,
+   "ATM": 0.0086,
+   "lat": 47.269,
+   "lng": 19.288
+  },
+  {
+   "id": "5ca2f8321d67fb02",
+   "region": "HU-NAT",
+   "title": "Ezen a listán is Románia mögé csúsztunk, innen lesz szép nyerni",
+   "summary": "Ezen a listán is Románia mögé csúsztunk, innen lesz szép nyerni Privátbankár.hu",
+   "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxPNWpZVjNXbXIzLU9Oa1ZjTTQzN0swTUhlNEhIYUhiSU5URXVOTVV2U2lISDh1QUl0aW9XOTZuWmlUMFN5Tk90VFZsSnh2QlRkaHd4WXNWU3otVFJtanBaZFNKc3VrN0pVb2swYlQyZllabnpkSUpQUUI5WEtyeExJbEROMmUwdzMySm9uLVA1b3lnUTZTVjktY3N2QWFWbGZOWXB0aTNydw?oc=5",
+   "source": "Privátbankár.hu",
+   "source_domain": "privatbankar.hu",
+   "published": "2026-11-01T15:28:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 45.949,
+   "lng": 26.578
+  },
+  {
    "id": "15834c116d24440a",
    "region": "HU-NAT",
    "title": "Japán kultúra Budapesten: különleges kiállítás és hangulatos japánkertek",
@@ -2956,6 +3804,27 @@
    "ATM": 0.0147,
    "lat": 36.012,
    "lng": -117.147
+  },
+  {
+   "id": "9d407019a2a9f58e",
+   "region": "HU-NAT",
+   "title": "A britek többsége visszacsinálná a Brexitet",
+   "summary": "A britek többsége visszacsinálná a Brexitet Portfolio.hu",
+   "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxNU1BzMkhTSHM0LWczSmcxVWZLTG53TG5PS2RETTJHN19qT0hkay1Bc0huSkJYQ0c5RERDUEQ0cHhxOHdSWFFrYUpQVG9Wa05fblM4bHRwU1BuWmJQMHNhbXR6UlpqejlmSXNtV2pUZlRhMWRCOXlsT2RZWWN2eV95MXJXbkJhcUlENlJDbjA5TTI5V0hGaGpjUExyZGRTZ9IBngFBVV95cUxNU1BzMkhTSHM0LWczSmcxVWZLTG53TG5PS2RETTJHN19qT0hkay1Bc0huSkJYQ0c5RERDUEQ0cHhxOHdSWFFrYUpQVG9Wa05fblM4bHRwU1BuWmJQMHNhbXR6UlpqejlmSXNtV2pUZlRhMWRCOXlsT2RZWWN2eV95MXJXbkJhcUlENlJDbjA5TTI5V0hGaGpjUExyZGRTZw?oc=5",
+   "source": "Portfolio.hu",
+   "source_domain": "portfolio.hu",
+   "published": "2026-11-01T15:23:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.711,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 46.992,
+   "lng": 19.628
   },
   {
    "id": "1fb1b074a32973d8",
@@ -3042,6 +3911,25 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0.0
+  },
+  {
+   "id": "dfa83ededceb17c7",
+   "region": "INT",
+   "title": "PODCAST: Gen Z protests, Oleshky and a possible Democrat Congress",
+   "summary": "PODCAST: Gen Z protests, Oleshky and a possible Democrat Congress Reuters",
+   "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxPcHNWNm9OUHpqWVB2V1RQWnNpc3pFVUJyeE5mT0dYM3Mzc09UU1oxNXN3NFFJRmVSM09aUmRlcWcwY2R6d0F1NlFnbGFPaVlRRHZFWDZ3UzB1OTAxVEZaTzBidlcwZzJPSmRNdl9LQkdTblctVHgxeVZOaFItUG1ENDVlRzFhZWRBb1R5VGZwb0JwZ0JwVFRoOGV3?oc=5",
+   "source": "Reuters",
+   "source_domain": "reuters.com",
+   "published": "2026-11-01T15:18:56Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.098,
+   "S": 0.098,
+   "G": 0.6,
+   "ATM": 0.0176
   },
   {
    "id": "456b4074a1e87bc2",
@@ -3132,7 +4020,7 @@
    "id": "b232b0d50fed55f0",
    "region": "INT",
    "title": "Iran warns of 'geographically unrestricted response' if US attacks",
-   "summary": "Iran warns of 'geographically unrestricted response' if US attacks Euronews.com Iran war live: US response awaited on new proposal to reopen Hormuz: Tehran Al Jazeera Iran's supreme leader orders \"maximum\" response to any U.S. attack Axios Iran army: Potential war could be ‘longer than previous conflict,’ Trump won’t dictate its duration The Times of Israel Iran's leader says response to attack would have no 'geographic limits,' and other Mideast news AP News",
+   "summary": "Iran warns of 'geographically unrestricted response' if US attacks Euronews.com Iran army: Potential war could be ‘longer than previous conflict,’ Trump won’t dictate its duration The Times of Israel Iran's supreme leader orders \"maximum\" response to any U.S. attack Axios Live - Iran warns any new war could spread beyond the Middle East Iran International Iran's leader says response to attack would have no 'geographic limits,' and other Mideast news AP News",
    "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQU1ZwazBHVTQyY3RoX1hoUkhYSXo4LTR0MGZoUGpZNlhtbTlSMG1VNGRNLVNHUjNuNTF0c1BjcnpEa2JqVGhMX2VabHI3V3RrbllISnlpV3lneTM1UU9FVWlleFhpLUpSMk1Nal85amhDbEw4VnJwdHpUQk04TXExRVJzXzJkVk1rWEFPYXV6V1R0S0t4VTFzNnlvdmt3bWkyOTJic3VCYndKTFBOVlduYXVWT3FKVHlKT2VCem9sTQ?oc=5",
    "source": "Euronews.com",
    "source_domain": "euronews.com",
@@ -3210,6 +4098,27 @@
    "lng": 19.432
   },
   {
+   "id": "0f9edc6bee9bb143",
+   "region": "INT",
+   "title": "Russia's FSB Says Minor Detained Over Park Attack Threat After US Tip-Off",
+   "summary": "Russia's FSB Says Minor Detained Over Park Attack Threat After US Tip-Off U.S. News & World Report",
+   "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNY0o0SWlTMEVhMlEtemJVamdReWVnakNmWVJGU1BjWHE0NE1uUlViNVZLQWtPSDh2Q2FILUIxaHRJaGRZVnBxU1J6ZmpWblVSMUw0MkJESzZJeXRUN3B0RWJjNlhscjNUV3hKYnJuczk5bjZTQXlYOExaME9QLXJUTkNTQTAwTWpFOExOZDM1WjllNVFMb2hBTXIybm03eTQwaUFacE9MRUo0UEJUNlJCU3ZFZ3RDbE1yQ0hzZEp4YTdDX3JB?oc=5",
+   "source": "U.S. News & World Report",
+   "source_domain": "usnews.com",
+   "published": "2026-11-01T15:06:47Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.062,
+   "S": 0.062,
+   "G": 0.6,
+   "ATM": 0.0204,
+   "lat": 61.627,
+   "lng": 103.445
+  },
+  {
    "id": "d387f753b782f578",
    "region": "INT",
    "title": "Saquon Barkley’s NFL trade deadline fate revealed as Eagles spiral",
@@ -3245,7 +4154,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -3294,6 +4203,27 @@
    "S": 0.071,
    "G": 0.6,
    "ATM": 0.0235
+  },
+  {
+   "id": "1b0834c6643a3a53",
+   "region": "INT",
+   "title": "Minor detained after U.S. warned Russia of possible Moscow terror attack, FSB says",
+   "summary": "Minor detained after U.S. warned Russia of possible Moscow terror attack, FSB says NBC News",
+   "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPVTc0WFR6cTJMZUFXaThqUFhoLV84N19KSFRvMEtXT1VmOU1vS1hIdjhaWlZWaVdoNEpvQnMyMmtOZG03QmhWa3M0dndXNjhZamVqMmRTbEZKemJ0ek5nbkdIR2lIdXVoX3hqNzdlS1A5cDEyWW5PdWwzTTdkTkE0MlgwUXYxZmROcDNHaG53R25DMm0tX3daYjhBTWNSRDJNaVZDeVp3?oc=5",
+   "source": "NBC News",
+   "source_domain": "nbcnews.com",
+   "published": "2026-11-01T15:02:21Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.104,
+   "S": 0.104,
+   "G": 0.6,
+   "ATM": 0.0188,
+   "lat": 38.792,
+   "lng": -99.083
   },
   {
    "id": "0cd03b09a1275d61",
@@ -3539,6 +4469,27 @@
    "ATM": 0.0161
   },
   {
+   "id": "b1f53f5fbb113b8f",
+   "region": "HU-NAT",
+   "title": "A Control mintájára 90 fokkal elforgatták a GTA V térképét, de ekkora káoszt még nem láttál",
+   "summary": "A Control mintájára 90 fokkal elforgatták a GTA V térképét, de ekkora káoszt még nem láttál PC Guru",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxQenFzTEs2VnV6S0FMOVVKUFR2TXhJbXM5ZUlFc3pQalpHT21MbVZSaGx6T3lHbFFMbFMxM0h1QVlrX3VOS0ZlVl9uWDdpX1BuNWxGRHpPRmxrMndvZnJTZ2tIQ2ZhQnZTTUtXZVhkbzZmeExnSEZ1WFl0RWh4czNiazU3TGNpZFFmUkUzMG5FZk05MEJYWUpzTXlma0pHM3hYMXhiSnRvY09DcjNSTnlpcFJ5ekNRLWRsdUUycVlvbUNmb3NzdjVQN3FoSWs2aFl1?oc=5",
+   "source": "PC Guru",
+   "source_domain": "pcguru.hu",
+   "published": "2026-11-01T15:00:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.072,
+   "S": 0.072,
+   "G": 0.9,
+   "ATM": 0.0359,
+   "lat": 47.123,
+   "lng": 19.348
+  },
+  {
    "id": "e73a6a185a2b19a3",
    "region": "INT",
    "title": "Police catch on fire as rioters aim fireworks at them",
@@ -3589,7 +4540,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.144,
    "S": 0.144,
    "G": 0.6,
@@ -3629,7 +4580,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3662,7 +4613,7 @@
    "id": "1a8932a1815496a9",
    "region": "HU-NAT",
    "title": "Újabb meglepő vereség a Puskás Akadémiától, a Debrecen elhozta a három pontot Felcsútról",
-   "summary": "Újabb meglepő vereség a Puskás Akadémiától, a Debrecen elhozta a három pontot Felcsútról Index.hu Galéria: piros lap és két gól a hajrában a Puskás Akadémia és a Debrecen meccsén Nemzeti Sport Online Szép volt, fiúk: Puskás Akadémia-DVSC 1-3 DVSC Futball Zrt. Marco Rossi előtt győzött a Loki, újra otthon bukott el a Puskás Akadémia Hírstart Egy gól döntött a PAFC-DVSC meccsen, nagy lépést tettek a debreceniek a bajnoki címért HAON",
+   "summary": "Újabb meglepő vereség a Puskás Akadémiától, a Debrecen elhozta a három pontot Felcsútról Index.hu A kiállítás után eldőlt, a Debrecen két góllal győzött a Puskás Akadémia otthonában Nemzeti Sport Online Szép volt, fiúk: Puskás Akadémia-DVSC 1-3 DVSC Futball Zrt. Marco Rossi előtt győzött a Loki, újra otthon bukott el a Puskás Akadémia Hírstart Debreceni VSC: a felcsútiak is fejet hajtottak a DVSC előtt! HAON",
    "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQazc2blFadnE0ckkzMEhwcWdOMFdlV1ZjOWVzMEVmVzUzS3VJbVVzdlVOaU5ZMFdGd0RUT01XNXExZWhhdjBMdkh2YUFLM01WZ0NLc0N2Z3BQXzNaTWlSN0JVZmdsMGI2c3ZtQ01HektnLVdaVHpFQ1lZR1lYZWIweEh6ZGhwTTdkbmVxcGRNMEtmVmw0RG8wOEZZbHJuWkkwZVp3U3lBUEFzajdLeG9nLXpR?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -3671,11 +4622,11 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.704,
-   "S0": 0.062,
-   "S": 0.062,
+   "V": 0.702,
+   "S0": 0.192,
+   "S": 0.192,
    "G": 0.9,
-   "ATM": 0.0166,
+   "ATM": 0.0515,
    "lat": 47.57,
    "lng": 21.447
   },
@@ -3745,6 +4696,27 @@
    "lng": 19.382
   },
   {
+   "id": "613dfdc4a03e7cb4",
+   "region": "HU-NAT",
+   "title": "Egy hónapig nem lehet Nápoly repülőterére utazni",
+   "summary": "Egy hónapig nem lehet Nápoly repülőterére utazni 24.hu A város, ahová senki sem fog repülni novemberben: Nápoly Telex A magyar turistákat is átirányítják, lezárják ezt a repteret egész novemberre Olaszországban Infostart Külföld - Egy teljes hónapra bezárt Nápoly repülőtere Index.hu Egy hónapra bezár egy nagy európai repülőtér, minden járatot törölnek Hírstart",
+   "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE0xNVhTUVZIenhabnBhSTdyT2w3MWpYS2lJVXJQWmJGU2ZoQ1FERkFRakhRQmpzSGZYTFZRMzRKYW5uUWg4Nm9td2lGYkJuVjJRRHV2MnNnWnM1VjdjUURWYlloN3F6Wk1ob0taSjg2TkxnSDJyRENmTF9B?oc=5",
+   "source": "24.hu",
+   "source_domain": "24.hu",
+   "published": "2026-11-01T14:44:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.231,
+   "lng": 19.318
+  },
+  {
    "id": "96407a0ddb652aa3",
    "region": "HU-NAT",
    "title": "Nyugdíjemelés 2027-ben: mutatjuk, ki mennyivel kaphat többet",
@@ -3797,7 +4769,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.064,
    "S": 0.064,
    "G": 0.6,
@@ -3816,11 +4788,32 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.029,
    "S": 0.029,
    "G": 0.6,
    "ATM": 0.0056
+  },
+  {
+   "id": "29b0a60ba685c144",
+   "region": "HU-NAT",
+   "title": "Az alacsonyabb villany- és benzinárak segítenek megfékezni az inflációt az év végén.",
+   "summary": "Az alacsonyabb villany- és benzinárak segítenek megfékezni az inflációt az év végén. Vietnam.vn",
+   "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxPQUlzaHVTUlFETllOVGE3Z0RVM0UzT241b0ZyTmlYalZLQlVFSklOVUlNSEQ0aS11bnhqQUtfbWtTa3RkVUs0RlB1S3hvaGFuNzZaUHQ0SjVXWmNnc3RnaUVmbjItX3BrZHl4bF9rNmFrVVRmbzB0cVZORHJ6MFdvUWlCZzFHR1cwb2cxOE5UU1Q?oc=5",
+   "source": "Vietnam.vn",
+   "source_domain": "vietnam.vn",
+   "published": "2026-11-01T14:33:54Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.467,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.087,
+   "lng": 19.189
   },
   {
    "id": "04026264590a14b5",
@@ -3856,7 +4849,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3877,11 +4870,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
-   "ATM": 0.0805,
+   "ATM": 0.0807,
    "lat": 47.423,
    "lng": 19.347
   },
@@ -3946,7 +4939,7 @@
    "S0": 0.036,
    "S": 0.036,
    "G": 0.9,
-   "ATM": 0.0102,
+   "ATM": 0.0101,
    "lat": 47.104,
    "lng": 19.246
   },
@@ -4009,7 +5002,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.036,
    "S": 0.036,
    "G": 0.6,
@@ -4030,7 +5023,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.6,
@@ -4040,7 +5033,7 @@
    "id": "eca3eb8381cbe186",
    "region": "INT",
    "title": "Israel election: When will government be formed, who will lead it?",
-   "summary": "Israel election: When will government be formed, who will lead it? Al Jazeera Netanyahu’s Bid to Stay in Power Will Test His Political Savvy The New York Times Netanyahu lost his majority, but can the opposition form a government? A look at possible paths ahead The Times of Israel The Bursting of the Tel Aviv Bubble The Atlantic Israel’s election results are in. Here’s what could happen next AP News",
+   "summary": "Israel election: When will government be formed, who will lead it? Al Jazeera Netanyahu’s Bid to Stay in Power Will Test His Political Savvy The New York Times Israel’s president says parties need to engage with ‘open heart’ to avoid fresh election NBC News The Bursting of the Tel Aviv Bubble The Atlantic Israel’s election results are in. Here’s what could happen next AP News",
    "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNX2xLdVlqTFd2SXdOeWpyZ3ZWMkhTTWc0emM3MHRzNGMxdXAwZDBqWVBYU0lSbnFPSXlWOGFoYzZQa0o0SmdMQWNEb0NpQjhHMjJ4aE9IZWlZd3dMMjYxWndWRXJiMEhBTHRPX25ZVGR5c3p4TEhEUGtrYTdoSUlRZUFfNkIwak93RkRER0pNaVV2WUNZRktGVHNzbjBBSUpUYWg2ZEVzMNIBrAFBVV95cUxQM0VrcXVxbE1WVDNCMW13SFdzeTZUN2cxOGFGSW5oMjY0c3Z5VDFKWHBBOFFzcFEyd05fNldkWHV6RWJfZ2w5WHoyLWZ4NlFISFlScjlTTmtIRExjNFcyWXNjTDFyVmRINThqRVhuSnBkejYtTDdFcS1VTHdkOG5mYXhWYVZOQ0pva2RwVDZVSlRvcWNtbDV2cHhCNGdNWXlsMm1zdEZjS0ZZaGpP?oc=5",
    "source": "Al Jazeera",
    "source_domain": "aljazeera.com",
@@ -4050,10 +5043,10 @@
    },
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.0,
-   "S": 0.0,
+   "S0": 0.013,
+   "S": 0.013,
    "G": 0.6,
-   "ATM": 0.0,
+   "ATM": 0.0043,
    "lat": 30.875,
    "lng": 35.883
   },
@@ -4161,6 +5154,27 @@
    "lng": 19.617
   },
   {
+   "id": "74a9bde9f4c62bf0",
+   "region": "HU-NAT",
+   "title": "Rejtélyes repülő landolt a Dunán – most kiderült, mit keresett ott",
+   "summary": "Rejtélyes repülő landolt a Dunán – most kiderült, mit keresett ott ORIGO",
+   "link": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE1aS1FIa3ROcERpU2FKazl5SDVnWlpKamJMUS0wZDZjOFAzaWZheXM2SHRUeU91U3daUUNYeGdnVVFxWUJFdHZwQkEydVVLVFlWcVhqZExJQWNLZE9SYVl3dVVSRDI?oc=5",
+   "source": "ORIGO",
+   "source_domain": "origo.hu",
+   "published": "2026-11-01T14:22:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.689,
+   "S0": 0.044,
+   "S": 0.044,
+   "G": 0.9,
+   "ATM": 0.0123,
+   "lat": 47.063,
+   "lng": 19.201
+  },
+  {
    "id": "9ce56e75ae15bb9f",
    "region": "AT-1",
    "title": "Halloween: Einbruch und beschädigte Toilette",
@@ -4194,7 +5208,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.064,
    "S": 0.064,
    "G": 0.6,
@@ -4262,6 +5276,27 @@
    "lng": 19.447
   },
   {
+   "id": "6aff73ce52c46f74",
+   "region": "HU-NAT",
+   "title": "Az európai gazdaságok lassulnak.",
+   "summary": "Az európai gazdaságok lassulnak. Vietnam.vn",
+   "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBZRzlpQ0Q4ckVLMzIwSFN2RGZYbkJqUks2OU9SU1BXWHRscENzV0duRkx2ckR5VXd3OU82dV90MzBHQ1BMcTBTU25JN1FIUTVxZFQtVm1xU2NBS2tuZnpickVJLXlZT2dTNWZMZ1BDOA?oc=5",
+   "source": "Vietnam.vn",
+   "source_domain": "vietnam.vn",
+   "published": "2026-11-01T14:17:41Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.467,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 46.989,
+   "lng": 19.463
+  },
+  {
    "id": "f2a881deed68d3c4",
    "region": "INT",
    "title": "Pregnant mom killed in mass shooting inside Bay Area Spirit Halloween store",
@@ -4293,7 +5328,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4360,7 +5395,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.677,
+   "V": 0.676,
    "S0": 0.036,
    "S": 0.036,
    "G": 0.6,
@@ -4431,17 +5466,36 @@
    "id": "eeabf72237cf34b7",
    "region": "INT",
    "title": "King to address slavery during Commonwealth speech in Antigua on final leg of Caribbean tour",
-   "summary": "King to address slavery during Commonwealth speech in Antigua on final leg of Caribbean tour BBC Burnham ‘open’ to UK slavery apology, but not reparations: Why now? Al Jazeera British people can’t be made to pay for the wrongs of slavery – but we must confront our complicated history The Guardian The UK's stance on its role in the slave trade is shifting, but reparations remain off the table WRAL King Charles must gently rebuff the slave reparations claimants The Times",
+   "summary": "King to address slavery during Commonwealth speech in Antigua on final leg of Caribbean tour BBC British people can’t be made to pay for the wrongs of slavery – but we must confront our complicated history The Guardian King Charles' unmissable reunion moment with Queen Camilla in the Caribbean after her delayed tour start Yahoo Britain’s Prime Minister Says He’s Open to a Formal Apology for Slavery The New York Times The UK's stance on its role in the slave trade is shifting, but reparations remain off the table 10tv.com",
    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE1fdHdybEcyVUp1Mkhoa2FDdndrNDNhXzhRNU9DaXdaalBfbVljanZQREMyYkNEY2E2SmEyNGlhQVJKS2tlT21FZjRHXzQ2RU9rMkNGeXgxVm1IYkE?oc=5",
    "source": "BBC",
    "source_domain": "bbc.com",
    "published": "2026-11-01T14:11:35Z",
    "V0": 0.7,
    "V": 0.7,
-   "S0": 0.022,
-   "S": 0.022,
+   "S0": 0.01,
+   "S": 0.01,
    "G": 0.6,
-   "ATM": 0.0039
+   "ATM": 0.0018
+  },
+  {
+   "id": "51fa6d93b7326dcd",
+   "region": "INT",
+   "title": "Fantasy football rankings, projections, lineups, sleepers for Week 8 from proven model",
+   "summary": "Fantasy football rankings, projections, lineups, sleepers for Week 8 from proven model CBS Sports Fantasy Football Week 8 Rankings from Justin Boone Yahoo Sports NFL Week 8 fantasy football rankings, best Halloween candy: Jared Goff’s fine; Whoppers aren’t The New York Times NFL Week 8 fantasy sleepers: QB Sam Darnold, RB Rico Dowdle, WR Ja'Kobi Lane among upside plays NFL.com Fantasy Football Start 'Em, Sit 'Em: Lineup advice for Week 8 from Justin Boone Yahoo Sports",
+   "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxQeDl1TVAzdTdQOXRUMHZMUmNYTWtCNTM1MDRQSWFxa0pkWUgyaFFFMHh5T2p4UlJDeTBSMzdfdFFGcm9rTkV6Um5FdFFmZEdyVWQ1dTUtZ2c0RFZ1RzZFN1FaeEUwQllVckIyeVlNRGZmelI4aTBjWHBZZXFhQjVXVE16WklkWGpoQlcwekNlbU4xYmFTV3R1MExrUEkzZUNlOEJqSTYyb3M2a3ZxMlNJYlRnUzJFNmxmNmNHY0FTMlBoLVpBdS1ERTZCQ2JTeVVIMHRyTlY0V2JvZTR1d2FzTw?oc=5",
+   "source": "CBS Sports",
+   "source_domain": "cbssports.com",
+   "published": "2026-11-01T14:09:10Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.043,
+   "S": 0.043,
+   "G": 0.6,
+   "ATM": 0.0141
   },
   {
    "id": "bd25ac9cd8392dea",
@@ -4456,7 +5510,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4505,6 +5559,27 @@
    "ATM": 0.0115,
    "lat": 49.466,
    "lng": 32.504
+  },
+  {
+   "id": "397334c313367895",
+   "region": "INT",
+   "title": "Civilians in Ukraine's Kherson prepare for the return of war as localized ceasefire ends",
+   "summary": "Civilians in Ukraine's Kherson prepare for the return of war as localized ceasefire ends KSAT",
+   "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxPMjNrTTlmR3Y4OS1CeG94UjkyMUlQMnZ3TXBmZ25va3J2LXcxOGhTUWVwZnNFdkVBSldZdG52MVp1bWZLVnYzeFllWWhWYjB1WHA5OGFUMEk2VVZyaTlRRFZPNTl0Y0JJektJVHFYUmFyNGpOU19SYzYycDFzTlFQVlNzcmVyMVRjMWRjdzVJTkZnZ0g3b3hxb3VTU2MxaDZxT0JRbzNrM2tyb3dlMW9lR3ZGVHM2RTZjY2RpOTl3STU2ellYVVNYTkdqYw?oc=5",
+   "source": "KSAT",
+   "source_domain": "ksat.com",
+   "published": "2026-11-01T14:06:02Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.036,
+   "S": 0.036,
+   "G": 0.6,
+   "ATM": 0.012,
+   "lat": 50.209,
+   "lng": 30.653
   },
   {
    "id": "b57b6cb4a55c8e63",
@@ -4671,6 +5746,25 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0.0
+  },
+  {
+   "id": "2a5b1959d50c44a9",
+   "region": "INT",
+   "title": "‘S.N.L.’ Plays Trick-or-Treat When Trump Interrupts David S. Pumpkins",
+   "summary": "‘S.N.L.’ Plays Trick-or-Treat When Trump Interrupts David S. Pumpkins The New York Times Watch: Tom Hanks returns as David S. Pumpkins for Halloween 'SNL' Yahoo ‘SNL’ Cold Open Crashed by Tom Hanks as David S. Pumpkins, Nicki Minaj and Donald Trump, Who Admits He ‘Might Be Gay’ Variety 'SNL' cold open – Trump admires Tom Hanks' butt, frets over midterms USA Today Tom Hanks Returns As David S. Pumpkins For 'SNL' Opener Deadline",
+   "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxPeEQzTUhhU0swWF9Nd0ZXNWI1NlZpMGVfMjF5N05oUTdTTUFtYkZQNERXMUE2RVpiTFRmMHZ1RjdvQUJEUnRHT3Vid2VMUWJmQUZ3bDluUzFTbHhkeWFzR09RRmU2dTFVSjR5Y2xOUmVqWUtfcFZTZ3BlY295dWhwVUd5S0JQOEhGNXhFQVdjZFRlTU1UOUFhT1FHZWtNUnRVWHBXVzgwcDQzc0ZI?oc=5",
+   "source": "The New York Times",
+   "source_domain": "nytimes.com",
+   "published": "2026-11-01T14:00:46Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.06,
+   "S": 0.06,
+   "G": 0.6,
+   "ATM": 0.0107
   },
   {
    "id": "c4186c3f189736ad",
@@ -4964,6 +6058,25 @@
    "ATM": 0.0083
   },
   {
+   "id": "0c738a2bfb4c5551",
+   "region": "INT",
+   "title": "HomePod Mini 2 first look: Three things I love and one disappointment",
+   "summary": "HomePod Mini 2 first look: Three things I love and one disappointment The Verge HomePod 27.2 hands-on: default wireless speaker for Mac, Sound Glow and more [Video] 9to5Mac Apple releases HomePod Software 27.2 with Sound Glow and new speaker features The Apple Post HomePod mini 2 arrives in stores with improved audio Cult of Mac Here's a Hands-On Look at HomePod Mini 2's New Two-Tone Colors MacRumors",
+   "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxNR29vMVZJcXpFQThiejJuWjBleVl1bFRLNmxJeHhveDMyQS1BTHNnT1dxaFVnNHFYUlo2TDVIRVQ1eTJOaUlkbklSd25DaUVqYloxT1Q4bjQzekRrV0lsbzJnSmRHTnpCSGt3eldNVmFJVTItbFlhQWxWbzhlbzAzakg5ckxDVkd3c0I3TUJuUENNM1E?oc=5",
+   "source": "The Verge",
+   "source_domain": "theverge.com",
+   "published": "2026-11-01T14:00:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
+  },
+  {
    "id": "032c305bf127ab51",
    "region": "INT",
    "title": "University of Cambridge scientist died in Spain train crash",
@@ -5048,6 +6161,24 @@
    "ATM": 0.1238,
    "lat": 33.385,
    "lng": 51.436
+  },
+  {
+   "id": "29d00d3aaea431db",
+   "region": "HU-NAT",
+   "title": "Lisszabonban is összefeszültek a lakhatási válság miatt tüntetők a rendőrökkel",
+   "summary": "Lisszabonban is összefeszültek a lakhatási válság miatt tüntetők a rendőrökkel 24.hu Rohamrendőrök gumibottal oszlatták a lakhatási tüntetőket Portugáliában, 13 embert letartóztattak Hírstart Portugáliában a rohamrendőrök ismét felszámolták a tüntetők sátortáborát Új Szó Montenegró reagál a portugál lakhatási tüntetésekre The Portugal News Portugália: rárontott a rendőrség a lakhatási válság miatt tiltakozók sátortáboraira Lisszabonban és Portóban Euronews.com",
+   "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5UYUFiRVJnNzBCLVJqaXpFQzN5dHdyR091X1BkUTZfWkdxTVhFemdVdlU2enVFRHUwcDI0YWEwVHdDTkJTZE44a01qd2hMTUJhSkZKekl6LXViMk51VzRTQi1DU1NxN1NKTDFjQjZtd2xZbnZhSXBJMDNQdUs?oc=5",
+   "source": "24.hu",
+   "source_domain": "24.hu",
+   "published": "2026-11-01T13:45:00Z",
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.102,
+   "lng": 19.153
   },
   {
    "id": "8bbfa328745a33ab",
@@ -5202,7 +6333,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5305,7 +6436,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5388,7 +6519,7 @@
    "id": "b864f58b2fb08933",
    "region": "HU-NAT",
    "title": "Tisza-kormány: jön a lusztráció, feltárulnak előttünk a 2027-es év kormányzati tervei",
-   "summary": "Tisza-kormány: jön a lusztráció, feltárulnak előttünk a 2027-es év kormányzati tervei Portfolio.hu „Magyar Péter egy tróger, el kell kergetni”: megszorításokkal hergeli a szavazókat a Fidesz Economx Stagnáló foglalkoztatás, növekvő reálbérek, olcsóbb olaj – ilyen évvel számol a kormány 2027-ben Index.hu Már látszik, hogy ki fizeti a fordulatot: megnéztük a Tisza első költségvetését Telex Erről nem beszélnek: rengeteg pénzt fizet Magyarország az Európai Uniónak, a 2027-es költségvetésben forintra pontosan látszik – nem csak jönnek az EU-s források Világgazdaság",
+   "summary": "Tisza-kormány: jön a lusztráció, feltárulnak előttünk a 2027-es év kormányzati tervei Portfolio.hu „Magyar Péter egy tróger, el kell kergetni”: megszorításokkal hergeli a szavazókat a Fidesz Economx Itt az új költségvetés: marad a rezsicsökkentés, vége az árrésstopnak Agroinform Az állam saját működésén spórolna, a pazarló kiadások felszámolásával húzná meg a nadrágszíjat Index.hu Már látszik, hogy ki fizeti a fordulatot: megnéztük a Tisza első költségvetését Telex",
    "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxQNURzQ082S3ltRkpSbUtCaE9tRVQ0UHNxcmFRb0ZCV1RSNENucml2QUFpeTRlNkJtdnVuU2tOY01SbjEtQ21rRnNPejFNYUJuTjBpRGkyMkRydVJLUEdZX2R1RHlOeTRib0swNkswaTAwNVdRaENDN0hueVZsX2lFakpMTDBYQWVNWnEtampSLUI5ZEdFUWdtc25FMVV1dGgwUjV5UjRYX1ZBQ3htb2l1d3VLaXN0OXo0cUlpWTVZUEg4U191RjZYY1owcUxOQdIB0wFBVV95cUxPN2FmYXljQ21FbkxTT2ViTHRlMlVVRXduSzBkUHUxYUt5TGxhSWVXejU2czZ1RXZLbGVrbGpTbmxra0VTbEl6enY4by1sRUt2cVRXdnQwNGhTRnY1THhpdGdiSnZtY0FZdWFnRmhKZk1udktxdVB5am5EbVVES0h2a1J6czcwZEtLeVZuMEpyVTd1bTc1VjVYV2I4TGlNWmZlWDdZdEFONkc0OFBIdDRsRzM0MG5tbmZNd19RYjB2T3NBOWRoRmFuakFCZERqelJZeWlV?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -5397,7 +6528,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5470,7 +6601,7 @@
    "id": "d3b488202cd0325b",
    "region": "INT",
    "title": "Sullivan says he’ll accept Alaska Senate results but slams Peltola over alleged ballot scheme",
-   "summary": "Sullivan says he’ll accept Alaska Senate results but slams Peltola over alleged ballot scheme CNN Trump's rallies in Iowa and Kansas come as Republicans fight to keep Senate and House control WRAL Trump to appear at rallies in battlegrounds Iowa and Kansas two days before midterms – live The Guardian Trump heads to Iowa, Kansas for rallies before midterms Reuters 2 days until midterms, Trump campaigns in Iowa and Kansas as both parties make final push Fox News",
+   "summary": "Sullivan says he’ll accept Alaska Senate results but slams Peltola over alleged ballot scheme CNN Trump to appear at rallies in battlegrounds Iowa and Kansas two days before midterms – live The Guardian Rift grows between Democrats Abdul El-Sayed and Haley Stevens in Michigan | CNN Politics CNN Election 2026 live updates: Trump to rally in Kansas and Iowa in support of GOP candidates NBC News Trump Banks on Rallies to Turn Out MAGA Faithful One More Time Bloomberg.com",
    "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNWFU5ZTdEX1VhYnZ0RWMtd28wV1hXd3dsZDRNd1AwZTc4SkluSjJDUUk1X2JuNkFMVWtHYnFwXzBxMmlSYV8yTTdhRHpqa0htczZiNGVweThyaEQ1eEhWUjEzdFJZRUM5Smd2UGhienQ5SDJYUXdMc1hDS1k2X2RGbA?oc=5",
    "source": "CNN",
    "source_domain": "cnn.com",
@@ -5479,11 +6610,11 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
-   "S0": 0.188,
-   "S": 0.188,
+   "V": 0.677,
+   "S0": 0.23,
+   "S": 0.23,
    "G": 0.6,
-   "ATM": 0.0363
+   "ATM": 0.0445
   },
   {
    "id": "2b7670ad4cc02695",
@@ -5538,7 +6669,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5582,34 +6713,31 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.056,
    "S": 0.056,
    "G": 0.6,
-   "ATM": 0.0107,
+   "ATM": 0.0108,
    "lat": 51.652,
    "lng": 9.625
   },
   {
-   "id": "1b0834c6643a3a53",
+   "id": "d7ff0160f3902e40",
    "region": "INT",
-   "title": "U.S. warned Russia of possible Moscow terror attack, FSB says",
-   "summary": "U.S. warned Russia of possible Moscow terror attack, FSB says NBC News",
-   "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPVTc0WFR6cTJMZUFXaThqUFhoLV84N19KSFRvMEtXT1VmOU1vS1hIdjhaWlZWaVdoNEpvQnMyMmtOZG03QmhWa3M0dndXNjhZamVqMmRTbEZKemJ0ek5nbkdIR2lIdXVoX3hqNzdlS1A5cDEyWW5PdWwzTTdkTkE0MlgwUXYxZmROcDNHaG53R25DMm0tX3daYjhBTWNSRDJNaVZDeVp3?oc=5",
-   "source": "NBC News",
-   "source_domain": "nbcnews.com",
-   "published": "2026-11-01T13:20:12Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.139,
-   "S": 0.139,
+   "title": "India Hindu Festival",
+   "summary": "India Hindu Festival Post Register",
+   "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNNVYzQzRabmJTOXFaYnZnMEZUbkxFc0tQeEJHUkNfVmRaV3NERTNqMkNYejRJZm5ZQ2MxQVpicjdrZHZ3dzVnN3pkODJkU3hWenlJX21XZFIzbm1XaHp1RXlqQnNRUVRzVDZjWEVlbGRDcXFpY2s2U1I4VEJnbnhXWl95YzVvWjRBOXZKODI2MmdGNnVxMDRybW5sSkVkZGctaGt5Vmx4YWlscmlf?oc=5",
+   "source": "Post Register",
+   "source_domain": "postregister.com",
+   "published": "2026-11-01T13:16:17Z",
+   "V0": 0.45,
+   "V": 0.461,
+   "S0": 0.0,
+   "S": 0.0,
    "G": 0.6,
-   "ATM": 0.025,
-   "lat": 38.792,
-   "lng": -99.083
+   "ATM": 0.0,
+   "lat": 19.138,
+   "lng": 79.125
   },
   {
    "id": "00a5426638586d42",
@@ -5645,7 +6773,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -5673,6 +6801,24 @@
    "S": 0.042,
    "G": 0.6,
    "ATM": 0.0072
+  },
+  {
+   "id": "927d1bc373003fbc",
+   "region": "HU-NAT",
+   "title": "Nyolc ukrajnai megyében vannak áramszünetek, két régióban különösen súlyos a helyzet",
+   "summary": "Nyolc ukrajnai megyében vannak áramszünetek, két régióban különösen súlyos a helyzet Kárpátinfo.net",
+   "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNSXNLTVNHR1BGQ0hQOXU3bGx4R2VjNVBJZHVYN1VkUEx3TFJWRl91OHhZdk00YVJjZFhtRWlINUgwekktNEhiMGFPUV9HSnhfSmlLdG9KSndyU3F6dGJmLUhvNE1TLXd4LWNHQzNwZWdKVFpRcTFrX0RUZ3Q5RExGWHdpa292Y0tSRGtubjdFZERZWlRqRDJHTmJzQ0dRdUhVQlB3QTlR?oc=5",
+   "source": "Kárpátinfo.net",
+   "source_domain": "karpatinfo.net",
+   "published": "2026-11-01T13:08:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 49.221,
+   "lng": 33.912
   },
   {
    "id": "d2749bc0a94b3e61",
@@ -5769,7 +6915,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6228,7 +7374,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6362,6 +7508,24 @@
    "lng": 19.769
   },
   {
+   "id": "4a60052d59fd77e6",
+   "region": "INT",
+   "title": "Pineapple express a flood threat to California, Southwest",
+   "summary": "Pineapple express a flood threat to California, Southwest The Weather Channel Severe Storms Target the Plains & South to Start the Week WeatherNation Severe storm threat charging up across portions of the South and Great Plains Yahoo Massive cross-country storm targets Southwest before unleashing dangerous weather across 35 states FOX Weather After Months of Heavy Rain, the Southwest Faces More Weekend Storms The New York Times",
+   "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxOd0c2SldlYmJMdEhrNjZVTWRkaGhyc2xIeU9XTFhZOHRNVUdfeFRrdXp0bDRWNU54X1JKQ0QzRU5TM0ZjWFRzYlY3QU5Bc2NscnpRdnc2OEhPNW4xcEM5dEE2amVjZWlLbDJTbkJ2M1lsRWFqTGlmVDhxR3c0UkZ1Tm5JT3hleFRET1FaUVVTRE9velIzZC1fNm1oenplY0V4QjQtakVNXzNJX04yOC1V?oc=5",
+   "source": "The Weather Channel",
+   "source_domain": "weather.com",
+   "published": "2026-11-01T12:31:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.013,
+   "S": 0.013,
+   "G": 0.6,
+   "ATM": 0.0042,
+   "lat": 35.743,
+   "lng": -117.104
+  },
+  {
    "id": "5a1511214e8b9262",
    "region": "HU-NAT",
    "title": "Négy alig ismert lehetőség, amivel pótolható a kieső jövedelem az egészségpénztárból",
@@ -6404,7 +7568,7 @@
    "id": "24edb1ec39c3ac04",
    "region": "HU-NAT",
    "title": "Orbán Viktor szerint a lengyel nép fellázadt a Tusk-kormány ellen",
-   "summary": "Orbán Viktor szerint a lengyel nép fellázadt a Tusk-kormány ellen Portfolio.hu Pattanásig feszült a helyzet Lengyelországban, erőszakos hatalomátvételről beszél az államfő, rendőrök őrzik a bíróságot Portfolio.hu Megtörte a csendet Orbán Viktor Mfor.hu Világ: Lengyel alkotmányos válság: megszólalt az Európai Bizottság és Orbán Viktor is | hvg.hu Alkotmánybíróság: Tusk kizárta a kompromisszumot 24.hu",
+   "summary": "Orbán Viktor szerint a lengyel nép fellázadt a Tusk-kormány ellen Portfolio.hu",
    "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQTkI1WFhvVU1KSWZKRzhaV3hVMGVfMnBiNWRIYmhEenpYdFN5ckdpdDBkSFcwaEk2VzM2RllycEhhZW9tSWVEemVEbHVLLVRmZ2xLZnNlWXZFZnNySnNrdFlqZGpGQ1BnenhTNm5GR3AtdFhxa3hFaFpZWDJMNkx2dGFzbXlBMm5jRXcyLUdtR0hTRU5YNDRuYU9jenp5eWJFRW9uYU5kdzZKamFKdEtNcFgyWEJBQdIBuwFBVV95cUxPSFA5Y0x6UGFnLUxZaC15ZUpYaGxBLUlZcDkwSjBoZkFxZ3J0ZUd1VEM4Y3VTNE8wVndLdWZtZmtheTBjbndKNU1qVU9iWVVCWDFKYWhrNHZGeENrdGhrSThwY25fMll3cXhacEgwb0ZISVI0NWdWVlQxTEg0TlA5WVIyakxSbGlhMWlyejlEZEJYUk5RWWltaGl5RGhlZUpKaU42MlVHakw1czlaWlBoNC1ZZ3VZQVp0SHJV?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -6413,7 +7577,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6684,7 +7848,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.713,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6696,7 +7860,7 @@
    "id": "6f6bae9062002276",
    "region": "HU-NAT",
    "title": "„Visszajöttünk a pokolból” – több száz embert menekítettek ki a frontvonal menti Oleskiből",
-   "summary": "„Visszajöttünk a pokolból” – több száz embert menekítettek ki a frontvonal menti Oleskiből Index.hu Megérkeztek az Oleskiből evakuált emberek Ukrajnába Euronews.com Rendszeres humanitárius együttműködésről állapodtak meg az ukránok és az oroszok 24.hu Zajlik az evakuáció: úgy néz ki kitart a tűzszünet a kritikus ukrajnai övezetben Portfolio.hu Megérkeztek Belaruszba az oleski lakosok, akiket a Melania Trump által kitárgyalt humanitárius tűzszünet miatt tudtak kimenekíteni 444",
+   "summary": "„Visszajöttünk a pokolból” – több száz embert menekítettek ki a frontvonal menti Oleskiből Index.hu „A pokolból jöttünk vissza” – megérkeztek Ukrajnába a Melania Trump-féle tűzszünet alatt kimenekített oleski civilek Telex Megérkeztek az Oleskiből evakuált emberek Ukrajnába Euronews.com Rendszeres humanitárius együttműködésről állapodtak meg az ukránok és az oroszok 24.hu Zajlik az evakuáció: úgy néz ki kitart a tűzszünet a kritikus ukrajnai övezetben Portfolio.hu",
    "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNcTRzQlNnM2lCWFBVczRjU092OGV3TngxTE81NGNiOTloUFRPbDNzUFh2TFFDbEhhWmlOYjFtdUUyc2V2ZWIwdVVPUERlWDZZaDdpdURjcldCbkxQRk5fRFBkX215ZlgydnhLT3luREwySGx1elIwcFlDTDNaWDkyTWZEdTgtQUVzbUIzcWRnVy1WQlRtNWo5X0pSM25ubHlIQ0w1MVdaZjFkTVhuZ0J6dA?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -6705,7 +7869,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6747,7 +7911,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6768,7 +7932,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7056,7 +8220,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7077,7 +8241,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7123,7 +8287,7 @@
    "S0": 0.222,
    "S": 0.222,
    "G": 0.6,
-   "ATM": 0.0431
+   "ATM": 0.043
   },
   {
    "id": "ca4993d48c86c63b",
@@ -7192,7 +8356,7 @@
    "id": "86944851032f7e16",
    "region": "INT",
    "title": "It's ACA open enrollment time. Here are the changes for health insurance shoppers",
-   "summary": "It's ACA open enrollment time. Here are the changes for health insurance shoppers NPR 9 Things to Watch for the 2027 ACA Open Enrollment Period KFF What to know about the Affordable Care Act’s open enrollment period now underway AP News Affordable Care Act Rates to Rise Steeply—Again WSJ Obamacare Policies Hit Again With Steep Premium Increases for 2027 The New York Times",
+   "summary": "It's ACA open enrollment time. Here are the changes for health insurance shoppers NPR 9 Things to Watch for the 2027 ACA Open Enrollment Period KFF Obamacare Policies Hit Again With Steep Premium Increases for 2027 The New York Times What to know about the Affordable Care Act’s open enrollment period now underway AP News Health insurance open enrollment: 5 things to review before choosing a plan Fox Business",
    "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNYVBmWGNsOWtSNy1BbF8zUXRKZlFnNWkzc3lfM3FDUXpZNjByemlVRjZQUnVlcko3YW5vcGRnRm5SQ1BWMUowaWJDRmpHbDA1OUdwaXBWd3gxMXcxeTN4elVPYWxaYXBuYmU3dVdRT0cxTE5kaG9HN3dWYks5YkhWUE1JN2xFc2ZB?oc=5",
    "source": "NPR",
    "source_domain": "npr.org",
@@ -7202,10 +8366,10 @@
    },
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.074,
-   "S": 0.074,
+   "S0": 0.059,
+   "S": 0.059,
    "G": 0.6,
-   "ATM": 0.0243
+   "ATM": 0.0194
   },
   {
    "id": "de77300dcc63145a",
@@ -7252,25 +8416,6 @@
    "lng": 19.54
   },
   {
-   "id": "bbe8ab876b02f2c8",
-   "region": "INT",
-   "title": "College football Week 9 winners and losers, from confident kickers to Halloween horrors",
-   "summary": "College football Week 9 winners and losers, from confident kickers to Halloween horrors The New York Times Indiana turns to Wilson at QB, survives Minnesota in OT ESPN In need of a bye: Injuries piled up for IU football before and during win over Minnesota The Daily Hoosier Gophers suffer heartbreaking overtime loss to No. 4 Indiana Pioneer Press Hayes: Two timeouts, zero used: Curt Cignetti blew it, and Indiana got lucky | opinion IndyStar",
-   "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPdDJVbXozdkZoQk8xVUF4YVBZc3FzM0lndndRQnJWWTJTV09xNkNVSmxLQ2RFbUIyS3Jrb0FxMFl3eVZYOTFOSVBaVVVmTUdURGNrN2RqRFJzRWNSeDh6dG9NZlMwN3JUQ0pocmhaQkdxSjg3ZzEtd2FlTTlGdi1Bc1BxM0h4T3g3eDd4LUk3N3R0elRaLXc?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-11-01T11:55:11Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.179,
-   "S": 0.179,
-   "G": 0.6,
-   "ATM": 0.0322
-  },
-  {
    "id": "2dd4f1cd2be53df8",
    "region": "INT",
    "title": "Megan Thee Stallion’s Halloween costume was a cirque du horror",
@@ -7283,11 +8428,11 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.216,
    "S": 0.216,
    "G": 0.6,
-   "ATM": 0.0417
+   "ATM": 0.0418
   },
   {
    "id": "e715b6c9deda1a68",
@@ -7321,7 +8466,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -7369,7 +8514,7 @@
    "id": "d7d212acbba88748",
    "region": "INT",
    "title": "Trump White House maps path to govern without Congress if Democrats win",
-   "summary": "Trump White House maps path to govern without Congress if Democrats win Reuters Opinion | How a ‘blue wave’ ultimately could cripple the Democratic Party The Washington Post What happens if Democrats take Congress? Trump’s power explained NewsNation Checks and Balance newsletter: Democrats’ nauseous optimism The Economist What is likely to happen if Democrats win back control of Congress CNN",
+   "summary": "Trump White House maps path to govern without Congress if Democrats win Reuters Opinion | How a ‘blue wave’ ultimately could cripple the Democratic Party The Washington Post Checks and Balance newsletter: Democrats’ nauseous optimism The Economist What happens if Democrats take Congress? Trump’s power explained NewsNation What is likely to happen if Democrats win back control of Congress CNN",
    "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOOXdkX2hvMlBTTmRRRGlTbndZSTFnWnZyYkJ5STRjNFBOUkdwQ3VDUjRuTUQySzhQMkp2UXh0MW5VS3E4WHVXeEhQQ2JnRnUxV0pIVTM3T1J6Y0o3Y1JWamZ4YXMwNEtjazNiU3pERzRaWC1XNXZBZk56UU1KSUFNMWtZS0hrUjNUSW5ILW9kdWVQa3BqYkNPSl9tQk90SEtWcDdXRjZXdkdUT1IzS2ViaTgwTmE5MnlCclh1T0pB?oc=5",
    "source": "Reuters",
    "source_domain": "reuters.com",
@@ -7453,7 +8598,7 @@
    "id": "4b3c8370d910b0a2",
    "region": "INT",
    "title": "Gen Z protests turn violent in Germany",
-   "summary": "Gen Z protests turn violent in Germany Financial Times Shops looted as German cost of living protests turn violent BBC Protests spread to Germany as hundreds of thousands march again in France CNN Rioters loot stores in Frankfurt as European youths protest living costs and military service NBC News German ministers pledge tough action after rioters damage stores in Frankfurt CBC",
+   "summary": "Gen Z protests turn violent in Germany Financial Times Germany blames infiltrators as Gen Z protests turn violent CNN Shops looted as German cost of living protests turn violent BBC German rioters loot shops as 'Gen Z' demos turn ugly RFI ‘Gen Z Takes Charge’ protests across Germany turn violent as rioters loot shops in Frankfurt New York Post",
    "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxObExHY0U2MGk0d3FqbVc5MVdJaDZSMjZUUFhmcHBJSllSeTdlVFU1VzVuUXZNS0lrNERDZUpEZ2FqSFhWdWhOb1ZLaW9Oazk4alJmdDVyaTNFZmsweFV1Wi1Pb2oyLVBZRm1HXzNJRExWQ0sxaWFldmFaVG10dXFIQnhyZDM?oc=5",
    "source": "Financial Times",
    "source_domain": "ft.com",
@@ -7463,10 +8608,10 @@
    },
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.061,
-   "S": 0.061,
+   "S0": 0.047,
+   "S": 0.047,
    "G": 0.6,
-   "ATM": 0.02,
+   "ATM": 0.0156,
    "lat": 51.885,
    "lng": 11.528
   },
@@ -7488,6 +8633,22 @@
    "S": 0.056,
    "G": 0.6,
    "ATM": 0.01
+  },
+  {
+   "id": "b545feee9450027e",
+   "region": "INT",
+   "title": "The Stock Market Is Doing Something for Only the 3rd Time in 28 Years, and History Says It's Clear What Comes Next for Stocks",
+   "summary": "The Stock Market Is Doing Something for Only the 3rd Time in 28 Years, and History Says It's Clear What Comes Next for Stocks The Motley Fool Prediction: A Bear Market Is Coming. Here's Warren Buffett's Best Advice to Prepare for Volatility Yahoo Finance Here’s the 1 Indicator I’m Watching to See if the S&P 500 Is About to Enter a Correction… or Come Crashing Down Barchart.com Buy the dip, but downside in stocks may persist near-term, says Tech Contrarians’ Sara Awad TradingView Is a market crash imminent? | Jorgen Vik The Daily Progress",
+   "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxNcWJ2Yzdfd0JIR3Z3UnlyMzZYaTFOV0hTXzVvQVU2dnRZdGpVYXZvRU9kdXhGUXc4Zk43Tm5QQ1dUTS1GRnJXUWZySVZBT0lmbFlVQ2QwWV9tVzBscWtEZnBnQ2NlSVdxa0VyY3ZUb0ZZWkpoWC01bzdsV3RydnJCUnl5VmJVRGtlSGZPNmRER3hMSWNSN2c3OWViZzBxdnVfSUM2ZXRvUUF3aXgtb2pPYTVrRE9ZZzR3OGZOenVBcmhXOEZhSzQ3Mg?oc=5",
+   "source": "The Motley Fool",
+   "source_domain": "fool.com",
+   "published": "2026-11-01T11:36:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
   },
   {
    "id": "6f9bcc458c388855",
@@ -7546,9 +8707,28 @@
    "S0": 0.208,
    "S": 0.208,
    "G": 0.6,
-   "ATM": 0.0674,
+   "ATM": 0.0673,
    "lat": 52.496,
    "lng": 11.644
+  },
+  {
+   "id": "bbe8ab876b02f2c8",
+   "region": "INT",
+   "title": "College football Week 9 winners and losers, from confident kickers to Halloween horrors",
+   "summary": "College football Week 9 winners and losers, from confident kickers to Halloween horrors The New York Times One play from monumental upset, Gophers won’t have to wait long for another chance Star Tribune Indiana-Minnesota made college football history. Kirk Herbstreit lost his mind USA Today How a freshman stepped up for Indiana starter injured minutes before win vs Minnesota IndyStar In need of a bye: Injuries piled up for IU football before and during win over Minnesota The Daily Hoosier",
+   "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPdDJVbXozdkZoQk8xVUF4YVBZc3FzM0lndndRQnJWWTJTV09xNkNVSmxLQ2RFbUIyS3Jrb0FxMFl3eVZYOTFOSVBaVVVmTUdURGNrN2RqRFJzRWNSeDh6dG9NZlMwN3JUQ0pocmhaQkdxSjg3ZzEtd2FlTTlGdi1Bc1BxM0h4T3g3eDd4LUk3N3R0elRaLXc?oc=5",
+   "source": "The New York Times",
+   "source_domain": "nytimes.com",
+   "published": "2026-11-01T11:34:24Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.177,
+   "S": 0.177,
+   "G": 0.6,
+   "ATM": 0.0319
   },
   {
    "id": "48ef20c14096dba9",
@@ -7607,7 +8787,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.036,
    "S": 0.036,
    "G": 0.6,
@@ -7626,7 +8806,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -7645,7 +8825,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.6,
@@ -7664,7 +8844,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.064,
    "S": 0.064,
    "G": 0.6,
@@ -7683,7 +8863,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -7721,11 +8901,11 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.677,
+   "V": 0.676,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.6,
-   "ATM": 0.0323
+   "ATM": 0.0324
   },
   {
    "id": "d2d9026e1d7d1f8d",
@@ -8217,7 +9397,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T11:00:15Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.6,
@@ -8382,7 +9562,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T10:54:30Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -8394,17 +9574,17 @@
    "id": "60d5f5becf4b52cb",
    "region": "INT",
    "title": "200 Passengers On Three-Year Journey Around The World Left Stranded In Cambodia After Cruise Faces Fuel Crisis",
-   "summary": "200 Passengers On Three-Year Journey Around The World Left Stranded In Cambodia After Cruise Faces Fuel Crisis NDTV",
+   "summary": "200 Passengers On Three-Year Journey Around The World Left Stranded In Cambodia After Cruise Faces Fuel Crisis NDTV The cursed cruise: how the dream of never-ending luxury at sea became a nightmare The Guardian They signed up for a lifetime at sea on an endless cruise. High gas prices intervened NPR Cast out from their cruise-ship home, couple not ready to come back to South Florida WPEC US couple's retirement dream in ruins after residential cruise scrapped in Cambodia Reuters",
    "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPNVZqdE9IcVR6d1lrckszWkNVam5JRzZ5cG5BODZYYUxkd1NFbFFxNkx5VkZTMWRXVXBtQUliVjJJLVFxbHo3Y0dwNzFNX0hnOUp0alFLNy0xaHlRRmx5MDFUeGt3aXZ3Q3BlMFllUVhodHBTOWE3MjJRdXJDZnJoVE5EOTMzY0pRRDMxaldWY1IwWVpmd3BMc215TGNYNHM5WG03d1F4UUdCd3RaLU1CcEYtR18xNndabmJrbE51aFVZR3JOcE9SV2hpaFlGZmlkZVluMTE3WXV2NDJJOFQxQdIB6AFBVV95cUxNZkpkQUlUWFVyRG5nX3hjbUMxaGJVbzV3Z0tORl92WFdSTUh5MFpzMWRYZmJFQUdXMF8zOGx5T19WdzdwbDN0WjRhYUxuVGJ2Qm5pUm1kZlktZHBaazNiNnNJNFF2YWRabXgwWDZubEgxS18zNlhPYS0wcWIxUlhBNUYyUDRVeUdyR1pBTnVvb2pwdzJjSFprd2pLbldqdGQ1TEx2RGxIYnlkYmt0dnpKNUZfaW14X195MW10RkNoLTRpX3ZTUTZKRkRBZDRUMEVWNGFwakhhMTJibTFLSFdHUzNQRzF5TGdh?oc=5",
    "source": "NDTV",
    "source_domain": "ndtv.com",
    "published": "2026-11-01T10:53:15Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.027,
-   "S": 0.027,
+   "S0": 0.197,
+   "S": 0.197,
    "G": 0.6,
-   "ATM": 0.0089
+   "ATM": 0.0651
   },
   {
    "id": "8a01057e0806ecc0",
@@ -8453,7 +9633,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T10:48:45Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -8469,9 +9649,9 @@
    "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNM0ZFWlhldUxkU25QenFCeWp3X1lQTm1fRExWY1ZULU9HTnZVSElZSnROVHA2Y3BvMDVsNU5ydVFHVzU1cEM0bEtmRzBMWHVreHdmSHFZYlRlSFUxSXFSWDhTYkxGdWhHWThMVE82VDIwNTV6c3lCSUljYTI4WFJpT2NobHBGazg5YlVrS3ZoaDZhUXYxVjhYZUVEQkpCaWNkdDVTSmxn?oc=5",
    "source": "Hirnavigator",
    "source_domain": "hirnavigator.hu",
-   "published": "2026-11-01T10:47:50Z",
+   "published": "2026-11-01T10:48:39Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -8990,7 +10170,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T10:18:29Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -9081,7 +10261,7 @@
    "id": "5e4773f0bcae199f",
    "region": "HU-NAT",
    "title": "Világ: Lengyel alkotmányos válság: megszólalt az Európai Bizottság és Orbán Viktor is",
-   "summary": "Világ: Lengyel alkotmányos válság: megszólalt az Európai Bizottság és Orbán Viktor is | hvg.hu Pattanásig feszült a helyzet Lengyelországban, erőszakos hatalomátvételről beszél az államfő, rendőrök őrzik a bíróságot Portfolio.hu Megtörte a csendet Orbán Viktor Mfor.hu Orbán Viktor megszakértette a varsói eseményeket 444 Alkotmánybíróság: Tusk kizárta a kompromisszumot 24.hu",
+   "summary": "Világ: Lengyel alkotmányos válság: megszólalt az Európai Bizottság és Orbán Viktor is | hvg.hu Pattanásig feszült a helyzet Lengyelországban, erőszakos hatalomátvételről beszél az államfő, rendőrök őrzik a bíróságot Portfolio.hu Végre megszólaltak Ursula von der Leyenék a lengyelországi puccsról: az Európai Bizottság most tényleg meglepetést okozott – \"Gyorsabban, mint gondoltam\" Világgazdaság Alkotmánybíróság: Tusk kizárta a kompromisszumot 24.hu Orbán Viktor megszakértette a varsói eseményeket 444",
    "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOSEVnN2pWOE1MS0VwdVdzaTdIRFdRQUJfMjlHdUxUXzlSUEdDanVKSnZ3WkJCckxIZG5DcWQ4Mlp2RURTSnNhMThCbDJZWldrdlloNUhPanFEYXhZUHZXSm5RTHUwcXYxQTMwWnBhSHN0SVFUZUcwS0FvU2lWMlRJSERua3BMNzFvamVYS2hHSFkzdw?oc=5",
    "source": "| hvg.hu",
    "source_domain": "hvg.hu",
@@ -9109,7 +10289,7 @@
    "S0": 0.031,
    "S": 0.031,
    "G": 0.9,
-   "ATM": 0.0087,
+   "ATM": 0.0086,
    "lat": 47.225,
    "lng": 19.65
   },
@@ -9141,7 +10321,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T10:11:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -9319,7 +10499,7 @@
    "id": "9692abdd65a759ef",
    "region": "INT",
    "title": "A Midterm Campaign Dominated by Concerns Over High Prices Nears Its End",
-   "summary": "A Midterm Campaign Dominated by Concerns Over High Prices Nears Its End The New York Times “Nobody’s listening”: 5 things Americans told me about the economy that Washington needs to hear CNN We talked to voters in six battleground states about the rising cost of living The Washington Post Affordability top of mind for voters in final sprint to midterms: ‘I have to pick between medicine or groceries’ The Guardian Why the U.S. can’t get inflation under control, explained in seven charts The Globe and Mail",
+   "summary": "A Midterm Campaign Dominated by Concerns Over High Prices Nears Its End The New York Times “Nobody’s listening”: 5 things Americans told me about the economy that Washington needs to hear CNN We talked to voters in six battleground states about the rising cost of living The Washington Post Why the U.S. can’t get inflation under control, explained in seven charts The Globe and Mail Affordability top of mind for voters in final sprint to midterms: ‘I have to pick between medicine or groceries’ The Guardian",
    "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPNktSQ1FaUkJwNzVEWGtldncySlJGVWg4eEdZblRoY25NSjMwQnVfa1ZmdWc3eTdhSmFSa0t6dnhhWjM5TU91YnpYMEdtazVXLTZyM280dUlPZkVJYVBGZ3RhbWtYcXU5ZjM2THJSd0dzMkNPMTZhVXdVMWZ2ZFI5d0t2eHdHUQ?oc=5",
    "source": "The New York Times",
    "source_domain": "nytimes.com",
@@ -9398,7 +10578,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T10:00:15Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -9523,7 +10703,7 @@
    "id": "a3a06f8bcead81ee",
    "region": "HU-NAT",
    "title": "Elfogták a soponyai postarablás gyanúsítottját",
-   "summary": "Elfogták a soponyai postarablás gyanúsítottját 24.hu Őrizetben a soponyai postarablás gyanúsítottja | A Rendőrség hivatalos honlapja Police.hu Élet+Stílus: Játékfegyverrel rabolt ki egy postát egy soponyai fiatal | hvg.hu Elkapták a magyar postarablót, bizarr, mit találtak a lakásán – videó Infostart Kiraboltak egy postát Fejér megyében, két óra alatt elfogták a gyanúsítottat (videó) FEOL",
+   "summary": "Elfogták a soponyai postarablás gyanúsítottját 24.hu Élet+Stílus: Játékfegyverrel rabolt ki egy postát egy soponyai fiatal | hvg.hu Elkapták a magyar postarablót, bizarr, mit találtak a lakásán – videó Infostart Kiraboltak egy postát Fejér megyében, két óra alatt elfogták a gyanúsítottat (videó) FEOL Őrizetbe vették a soponyai postarablás gyanúsítottját Blikk",
    "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxOa25mNXFBZXNYOGlqZ245bGQ1WEVXcnFLTFBZWlhTYW4yYjVNSFVBdUc5UW9Ba1YwU2hIWDh5VV9MUFB2UWNEeFh4SkRQaHRUOUlrd0pxWVlMNjNfWHFueV82ZU43V1Ytc3hCbElCWmZzUHB5aDM0dnFLVXZOelRsckdZcjVHVFU?oc=5",
    "source": "24.hu",
    "source_domain": "24.hu",
@@ -9533,10 +10713,10 @@
    },
    "V0": 0.7,
    "V": 0.7,
-   "S0": 0.018,
-   "S": 0.018,
+   "S0": 0.019,
+   "S": 0.019,
    "G": 0.9,
-   "ATM": 0.0048,
+   "ATM": 0.005,
    "lat": 47.34,
    "lng": 19.617
   },
@@ -9608,7 +10788,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T09:50:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -9624,7 +10804,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T09:49:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -9821,7 +11001,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T09:36:50Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.6,
@@ -10123,7 +11303,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -10472,11 +11652,11 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T09:07:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
-   "ATM": 0.0444,
+   "ATM": 0.0447,
    "lat": 46.953,
    "lng": 17.573
   },
@@ -10549,46 +11729,6 @@
    "ATM": 0.0357,
    "lat": 47.157,
    "lng": 16.785
-  },
-  {
-   "id": "aa8f4f86f99db481",
-   "region": "HU-NAT",
-   "title": "HungaroMet – Magyarország: Kritériumok szerinti veszélyes időjárási jelenség nem várható.",
-   "summary": "Figyelmeztető előrejelzés Magyarország területére 2026.11.02 hétfő éjfélig",
-   "link": "https://www.met.hu/idojaras/veszelyjelzes/figyelmezteto_elorejelzes_mara/akadalymentes/index.php",
-   "source": "HungaroMet",
-   "source_domain": "met.hu",
-   "published": "2026-11-01T09:03:00Z",
-   "alert": false,
-   "official": true,
-   "V0": 0.95,
-   "V": 0.95,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0.0,
-   "lat": 46.446,
-   "lng": 18.879
-  },
-  {
-   "id": "7d5719e715533528",
-   "region": "HU-VA",
-   "title": "HungaroMet – Vas vármegye: Nincs érvényben figyelmeztetés",
-   "summary": "Figyelmeztető előrejelzés Magyarország területére 2026.11.02 hétfő éjfélig",
-   "link": "https://www.met.hu/idojaras/veszelyjelzes/figyelmezteto_elorejelzes_mara/akadalymentes/index.php?v=18",
-   "source": "HungaroMet",
-   "source_domain": "met.hu",
-   "published": "2026-11-01T09:03:00Z",
-   "alert": false,
-   "official": true,
-   "V0": 0.95,
-   "V": 0.95,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 1.0,
-   "ATM": 0.0,
-   "lat": 47.039,
-   "lng": 16.611
   },
   {
    "id": "a84bf833b788d248",
@@ -11119,7 +12259,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T08:58:39Z",
    "V0": 0.45,
-   "V": 0.461,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11297,13 +12437,13 @@
    "id": "071bf12d398631ff",
    "region": "HU-NAT",
    "title": "Külföld - Patthelyzet Izraelben, bajba kerülhet Benjamin Netanjahu",
-   "summary": "Külföld - Patthelyzet Izraelben, bajba kerülhet Benjamin Netanjahu Index.hu Ki lesz az új izraeli kormányfő? Privátbankár.hu Megszólalt az ellenzéki vezető: összeomlott Netanjahu tábora, győzött az ellenzék Izraelben Portfolio.hu Máris készülhet a következő választásra Izrael – Klasszis Podcast Piac&Profit Az ellenzék inkább hatalomban tartja Netanjahut, hiába van meg a leváltásához szükséges többség Mérce",
+   "summary": "Külföld - Patthelyzet Izraelben, bajba kerülhet Benjamin Netanjahu Index.hu Megszólalt az ellenzéki vezető: összeomlott Netanjahu tábora, győzött az ellenzék Izraelben Portfolio.hu Ki lesz az új izraeli kormányfő? Privátbankár.hu Máris készülhet a következő választásra Izrael – Klasszis Podcast Piac&Profit Az ellenzék inkább hatalomban tartja Netanjahut, hiába van meg a leváltásához szükséges többség Mérce",
    "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxOUmYxaVhDVUhnR1F6Q3lnVmh3UE5RNUNRRzlDbmZiRHRYbHZub0w2X2dtWUFjWEtoSmhvWkM3YWs4bjRQam9vZFV1a2s0RzdLRHVfLVdYUVNRdzRfSDlMdXdIak9UUmVHSTBkalZ3R3U5aXJRaTRENTg0R3k3dV91VG05RmRWcG9GTzBrZDBfaHd1RFdXeHdVS2x3ZXhacndZYTloRG9ONnU?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
    "published": "2026-11-01T08:54:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11339,7 +12479,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T08:53:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11373,7 +12513,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T08:52:48Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11427,7 +12567,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T08:50:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11755,7 +12895,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T08:32:48Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11803,17 +12943,17 @@
    "id": "5f18a120e88e2a88",
    "region": "HU-NAT",
    "title": "A Paks kapusa felkészült arra is, hogy „megsorozzák” a ferencvárosiak",
-   "summary": "A Paks kapusa felkészült arra is, hogy „megsorozzák” a ferencvárosiak Nemzeti Sport Online Zöld-fehér csata a dobogóra lépésért – Ferencváros–Paks az NB I-ben Nemzeti Sport Online „Próbáljuk megismételni az MTK elleni teljesítményt” Fradi.hu Visszavágásra készül a Ferencváros Hatharom NB I: a Fradi egyetlen legyőzője érkezik az Üllői útra, az éllovasra is nehéz teszt vár NB1.hu",
+   "summary": "A Paks kapusa felkészült arra is, hogy „megsorozzák” a ferencvárosiak Nemzeti Sport Online Futball - Futball - Spórolósan nyert a Ferencváros az AC Milan elleni főpróbán Index.hu Yusuf és Zachariassen gólja döntött, az FTC a Paks legyőzésével hangolt a Milan elleni El-csatára Nemzeti Sport Online „Próbáljuk megismételni az MTK elleni teljesítményt” Fradi.hu NB I: a Fradi egyetlen legyőzője érkezik az Üllői útra, az éllovasra is nehéz teszt vár NB1.hu",
    "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxONWNxeFRqbXpPZmpNc3dFZHF3TUZ5QmViMEpFZ0NjOHBvMlg3bTVVZ1Y0Rms1N3VSWi1wUG5mUUVydVF5d2d0ZmpyeG9wOThJaWJFWEdtZU9fUUJ4V0ZIV2tneEFTSjVXM0xEQ3dFMl9RejQ4MkliYnp1dDhhOXVlTlRQYUV6MUFSeXltdFFpQndiX1lWU3pOckZkVU92b2RpQ3c2TEFKbVZTYVdrUFVCbUpmaG1SLWQ3?oc=5",
    "source": "Nemzeti Sport Online",
    "source_domain": "nemzetisport.hu",
    "published": "2026-11-01T08:29:25Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.017,
-   "S": 0.017,
+   "S0": 0.03,
+   "S": 0.03,
    "G": 0.9,
-   "ATM": 0.0086,
+   "ATM": 0.0147,
    "lat": 47.044,
    "lng": 19.365
   },
@@ -11845,7 +12985,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T08:27:48Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11963,17 +13103,17 @@
    "id": "d1c17a656165c055",
    "region": "INT",
    "title": "Golden State Valkyries win WNBA title with victory over Atlanta Dream",
-   "summary": "Golden State Valkyries win WNBA title with victory over Atlanta Dream BBC Golden State Valkyries top Atlanta Dream in Game 7 to secure first WNBA title ESPN Gabby Williams Says Valkyries' 'Group Full of Love' Changed Trajectory of Her Career Yahoo Sports Angel Reese, Atlanta Dream fall short in Game 7 as Golden State Valkyries win first WNBA championship Fox News 'I stayed patient': How Finals MVP Gabby Williams made history in Game 7 to fuel Valkyries to WNBA title CBS Sports",
+   "summary": "Golden State Valkyries win WNBA title with victory over Atlanta Dream BBC Can the Valkyries repeat as WNBA champions? Of course. They’re just getting started The New York Times The Valkyries unleashed Gabby Williams, and she won them the WNBA Finals The Mercury News Angel Reese, Atlanta Dream fall short in Game 7 as Golden State Valkyries win first WNBA championship Fox News 'I stayed patient': How Finals MVP Gabby Williams made history in Game 7 to fuel Valkyries to WNBA title CBS Sports",
    "link": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5NdkZuaW9WbjB4dTRXNHBxR2w3UWZ4ZVFDLUtPX2NFT25ZalRyRXFHdmtNbTVESFZ1LW9jR04wMnVObXZLU3FCUDVHYXBDZWxaTTlZcEdwUU5NWDNkdGgycUlsNkhNb0RYLVlF?oc=5",
    "source": "BBC",
    "source_domain": "bbc.com",
    "published": "2026-11-01T08:16:59Z",
    "V0": 0.7,
    "V": 0.7,
-   "S0": 0.094,
-   "S": 0.094,
+   "S0": 0.088,
+   "S": 0.088,
    "G": 0.6,
-   "ATM": 0.0169
+   "ATM": 0.0159
   },
   {
    "id": "de6858803f8ef982",
@@ -12039,7 +13179,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T08:13:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -12130,7 +13270,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T08:09:04Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -12297,13 +13437,29 @@
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T07:57:00Z",
    "V0": 0.7,
-   "V": 0.713,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
    "ATM": 0.0,
    "lat": 50.732,
    "lng": 29.893
+  },
+  {
+   "id": "9ee4107eba6fd039",
+   "region": "INT",
+   "title": "Senior Arab MK says Joint List ready to back anti-Netanyahu government from outside",
+   "summary": "Senior Arab MK says Joint List ready to back anti-Netanyahu government from outside The Times of Israel Where Do Israel’s Arab Parties Stand? The New York Times Arab Joint List chairman says party will not join government The Jerusalem Post Israel’s Arabs are now kingmakers and they’re ready to oust Netanyahu The Telegraph Netanyahu’s main rival opens door to coalition with Arab parties Yahoo",
+   "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNaGRXYUF6bnluV0h4VVVObWgzZzhJZ0tRZ05KMlZZcmMzZmNPd3ZWdml5dGdxVnBOcFk4Zk5wNU0tVEwyTTRKSXJ5dlhTTHZCVGg1dTNHLTBFc2lWY3ZlRWpYS1EtX0NUQXIzUUpyYXZXczZKamlJQ1BTUm5jMkJ4d3drUkZ2MzdRWHJUN0F4a3dsTUdUV04zaWdsSFNpTU1RZzlIVXJRaXZkM3JB0gGyAUFVX3lxTFBWVXpjTkxpT1hja1NQOFZBdk5nUE9NLUhXaUpuR3JaQXBKWWE0SVVZMHY3WnlpemFTSFNLaVZfdG1Xd0VicHBOMktndElXNkdxQXlpSlNiUWRvSGZNajhLOGNXVDVWbDZrcEFsV3gyd1B6MDhnREZuMnJDNmVvUk90NXZ0OUVqTEN1SzFRbzJmNThUSTBuNEwtTnA2d09wTmFVSnExbHliNW83ZHNsRjZCVHc?oc=5",
+   "source": "The Times of Israel",
+   "source_domain": "timesofisrael.com",
+   "published": "2026-11-01T07:56:35Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0.0
   },
   {
    "id": "6a22aee59bff9bef",
@@ -12376,6 +13532,24 @@
    "ATM": 0.0,
    "lat": 47.43,
    "lng": 19.595
+  },
+  {
+   "id": "9e390c5a64fd5c33",
+   "region": "HU-NAT",
+   "title": "Ezüstárak ma, 2026. november 1-jén: A világpiaci ezüstárak több mint 6%-kal zuhantak.",
+   "summary": "Ezüstárak ma, 2026. november 1-jén: A világpiaci ezüstárak több mint 6%-kal zuhantak. Vietnam.vn",
+   "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOSmxfT3Z1T01sSHo5eE4zbDBmZXM4a2tBaFExSS1WVFdSU2FaWUV1OWJDN0czMTEybE5aVG96OVJRV1hvZFdEaXRyYVR6eGdzSU5YaUd3U2hXaEhicUY5T1lMUFpiaG9ZbXA3V3djV1VTVmxZYllVYkVBMDJkcDF0YVVqcGc?oc=5",
+   "source": "Vietnam.vn",
+   "source_domain": "vietnam.vn",
+   "published": "2026-11-01T07:49:03Z",
+   "V0": 0.45,
+   "V": 0.467,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.047,
+   "lng": 19.237
   },
   {
    "id": "a3e124d6546798a3",
@@ -12465,7 +13639,7 @@
    "id": "e801ee47ee8439e2",
    "region": "HU-NAT",
    "title": "Élet+Stílus: Hamilton először nyert időmérőt a Ferrarival",
-   "summary": "Élet+Stílus: Hamilton először nyert időmérőt a Ferrarival | hvg.hu 30 évig nem tapasztalt probléma: Hamilton elárulta, mi csorbította az időmérős varázserejét az utóbbi években M4 Sport Tedd meg a téteket! Hamilton a mexikói verseny toronymagas esélyese! (x) f1világ.hu Hamilton nem találta a szavakat az első ferraris pole-ja után: Imádom, amit csinálok! Ez a szeretet nem múlik el Nemzeti Sport Online Megvan Hamilton első időmérős sikere a Ferrarival 24.hu",
+   "summary": "Élet+Stílus: Hamilton először nyert időmérőt a Ferrarival | hvg.hu F1-es Mexikóvárosi Nagydíj – az időmérő végeredménye (frissítve!) Formula.hu 30 évig nem tapasztalt probléma: Hamilton elárulta, mi csorbította az időmérős varázserejét az utóbbi években M4 Sport Hamilton nem találta a szavakat az első ferraris pole-ja után: Imádom, amit csinálok! Ez a szeretet nem múlik el Nemzeti Sport Online Hamiltonnak a szava is elállt a mexikói pole-tól Vezess",
    "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQWFphdmptbTdYb1JjS3BHb2xmMlZZeUV2dG5wT2NZZ25FM2xKRWxpYkR5VEJoeG5MSjNZOEt6dFk3QzNhQ0NhYnNsRWxPeWRZN1JmN1hGcmtyNG52eC1LaXRGNkFVc2JZbmJVd0xOR00yc0paSFRfWXhCalh5TGxxa0FQV0xPYmNmS1d5MUJsVnJmQQ?oc=5",
    "source": "| hvg.hu",
    "source_domain": "hvg.hu",
@@ -12581,7 +13755,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T07:33:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -12697,17 +13871,17 @@
    "id": "467de78a97199fc5",
    "region": "HU-NAT",
    "title": "Hatalmas támadás érte a Binance kriptoplatformot, de megérkezett a bejelentés a pénzek megtérítéséről",
-   "summary": "Hatalmas támadás érte a Binance kriptoplatformot, de megérkezett a bejelentés a pénzek megtérítéséről Portfolio.hu 2 billió forint tűnt el, de már megy a visszaszerzés 24.hu A nagy Binance-rablás: bezuhant a bitcoin, megrendült a bizalom: minden idők legnagyobb kriptorablása után már senki pénze sincs biztonságban? Világgazdaság Gazdaság: Majdnem teljesen fedezte már a Binance a hackertámadás kárát | hvg.hu A rezsimnek dolgozó észak-koreai hackerek lophatták el a Binance ügyfeleinek dollármilliárdjait 444",
+   "summary": "Hatalmas támadás érte a Binance kriptoplatformot, de megérkezett a bejelentés a pénzek megtérítéséről Portfolio.hu Tech-Tudomány - Az FBI megerősítette: Észak-Korea áll minden idők legnagyobb kriptorablása mögött Index.hu 2 billió forint tűnt el, de már megy a visszaszerzés 24.hu A történelem legnagyobb kriptohekkje érhette a világ legnagyobb kriptotőzsdéjét Telex Gazdaság: Majdnem teljesen fedezte már a Binance a hackertámadás kárát | hvg.hu",
    "link": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxObnh6a3Vsdy1IaXpkUlVLaXQwcG9tZm03MFVwYjEyakFLeEhyREpKRUFnbDk4YWdLaE95WDZjZmo1ZnprM2F5WFRFX1ZrWVE4c0dvdlc2WC1YMC12MC1qcWpfWmszMlhLbzU5VjhEMHFndHhUREhGVXVJOXdzTVhYbGFNVm9ySDVBRTBsd3R2S2JFc3JjZmZ3WEhtc1RCb2Fod2hwZVVGblQteC00TDNpYlZuUGh0SnpVUDhSUU1hS2VSWEs4UjFXa2MyNmJDdHdkRWQzTGtYTHBlM2lEMDBWUktjazJJU2PSAewBQVVfeXFMT0IwRWZscDlISHMyb1Q3ZGQ0R0dlYVpUYmVWOVQ2T2lkTXRfOHFQNElmcGphNzdMRDJHaWVWdFdTQkFiSFhRcFM1S3p3VnBYc0U3NU1fb3pRRVk5elBGQzB3R25LaEQ0Nm1mYVc1MElRUUFWWFJGUDQtZkdDMVhPRzgzMVV0UjlweWNwbU0zNktqc1Izc3lEcDgzVWxScDB5NHFMX1RYQkVtbms1cXVrOGJzQVdiNHZDRVRlRktfMktpcGdKTktjclNvc0ozVlgzMkRiTDF6WXU2aUFHR2t0R0Z3X2FueVcxb1E2VVE?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T07:21:00Z",
    "V0": 0.7,
-   "V": 0.71,
-   "S0": 0.0,
-   "S": 0.0,
+   "V": 0.711,
+   "S0": 0.015,
+   "S": 0.015,
    "G": 0.9,
-   "ATM": 0.0,
+   "ATM": 0.0039,
    "lat": 47.229,
    "lng": 19.371
   },
@@ -12845,7 +14019,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-11-01T07:13:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13250,6 +14424,24 @@
    "lng": 9.712
   },
   {
+   "id": "d6b1bd533bea4a41",
+   "region": "HU-NAT",
+   "title": "Közzétette a kormány, kinek mennyivel fog emelkedni a nyugdíja",
+   "summary": "Közzétette a kormány, kinek mennyivel fog emelkedni a nyugdíja Hirnavigator",
+   "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNbXBFempoSTlGek5TNG92ZGpvRDlBUHJuRWRBUU9kQ2gwUFdDREVzVjJGOU9fVDdNM2gtRExKbXIxUFA0QU42bmdyeEEzWDJuYXRSLVVuYkRmYUdleFRBVDEtSkpQS1lSQlRjZnV0cXcxTmsxWEhGM3E5VmR3bzAwTlRxTWF3Y1dzZDZ6cV9uVUw4TGRHYmFoYnhUOVZQS28?oc=5",
+   "source": "Hirnavigator",
+   "source_domain": "hirnavigator.hu",
+   "published": "2026-11-01T06:52:16Z",
+   "V0": 0.45,
+   "V": 0.462,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.235,
+   "lng": 19.116
+  },
+  {
    "id": "3bed3bbc1cdbb36b",
    "region": "HU-NAT",
    "title": "Fordulat: évekig menekült, most feladta magát a budapesti antifa támadások egyik gyanúsítottja",
@@ -13263,7 +14455,7 @@
    "S0": 0.036,
    "S": 0.036,
    "G": 0.9,
-   "ATM": 0.0102,
+   "ATM": 0.0101,
    "lat": 47.517,
    "lng": 18.936
   },
@@ -13287,17 +14479,17 @@
    "id": "fe9a6ec2b57b5e87",
    "region": "INT",
    "title": "FBI Links North Korea's TraderTraitor to Record $6.43 Billion Binance Crypto Heist",
-   "summary": "FBI Links North Korea's TraderTraitor to Record $6.43 Billion Binance Crypto Heist The Hacker News A simple explainer of the massive $6.3 billion crypto heist at Binance NPR How suspected North Korean hackers swiped billions in crypto in only minutes The Washington Post Behind the Scenes of Crypto’s Biggest Nightmare: a Record-Breaking Cyber Heist WSJ Binance restarts withdrawals after $6.3bn heist Yahoo",
+   "summary": "FBI Links North Korea's TraderTraitor to Record $6.43 Billion Binance Crypto Heist The Hacker News North Korea responsible for $6 billion Binance cryptocurrency hack, FBI says Fox Business Binance resumes withdrawals following $6.3 billion breach TechCrunch Behind the Scenes of Crypto’s Biggest Nightmare: a Record-Breaking Cyber Heist WSJ How suspected North Korean hackers swiped billions in crypto in only minutes The Washington Post",
    "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQWmVOUTJ5cEo0bUU2Unp2V093dXNIN3hEaHB5VXRrZlBYRjc5RkVzM2lraGRpZGNIM0s0Uk15bVdPOHNSNGJsN29Ma3lVTzBleWd2WHRuSGlzOXVtV193RE8wbXgyaGNjdGdJRkUxdkR2ajN0MGh2STQ2T2p3YTVMTnRVME8?oc=5",
    "source": "The Hacker News",
    "source_domain": "thehackernews.com",
    "published": "2026-11-01T06:48:08Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.22,
-   "S": 0.22,
+   "S0": 0.217,
+   "S": 0.217,
    "G": 0.6,
-   "ATM": 0.0727,
+   "ATM": 0.0717,
    "lat": 39.419,
    "lng": 127.807
   },
@@ -13363,13 +14555,31 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T06:36:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
-   "ATM": 0.0444,
+   "ATM": 0.0447,
    "lat": 47.311,
    "lng": 19.541
+  },
+  {
+   "id": "e3b5d78e5eaaf456",
+   "region": "HU-NAT",
+   "title": "Közzétette a kormány, kinek mennyivel emelkedik jövőre a nyugdíja",
+   "summary": "Közzétette a kormány, kinek mennyivel emelkedik jövőre a nyugdíja Hírstart",
+   "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQMHdkUEIzMklpNHlKSVVBc3BTRDFpWTUwZGZvVDJSSmVUd1hCNlFVX1lyeklLYUF5RmV0MF9iZGlBcHNOYTVRODhwNkJDMk4xV1hiREp4V2VPQUpXWGx4WEI4ekRGSzhLYUxxbDl0YVdHRzE3SUVkcy05YkdQWHE1eWFsdzJVUUVSejZpUHhWSEpMZjJncXlFODE5djRMcmwxNVJxeE5xQXNjUzFS?oc=5",
+   "source": "Hírstart",
+   "source_domain": "hirstart.hu",
+   "published": "2026-11-01T06:34:14Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.395,
+   "lng": 19.669
   },
   {
    "id": "a267026c64f79471",
@@ -13380,7 +14590,9 @@
    "source": "| eduline.hu",
    "source_domain": "eduline.hu",
    "published": "2026-11-01T06:33:00Z",
+   "V0": 0.45,
    "V": 0.45,
+   "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
    "ATM": 0.0,
@@ -13397,7 +14609,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T06:32:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.064,
    "S": 0.064,
    "G": 0.6,
@@ -13452,7 +14664,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T06:28:33Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13470,7 +14682,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T06:28:29Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13605,13 +14817,31 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
    "ATM": 0.0,
    "lat": 47.079,
    "lng": 19.169
+  },
+  {
+   "id": "61c5a99ec1439c1d",
+   "region": "HU-NAT",
+   "title": "Álláshirdetéseket jelentetett meg a kormány, prominens állami cégekhez várják a vezetőket",
+   "summary": "Álláshirdetéseket jelentetett meg a kormány, prominens állami cégekhez várják a vezetőket Hirnavigator",
+   "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOTHlCaUtsY1pFY1hKVUIwTlR3M0l3aVhfQm5iN2E5VVAycFVBZlpxN2hGeUxCYjNmaTRFaDNUd2hpSXlWYUo0NGpFNmhrNTFueGJtcXJPcVJpMkl3UHVjbHYxLWlsdm8wcWNXZWQ1Wl82M09ua0NLeDNrV0Y0Y3lRa0VyZ1JTZTFZTGJUbFZRYXRNUTFaaVBuUHNOZ3B1SERqSDRSZkVBRGk0X2Z0S1lldDFaeENPM2xYYXRqSUpBNVlaSTA?oc=5",
+   "source": "Hirnavigator",
+   "source_domain": "hirnavigator.hu",
+   "published": "2026-11-01T06:08:36Z",
+   "V0": 0.45,
+   "V": 0.462,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.195,
+   "lng": 19.328
   },
   {
    "id": "41e957ee6702465a",
@@ -13781,11 +15011,11 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T05:54:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.9,
-   "ATM": 0.0666,
+   "ATM": 0.067,
    "lat": 47.353,
    "lng": 19.232
   },
@@ -13938,17 +15168,17 @@
    "id": "71fd85f1b62edbb6",
    "region": "INT",
    "title": "Best Celebrity Halloween Costumes 2026: Paris Hilton as Britney Spears, Lisa Rinna as Kylie Jenner and More",
-   "summary": "Best Celebrity Halloween Costumes 2026: Paris Hilton as Britney Spears, Lisa Rinna as Kylie Jenner and More The Hollywood Reporter Lisa Rinna channels Kylie Jenner, Carson Daly nails Ella Langley's fringe and more: The best celebrity Halloween costumes of 2026 so far Yahoo See the best celebrity Halloween costumes of 2026 ABC News - Breaking News, Latest News and Videos The Best 2026 Halloween Costumes, From Paris Hilton as Britney Spears to Kim Kardashian as North West Billboard",
+   "summary": "Best Celebrity Halloween Costumes 2026: Paris Hilton as Britney Spears, Lisa Rinna as Kylie Jenner and More The Hollywood Reporter See the best celebrity Halloween costumes of 2026 ABC News - Breaking News, Latest News and Videos Lisa Rinna channels Kylie Jenner, Carson Daly nails Ella Langley's fringe and more: The best celebrity Halloween costumes of 2026 so far Yahoo All of the 2026 Celebrity Halloween Costumes You Might Have Missed Teen Vogue Paris Hilton, Heidi Klum, more unveil wild Halloween 2026 costumes – See the looks USA Today",
    "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPYXJya0ItTFBPMWV1MURWUlJfQU1aTnhYbnVQNmpsVkJSMFpCQmdheHJvRmtHbDRXdnJIUGRLanhIOXY5b2dHN1lQWHNseWlVWEdNU2hvMVhMWjRPZmZNNngwSmtONmI3dF9xRW9YangydnhzVFB2RHVwdDYzbXFTLVRrOS0xbGUzOHA3M2hzenJZOUxoSC1weDZ1aVRxRVhtYlBwSmJYRzkwYXBRZEE?oc=5",
    "source": "The Hollywood Reporter",
    "source_domain": "hollywoodreporter.com",
    "published": "2026-11-01T05:39:04Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.011,
-   "S": 0.011,
+   "S0": 0.019,
+   "S": 0.019,
    "G": 0.6,
-   "ATM": 0.0035,
+   "ATM": 0.0061,
    "lat": 47.014,
    "lng": 3.287
   },
@@ -14014,17 +15244,17 @@
    "id": "0600b322d410cc71",
    "region": "HU-NAT",
    "title": "Tagadja a dulakodást a kirúgott F1-pilóta",
-   "summary": "Tagadja a dulakodást a kirúgott F1-pilóta Vezess Ocon tagadja, hogy fizikai erőszak történt – hivatalos közleményben reagált Nemzeti Sport Online Bumerángként térhet vissza a Forma-1-es pilóta Vezess A Haas a versenyhétvége közben cserélte le Ocont 24.hu Váratlanul visszalépett a Mexikói Nagydíjtól Ocon – Hirakava versenyez helyette! M4 Sport",
+   "summary": "Tagadja a dulakodást a kirúgott F1-pilóta Vezess Sajtó: Ocon az Aston Martinnál folytatja M4 Sport Bumerángként térhet vissza a Forma-1-es pilóta Vezess Sajtóhír: Ocon összetűzésbe keveredett a Haas csapatfőnökével Mexikóban f1világ.hu Ki is az a Ryo Hirakawa? Formula.hu",
    "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxObjdEbjVnZ2RDbU83OWtpRGRsR2F3QXJNWVlDbGgxRVlXT1ZuUXpZZmg3dWNidXhHNC04ajk2MUh2S3p5aFZtbTJMZksyWjJRc05DZTh5aGhRX2hIelpkaDU3ZlBjVFI1V2FxRFQyQno3bVNNd0JoZGNUUUYzV1ctY240elVQMm5YZWQw?oc=5",
    "source": "Vezess",
    "source_domain": "vezess.hu",
    "published": "2026-11-01T05:31:32Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.125,
-   "S": 0.125,
+   "S0": 0.0,
+   "S": 0.0,
    "G": 0.9,
-   "ATM": 0.0619,
+   "ATM": 0.0,
    "lat": 47.321,
    "lng": 19.651
   },
@@ -14220,33 +15450,33 @@
    "id": "2d50669408ecfda7",
    "region": "INT",
    "title": "‘SNL’ Pays Tribute To Patrick Stewart With Clip From His 1994 Episode",
-   "summary": "‘SNL’ Pays Tribute To Patrick Stewart With Clip From His 1994 Episode Deadline What Patrick Stewart’s ‘brief’ dementia journey reveals about lifespans after diagnosis The Washington Post William Shatner and ‘Star Trek’ Family Mourn Patrick Stewart With Picard Tributes: ‘Godspeed, Captain’ Variety Patrick Stewart Was Regal, Stately and Quite Hilarious The New York Times ‘Green Room’ Director Recalls How Patrick Stewart “Saved” Movie From Being Scrapped The Hollywood Reporter",
+   "summary": "‘SNL’ Pays Tribute To Patrick Stewart With Clip From His 1994 Episode Deadline What Patrick Stewart’s ‘brief’ dementia journey reveals about lifespans after diagnosis The Washington Post Patrick Stewart’s Son Daniel Shares Throwback Photo with Late Actor Following His Death at 86 People.com Patrick Stewart Was Regal, Stately and Quite Hilarious The New York Times Star Trek: TNG costar pays tribute to Patrick Stewart Yahoo",
    "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTE5PMG81bGt2cFl2NHNpcmo5OHJzYktRaVJMNkVaR3RRekVJWm82SmZyeTRFd2VGUE5uREFQZ25oaUdhb3dmYi1RdWlmcjBjeWNFQTU1TUxkWkpqTHg0N3V5QUJFN2pET0NUVzRFV2NfcHNvUFU5ZTZpS1FxMkwtdw?oc=5",
    "source": "Deadline",
    "source_domain": "deadline.com",
    "published": "2026-11-01T05:11:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.022,
-   "S": 0.022,
+   "S0": 0.035,
+   "S": 0.035,
    "G": 0.6,
-   "ATM": 0.0071
+   "ATM": 0.0116
   },
   {
    "id": "40dcbd2da0d96853",
    "region": "HU-NAT",
    "title": "Heti TOP: PDF-szerkesztés bárhol ingyen, Messenger üzenetek letöltése, és Redmi Note 17 Pro Max teszt",
-   "summary": "Heti TOP: PDF-szerkesztés bárhol ingyen, Messenger üzenetek letöltése, és Redmi Note 17 Pro Max teszt Techwok Infó - Akár hat évig bírja az aksi, és a pocsolyát is túléli: megérkezett a REDMI Note 17 Pro Max Index.hu Redmi Note 17 Pro Max 5G okostelefon teszt RendeljKínait Hosszú távú szoftvertámogatás az olcsó okostelefonoknál: a Xiaomi példát mutat Hírstart Mi a különbség a Redmi Note 17 4G és a Redmi Note 17 5G között? Vietnam.vn",
+   "summary": "Heti TOP: PDF-szerkesztés bárhol ingyen, Messenger üzenetek letöltése, és Redmi Note 17 Pro Max teszt Techwok Infó - Akár hat évig bírja az aksi, és a pocsolyát is túléli: megérkezett a REDMI Note 17 Pro Max Index.hu Redmi Note 17 Pro Max 5G okostelefon teszt RendeljKínait Hosszú távú szoftvertámogatás az olcsó okostelefonoknál: a Xiaomi példát mutat Hírstart Akár három napig bírja egy töltéssel, és a pocsolyát is túléli a REDMI új csúcsmodellje 24.hu",
    "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxNdE13VTRtMXpMaExSWnlacVBDZWt2VHZJZEVJRzdrRFNvQTBoMTgwc0duS0pMTWRWRXRydUdqdUs5UDNSNWo1bDVGdnhOYUJDSm9sY0RkVEttVTNMN0NDOVowcWtHTGZhZUZZOThkVlJQQ2NIMnRoTXpiZFg4WXZiV0pIblZ6SkF4RWgwcUZGVVNVU0o1TWJvQVJkTEVXYVNZT3ZYcnI3UEZ4YUZtSGl1UzBlWnc0X21Wak02RjhnQTlGdk5TLUlhZQ?oc=5",
    "source": "Techwok",
    "source_domain": "techwok.hu",
    "published": "2026-11-01T05:10:37Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.063,
-   "S": 0.063,
+   "S0": 0.072,
+   "S": 0.072,
    "G": 0.9,
-   "ATM": 0.0313,
+   "ATM": 0.0359,
    "lat": 47.285,
    "lng": 19.079
   },
@@ -14260,7 +15490,7 @@
    "source_domain": "nypost.com",
    "published": "2026-11-01T05:10:00Z",
    "V0": 0.7,
-   "V": 0.711,
+   "V": 0.71,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -14304,17 +15534,17 @@
    "id": "cfbdd244905b88f2",
    "region": "INT",
    "title": "UFC Vegas 123 results: Tom Nolan makes the most of controversial referee stand-up, knocks out Renato Moicano",
-   "summary": "UFC Vegas 123 results: Tom Nolan makes the most of controversial referee stand-up, knocks out Renato Moicano Yahoo Sports Main Card Results | UFC Fight Night: Moicano vs Nolan UFC.com UFC Fight Night predictions -- Renato Moicano vs. Tom Nolan: Fight card, odds and expert picks for Las Vegas CBS Sports Biggest Winners, Losers From UFC Halloween MMA Mania Matches to make after UFC Vegas 123 Sherdog",
+   "summary": "UFC Vegas 123 results: Tom Nolan makes the most of controversial referee stand-up, knocks out Renato Moicano Yahoo Sports Main Card Results | UFC Fight Night: Moicano vs Nolan UFC.com Tom Nolan Issues Statement Following UFC Vegas 123 Yahoo Sports UFC Fight Night predictions -- Renato Moicano vs. Tom Nolan: Fight card, odds and expert picks for Las Vegas CBS Sports UFC Vegas 123 live blog: Renato Moicano vs. Tom Nolan MMA Fighting",
    "link": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQSTdzOG5hZl9mQi13WmVZUTF5WE8wa2RMQkZ5WUVvdThrMTluQ1diWHo5dWtEWm53Z21sRU5oWnJRd3NibnJvRmhuaFp4ZkFEQ1pQblllSGFuSTlWZmZaWFlzdUx0NVJSUTI4UXlSOXJiTGNBMWY5QnhkaTY1dUxlX0FaWldoa0FFU0t6cW5ZSWROVUVtVjJzem8tWnlJdGFpcFhVSUdVdDJqTG9KT3FaeDFjV3poREVyRGNYd0puXzRxVFZFTE1lUlB0NkRjNkFJYzBYUE56Snpocko2eGs1cF8tWm5wVlRlNTRjS2ZBOA?oc=5",
    "source": "Yahoo Sports",
    "source_domain": "sports.yahoo.com",
    "published": "2026-11-01T05:08:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.1,
-   "S": 0.1,
+   "S0": 0.094,
+   "S": 0.094,
    "G": 0.6,
-   "ATM": 0.033
+   "ATM": 0.0309
   },
   {
    "id": "4ca2a26d11cd7328",
@@ -14326,7 +15556,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-01T05:04:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -14409,7 +15639,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T05:00:15Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -14814,7 +16044,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T04:30:15Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -14957,7 +16187,7 @@
    "S0": 0.22,
    "S": 0.22,
    "G": 0.6,
-   "ATM": 0.0384
+   "ATM": 0.0383
   },
   {
    "id": "0b0fce406193cab0",
@@ -15164,7 +16394,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T03:38:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -15198,7 +16428,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T03:23:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.086,
    "S": 0.086,
    "G": 0.6,
@@ -15246,7 +16476,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T03:12:43Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -15613,6 +16843,24 @@
    "ATM": 0.0107
   },
   {
+   "id": "a31ef1e97ccd5af9",
+   "region": "HU-NAT",
+   "title": "Benyújtotta a kormány a jövő évi költségvetés tervezetét",
+   "summary": "Benyújtotta a kormány a jövő évi költségvetés tervezetét Hirnavigator",
+   "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQM3NYY2g0V0dfN1hBMHNiVTdlY25jamwwOUZ1X3RfV21ZZnRHSnJKdzAyb3NGNHdCYW9xV3RjX1lYNGJsT0VPQXl5a3hXNUFHYm1uRlQ5aFJfS3dYdUpfby0zY3g4ZWl4b2o3eW9ValA2ZmlheXNtT016NG5hU2NZZGdHMGJVWTRXLUdBREsxalZDeU9pWWU3aQ?oc=5",
+   "source": "Hirnavigator",
+   "source_domain": "hirnavigator.hu",
+   "published": "2026-11-01T01:42:43Z",
+   "V0": 0.45,
+   "V": 0.462,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 46.974,
+   "lng": 19.595
+  },
+  {
    "id": "f1503f0736488730",
    "region": "INT",
    "title": "Nahshon Wright’s ‘frustrating’ Jets year could see him on the move at trade deadline",
@@ -15708,7 +16956,7 @@
    "source_domain": "cnn.com",
    "published": "2026-11-01T01:32:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.029,
    "S": 0.029,
    "G": 0.6,
@@ -15806,7 +17054,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-11-01T01:14:04Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -15952,7 +17200,7 @@
    "source_domain": "nypost.com",
    "published": "2026-11-01T00:28:00Z",
    "V0": 0.7,
-   "V": 0.711,
+   "V": 0.71,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -16164,17 +17412,17 @@
    "id": "9f4823c8e874749f",
    "region": "INT",
    "title": "Four volunteers just finished a year in isolation in Houston, all in the name of space exploration",
-   "summary": "Four volunteers just finished a year in isolation in Houston, all in the name of space exploration KHOU They spent more than a year inside a NASA hangar in Houston simulating life on Mars. Now, they’re finally out Houston Public Media NASA Invites Media to Crew Completion of Yearlong Mars Simulation NASA (.gov) 4 volunteers who lived in a Mars simulation for a year are back to the real world NPR Four NASA volunteers spent 378 days living like Mars astronauts Chron",
+   "summary": "Four volunteers just finished a year in isolation in Houston, all in the name of space exploration KHOU They spent more than a year inside a NASA hangar in Houston simulating life on Mars. Now, they’re finally out Houston Public Media NASA Invites Media to Crew Completion of Yearlong Mars Simulation NASA (.gov) 4 volunteers who lived in a Mars simulation for a year are back to the real world NPR Crew from NASA's simulated Mars mission emerges after 378 days in isolation Reuters",
    "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNSTgzWkE2Z2tHejlLLWNSd2kta0gwdDdLSFljMV9uRE5tZmp0Q1pNVHpCcWtYU05fejNGZEV4dkcwUnh3cXJhYmJFeE1zdGRlcXMyWk9GZ2hXdUlERmdFM0xidmowREM3ZE5USElabkdTdHVqWlU4OEw4eno0Qld6WEFEOWZIdmlZdGd2SFdiVUJUNnpnYmVzRmNxSklpRGw1OFR2bU1Udm1SeURsX1Q0N0VIZXNrRGZpazhB?oc=5",
    "source": "KHOU",
    "source_domain": "khou.com",
    "published": "2026-11-01T00:08:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.065,
-   "S": 0.065,
+   "S0": 0.064,
+   "S": 0.064,
    "G": 0.6,
-   "ATM": 0.0214
+   "ATM": 0.0212
   },
   {
    "id": "a9f73d3356adab58",
@@ -16416,11 +17664,11 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T23:42:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.056,
    "S": 0.056,
    "G": 0.6,
-   "ATM": 0.0107
+   "ATM": 0.0108
   },
   {
    "id": "1fda3bf2fee71cf7",
@@ -16669,7 +17917,7 @@
    "source_domain": "nypost.com",
    "published": "2026-10-31T23:05:00Z",
    "V0": 0.7,
-   "V": 0.712,
+   "V": 0.71,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -16793,7 +18041,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T22:51:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -16843,7 +18091,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T22:37:55Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -17218,7 +18466,7 @@
    "source_domain": "nypost.com",
    "published": "2026-10-31T21:36:00Z",
    "V0": 0.7,
-   "V": 0.711,
+   "V": 0.71,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -17356,7 +18604,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T21:22:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -17422,7 +18670,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T21:17:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -17438,7 +18686,7 @@
    "source_domain": "vietnam.vn",
    "published": "2026-10-31T21:16:36Z",
    "V0": 0.45,
-   "V": 0.463,
+   "V": 0.467,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -17492,11 +18740,11 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T21:07:47Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.033,
    "S": 0.033,
    "G": 0.6,
-   "ATM": 0.0064
+   "ATM": 0.0065
   },
   {
    "id": "01127ee175cd3d54",
@@ -17736,7 +18984,7 @@
    "source_domain": "index.hu",
    "published": "2026-10-31T20:38:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -17763,6 +19011,24 @@
    "lng": 19.715
   },
   {
+   "id": "72801a517557b84e",
+   "region": "HU-NAT",
+   "title": "Súlyos bírálat érte a kormány azbesztmentesítési pályázatát, milliárdos teher szakadhat a városokra",
+   "summary": "Súlyos bírálat érte a kormány azbesztmentesítési pályázatát, milliárdos teher szakadhat a városokra Hirnavigator",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOM1BLdDl2SEFabnUwOTVxZFNVSWZickwwbGtKWEJQSS1EYklWbzA1WWw4U1dXZU5lZXhWTU82TTBnMWxYc1hRX1YteFJSbFRMYkptNmZlYUdEYjFBSkxoeUJWTTlfNDVLTUQ1bkJwa2pLcDBQckFWZmpCYldtTGlsd2J2VEFGN0FqTTJfNlVjWWVGRGN6ODBnVk1RNGV1R0d4R1p4bW5Ham95S1dhdUZybVF5VWRqWWZ0ZDdFT09qNFNqLWpyWWpsUXljbG9RRlF2?oc=5",
+   "source": "Hirnavigator",
+   "source_domain": "hirnavigator.hu",
+   "published": "2026-10-31T20:31:55Z",
+   "V0": 0.45,
+   "V": 0.462,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.342,
+   "lng": 19.179
+  },
+  {
    "id": "b8d40e64625606a5",
    "region": "HU-NAT",
    "title": "Tisza-kormány: nagy átrendezés jön a költségvetésben, több tízmilliárdos könnyítést kapnak az önkormányzatok",
@@ -17772,13 +19038,31 @@
    "source_domain": "portfolio.hu",
    "published": "2026-10-31T20:31:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
    "ATM": 0.0,
    "lat": 47.418,
    "lng": 19.095
+  },
+  {
+   "id": "54b0d1e4031c1656",
+   "region": "HU-NAT",
+   "title": "Forrong Európa: nem szűnnek a tüntetések és az utcai összecsapások",
+   "summary": "Forrong Európa: nem szűnnek a tüntetések és az utcai összecsapások Portfolio.hu Europeo – Új tiltakozási hullám söpörhet végig Franciaországon www.atv.hu Újra tüntetnek a francia városokban, 400 ezren mehetnek utcára 24.hu Bedeszkázott kirakatok, vandalizmus, erőszak: százezrek vonulnak a francia utcákon Növekedés.hu Több mint 300 ezren vonultak az utcára Franciaországban, több városban is összecsapások voltak Euronews.com",
+   "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOZmtzdm1tdUdwQjhEdmZuX0Y4dXJWSFdiOHRRZ0NIN0EzS2I3R0RIYUpoUk9GaHdXaE0wcVhGd3RCUEJSNHZUclFYZjdaNUhnUnhGczhRbExqZTMzTUdpRHpOblBQaVRtWk1OUDhNRkktb0ZBTUN1X0dCYXVpSFFic0RiUDlSTFJQWDBkaG5vT0VQc1UtNkR5SXNsdk9Fb0E5Mzh0a3JPQy0yUmJEbFR0TmZfUdIBuAFBVV95cUxPSzVDT0lIeDBKRXAzQlJpUXVMWUxiaFJIVHpxZUgxcmJfU3BrdFhxSlNXSlVMVHFPUUZBc1ZTMy1ibVlaVzRZU0xMMFJ0RHlVOWxmRGU1Rk9hNFFiZGdnR3dKRlRVanJzWkZ6MHRJcEJoajJRNzEyS3hibjA2VjNBNUk0VG9aeXo2RjJ2SXJVdk54RDhTTlhXT1dueWNBblhIM0loelVvUFdWTFYxdGEyMkkyb0lvRmcy?oc=5",
+   "source": "Portfolio.hu",
+   "source_domain": "portfolio.hu",
+   "published": "2026-10-31T20:30:00Z",
+   "V0": 0.7,
+   "V": 0.711,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.016,
+   "lng": 19.535
   },
   {
    "id": "68054a061c5d70d7",
@@ -17822,7 +19106,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T20:26:42Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -17993,6 +19277,24 @@
    "lng": -120.857
   },
   {
+   "id": "4ca89da306ccf643",
+   "region": "HU-NAT",
+   "title": "Új korszak kezdődik az ingatlanpiacon",
+   "summary": "Új korszak kezdődik az ingatlanpiacon Magyar Hírlap",
+   "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNT1lTLXR6V01ReldZZ2prUWlGeGE0TkJiM25pMXFLZmVxX1RZQVAwUXJSUUREZmRpSnNGRDlPS3NjMk83dENscDZkVzlBWGMwYTJiT1VUUzAyb2pWTXd6TXNjYUttdUN3WFpXNkVnZGlvS1AyYXJHNmZOdWVpWWFBTkZFNHNsUQ?oc=5",
+   "source": "Magyar Hírlap",
+   "source_domain": "magyarhirlap.hu",
+   "published": "2026-10-31T19:56:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0.0,
+   "lat": 47.293,
+   "lng": 19.707
+  },
+  {
    "id": "b6defcbc36848b39",
    "region": "INT",
    "title": "Beach day goes down the drain for SoCal shoreline after massive 27,000 gallon sewage spill",
@@ -18070,7 +19372,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-31T19:48:17Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -18088,11 +19390,11 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T19:47:20Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.6,
-   "ATM": 0.023
+   "ATM": 0.0231
   },
   {
    "id": "118de2a88c5140c8",
@@ -18140,7 +19442,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T19:42:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.6,
@@ -18246,7 +19548,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T19:30:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.093,
    "S": 0.093,
    "G": 0.6,
@@ -18428,11 +19730,11 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-31T19:08:39Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.128,
    "S": 0.128,
    "G": 1.0,
-   "ATM": 0.0688,
+   "ATM": 0.069,
    "lat": 47.088,
    "lng": 16.417
   },
@@ -18487,6 +19789,24 @@
    "ATM": 0.0764,
    "lat": 46.913,
    "lng": 16.454
+  },
+  {
+   "id": "eecfef786074a844",
+   "region": "HU-NAT",
+   "title": "Öt különleges temető Vas megyében, amit látni kell",
+   "summary": "Öt különleges temető Vas megyében, amit látni kell VAOL",
+   "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOSVIwV3FXOFFranJhbmlXMzdfTFd6bnFGV3VVYzRNbmczY0xwcTdwTWRfLXBqeGNNbm5RRkc1YnV2VEliYTRGMVZHaW96ODhGSmIyMk4xLXRQRG1SUDNNVEFMX2JBY0U2dVJWTjlxUDZjc19yLXBkZTFaQ3lzejRyWTRqOUY3Ykg4czExay1HR2wzZw?oc=5",
+   "source": "VAOL",
+   "source_domain": "vaol.hu",
+   "published": "2026-10-31T19:00:03Z",
+   "V0": 0.7,
+   "V": 0.7,
+   "S0": 0.056,
+   "S": 0.056,
+   "G": 0.9,
+   "ATM": 0.015,
+   "lat": 46.991,
+   "lng": 19.642
   },
   {
    "id": "ab0ad1c800c2ff2e",
@@ -18660,7 +19980,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19100,7 +20420,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-10-31T18:03:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19136,7 +20456,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-31T17:57:42Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19314,7 +20634,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:45:25Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.076,
    "S": 0.076,
    "G": 0.6,
@@ -19350,7 +20670,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-10-31T17:44:53Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19368,7 +20688,7 @@
    "source_domain": "edition.cnn.com",
    "published": "2026-10-31T17:41:18Z",
    "V0": 0.7,
-   "V": 0.677,
+   "V": 0.676,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -19386,7 +20706,7 @@
    "source_domain": "origo.hu",
    "published": "2026-10-31T17:39:58Z",
    "V0": 0.7,
-   "V": 0.688,
+   "V": 0.689,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.9,
@@ -19530,7 +20850,7 @@
    "source_domain": "portfolio.hu",
    "published": "2026-10-31T17:30:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19582,7 +20902,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:22:29Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -19616,7 +20936,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:18:51Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
@@ -19674,17 +20994,17 @@
    "id": "617ce2118511af27",
    "region": "INT",
    "title": "NASA telescope is on the verge of plunging back to Earth after failed rescue mission",
-   "summary": "NASA telescope is on the verge of plunging back to Earth after failed rescue mission ABC News - Breaking News, Latest News and Videos NASA's Swift space telescope is about to crash to Earth. Where will it fall? Space NASA satellite to plunge back to Earth after 22 years in space Scripps News The Swift Space Telescope Is About To Fall Down To Earth. Its Science Will Be Used For Decades To Come IFLScience Aging NASA telescope sinks toward Earth after failed rescue attempt LiveNOW from FOX",
+   "summary": "NASA telescope is on the verge of plunging back to Earth after failed rescue mission ABC News - Breaking News, Latest News and Videos NASA's Swift space telescope is about to crash to Earth. Where will it fall? Space NASA satellite to plunge back to Earth after 22 years in space Scripps News Aging NASA telescope sinks toward Earth after failed rescue attempt LiveNOW from FOX Aging NASA Telescope Expected to Crash Back to Earth in Days The Daily Beast",
    "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNM2hHNTJVeGNHb0VHMU9jZ0JscHRGOFI1MkRfR2pDZ0xRNU8zNVZ1SVRYcFo2Sk5heklqM01rZ3d3Rmw3X1gyZWJkMHBBZVlsUURLRC01U3FSZW5sRDNmcGtoZXZ1ZzVqMzR6RUIwOGdPZ2k3YjZlR19sYUcxUzdwN2RMdTNiNlNiVk0tcFhROU5JODY5bXJxS0p3Y2tkdnBIX3QyUVk0ONIBrAFBVV95cUxOQlNYZWhtSDhmTEpOc2pPZGNNQUdMVTZXYTFHTlc0M1ZQQUM2SDEzQll2bjE4eFhrRVYyVElzWXhVVWJDckZMQUNqRkxONVRHNGJUak9GVTVNV0dKOTN5ODI5c0pFSk1lb1RFVWVUbHZOS080ajhhejBESVgxZmc2Mmp1NURkYURKQjcyaTh4UmFiamdXYkpfWl9oM2V4UnZhaDl1YUtnSXYtWUZi?oc=5",
    "source": "ABC News - Breaking News, Latest News and Videos",
    "source_domain": "abcnews.com",
    "published": "2026-10-31T17:09:07Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.073,
-   "S": 0.073,
+   "S0": 0.089,
+   "S": 0.089,
    "G": 0.6,
-   "ATM": 0.0241
+   "ATM": 0.0293
   },
   {
    "id": "530c1214566e1906",
@@ -19732,7 +21052,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:04:00Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.036,
    "S": 0.036,
    "G": 0.6,
@@ -19748,11 +21068,11 @@
    "source_domain": "edition.cnn.com",
    "published": "2026-10-31T17:02:51Z",
    "V0": 0.7,
-   "V": 0.679,
+   "V": 0.676,
    "S0": 0.033,
    "S": 0.033,
    "G": 0.6,
-   "ATM": 0.0064,
+   "ATM": 0.0065,
    "lat": 22.237,
    "lng": -102.845
   },
@@ -19784,7 +21104,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:01:06Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.044,
    "S": 0.044,
    "G": 0.6,
@@ -19800,11 +21120,11 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T17:00:15Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.033,
    "S": 0.033,
    "G": 0.6,
-   "ATM": 0.0064,
+   "ATM": 0.0065,
    "lat": 23.453,
    "lng": -101.69
   },
@@ -19954,7 +21274,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T16:48:51Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.081,
    "S": 0.081,
    "G": 0.6,
@@ -19986,7 +21306,7 @@
    "source_domain": "edition.cnn.com",
    "published": "2026-10-31T16:47:13Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.676,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -20004,7 +21324,7 @@
    "source_domain": "cnn.com",
    "published": "2026-10-31T16:44:45Z",
    "V0": 0.7,
-   "V": 0.678,
+   "V": 0.677,
    "S0": 0.031,
    "S": 0.031,
    "G": 0.6,
@@ -20299,10 +21619,12 @@
    "source": "ORIGO",
    "source_domain": "origo.hu",
    "published": "2026-10-31T16:15:00Z",
-   "V": 0.7,
+   "V0": 0.7,
+   "V": 0.689,
+   "S0": 0.206,
    "S": 0.206,
    "G": 0.9,
-   "ATM": 0.0557,
+   "ATM": 0.0578,
    "lat": 62.183,
    "lng": 106.562
   },
@@ -20356,7 +21678,7 @@
    "S0": 0.036,
    "S": 0.036,
    "G": 0.9,
-   "ATM": 0.0102,
+   "ATM": 0.0101,
    "lat": 47.343,
    "lng": 19.386
   },
@@ -22360,7 +23682,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-31T13:31:31Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -24114,34 +25436,6 @@
    "ATM": 0.0088
   },
   {
-   "id": "ec75bc54ad2e7677",
-   "region": "INT",
-   "title": "One utility bill pushed her out of her home",
-   "summary": "One utility bill pushed her out of her home CNN",
-   "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNRkhHaGF4OTBUWWtLbVVpYnV2VFVTVEo4QXlDam9CTUFwZGc1bVlTUDVpYk1OZ1J5NlVjWms4UDhsdVRXRkJRVVRob0lJaVNHSWtHNC1jOHJVUnZQQzdBQ09uVERLNno3QkNqMmxnejJBdzVRaFZiRWFFZXNhMm4yYm84WExsWnZMYmpYNTdFS2lFVlZSZ05B?oc=5",
-   "source": "CNN",
-   "source_domain": "edition.cnn.com",
-   "published": "2026-10-31T10:32:00Z",
-   "V": 0.7,
-   "S": 0.049,
-   "G": 0.6,
-   "ATM": 0.0088
-  },
-  {
-   "id": "f1828adc14dc9a50",
-   "region": "INT",
-   "title": "Analysis: All signs point to Trump contesting the election. What to watch for | CNN Politics",
-   "summary": "Analysis: All signs point to Trump contesting the election. What to watch for | CNN Politics CNN",
-   "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1zZFRaUTU3R01CYUF1cW5HQ3pJQlFjdEtaaDdUenRsRXZBakQyd25taXdiMFdwQk1tRzJPd3dPN2ZiQWtkYWlibzM2bVIxaHpXaWRkbFFyMUJNdmZKVDNsbGMwXzlxWm9uN1R0ODNESGkya29wNmpfRmJ3?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-10-31T10:31:26Z",
-   "V": 0.7,
-   "S": 0.093,
-   "G": 0.6,
-   "ATM": 0.0167
-  },
-  {
    "id": "c9c3f64a09da380f",
    "region": "SI-1",
    "title": "FOTO: V Lendavi uspešno zaključili Medgeneracijsko akademijo dediščine Prekmurja",
@@ -24158,20 +25452,6 @@
    "ATM": 0.0431,
    "lat": 46.886,
    "lng": 16.08
-  },
-  {
-   "id": "f611eafb12df1700",
-   "region": "INT",
-   "title": "‘You Can’t See Anything’: foreign movie fans are itching — but unable — to see Nathan Fielder’s movie",
-   "summary": "‘You Can’t See Anything’: foreign movie fans are itching — but unable — to see Nathan Fielder’s movie CNN",
-   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPdTBZUWNMc0p3YnFoSU5reEJ6eUdmR2dqRTFJaGozbjlyd1g2aGVMR1RoLXBLc3BlcDdxWG9Uc0hjckh1NURhNHZnQVcwZmxEWjF1LURQN2FsUlhodlpKMUlzNmRPU19FZkNUQW9TRS1fRUVQdXZCcGtZWG4tWUVvVXFZWjV1VGxNMnJR?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-10-31T10:30:35Z",
-   "V": 0.7,
-   "S": 0.027,
-   "G": 0.6,
-   "ATM": 0.0048
   },
   {
    "id": "a1604f431191a58b",
@@ -24340,22 +25620,6 @@
    "lng": 19.214
   },
   {
-   "id": "855dbe31bc50b130",
-   "region": "INT",
-   "title": "Strands Hints for November 1, 2026",
-   "summary": "Strands Hints for November 1, 2026 The New York Times Today’s NYT Strands Hints, Spangram and Answers for Friday, Oct. 30, #971 CNET Today’s NYT Strands answers, clues, and hints on October 31 (puzzle #972) PC Guide Today’s NYT ‘Strands’ Hints, Spangram and Answers for Sunday, November 1, 2026 Parade Magazine NYT Strands hints and answers for Sunday, November 1 (game #973) Yahoo Tech",
-   "link": "https://news.google.com/rss/articles/CBMie0FVX3lxTE9zZG92OUo3bXV4YXVVb1lkR1oySlV3UGtIUWxzWVBsbUZBRlFHLWpOaWkwQzZQNlpsS0ptcTBSQU1YYm5fMFlMcGU1LUY2dmdOWVF3dllRaThmUWV4bEh1bmtiZnVUTmtVUGVzS3p5REZnRnR6Vnhqd1Z2SQ?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-10-31T10:00:04Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.074,
-   "S": 0.074,
-   "G": 0.6,
-   "ATM": 0.0134
-  },
-  {
    "id": "2ee9790f390ebe39",
    "region": "AT-1",
    "title": "Nach großem Ärger - Busfahren wird für Senioren im Burgenland billiger",
@@ -24372,22 +25636,6 @@
    "ATM": 0.0,
    "lat": 47.706,
    "lng": 16.209
-  },
-  {
-   "id": "a22e78d31e7edd14",
-   "region": "INT",
-   "title": "An AI Agent Injected Drugs Into a Live Mouse’s Brain",
-   "summary": "An AI Agent Injected Drugs Into a Live Mouse’s Brain WIRED A Claude model autonomously chose a gene therapy and operated on a mouse brain with no human decision-making The Decoder AI agent used to perform controversial brain surgery on a mouse, Anthropic Sonnet-controlled motorized surgery rig — Opus 5.5 refused to conduct biological experiment, Sonnet given free rein to treat epilepsy with a range of gene therapy vectors after Tom's Hardware Exin Therapeutics Uses Anthropic Sonnet to Guide Mouse Brain Surgery news.lavx.hu AI Agent Autonomously Performs Gene Therapy Injection on Live Mouse Brain The Tech Buzz",
-   "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5SRGJycTlPN1l0ZDU4bU1Wcm9yRU9xaUdoeWFvdDhZZ213SG1MZkwzSzM3eFd6MGdtNlBrTjVJZ3lZWjRKdmJYQ05CNjhHMnpia3ZLbTJVMWd5ZmdTWmZJbzZlNUdGTm1lcEU1NmN4cWJMQUlsXzNOVTF5c3c?oc=5",
-   "source": "WIRED",
-   "source_domain": "wired.com",
-   "published": "2026-10-31T10:00:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.01,
-   "S": 0.01,
-   "G": 0.6,
-   "ATM": 0.0032
   },
   {
    "id": "d3e8c0c3c90b64a3",
@@ -24444,22 +25692,6 @@
    "lng": 15.898
   },
   {
-   "id": "f5e791913c59c041",
-   "region": "INT",
-   "title": "In Biden's First Halloween In Office, A 100-Piece Bag Of Candy Cost $9.91, A Study Found. This Year It's $16.96, And Government Data Shows Candy Prices Rose 7.7% In A Year, More Than Double Overall Inflation",
-   "summary": "In Biden's First Halloween In Office, A 100-Piece Bag Of Candy Cost $9.91, A Study Found. This Year It's $16.96, And Government Data Shows Candy Prices Rose 7.7% In A Year, More Than Double Overall Inflation 24/7 Wall St. The Scariest Part of Halloween This Year? The Candy Prices. The New York Times Soaring cost of Halloween treats spooks shoppers BBC Halloween gets pricier as chocolate costs climb — Hershey may feel the pinch CNBC Candy prices got you scared stiff? What to know about the cost of Halloween this year NPR",
-   "link": "https://news.google.com/rss/articles/CBMi0wJBVV95cUxPQ29LSmhEYTdGR3VVOXFfY1dGVDB2SVBGb0dBN01QWk1oVXBOOUttV0piajI3S1pieXc5YWZPUm5HeUJuVzk2RDRaTXJpWkFSS2hJQzQwdTJoV0J6cWg0LU5fQ3hBTV9CREl1eDBJNUs0Q0tmODMtd1RzeGctV2VJTnRsLVNHVUsxeFpNaloyTEJfNy11T05GekI2dWljaTdWdjl3ekN5cml0VW41YVB0RjBLUkFNOWVUbm9kTm44NGpXT0J5cXFHU3Nyakx5UEo0TnRyRWV0V1c4eUYxWXB6UXpvT3F6MWpfc2h2RUZVaEwxanB4YVhiallFN25XSEdFZEtJT09RY1Bia3YxbVRlT1prZ0hkMEVhYjZUZTloMHhxMDRlbkpLTmNpMG5vU2FURnFHbUR3X2VPQ1VNU1dUMWhudklNMUpGSVlkazhOdVlURlU?oc=5",
-   "source": "24/7 Wall St.",
-   "source_domain": "247wallst.com",
-   "published": "2026-10-31T09:24:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.026,
-   "S": 0.026,
-   "G": 0.6,
-   "ATM": 0.0084
-  },
-  {
    "id": "ed06c1ebae2ec4f2",
    "region": "AT-1",
    "title": "Weltspartag im Mittelburgenland: Tradition trifft auf Moderne",
@@ -24476,22 +25708,6 @@
    "ATM": 0.0163,
    "lat": 47.617,
    "lng": 16.189
-  },
-  {
-   "id": "5c635865d006baaa",
-   "region": "INT",
-   "title": "CCTV and zip ties: How US mail-in votes are secured and counted",
-   "summary": "BBC Verify goes to an election centre to get a behind-the-scenes look at how mail-in ballots for the US midterm elections are processed.",
-   "link": "https://www.bbc.co.uk/news/videos/cw4g1vlj4v2jo?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-31T09:16:14Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.6,
-   "ATM": 0.0096
   },
   {
    "id": "d8969ddf4689d327",
@@ -24528,20 +25744,6 @@
    "ATM": 0.0147,
    "lat": 47.216,
    "lng": 16.72
-  },
-  {
-   "id": "d38a4d4bac486e64",
-   "region": "INT",
-   "title": "Oil company earnings skyrocket — again",
-   "summary": "Oil company earnings skyrocket — again NPR U.S. Oil Industry Earned Over $130 Billion in Profit During Iran War The New York Times Oil giants post billions in profits as Americans feel pain at the pump Fox Business Trump called out Big Oil profits. Here’s how much their refining earnings have surged since CNBC Oil majors resist pressure to invest in new refineries as fuel prices keep rising Financial Times",
-   "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxPMlFhc1hubko5aGY3RGJEN1Z4QnFMell4RUdDOENlak9tUnJYQ1BxSXVURjhHQWdyNi1lMGpjRUtwek9IbkVMTEcxb2lFUlNTeVpTOWl2WlVReVQ4R3pBRUZ1R2RqbFhUdy1EQzJMTHduOUl6MGx1bTJGRmZGYUtidnczV1lyS3hRNGx5MlRpSW4?oc=5",
-   "source": "NPR",
-   "source_domain": "npr.org",
-   "published": "2026-10-31T09:00:00Z",
-   "V": 0.45,
-   "S": 0.026,
-   "G": 0.6,
-   "ATM": 0.0085
   },
   {
    "id": "21630b6e146a13ab",
@@ -24596,24 +25798,6 @@
    "ATM": 0.1536,
    "lat": 47.448,
    "lng": 19.152
-  },
-  {
-   "id": "08b0d1a584c54c50",
-   "region": "INT",
-   "title": "France heads into third weekend of protests as youth-led rallies erupt across Europe",
-   "summary": "Interior Minister Laurent Nuñez warned of a “very high risk” of disorder, especially after dark on Halloween.",
-   "link": "https://nypost.com/2026/10/31/world-news/france-heads-into-third-weekend-of-protests-as-youth-led-rallies-erupt-across-europe/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-10-31T07:29:01Z",
-   "V0": 0.7,
-   "V": 0.71,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0,
-   "lat": 48.085,
-   "lng": 0.424
   },
   {
    "id": "94dd2379209ed692",
@@ -24706,22 +25890,6 @@
    "lng": 16.571
   },
   {
-   "id": "c9c1733634c520ba",
-   "region": "INT",
-   "title": "November’s Night Sky Brings A Supermoon And A Rare Mars-Jupiter Meetup",
-   "summary": "November’s Night Sky Brings A Supermoon And A Rare Mars-Jupiter Meetup Forbes 8 Night Sky Events to See in November, From a Supermoon to 3 Meteor Showers National Geographic Skywatch: Action-packed November night skies from sunset to sunrise Pioneer Press Eyes to the Skies: November features early morning meetups of the moon and planets WTOP News The Sky This Week from October 30 to November 6: The Moon jockeys with Jupiter and Mars Astronomy.com",
-   "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxNRjVSUXhFYWNjckthSWN5djFfVVRWUzhOcWZIcElfQkhwczdIb1dSckJ4eTRXdE9GWG9OU3dCV1h2bWdXRmRtOUgyNEo4akgtM09Bc2F4c0VjMi0xM0lMX3RBWWRhT3dZRWNUdzhiRjRMNEJIbmEyS2pBTmtvTTNGdDRjaXNBSkQ5MXo2QUdCTjlTWkZoSTJVbzVoUmo0eE9vb3pOdWZTZWliR0puRHI5RUx4MjFMUHFkaE1ORnpn?oc=5",
-   "source": "Forbes",
-   "source_domain": "forbes.com",
-   "published": "2026-10-31T07:00:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.011,
-   "S": 0.011,
-   "G": 0.6,
-   "ATM": 0.0038
-  },
-  {
    "id": "aaa47aace19d363c",
    "region": "SI-1",
    "title": "Lokalne volitve 2026 v Dobrovniku: Kardinar: \"Kmetijska zadruga bi bila dobrodošla za Dobrovnik in celotno regijo\"",
@@ -24812,24 +25980,6 @@
    "lng": 16.608
   },
   {
-   "id": "fe78595c0baf2e76",
-   "region": "INT",
-   "title": "Spain train disaster clouds Sánchez chances of re-election",
-   "summary": "The Spanish PM is hit by a succession of crises just weeks before a snap general election.",
-   "link": "https://www.bbc.co.uk/news/articles/cmeweppr990qo?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-31T05:44:21Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0,
-   "lat": 40.764,
-   "lng": -2.441
-  },
-  {
    "id": "a9ac27c24f005b4a",
    "region": "AT-1",
    "title": "Polizei und WK warnen vor illegalen Feuerwerkskörpern",
@@ -24866,54 +26016,6 @@
    "lng": 16.437
   },
   {
-   "id": "51621e23f193d9be",
-   "region": "INT",
-   "title": "The fight to save Canadian town threatened by Trump's tariffs",
-   "summary": "A century-old paper mill in Témiscaming, Quebec is indefinitely closed after the US imposed 50% tariffs on its products, putting hundreds out of work.",
-   "link": "https://www.bbc.co.uk/news/articles/cmly016ep243o?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-31T02:39:25Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
-  },
-  {
-   "id": "25dfee5ad7bdf2bc",
-   "region": "INT",
-   "title": "Polish president turns back from Senegal trip after ally suspended from top court in judiciary battle",
-   "summary": "\"At a moment like this, the President must be in Poland. I ​am cutting short my flight to Senegal. I am returning,\" Karol Nawrocki said on X.",
-   "link": "https://nypost.com/2026/10/30/world-news/polish-president-karol-nawrock-turns-back-from-senegal-trip-after-ally-suspended/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-10-31T01:53:36Z",
-   "V0": 0.7,
-   "V": 0.71,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
-  },
-  {
-   "id": "b2887bbff8a98993",
-   "region": "INT",
-   "title": "Global nature talks reach deal but money remains an issue",
-   "summary": "Countries have been trying to get a global agreement to halt nature decline back on track.",
-   "link": "https://www.bbc.co.uk/news/articles/cw1l32qyj8pqo?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-31T01:27:05Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
-  },
-  {
    "id": "7730ff252b2b9259",
    "region": "HU-VA",
    "title": "Hivatalos: Távozik az Egis Körmend nyáron igazolt légiósa",
@@ -24930,124 +26032,6 @@
    "ATM": 0.0,
    "lat": 46.907,
    "lng": 16.574
-  },
-  {
-   "id": "2983ac9f31aee10c",
-   "region": "INT",
-   "title": "Police deployed during stand-off over control of top Poland court",
-   "summary": "The escalation came after the government suspended two senior justices and moved to bring criminal charges against them.",
-   "link": "https://www.bbc.co.uk/news/articles/crz9824d5e88o?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-31T01:11:43Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0,
-   "lat": 50.76,
-   "lng": 18.408
-  },
-  {
-   "id": "b600471a6fe22b62",
-   "region": "INT",
-   "title": "Meteorite Found in Sahara is Piece of Mars at Least 4.1 Billion Years Old",
-   "summary": "Meteorite Found in Sahara is Piece of Mars at Least 4.1 Billion Years Old Sci.News A Meteorite Found in the Sahara Is a 4.1-Billion-Year-Old Piece of Mars The New York Times Scientists have what they say is one of the oldest Mars meteorites The Washington Post Martian meteorite found in the Sahara is 4.1 billion years old Reuters Slice of Martian Meteorite Teghaza 001 NASA Jet Propulsion Laboratory (JPL) (.gov)",
-   "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9seVprbll2VkRETFp2Vm9WNXFqZWh6elZlbmlBc1FXS2RFZmsxMU1Vdl9ETDRRT28zNXVrT3NJNWlweUh3Y0FxaTl4aVQtcDIyMlVqdEhuN3EzdXFBVmlxNnJXTklwZE0wcklfZ2tRN2x2UnN0NGc?oc=5",
-   "source": "Sci.News",
-   "source_domain": "sci.news",
-   "published": "2026-10-31T00:20:21Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.026,
-   "S": 0.026,
-   "G": 0.6,
-   "ATM": 0.0085
-  },
-  {
-   "id": "c6f4b1c6ca457d66",
-   "region": "INT",
-   "title": "Rioters loot stores in Frankfurt as Gen Z-led protests in Germany turn violent",
-   "summary": "Rioters loot stores in Frankfurt as Gen Z-led protests in Germany turn violent Reuters Shops looted as German cost of living protests turn violent BBC Riots loot stores in Frankfurt as European youths protest living costs and military service NBC News Protests spread to Germany as hundreds of thousands march again in France CNN Germany's Gen Z protests disrupted by violence on Saturday DW.com",
-   "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPVVU2eHhKcXB0TU1teDBNamJNdjczWUVuNFpYVDBQUTNCMEJwYmYweGE1MXFsXzAxcGdYVlVObG1VQjg3dm94dXUyc2F5UHd6TkE0cUdQb2xpTk8tczhWNWdMR3pubExzLVkwZzdTWUY4bjhocmFMeWhzUE01WE1qTkZzNHBZZm1RUDlUQkJxSG5HT2tyS1ZDQm9GeWtXdjJOTXBrY29EZmJVVkxKOHNDLUc0RXY2VG8?oc=5",
-   "source": "Reuters",
-   "source_domain": "reuters.com",
-   "published": "2026-10-31T00:03:00Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.042,
-   "S": 0.042,
-   "G": 0.6,
-   "ATM": 0.0075,
-   "lat": 52.785,
-   "lng": 12.18
-  },
-  {
-   "id": "3d5a28f68112b5a6",
-   "region": "INT",
-   "title": "Time to set back the clocks, much to Trump’s chagrin",
-   "summary": "Time to set back the clocks, much to Trump’s chagrin The Hill Daylight saving time 2026 ended today. Here's what time the clocks changed and more key details. CBS News Daylight saving time has ended. Here's when clocks spring forward USA Today Opinion | Why daylight saving time should be eliminated entirely The Washington Post How to ‘fall back’ this weekend without losing your mind Scientific American",
-   "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxONUVMUXpmaEVaNUdidHEzVTNIVTNENnRCck51RmhpMktNRnM1TGthZzhCQVhYWmRpeWxuU1RwdWpMSTZGNzNBTzdJQU9DNFp5dlpJX09HRFJUYnVVMUpOa0dNNlFCSXZ5SVplWXpZVDdpWG9RZDBybXUybVVpT3FaZjBFVjhhdGlxQk5MTUVqUFEwOHZa0gGaAUFVX3lxTE1Da015TVRWQndtXy1NSFplMF9BWjFwTjM5Z1lxamdXSmlENkdvQ2tiU19MYXM1NzZZckZmMkp1RDRaLVFFMzdTazAtR3NheUhZV3JBWnVhbHMxdFlFRTFSdjhtb3BUU0VlS3M4c0RpWHVqTFlnRmU1NDVWdndzellMUWdQQ0dMaTJ3NkxMSTBHZDJjVnJfQzN3Wmc?oc=5",
-   "source": "The Hill",
-   "source_domain": "thehill.com",
-   "published": "2026-10-30T23:43:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.024,
-   "S": 0.024,
-   "G": 0.6,
-   "ATM": 0.008
-  },
-  {
-   "id": "0eb6272f8cb7246f",
-   "region": "INT",
-   "title": "He questioned Thailand's monarchy dressed as Harry Potter. Now he's in jail for 34 years",
-   "summary": "Thailand has prosecuted 294 people since 2020 under its lèse majesté law, with sentences going up to 50 years.",
-   "link": "https://www.bbc.co.uk/news/articles/cmjwepvd0qq9o?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-30T23:26:16Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0,
-   "lat": 17.294,
-   "lng": 102.956
-  },
-  {
-   "id": "ddda62a7b44d537e",
-   "region": "INT",
-   "title": "Trans bus driver fired for wearing skimpy dress and dubbing route the ‘Lolita Line’ — but now they’re suing",
-   "summary": "\"I do this every day, and I don't think there is an issue,\" L.Z. said in a video while being confronted by parents. \"What's the problem?\"",
-   "link": "https://nypost.com/2026/10/30/world-news/canadian-trans-bus-driver-fired-for-wearing-skimpy-dress-is-suing/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-10-30T22:16:39Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
-  },
-  {
-   "id": "77e8331448e47476",
-   "region": "INT",
-   "title": "G20 'family photo' cancelled after protests over presence of Russian minister",
-   "summary": "UK Foreign Secretary Ed Miliband confronted his Russian counterpart at the meeting and accused his government of killing innocent civilians in Ukraine.",
-   "link": "https://www.bbc.co.uk/news/articles/cmd6dp2y576do?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-30T22:11:52Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
   },
   {
    "id": "d18eaa6a8a2ecb6b",
@@ -25102,38 +26086,6 @@
    "ATM": 0.0691,
    "lat": 46.951,
    "lng": 19.62
-  },
-  {
-   "id": "e3a68c21446080da",
-   "region": "INT",
-   "title": "DOJ dangles legal threats over state election officials days before the midterms",
-   "summary": "DOJ dangles legal threats over state election officials days before the midterms Politico Trump administration retools its battle over elections to keep fights alive after Election Day The Washington Post DOJ warns state election officials they could face jail time if they fail to preserve records ABC News - Breaking News, Latest News and Videos Oregon’s secretary of state pushes back on DOJ election warning, adds a spelling lesson OregonLive.com Politics, norms and the DOJ's unprecedented pre-election headlines NPR",
-   "link": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQRmRiaWxsQ0JrQW5NeWxsMWFoVHJNaWE2TzlwVVBBN2lFRXFvR0lON1gwRlRQOG1OSTdVVE00UzJJUkl5NThnc25mRWUwSHFkaDhNaXpEMEUtQ29HMFp3ejdrQk1kN3JBVG5ybGgtQkVPMEEtZHlYY0pyQzQ0UVBNSU1CenNPcEpicmQ0TlEzNA?oc=5",
-   "source": "Politico",
-   "source_domain": "politico.com",
-   "published": "2026-10-30T21:30:00Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.068,
-   "S": 0.068,
-   "G": 0.6,
-   "ATM": 0.0122
-  },
-  {
-   "id": "fb09ad1e6a5650d2",
-   "region": "INT",
-   "title": "Weil Collapse Floods Market With Lawyers Looking for New Jobs",
-   "summary": "Weil Collapse Floods Market With Lawyers Looking for New Jobs Bloomberg Law News Weil Gotshal’s Closest Relationship Cost the Firm Everything Bloomberg Law News Weil's meltdown sparks scramble for firm's 700 associates Reuters Weil Gotshal, Once a Legal Powerhouse, Plans to Dissolve The New York Times Weil Broke Barriers In Big Law And Bankruptcy, Legal Leaders Say Law.com",
-   "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOTkRIbW5uMlM4ZTJZbkRUbTE0TkY0Y04yOUc5aDlpY2pLeDV1WjJCWFVjNmxkcE9tZUNYcDN4enRfVktJbDE3aHE2ckZKbmhRak9nTmNTcGJuX1BwMnVpcVB6WUNZZUtEXzU4eEs4aXE1dW4yUXpucV9EdHNwMkktQTBOYU1sT3lYZFV3QmU1TGwzbGVOMUdhSUtOZjY0aTZDeWYyMThnSWpxYjF4Y0ZkbThESQ?oc=5",
-   "source": "Bloomberg Law News",
-   "source_domain": "news.bloomberglaw.com",
-   "published": "2026-10-30T21:12:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.167,
-   "S": 0.167,
-   "G": 0.6,
-   "ATM": 0.055
   },
   {
    "id": "948b10ad75c66f98",
@@ -25204,20 +26156,6 @@
    "ATM": 0.0163,
    "lat": 47.354,
    "lng": 16.264
-  },
-  {
-   "id": "dc5ea942e4802772",
-   "region": "INT",
-   "title": "Have we been thinking about women’s heart health all wrong? Leading medical societies think so.",
-   "summary": "Have we been thinking about women’s heart health all wrong? Leading medical societies think so. The Boston Globe Leading health groups redefine heart health for girls and women www.heart.org New heart health guidance urges women to track cardiovascular risk across every stage of life WCVB Women’s Hearts through Every Stage of Life The National Herald Chrisandra Shufelt, MD, on cardiovascular risk assessment and menopause care Contemporary OB/GYN",
-   "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQRDVlMGtXb0xnNnE0VTN3akhoXzg2VGZKdEp6T3BQVTV3ZUFIeW5kWXJBUGNNYldwX2RtcTFuQlVpM1hJVzB3ZHBYMUdVeFpfajlPWG5Yd29KS1RxXzZpbWZ4WTFuS1Nub2Niekg3VUZhWm9oR3B3dUdUMjl2eVJMX2RuT0NqQQ?oc=5",
-   "source": "The Boston Globe",
-   "source_domain": "bostonglobe.com",
-   "published": "2026-10-30T18:40:00Z",
-   "V": 0.45,
-   "S": 0.022,
-   "G": 0.6,
-   "ATM": 0.0073
   },
   {
    "id": "4eedf688bf153c6f",
@@ -25308,22 +26246,6 @@
    "lng": 16.643
   },
   {
-   "id": "4b985ad6674d5dc0",
-   "region": "INT",
-   "title": "Flu’s Back Way Sooner Than Normal. Here’s What to Know.",
-   "summary": "Flu’s Back Way Sooner Than Normal. Here’s What to Know. WSJ Experts say don't wait. Now is the time to get your flu shot. CIDRAP As flu cases rise in Maryland, here’s how to get ready The Baltimore Banner CDC: Louisiana emerges as only state with 'high' flu activity amid early seasonal surge WBRZ CDC reports increasing early-season influenza activity and at least 900 deaths nationwide 2 Minute Medicine",
-   "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQUXF5ak5GeXM1cThMV01VcW9xMTF0WHVCeWZHNHJXczl0aUlQSzdNb19IMEFzMkFoVWtYdnNUQVBQQXQzbnlWNUxCamF3UGZSWC1UU05qNXpYZGRIdUlHS2t5b0FxZzRYeEpFTTdFcmNhUHgyLThFc1d3ZG1TQ3VIaVlnV3NYNzg2dkVMTm1QOHQ?oc=5",
-   "source": "WSJ",
-   "source_domain": "wsj.com",
-   "published": "2026-10-30T17:40:00Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.06,
-   "S": 0.06,
-   "G": 0.6,
-   "ATM": 0.0109
-  },
-  {
    "id": "f2b47bd04484f105",
    "region": "SI-1",
    "title": "Trček na čelo PU-ja Kranj, Belšak prevzema PU Murska Sobota",
@@ -25358,22 +26280,6 @@
    "ATM": 0.0227,
    "lat": 47.111,
    "lng": 16.441
-  },
-  {
-   "id": "f466a2e5443b1003",
-   "region": "INT",
-   "title": "As a historic measles outbreak hits Pennsylvania Amish country, more show openness to vaccines",
-   "summary": "As a historic measles outbreak hits Pennsylvania Amish country, more show openness to vaccines AP News U.S. measles cases rise to 4,852 Honolulu Star-Advertiser US measles cases top 4,800 as the disease surges in multiple states CIDRAP A 'canary in the coal mine': Measles resurgence exposes weaknesses in U.S. public health, experts say CNBC 'No one should feel safe': 5 dead as Amish country measles horror explodes past 1,350 cases The Independent",
-   "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPaFhlMGw2LWVlLVYxbWZ0OXo3aFhYb3ZWYXV0TEpzX19NdHJ5VTNsRF9EYjVONjBXUlFjQUVXT1J5SC1PODJEazltN2NvVkFERWRKeUVyaUdsM2FZcmd0VWxWeXNkNVBGVVdCZnR1R3lraThTOFZSbHRhRF9pb2JoNjFJTkxSTG1ERzBZMktjaVVMNzlKY1ktWnB6UFUzY3ZOMWVnVEFFOUJsOFBQQXE1ZkRoZ0ZQZ2ZO?oc=5",
-   "source": "AP News",
-   "source_domain": "apnews.com",
-   "published": "2026-10-30T17:13:00Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.192,
-   "S": 0.192,
-   "G": 0.6,
-   "ATM": 0.0346
   },
   {
    "id": "244d8c7d199f477a",
@@ -25511,7 +26417,7 @@
    "source_domain": "index.hu",
    "published": "2026-10-30T14:31:00Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.702,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -25619,7 +26525,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-30T14:12:57Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -25718,24 +26624,6 @@
    "lng": 16.246
   },
   {
-   "id": "212375e34ea41cb7",
-   "region": "INT",
-   "title": "Amish country becomes epicenter of U.S. measles disaster as 5 die and cases surge past 1,350",
-   "summary": "Amish country becomes epicenter of U.S. measles disaster as 5 die and cases surge past 1,350 The Independent As a historic measles outbreak hits Pennsylvania Amish country, more show openness to vaccines AP News U.S. measles cases rise to 4,852 Honolulu Star-Advertiser US measles cases top 4,800 as the disease surges in multiple states CIDRAP Measles continues to spread in Pa., reaching 44 counties PennLive.com",
-   "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNNGFEWGtOaWFrRmVia1BJSG1RZDhYR0haVG5LbHp0RGdPa2dhbVFKOHA4Y09ZazNqMU84ZUJIRFdoLW9kRWY0T3NkUnZUQlhpY0psVmdKVklYbURVOTRVeXM1c1FzbUxfbFh2alRJX1k0Y0V5TXNJaUNDYTQxWkNGcEpTRmJXVXdYRlBFRHBjNEZOZzZpWC11ckRJa2swNFJMM1g1RnNn?oc=5",
-   "source": "The Independent",
-   "source_domain": "independent.co.uk",
-   "published": "2026-10-30T13:59:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.014,
-   "S": 0.014,
-   "G": 0.6,
-   "ATM": 0.0047,
-   "lat": 39.091,
-   "lng": -97.323
-  },
-  {
    "id": "176bd031784552ca",
    "region": "HU-VA",
    "title": "Tűzeset: Kigyulladt és teljes terjedelmében ég egy fatároló Szombathelyen",
@@ -25788,22 +26676,6 @@
    "ATM": 0.0354,
    "lat": 47.705,
    "lng": 16.593
-  },
-  {
-   "id": "8e1ea3b8481be987",
-   "region": "INT",
-   "title": "Deal of the Day: Apple’s Newest AirTags at their Lowest Price Ever",
-   "summary": "Deal of the Day: Apple’s Newest AirTags at their Lowest Price Ever WSJ Amazon's AirTag 2 deal drops the 4-pack to record-low $69.99 AppleInsider Deals: 4-Pack of AirTags 2 for $69 OS X Daily Best Apple deal: Save $29 on Apple AirTag 4-pack (2nd Gen) Mashable Don’t wait for Black Friday: This AirTag bundle deal is as good as it gets Macworld",
-   "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPa1ktMzJHaDNtLXd3bTNoUzlMa2Z4UTJjVjh6WHhJMDQzMWtFMGhaR3Z1Zm0wclI2YmJHaFZYNG9wa3VJdFZDV1VqLWhSYTJmUkYtMmp6cDNlQmRnelMydU9KS1RYN2NNQlNtVUFfVzk3RzE5TktBQjFlQWIwTjhkbA?oc=5",
-   "source": "WSJ",
-   "source_domain": "wsj.com",
-   "published": "2026-10-30T13:30:06Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.015,
-   "S": 0.015,
-   "G": 0.6,
-   "ATM": 0.0027
   },
   {
    "id": "2129cd3bc3c3bcac",
@@ -26076,22 +26948,6 @@
    "lng": 16.966
   },
   {
-   "id": "37a71f33840a25fb",
-   "region": "INT",
-   "title": "What's at stake for Trump in the US midterms?",
-   "summary": "Anthony Zurcher explains how the results of the midterm elections could reshape the rest of Trump's presidency.",
-   "link": "https://www.bbc.co.uk/news/videos/cq77pm2jmmd5o?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-10-30T10:19:48Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
-  },
-  {
    "id": "733fb9c624f9dfe9",
    "region": "SI-1",
    "title": "V Beltincih začeli čezmejni projekt za oživljanje praznih podeželskih stavb",
@@ -26126,22 +26982,6 @@
    "ATM": 0.0167,
    "lat": 47.189,
    "lng": 16.595
-  },
-  {
-   "id": "dc089588e82392de",
-   "region": "INT",
-   "title": "What happens to the brain when you eat peanuts daily? New study reveals striking results",
-   "summary": "What happens to the brain when you eat peanuts daily? New study reveals striking results Euronews.com Scientists discover a surprising brain benefit of eating peanuts every day Science Daily New Research Finds Daily Peanut Consumption Benefits Brain's Response to Insulin in Memory Related Regions Morningstar Peanuts and Brain Insulin Response: Study in Older Adults - News and Statistics IndexBox Scientists Discover That Eating Peanuts Every Day May Help Protect the Aging Brain SciTechDaily",
-   "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxQX0RsVzhvYl9HbGp6M01yc0ZKU2J0YnREcU5zbW1yZF9MdzExMktlYzNZYjgtZkJDbmQ2Q1dCaFNkRGNibDVEb3lWa2dTMXE5Qm4xLUpNMVRLTXloY05pN3Y3dXpmdjRoTVFNZDN6THB6V2RQUTR5ZnRDNU9sdG1jX1licDZzOVJBMTJJV3Y0X0NITFg2Yk1fQVkycXpiY0NPSFphOE1FLVVScUVLQnFRcVJqQXY1RzJsY1lvM19KdkQ?oc=5",
-   "source": "Euronews.com",
-   "source_domain": "euronews.com",
-   "published": "2026-10-30T08:53:25Z",
-   "V0": 0.7,
-   "V": 0.7,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0.0
   },
   {
    "id": "147c03f468838c7d",
@@ -26529,7 +27369,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-29T16:56:15Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -26707,7 +27547,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-29T14:47:14Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -26869,7 +27709,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-29T12:46:55Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
@@ -28855,7 +29695,7 @@
    "source_domain": "hirnavigator.hu",
    "published": "2026-10-27T05:12:11Z",
    "V0": 0.45,
-   "V": 0.464,
+   "V": 0.462,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
