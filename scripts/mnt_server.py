@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Média-Zaj Twin v39 – M2 modul a 8x8 mátrix-rendszerben (csak Python standard library).
+"""Média-Zaj Twin v40 – M2 modul a 8x8 mátrix-rendszerben (csak Python standard library).
 
 Használat:
   python3 scripts/mnt_server.py              gyűjtés + elemzés; csak érdemi változásnál ír fájlt
@@ -42,7 +42,7 @@ from urllib.request import Request, urlopen
 ROOT = Path(os.environ.get("MNT_ROOT") or Path(__file__).resolve().parent.parent)
 DATA = ROOT / "data"
 MET = DATA / "metrics"
-UA = "Mozilla/5.0 (compatible; MediaNoiseTwin/39)"
+UA = "Mozilla/5.0 (compatible; MediaNoiseTwin/40)"
 SCOPE_RANK = {"official": 0, "local": 1, "national": 2, "international": 3}
 
 
@@ -194,6 +194,28 @@ def clean_title(title, publisher):
             if not publisher and len(tail) <= 40 and len(head) > 20:
                 return head.strip()
     return t
+
+
+async def refresh_m1(cfg, errors):
+    """Az M1 (Solaris) P8-csomagjának letöltése a konfigurált címekről (először a Pages, majd a raw). Érvénytelen vagy hiányzó csomagnál None."""
+    m1 = cfg.get("m1") or {}
+    if m1.get("enabled") is False:
+        return None
+    for i, u in enumerate(m1.get("urls", [])):
+        try:
+            raw = await afetch(u, "m1_%d.json" % i)
+            if not raw:
+                continue
+            d = json.loads(raw.decode("utf-8", "ignore"))
+            hdr = d.get("header") if isinstance(d, dict) else None
+            if isinstance(hdr, dict) and str(hdr.get("module_id", "")).startswith("M1") and isinstance(d.get("core_metrics"), dict):
+                errors.pop("m1", None)
+                return d
+            errors["m1"] = "érvénytelen M1-csomag"
+        except Exception as e:
+            errors["m1"] = str(e)[:100]
+    errors.setdefault("m1", "nincs adat")
+    return None
 
 
 async def collect(cfg, errors):
@@ -400,8 +422,12 @@ def truth_flags(m, t):
     dyn = m.get("dynamic_payload") if isinstance(m.get("dynamic_payload"), dict) else {}
     an = m.get("anomalies") if isinstance(m.get("anomalies"), dict) else {}
     flags, det = set(), {}
-    if str(core.get("status") or m.get("status") or "").upper() == "ANOMALY":
-        flags |= {"solar", "geomagnetic"}          # az M1 saját megítélése: aktív bolygószintű (űr)anomália
+    dflags = dyn.get("flags")
+    if isinstance(dflags, list):
+        flags |= {str(f).lower() for f in dflags}      # az M1 pontos jelzői (geomagnetic / solar / earthquake / storm)
+        det["m1_flags"] = sorted(flags)
+    elif str(core.get("status") or m.get("status") or "").upper() == "ANOMALY":
+        flags |= {"solar", "geomagnetic"}              # jelzőlista nélküli csomagnál: az M1 saját megítélése, aktív bolygószintű (űr)anomália
         det["status"] = "ANOMALY"
     for f in m.get("flags") or []:
         flags.add(str(f).lower())
@@ -694,7 +720,9 @@ async def run_async(force=False):
     old = (jload(DATA / "articles.json", {}) or {}).get("articles", [])
     profiles = jload(MET / "source_profiles.json", {}) or {}
     trends = jload(MET / "trends.json", {}) or {}
-    truth = jload(MET / "environment_truth_matrix.json")
+    local_truth = jload(MET / "environment_truth_matrix.json")
+    m1 = await refresh_m1(cfg, errors)                      # élő M1-csomag; ha nem érhető el, a helyi másolat (a 12 órás elavulási szabállyal)
+    truth, origin = (m1, "fetched") if m1 is not None else (local_truth, "local" if local_truth else "none")
     schema_changed = state.get("schema") != "v39"
     if schema_changed:                       # a G/S/V jelentése megváltozott: a régi profilok nem hasonlíthatók, újratanulás a megőrzött cikkekből
         profiles = {}
@@ -714,13 +742,15 @@ async def run_async(force=False):
     alerts = build_alerts(cfg, arts, rising, official, new_ids) if new_ids or official.get("calm") is False else []
     meta = {"version": cfg["version"], "generated_at": iso(t), "region": cfg["region"], "thresholds": cfg["thresholds"], "events": res["events"],
             "errors": errors, "g": g_info, "weights": [round(x, 3) for x in mod.w],
-            "truth": {"available": flags is not None, "flags": sorted(flags) if flags is not None else None, "detail": res["flags_detail"]},
+            "truth": {"available": flags is not None, "flags": sorted(flags) if flags is not None else None, "detail": res["flags_detail"], "origin": origin},
             "official": {"calm": official.get("calm"), "excerpt": official.get("excerpt", "")[:300]}, "rising": rising, "warming_up": warming}
     if changed:
         jsave(DATA / "articles.json", {"meta": meta, "articles": [{k: v for k, v in a.items() if k != "trust"} for a in arts]})
         jsave(MET / "source_profiles.json", profiles)
         jsave(MET / "trends.json", trends)
         jsave(MET / "media_noise_matrix.json", res["p8"], pretty=True)
+        if m1 is not None:
+            jsave(MET / "environment_truth_matrix.json", m1, pretty=True)      # a busz pillanatképe (a változással együtt commitolódik)
         hist = jload(MET / "atm_history.json", {"points": []})
         pts = hist.get("points", [])
         last_t = parse_date(state.get("last_hist")) or datetime(1970, 1, 1, tzinfo=timezone.utc)
@@ -736,7 +766,7 @@ async def run_async(force=False):
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write("changed=%s\n" % ("true" if changed else "false"))
-    print("MNT v39: %d cikk (%d új), %d esemény, G %.2f (%s), ATM átlag %.3f, p90 %.3f, hibás forrás: %s, fizikai mérés: %s, riasztás: %d, változás: %s" % (
+    print("MNT v40: %d cikk (%d új), %d esemény, G %.2f (%s), ATM átlag %.3f, p90 %.3f, hibás forrás: %s, fizikai mérés: %s, riasztás: %d, változás: %s" % (
         len(arts), len(new_ids), res["events"], g_info["value"], g_info["source"], snap["mean"], snap["p90"], list(errors) or "nincs",
         "van" if flags is not None else "nincs", len(alerts), changed))
     return {"changed": changed, "alerts": alerts, "articles": arts, "snapshot": snap, "errors": errors, "p8": res["p8"], "g": g_info}

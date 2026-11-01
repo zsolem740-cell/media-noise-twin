@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v39 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő).
+/* Média-Zaj Twin v40 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";

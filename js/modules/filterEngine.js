@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v39 – kliensoldali öntanuló szűrő.
+/* Média-Zaj Twin v40 – kliensoldali öntanuló szűrő.
    Logisztikus regresszió 65 536 dimenziós hash-elt jellemzőtéren (előjeles hash-elés), AdaGrad + L2 tanulással.
    Tanítójel: szavazat (👍 érték / 👎 zaj) és olvasási idő. Az AUC-alapú λ-keverés a tanult p valószínűséget
    és az előzetes (1 − ATM/plafon) tisztaság-pontot keveri: λ csak annyit kap, amennyire a modell a saját
