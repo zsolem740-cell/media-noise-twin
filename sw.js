@@ -1,5 +1,5 @@
-/* Média-Zaj Twin v38 – service worker. Héj: gyorsítótárból (közben frissül); adat/konfig: hálózat először; Three.js: külön, tartós gyorsítótár. */
-const V = "mnt-v38", LIB = "mnt-lib-three-160";
+/* Média-Zaj Twin v39 – service worker. Héj: gyorsítótárból (közben frissül); adat/konfig: hálózat először; Three.js: külön, tartós gyorsítótár. */
+const V = "mnt-v39", LIB = "mnt-lib-three-160";
 const SHELL = ["./", "index.html", "css/hud.css", "js/app.js", "js/modules/webglGlobe.js", "js/modules/filterEngine.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", (e) => {

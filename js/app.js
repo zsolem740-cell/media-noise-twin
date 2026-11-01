@@ -1,4 +1,5 @@
-/* Média-Zaj Twin v38 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő). */
+/* Média-Zaj Twin v39 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő).
+   ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
@@ -64,6 +65,7 @@ function renderHud(list) {
   $("learn").textContent = `Tanuló szűrő: λ ${st.lambda.toFixed(2)} · AUC ${st.auc === null ? "–" : st.auc.toFixed(2)} · ${st.trained} tanítás`;
   const m = S.meta || {}, b = [];
   if (m.official) b.push(m.official.calm === false ? "🚨 HungaroMet: érvényes figyelmeztetés" : m.official.calm === true ? "✅ HungaroMet: nincs figyelmeztetés" : "ℹ HungaroMet: állapot ismeretlen");
+  if (m.g) b.push("⚖ G fizikai nyugalom " + Number(m.g.value).toFixed(2) + " (" + ({ M1: "Solaris M1", derived: "jelzőkből becsült", default: "nincs mérés, feltételezett" }[m.g.source] || m.g.source) + ")");
   if (m.truth) b.push(m.truth.available ? "🔬 Fizikai mérés: " + ((m.truth.flags || []).length ? m.truth.flags.map((f) => TOPIC_HU[f] || f).join(", ") : "nyugodt") : "🔬 Fizikai mérés: nincs adat");
   if (m.warming_up) b.push("📈 Trend: gyűjtés (24 óra kell)");
   else if ((m.rising || []).length) b.push("📈 Felszálló: " + m.rising.slice(0, 3).map((r) => r.term).join(", "));
@@ -93,9 +95,9 @@ function card(a, sc) {
  <div class="row"><span class="atm" style="--c:${c}">ATM ${atmTxt(a.atm)}</span><span class="scope">${SCOPE_HU[a.scope] || a.scope}</span><span class="time">${ago(a.published || a.first_seen)}</span></div>
  <h3><a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" data-act="link">${esc(a.title)}</a></h3>
  <div class="meta">${esc(a.source)}${a.geo ? " · 📍 " + esc(a.geo.name) : ""}${a.event_sources > 1 ? " · 📰 " + a.event_sources + " forrás" : ""}</div>
- <div class="bars">${bar("G", a.g, "g")}${bar("S", a.s, "s")}${bar("V", a.v, "v")}</div>
+ <div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>
  <div class="tags">${tags}${badge}</div>
- <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} · ${a.s.toFixed(2)} · ${(1 - a.v).toFixed(2)}${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
+ <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
  <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p></div>
  <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
 </article>`;

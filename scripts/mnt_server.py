@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Média-Zaj Twin v38 – szerveroldali gyűjtő és elemző (csak Python standard library).
+"""Média-Zaj Twin v39 – M2 modul a 8x8 mátrix-rendszerben (csak Python standard library).
 
 Használat:
   python3 scripts/mnt_server.py              gyűjtés + elemzés; csak érdemi változásnál ír fájlt
@@ -9,32 +9,40 @@ Használat:
 Környezeti változók (tesztelésre): MNT_FIXTURES=<könyvtár> (offline: <forrás-id>.xml, hungaromet_<n>.html),
   MNT_ROOT, MNT_OUTBOX, MNT_FORCE=1, MNT_NOW=<ISO idő>.
 
-ATM = G · S · (1 − V)
-  G  gerjesztés: érzelmi töltet (indulatszavak, felkiáltójel, NAGYBETŰ, kérdés-horog)           0..1
-  S  szenzáció: kattintásvadász jelleg (csalogató szavak, listás cím, három pont, felsőfok)    0..1
-  V  valóságtartalom: ellenőrizhetőség (hivatalos forrás, bizalom, számok/idézet/hivatkozás,
-     több független forrás, fizikai mérésekkel való keresztellenőrzés)                          0..1
+ATM = G · S · (1 − V)   (Anti-Noise Filter; az architekturális szerződés pontos definíciói)
+  G  fizikai nyugalom (stationarity) 0..1. Az M1 (Solaris) data/metrics/environment_truth_matrix.json
+     core_metrics.stationarity_G mezőjéből jön. 1,0 = nyugodt fizikai környezet, kis érték = fizikai anomália.
+     NEM a hír érzelmi töltete. Mérés nélkül 1,0 (forrás: "default"); G nélküli, régi alakú mátrixnál a jelzőkből becsült ("derived").
+  S  zaj (Signal/Noise score) 0..1: a hír nyelvi zaja: indulatszavak, felkiáltójel, NAGYBETŰ, csalogató szavak, listás cím, felsőfok.
+  V  érvényesség (Validity) 0..1: a hír állításainak egyezése a fizikai méréssel és az ellenőrizhetőség
+     (hivatalos forrás, bizalom, számok/idézet/hivatkozás, több független forrás).
+Az ATM akkor nagy, ha a fizikai környezet nyugodt (G nagy), a hír hangos (S nagy) és az állításai nem érvényesek (V kicsi).
+Kimenet a P8-buszra: data/metrics/media_noise_matrix.json (header / core_metrics / dynamic_payload / weights_vector).
 """
 import hashlib
+import asyncio
 import html
 import json
 import math
 import os
+import random
 import re
 import struct
 import sys
 import unicodedata
 import zlib
 import xml.etree.ElementTree as ET
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 ROOT = Path(os.environ.get("MNT_ROOT") or Path(__file__).resolve().parent.parent)
 DATA = ROOT / "data"
 MET = DATA / "metrics"
-UA = "Mozilla/5.0 (compatible; MediaNoiseTwin/38)"
+UA = "Mozilla/5.0 (compatible; MediaNoiseTwin/39)"
 SCOPE_RANK = {"official": 0, "local": 1, "national": 2, "international": 3}
 
 
@@ -112,14 +120,35 @@ def pctl(vals, p):
 
 
 # ───────────────────────── hírforrások beolvasása ─────────────────────────
-def fetch(url, key, timeout=20):
+def fetch_once(url, timeout=20):
+    req = Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.8, */*;q=0.5"})
+    with urlopen(req, timeout=timeout) as r:
+        return r.read(3_000_000)
+
+
+async def afetch(url, key, timeout=20, attempts=4, base=1.5):
+    """Nem blokkoló lekérés. 408/425/429/5xx és hálózati hiba esetén exponenciális visszalépés véletlen jitterrel (Retry-After-t is tiszteli)."""
     fx = os.environ.get("MNT_FIXTURES")
     if fx:
         p = Path(fx) / key
         return p.read_bytes() if p.exists() else None
-    req = Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.8, */*;q=0.5"})
-    with urlopen(req, timeout=timeout) as r:
-        return r.read(3_000_000)
+    last = None
+    for i in range(attempts):
+        wait = min(30.0, base * 2 ** i) * (0.5 + random.random())
+        try:
+            return await asyncio.to_thread(fetch_once, url, timeout)
+        except HTTPError as e:
+            last = e
+            if e.code not in (408, 425, 429, 500, 502, 503, 504):
+                break
+            ra = e.headers.get("Retry-After") if e.headers else None
+            if ra and str(ra).isdigit():
+                wait = max(wait, min(60.0, float(ra)))
+        except (URLError, TimeoutError, OSError) as e:
+            last = e
+        if i < attempts - 1:
+            await asyncio.sleep(wait)
+    raise RuntimeError(str(last)[:100] if last else "ismeretlen hiba")
 
 
 def lname(t):
@@ -167,19 +196,22 @@ def clean_title(title, publisher):
     return t
 
 
-def collect(cfg, errors):
-    out = []
-    mx = cfg["limits"].get("max_per_feed", 60)
-    for f in cfg["feeds"]:
-        if f.get("enabled") is False or f["type"] != "rss":
-            continue
+async def collect(cfg, errors):
+    feeds = [f for f in cfg["feeds"] if f.get("enabled") is not False and f["type"] == "rss"]
+
+    async def one(f):
         try:
-            raw = fetch(f["url"], f["id"] + ".xml")
+            raw = await afetch(f["url"], f["id"] + ".xml")
             if raw is None:
                 raise RuntimeError("nincs adat")
-            items = parse_feed(raw)
+            return f, parse_feed(raw), None
         except Exception as e:
-            errors[f["id"]] = str(e)[:120]
+            return f, [], str(e)[:120]
+
+    out, mx = [], cfg["limits"].get("max_per_feed", 60)
+    for f, items, err in await asyncio.gather(*[one(f) for f in feeds]):
+        if err:
+            errors[f["id"]] = err
             continue
         for it in items[:mx]:
             pub = it.get("publisher") or f["name"]
@@ -195,21 +227,22 @@ def collect(cfg, errors):
     return out
 
 
-def collect_official(cfg, errors, t):
+async def collect_official(cfg, errors, t):
     """HungaroMet: nincs nyilvános RSS/CAP, ezért a szöveges figyelmeztető oldalak tartalmát értelmezi (heurisztika)."""
     state = {"calm": None, "excerpt": "", "checked": False}
     arts = []
     for f in cfg["feeds"]:
         if f["type"] != "official_text" or f.get("enabled") is False:
             continue
-        pages = []
-        for i, u in enumerate(f["urls"]):
+
+        async def page(i, u):
             try:
-                raw = fetch(u, f["id"] + "_%d.html" % i)
-                if raw:
-                    pages.append(strip_html(raw.decode("utf-8", "ignore")))
+                raw = await afetch(u, f["id"] + "_%d.html" % i)
+                return strip_html(raw.decode("utf-8", "ignore")) if raw else None
             except Exception as e:
                 errors[f["id"]] = str(e)[:120]
+                return None
+        pages = [x for x in await asyncio.gather(*[page(i, u) for i, u in enumerate(f["urls"])]) if x]
         if not pages:
             errors.setdefault(f["id"], "nincs adat")
             continue
@@ -275,17 +308,19 @@ def topics_of(ft, L):
     return sorted(k for k, stems in L.topics.items() if hits(ft, stems))
 
 
-def base_scores(a, L, prof):
+def base_scores(a, L, prof, w):
+    """S (nyelvi zaj) és V (érvényesség a fizikai keresztellenőrzés ELŐTT). A G nem itt készül: az az M1 fizikai nyugalmából jön.
+    w = [w_indulat, w_csalogatás, w_bizonyíték, w_megerősítés] (az M8 Sentinel hangolhatja; alapérték 1,0)."""
     text = a["title"] + " . " + a.get("summary", "")
     ft = " " + fold(text) + " "
-    ar = hits(ft, L.ar)
+    arousal = min(1.0, hits(ft, L.ar) / 3)
     excl = min(1.0, text.count("!") / 2)
     caps = min(1.0, len(re.findall(r"\b[A-ZÁÉÍÓÖŐÚÜŰ]{4,}\b", a["title"])) / 3)
-    g = clamp(0.15 + 0.45 * min(1, ar / 3) + 0.15 * excl + 0.10 * caps + (0.05 if "?" in a["title"] else 0))
     cb, sp = hits(ft, L.cb), hits(ft, L.sup)
     listicle = 1 if re.match(r"^\s*\d{1,2}\s+[^\W\d]", a["title"]) else 0
     ell = 1 if ("..." in a["title"] or "…" in a["title"]) else 0
-    s = clamp(0.10 + 0.30 * min(1, cb / 2) + 0.20 * listicle + 0.12 * ell + 0.18 * min(1, sp / 2) + 0.10 * excl)
+    s = clamp(0.08 + w[0] * 0.28 * arousal + w[1] * (0.24 * min(1, cb / 2) + 0.14 * listicle + 0.10 * ell + 0.12 * min(1, sp / 2))
+              + 0.10 * excl + 0.06 * caps + (0.04 if "?" in a["title"] else 0))
     trust = a.get("trust", 0.5)
     if prof and prof.get("n", 0) >= 20:
         trust = 0.5 * trust + 0.5 * prof["v"]["mean"]
@@ -293,12 +328,12 @@ def base_scores(a, L, prof):
     ev = len(L.evid.findall(ft)) + (1 if re.search(r"[\"“„”]", text) else 0)
     att = hits(ft, L.att)
     if ev + att >= 1:
-        v += 0.10
+        v += w[2] * 0.10
     if ev + att >= 3:
-        v += 0.05
+        v += w[2] * 0.05
     if hits(ft, L.rum):
         v -= 0.10
-    return ft, g, s, clamp(v)
+    return ft, s, clamp(v)
 
 
 def vec_of(a, L):
@@ -348,59 +383,70 @@ PLANETARY = {"solar", "geomagnetic"}
 
 
 def truth_flags(m, t):
-    """A data/metrics/environment_truth_matrix.json tolerálás-alapú értelmezése. Visszaad: (flags|None, részletek).
-    Elfogadott alakok: {"flags":[...]}, {"anomalies":{"earthquake":{"active":true,"magnitude":5.1}, ...}}, lapos kulcsok (kp, flare_class, ...)."""
+    """Az M1 (Solaris) environment_truth_matrix.json értelmezése. Visszaad: (flags|None, részletek, G|None).
+    Elsődleges alak a P8-szerződés: {"header":{...,"timestamp"}, "core_metrics":{"status","stationarity_G",...},
+    "dynamic_payload":{"kp_index","bz_vector_nt","flare_level","solar_wind_speed_kms",...}}.
+    A régebbi, laza alakokat is elfogadja: {"flags":[...]}, {"anomalies":{...}}, lapos kulcsok. 12 óránál régebbi mátrixot nem használ."""
     if not isinstance(m, dict):
-        return None, {}
+        return None, {}, None
+    hdr = m.get("header") if isinstance(m.get("header"), dict) else {}
     up = parse_date(str(m.get("updated") or m.get("generated_at") or ""))
+    ts = hdr.get("timestamp")
+    if up is None and isinstance(ts, (int, float)) and not isinstance(ts, bool) and ts > 1e9:
+        up = datetime.fromtimestamp(ts, tz=timezone.utc)
     if up and (t - up) > timedelta(hours=12):
-        return None, {"stale": True}
+        return None, {"stale": True}, None
+    core = m.get("core_metrics") if isinstance(m.get("core_metrics"), dict) else {}
+    dyn = m.get("dynamic_payload") if isinstance(m.get("dynamic_payload"), dict) else {}
+    an = m.get("anomalies") if isinstance(m.get("anomalies"), dict) else {}
     flags, det = set(), {}
+    if str(core.get("status") or m.get("status") or "").upper() == "ANOMALY":
+        flags |= {"solar", "geomagnetic"}          # az M1 saját megítélése: aktív bolygószintű (űr)anomália
+        det["status"] = "ANOMALY"
     for f in m.get("flags") or []:
         flags.add(str(f).lower())
-    an = m.get("anomalies") if isinstance(m.get("anomalies"), dict) else m
-    for k, v in (an or {}).items():
-        k = str(k).lower()
-        if isinstance(v, bool):
-            if v:
-                flags.add(k)
-        elif isinstance(v, dict) and (v.get("active") or v.get("anomaly")):
+    for k in ("earthquake", "solar", "geomagnetic", "storm", "flood"):
+        if m.get(k) is True:
             flags.add(k)
+    for k, v in an.items():
+        k = str(k).lower()
+        if v is True or (isinstance(v, dict) and (v.get("active") or v.get("anomaly"))):
+            flags.add(k)
+
     def num(*ks):
-        for src in (an, m):
+        for src in (dyn, an, m):
             for k in ks:
-                x = src.get(k) if isinstance(src, dict) else None
+                x = src.get(k)
                 if isinstance(x, dict):
                     x = x.get("value", x.get("magnitude", x.get("max")))
-                if isinstance(x, (int, float)):
+                if isinstance(x, (int, float)) and not isinstance(x, bool):
                     return float(x)
         return None
     mag = num("earthquake_max_mag", "eq_max_mag", "magnitude", "earthquake")
-    kp = num("kp", "kp_index", "geomagnetic_kp")
+    kp = num("kp_index", "kp", "geomagnetic_kp")
+    bz = num("bz_vector_nt", "bz_nt", "bz")
+    wind = num("solar_wind_speed_kms", "solar_wind_kms")
     gust = num("wind_gust_kmh", "gust_kmh")
     drop = num("pressure_drop_3h", "pressure_drop")
-    sol = an.get("solar") if isinstance(an, dict) else None
-    fc = str(m.get("flare_class") or (sol.get("class", "") if isinstance(sol, dict) else "") or "").upper()
-    if mag is not None:
-        det["earthquake_mag"] = mag
-        if mag >= 4.5:
-            flags.add("earthquake")
-    if kp is not None:
-        det["kp"] = kp
-        if kp >= 5:
-            flags.add("geomagnetic")
-    if fc[:1] in ("M", "X"):
-        det["flare"] = fc
+    sol = an.get("solar") if isinstance(an.get("solar"), dict) else {}
+    fc = str(dyn.get("flare_level") or m.get("flare_class") or sol.get("class") or "").upper()
+    for key, val in (("earthquake_mag", mag), ("kp", kp), ("bz_nt", bz), ("solar_wind_kms", wind), ("gust_kmh", gust)):
+        if val is not None:
+            det[key] = val
+    if mag is not None and mag >= 4.5:
+        flags.add("earthquake")
+    if (kp is not None and kp >= 5) or (bz is not None and bz <= -10):
+        flags.add("geomagnetic")
+    if fc[:1] in ("M", "X") or (wind is not None and wind >= 700):
         flags.add("solar")
-    if gust is not None:
-        det["gust_kmh"] = gust
-        if gust >= 60:
-            flags.add("storm")
-    if drop is not None and drop >= 6:
+        det["flare"] = fc
+    if (gust is not None and gust >= 60) or (drop is not None and drop >= 6):
         flags.add("storm")
-    alias = {"flare": "solar", "solar_flare": "solar", "kp": "geomagnetic", "geomagnetic_storm": "geomagnetic", "quake": "earthquake", "wind": "storm", "flood": "flood"}
+    alias = {"flare": "solar", "solar_flare": "solar", "kp": "geomagnetic", "geomagnetic_storm": "geomagnetic", "quake": "earthquake", "wind": "storm"}
     flags = {alias.get(f, f) for f in flags}
-    return flags, det
+    g = core.get("stationarity_G", m.get("stationarity_G"))
+    g = clamp(float(g)) if isinstance(g, (int, float)) and not isinstance(g, bool) else None
+    return flags, det, g
 
 
 def apply_truth(a, flags, cfg, L):
@@ -521,24 +567,26 @@ def merge(old, fresh, t, keep_h, max_n):
     return arts[:max_n]
 
 
-def analyze(cfg, arts, profiles, flags, L):
+def analyze(cfg, arts, profiles, flags, L, g, w):
     thr = cfg["limits"]["cluster_threshold"]
+    trust = {f["id"]: f.get("trust", 0.5) for f in cfg["feeds"]}
     for a in arts:
-        ft, g, s, v = base_scores(a, L, profiles.get(a["source"]))
+        a["trust"] = trust.get(a.get("feed"), a.get("trust", 0.5))      # a mentett cikkekből a bizalom kimarad: a konfigurációból pótoljuk (stabil újrapontozás)
+        ft, s, v = base_scores(a, L, profiles.get(a["source"]), w)
         a["topics"] = topics_of(ft, L)
         if not a.get("geo"):
             a["geo"] = locate(fold(a["title"]), ft, L)
-        a["g"], a["s"], a["v"] = g, s, v
+        a["s"], a["v"] = s, v
     n_ev = cluster(arts, L, thr)
     for a in arts:
-        a["v"] = clamp(a["v"] + 0.06 * min(2, max(0, a.get("event_sources", 1) - 1)))
+        a["v"] = clamp(a["v"] + 0.06 * w[3] * min(2, max(0, a.get("event_sources", 1) - 1)))
         apply_truth(a, flags, cfg, L)
-        a["g"], a["s"], a["v"] = round(a["g"], 3), round(a["s"], 3), round(a["v"], 3)
+        a["g"], a["s"], a["v"] = round(g, 3), round(a["s"], 3), round(a["v"], 3)
         a["atm"] = round(a["g"] * a["s"] * (1 - a["v"]), 4)
     return n_ev
 
 
-def snapshot(arts, rising, flags, t):
+def snapshot(arts, rising, flags, t, g):
     last = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] or arts
     vals = [a["atm"] for a in last]
     by = {}
@@ -547,7 +595,7 @@ def snapshot(arts, rising, flags, t):
         if x:
             by[sc] = round(sum(x) / len(x), 4)
     return {"t": iso(t), "n": len(last), "mean": round(sum(vals) / len(vals), 4) if vals else 0, "p90": round(pctl(vals, 0.9), 4) if vals else 0,
-            "by_scope": by, "flags": sorted(flags) if flags is not None else None, "rising": [r["term"] for r in rising[:3]]}
+            "g": round(g, 3), "by_scope": by, "flags": sorted(flags) if flags is not None else None, "rising": [r["term"] for r in rising[:3]]}
 
 
 def build_alerts(cfg, arts, rising, official, new_ids):
@@ -568,40 +616,111 @@ def build_alerts(cfg, arts, rising, official, new_ids):
     return out[: n["max_per_run"]]
 
 
-def run(force=False):
+class BaseMatrixModule(ABC):
+    """Az 8x8 mátrix-rendszer modulok közös őse (architekturális szerződés, 1. szabály)."""
+
+    def __init__(self, module_id, version="1.0.0"):
+        self.module_id = module_id
+        self.version = version
+
+    @abstractmethod
+    async def process_payload(self, raw_input):
+        """Aszinkron adatfeldolgozás; a P8-busz alap JSON-sémáját adja vissza a dynamic_payload-ban."""
+
+    @abstractmethod
+    def update_weights(self, new_weights):
+        """Sentinel AI (M8) felület a súlyvektor dinamikus újrahangolásához."""
+
+
+class MediaZajTwin(BaseMatrixModule):
+    """M2 – Media-Zaj Twin. weights_vector = [w_indulat, w_csalogatás, w_bizonyíték, w_megerősítés] (0..2, alap 1,0)."""
+    DEFAULT_W = [1.0, 1.0, 1.0, 1.0]
+
+    def __init__(self, cfg):
+        super().__init__("M2_MEDIA_ZAJ", "1.0.0")
+        self.cfg, self.L, self.w = cfg, Lex(cfg), list(self.DEFAULT_W)
+
+    def update_weights(self, new_weights):
+        try:
+            v = [clamp(float(x), 0.0, 2.0) for x in new_weights][:4]
+        except (TypeError, ValueError):
+            return
+        if len(v) == 4:
+            self.w = v
+
+    def p8(self, t, arts, snap, g_info, flags, rising, official):
+        """A P8-busz alap sémája; a modul-specifikus adatok kizárólag a dynamic_payload-ban (4. szabály)."""
+        last = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] or arts
+        mean = lambda k: round(sum(a[k] for a in last) / len(last), 4) if last else 0.0
+        th = self.cfg["thresholds"]
+        status = "NOISE_ALERT" if snap["p90"] >= th["high"] else "ELEVATED" if snap["mean"] >= th["mid"] else "NOMINAL"
+        top = sorted(last, key=lambda a: -a["atm"])[:5]
+        return {"header": {"module_id": self.module_id, "version": self.version, "timestamp": int(t.timestamp()), "p8_signature": "MEDIA_NOISE_TWIN"},
+                "core_metrics": {"status": status, "stationarity_G": round(g_info["value"], 3), "noise_S": mean("s"), "validity_V": mean("v"), "atm_score": snap["mean"]},
+                "dynamic_payload": {"articles_24h": len(last), "atm_p90": snap["p90"], "atm_by_scope": snap["by_scope"], "g_source": g_info["source"],
+                                    "truth_flags": sorted(flags) if flags is not None else None, "official_calm": official.get("calm"),
+                                    "rising_terms": [r["term"] for r in rising[:5]],
+                                    "top_distorted": [{"id": a["id"], "title": a["title"][:120], "source": a["source"], "atm": a["atm"]} for a in top]},
+                "weights_vector": [round(x, 3) for x in self.w]}
+
+    async def process_payload(self, raw):
+        cfg, L, t = self.cfg, self.L, raw["now"]
+        flags, fdet, g_m = truth_flags(raw.get("truth"), t)
+        if flags is None:
+            g_info = {"value": 1.0, "source": "default"}                      # nincs fizikai mérés: nyugodtnak tételezzük fel
+        elif g_m is not None:
+            g_info = {"value": g_m, "source": "M1"}
+        else:
+            g_info = {"value": 1.0 if not flags else max(0.1, 1 - 0.3 * len(flags)), "source": "derived"}
+        known = {a["id"] for a in raw["old"]}
+        arts = merge(raw["old"], raw["fresh"], t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"])
+        new_ids = {a["id"] for a in arts if a["id"] not in known}
+        n_ev = analyze(cfg, arts, raw["profiles"], flags, L, g_info["value"], self.w)
+        update_profiles(raw["profiles"], [a for a in arts if not a.get("profiled")])
+        rising, warming = update_trends(raw["trends"], [a for a in arts if a["id"] in new_ids], L, t)
+        snap = snapshot(arts, rising, flags, t, g_info["value"])
+        return {"articles": arts, "new_ids": new_ids, "events": n_ev, "g": g_info, "flags": flags, "flags_detail": fdet, "rising": rising,
+                "warming": warming, "snapshot": snap, "p8": self.p8(t, arts, snap, g_info, flags, rising, raw["official"])}
+
+
+async def run_async(force=False):
     cfg = jload(ROOT / "config" / "sources.json")
     t = now()
-    L = Lex(cfg)
+    mod = MediaZajTwin(cfg)
+    wv = jload(MET / "weights_M2.json")                    # M8 Sentinel: dinamikus súlyvektor (nem kötelező)
+    mod.update_weights(wv.get("weights_vector") if isinstance(wv, dict) else wv)
     errors = {}
     state = jload(DATA / "state.json", {"signature": "", "cool": {}, "last_hist": ""})
     old = (jload(DATA / "articles.json", {}) or {}).get("articles", [])
     profiles = jload(MET / "source_profiles.json", {}) or {}
     trends = jload(MET / "trends.json", {}) or {}
-    flags, fdet = truth_flags(jload(MET / "environment_truth_matrix.json"), t)
-    fresh = collect(cfg, errors)
-    off_arts, official = collect_official(cfg, errors, t)
+    truth = jload(MET / "environment_truth_matrix.json")
+    schema_changed = state.get("schema") != "v39"
+    if schema_changed:                       # a G/S/V jelentése megváltozott: a régi profilok nem hasonlíthatók, újratanulás a megőrzött cikkekből
+        profiles = {}
+        for a in old:
+            a.pop("profiled", None)
+            a.pop("z", None)
+    fresh, (off_arts, official) = await asyncio.gather(collect(cfg, errors), collect_official(cfg, errors, t))
     fresh += off_arts
     if not fresh and errors and not old:
         print("Nincs elérhető forrás:", errors)
-    known = {a["id"] for a in old}
-    arts = merge(old, fresh, t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"])
-    new_ids = {a["id"] for a in arts if a["id"] not in known}
-    n_ev = analyze(cfg, arts, profiles, flags, L)
-    new_arts = [a for a in arts if a["id"] in new_ids]
-    update_profiles(profiles, [a for a in arts if not a.get("profiled")])
-    rising, warming = update_trends(trends, new_arts, L, t)
-    snap = snapshot(arts, rising, flags, t)
-    sig_src = json.dumps([[a["id"], round(a["atm"], 2)] for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] + [snap["flags"], snap["rising"], official.get("calm")], sort_keys=True)
+    res = await mod.process_payload({"now": t, "old": old, "fresh": fresh, "profiles": profiles, "trends": trends, "official": official, "truth": truth})
+    arts, new_ids, flags, g_info, rising, warming, snap = res["articles"], res["new_ids"], res["flags"], res["g"], res["rising"], res["warming"], res["snapshot"]
+    sig_src = json.dumps([[a["id"], round(a["atm"], 2)] for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))]
+                         + [snap["flags"], snap["rising"], official.get("calm"), round(g_info["value"], 2)], sort_keys=True)
     sig = hashlib.sha1(sig_src.encode()).hexdigest()
-    changed = force or sig != state.get("signature") or not (DATA / "articles.json").exists()
+    changed = force or schema_changed or sig != state.get("signature") or not (DATA / "articles.json").exists()
     alerts = build_alerts(cfg, arts, rising, official, new_ids) if new_ids or official.get("calm") is False else []
-    meta = {"version": cfg["version"], "generated_at": iso(t), "region": cfg["region"], "thresholds": cfg["thresholds"], "events": n_ev,
-            "errors": errors, "truth": {"available": flags is not None, "flags": sorted(flags) if flags is not None else None, "detail": fdet},
+    meta = {"version": cfg["version"], "generated_at": iso(t), "region": cfg["region"], "thresholds": cfg["thresholds"], "events": res["events"],
+            "errors": errors, "g": g_info, "weights": [round(x, 3) for x in mod.w],
+            "truth": {"available": flags is not None, "flags": sorted(flags) if flags is not None else None, "detail": res["flags_detail"]},
             "official": {"calm": official.get("calm"), "excerpt": official.get("excerpt", "")[:300]}, "rising": rising, "warming_up": warming}
     if changed:
         jsave(DATA / "articles.json", {"meta": meta, "articles": [{k: v for k, v in a.items() if k != "trust"} for a in arts]})
         jsave(MET / "source_profiles.json", profiles)
         jsave(MET / "trends.json", trends)
+        jsave(MET / "media_noise_matrix.json", res["p8"], pretty=True)
         hist = jload(MET / "atm_history.json", {"points": []})
         pts = hist.get("points", [])
         last_t = parse_date(state.get("last_hist")) or datetime(1970, 1, 1, tzinfo=timezone.utc)
@@ -610,15 +729,21 @@ def run(force=False):
             state["last_hist"] = iso(t)
         jsave(MET / "atm_history.json", {"points": pts[-cfg["limits"]["history_max"]:]})
         state["signature"] = sig
+        state["schema"] = "v39"
         jsave(DATA / "state.json", state)
     outbox = os.environ.get("MNT_OUTBOX") or "/tmp/mnt_outbox.json"
     jsave(outbox, alerts)
     if os.environ.get("GITHUB_OUTPUT"):
         with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
             f.write("changed=%s\n" % ("true" if changed else "false"))
-    print("MNT v38: %d cikk (%d új), %d esemény, ATM átlag %.3f, p90 %.3f, hibás forrás: %s, fizikai mérés: %s, riasztás: %d, változás: %s" % (
-        len(arts), len(new_ids), n_ev, snap["mean"], snap["p90"], list(errors) or "nincs", "van" if flags is not None else "nincs", len(alerts), changed))
-    return {"changed": changed, "alerts": alerts, "articles": arts, "snapshot": snap, "errors": errors}
+    print("MNT v39: %d cikk (%d új), %d esemény, G %.2f (%s), ATM átlag %.3f, p90 %.3f, hibás forrás: %s, fizikai mérés: %s, riasztás: %d, változás: %s" % (
+        len(arts), len(new_ids), res["events"], g_info["value"], g_info["source"], snap["mean"], snap["p90"], list(errors) or "nincs",
+        "van" if flags is not None else "nincs", len(alerts), changed))
+    return {"changed": changed, "alerts": alerts, "articles": arts, "snapshot": snap, "errors": errors, "p8": res["p8"], "g": g_info}
+
+
+def run(force=False):
+    return asyncio.run(run_async(force))
 
 
 # ───────────────────────── ntfy ─────────────────────────
