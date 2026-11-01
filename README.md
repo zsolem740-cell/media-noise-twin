@@ -30,3 +30,4 @@ Elfogadott alakok (bármelyik): `{"updated":"2026-11-01T11:30:00Z","flags":["geo
 
 ## Frissítés
 A munkafolyamat csak akkor csomagol ki, ha a `.mnt-version` fájl nem `v38`. Újrakicsomagoláshoz: Run workflow › `force_extract = igen` (felülírja a kézi módosításokat).
+
