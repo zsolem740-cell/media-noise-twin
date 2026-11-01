@@ -1,0 +1,1621 @@
+name: Média-Zaj Twin
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_extract:
+        description: "A fájlok újrakicsomagolása (felülírja a kézi módosításokat): igen / nem"
+        default: "nem"
+  push:
+    paths:
+      - ".github/workflows/media-noise.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-noise
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Önkicsomagolás (v38)
+        env:
+          FORCE: ${{ github.event.inputs.force_extract }}
+        run: |
+          set -e
+          if [ -f .mnt-version ] && [ "$(cat .mnt-version)" = "v38" ] && [ "$FORCE" != "igen" ]; then
+            echo "A v38 fájlok már kicsomagolva, kihagyom."
+            exit 0
+          fi
+          echo "Kicsomagolás: Média-Zaj Twin v38"
+          mkdir -p "$(dirname 'index.html')"
+          cat > 'index.html' <<'__MNT_EOF_1__'
+          <!doctype html>
+          <html lang="hu">
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+          <meta name="theme-color" content="#030406">
+          <meta name="mobile-web-app-capable" content="yes">
+          <title>Média-Zaj Twin</title>
+          <link rel="manifest" href="manifest.webmanifest">
+          <link rel="icon" href="icons/icon-192.png">
+          <link rel="apple-touch-icon" href="icons/icon-192.png">
+          <link rel="stylesheet" href="css/hud.css">
+          <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+          </head>
+          <body>
+          <div id="globe" aria-label="3D glóbusz a hírek helyszíneivel"></div>
+          <main id="app">
+            <header class="hud glass">
+              <div class="title"><b>MÉDIA-ZAJ TWIN</b><small>Vas megye / Alpokalja · ATM = G·S·(1−V) · v38 · <span id="kind">…</span></small></div>
+              <div class="tiles">
+                <div class="tile"><b id="m-atm">–</b><small>ATM átlag (×100)</small></div>
+                <div class="tile"><b id="m-p90">–</b><small>p90 (×100)</small></div>
+                <div class="tile"><b id="m-n">–</b><small>hírek száma</small></div>
+                <div class="tile"><b id="m-upd">–</b><small>frissítve</small></div>
+              </div>
+              <div class="spark"><canvas id="spark"></canvas><span id="learn" class="dim"></span></div>
+              <div id="banner" class="banner"></div>
+              <div class="btns">
+                <button id="b-refresh" title="Adatok újratöltése">⟳ Frissítés</button>
+                <button id="b-focus" title="Vas megye a gömb közepére">◎ Fókusz</button>
+                <button id="b-auto" title="Automatikus forgás">↻ Forgás</button>
+                <button id="b-settings" title="Beállítások">⚙</button>
+              </div>
+            </header>
+            <section id="sheet" class="sheet glass">
+              <button id="b-sheet" class="handle" aria-label="Lista mutatása/rejtése"><i></i></button>
+              <div class="filters">
+                <div id="chips" class="chips">
+                  <button data-scope="official">Hivatalos</button><button data-scope="local">Helyi</button>
+                  <button data-scope="national">Országos</button><button data-scope="international">Nemzetközi</button>
+                </div>
+                <div class="ctl">
+                  <select id="mode" aria-label="Rendezés">
+                    <option value="learned">Tanult sorrend</option><option value="noisy">Legzajosabb elöl</option>
+                    <option value="clean">Legtisztább elöl</option><option value="recent">Legfrissebb elöl</option>
+                  </select>
+                  <label class="chk"><input id="hide" type="checkbox"> zaj elrejtése</label>
+                  <input id="thr" type="range" min="2" max="40" value="25" aria-label="ATM-plafon"><span id="thr-val" class="dim">25.0</span>
+                </div>
+              </div>
+              <p id="empty" class="dim pad" hidden>Még nincs adat. A GitHubon: Actions › Média-Zaj Twin › Run workflow, majd frissíts.</p>
+              <div id="list"></div>
+              <button id="more" class="more" hidden>Továbbiak</button>
+              <p class="dim pad foot">A pontszám tájékoztató, nem igazságmérő. Az ATM a szöveg jellemzőiből és a mért környezeti adatokból számolt kísérleti mutató.</p>
+            </section>
+          </main>
+          <div id="settings" class="modal" hidden>
+            <div class="glass box">
+              <h2>Beállítások</h2>
+              <p class="dim">A tanult szűrő és a szavazatok csak ezen a telefonon tárolódnak.</p>
+              <button id="s-reset">Tanulás és szavazatok törlése</button>
+              <button id="s-2d">Egyszerű 2D glóbusz</button>
+              <button id="s-close" class="ghost">Bezárás</button>
+            </div>
+          </div>
+          <noscript><p style="padding:2rem;color:#fff">Az alkalmazáshoz JavaScript szükséges.</p></noscript>
+          <script type="module" src="js/app.js"></script>
+          </body>
+          </html>
+          __MNT_EOF_1__
+          mkdir -p "$(dirname 'manifest.webmanifest')"
+          cat > 'manifest.webmanifest' <<'__MNT_EOF_2__'
+          {"name":"Média-Zaj Twin","short_name":"Zaj-Twin","description":"Helyi és nemzetközi hírek zajmérője: ATM = G·S·(1−V), fizikai keresztellenőrzéssel.","lang":"hu","start_url":"./","scope":"./","display":"standalone","orientation":"portrait","background_color":"#030406","theme_color":"#030406","icons":[{"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
+          __MNT_EOF_2__
+          mkdir -p "$(dirname 'sw.js')"
+          cat > 'sw.js' <<'__MNT_EOF_3__'
+          /* Média-Zaj Twin v38 – service worker. Héj: gyorsítótárból (közben frissül); adat/konfig: hálózat először; Three.js: külön, tartós gyorsítótár. */
+          const V = "mnt-v38", LIB = "mnt-lib-three-160";
+          const SHELL = ["./", "index.html", "css/hud.css", "js/app.js", "js/modules/webglGlobe.js", "js/modules/filterEngine.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
+          self.addEventListener("install", (e) => { e.waitUntil(caches.open(V).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
+          self.addEventListener("activate", (e) => {
+            e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith("mnt-") && k !== V && k !== LIB).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
+          });
+          self.addEventListener("fetch", (e) => {
+            const r = e.request; if (r.method !== "GET") return;
+            const u = new URL(r.url);
+            if (u.hostname.endsWith("jsdelivr.net")) {
+              e.respondWith(caches.open(LIB).then((c) => c.match(r).then((hit) => hit || fetch(r).then((res) => { if (res.ok) c.put(r, res.clone()); return res; }))));
+            } else if (u.origin === location.origin && (u.pathname.includes("/data/") || u.pathname.includes("/config/"))) {
+              e.respondWith(fetch(r).then((res) => { if (res.ok) caches.open(V).then((c) => c.put(r, res.clone())); return res; }).catch(() => caches.match(r)));
+            } else if (u.origin === location.origin) {
+              e.respondWith(caches.match(r).then((hit) => { const net = fetch(r).then((res) => { if (res.ok) caches.open(V).then((c) => c.put(r, res.clone())); return res; }).catch(() => hit); return hit || net; }));
+            }
+          });
+          __MNT_EOF_3__
+          mkdir -p "$(dirname 'css/hud.css')"
+          cat > 'css/hud.css' <<'__MNT_EOF_4__'
+          :root{--bg:#030406;--ink:#dbe7ff;--dim:#8193a5;--line:rgba(120,160,255,.18);--cy:#06b6d4;--vi:#8b5cf6;--am:#f59e0b;--rd:#ef4444;--gr:#34d399;
+          --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+          *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+          html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.45 var(--mono);overflow:hidden}
+          #globe{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 38%,#0a1230 0%,#030406 70%)}
+          .globe-canvas{display:block;width:100%;height:100%}
+          #app{position:fixed;inset:0;display:flex;flex-direction:column;pointer-events:none;padding-top:var(--sat)}
+          .glass{background:rgba(10,16,30,.58);backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+          .hud{pointer-events:auto;margin:8px 8px 0;padding:10px 12px;border-radius:16px}
+          .title b{display:block;letter-spacing:.14em;color:var(--am);font-size:15px}
+          .title small{display:block;color:var(--dim);font-size:11px}
+          .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 6px}
+          .tile{background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:10px;padding:5px 6px;text-align:center;min-width:0}
+          .tile b{display:block;font-size:17px;color:var(--cy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .tile small{display:block;color:var(--dim);font-size:9.5px;line-height:1.15}
+          .spark{display:flex;align-items:center;gap:8px}.spark canvas{width:96px;height:28px;flex:none}
+          .dim{color:var(--dim);font-size:11px}.pad{padding:10px 14px}.foot{text-align:center}
+          .banner{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}.banner span{font-size:10.5px;padding:2px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(6,182,212,.07)}
+          .btns{display:flex;gap:6px;margin-top:8px}
+          button,select{font:inherit;color:var(--ink);background:rgba(6,182,212,.08);border:1px solid var(--line);border-radius:10px;padding:7px 10px;min-height:36px}
+          button:active{background:rgba(6,182,212,.22)}button.off{opacity:.45}button.ghost{background:transparent}
+          .btns button{flex:1}.btns #b-settings{flex:0 0 auto}
+          .sheet{pointer-events:auto;margin:auto 0 0;border-radius:18px 18px 0 0;max-height:56vh;overflow:auto;overscroll-behavior:contain;padding-bottom:calc(var(--sab) + 8px);transition:transform .25s}
+          .peek .sheet{transform:translateY(calc(100% - 38px))}
+          .handle{position:sticky;top:0;z-index:2;display:block;width:100%;background:rgba(10,16,30,.85);border:0;border-radius:18px 18px 0 0;padding:8px 0;min-height:0}
+          .handle i{display:block;width:44px;height:4px;border-radius:2px;background:var(--dim);margin:0 auto}
+          .filters{padding:4px 10px 6px}
+          .chips{display:flex;gap:6px;flex-wrap:wrap}.chips button{padding:5px 10px;min-height:30px;border-radius:999px;font-size:12px}
+          .chips button.off{opacity:.4;text-decoration:line-through}
+          .ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+          .ctl select{flex:1;min-width:140px}.chk{display:flex;align-items:center;gap:4px;font-size:12px}.ctl input[type=range]{flex:1;min-width:80px;accent-color:var(--vi)}
+          .card{margin:6px 8px;padding:10px 11px;border:1px solid var(--line);border-radius:14px;background:rgba(5,10,24,.55)}
+          .card.sel{border-color:var(--vi);box-shadow:0 0 0 1px var(--vi),0 0 18px rgba(139,92,246,.35)}
+          .card .row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--dim)}
+          .atm{color:#06121a;background:var(--c);padding:1px 8px;border-radius:999px;font-weight:700}
+          .scope{border:1px solid var(--line);padding:0 7px;border-radius:999px}.time{margin-left:auto}
+          .card h3{margin:6px 0 2px;font-size:14px;line-height:1.35;font-weight:600}.card h3 a{color:var(--ink);text-decoration:none}
+          .meta{color:var(--dim);font-size:11px}
+          .bars{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:7px 0 4px}
+          .bar{position:relative;height:15px;border-radius:5px;background:rgba(120,160,255,.10);overflow:hidden}
+          .bar i{position:absolute;inset:0 auto 0 0;opacity:.55}.bar.g i{background:var(--am)}.bar.s i{background:var(--rd)}.bar.v i{background:var(--gr)}
+          .bar b{position:relative;font-size:10px;font-weight:600;padding-left:5px;line-height:15px}
+          .tags{display:flex;gap:5px;flex-wrap:wrap}.tags em{font-style:normal;font-size:10.5px;padding:1px 7px;border-radius:999px;background:rgba(139,92,246,.18)}
+          .tags em.ok{background:rgba(52,211,153,.18);color:var(--gr)}.tags em.bad{background:rgba(239,68,68,.18);color:#fca5a5}
+          .detail p{margin:6px 0 0;font-size:12px}.votes{display:flex;gap:6px;margin-top:8px}.votes button{flex:1;padding:6px;font-size:12px}
+          .votes button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}
+          .more{display:block;margin:8px auto}
+          .modal{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
+          .modal[hidden]{display:none}.box{border-radius:16px;padding:16px;max-width:360px;width:100%;display:flex;flex-direction:column;gap:10px}.box h2{margin:0;font-size:16px;color:var(--am)}
+          @media (min-width:820px){#app{flex-direction:row;padding:var(--sat) 8px 8px}.hud{width:380px;margin:0;align-self:flex-start}.sheet{margin:0 0 0 auto;width:460px;max-height:none;height:100%;border-radius:18px}.peek .sheet{transform:none}.handle{display:none}}
+          @media (prefers-reduced-motion:reduce){.sheet{transition:none}}
+          __MNT_EOF_4__
+          mkdir -p "$(dirname 'js/app.js')"
+          cat > 'js/app.js' <<'__MNT_EOF_5__'
+          /* Média-Zaj Twin v38 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő). */
+          import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
+          import { FilterEngine } from "./modules/filterEngine.js";
+
+          const $ = (id) => document.getElementById(id);
+          const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+          const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
+          const TOPIC_HU = { earthquake: "földrengés", solar: "napkitörés", geomagnetic: "geomágneses", storm: "vihar", flood: "árvíz" };
+          const DEF_TH = { mid: 0.12, high: 0.25 };
+          const S = { arts: [], meta: null, hist: [], scopes: { official: true, local: true, national: true, international: true }, mode: "learned", hide: false, thr: 0.25, limit: 50, selected: null };
+          const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
+          const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* tele a tár */ } };
+          const engine = new FilterEngine();
+          const votes = lsGet("mnt.votes.v38", {});
+          const prefs = lsGet("mnt.pref.v38", { fallback: false, auto: true });
+          let globe = null, reading = null;
+
+          const th = () => (S.meta && S.meta.thresholds) || DEF_TH;
+          const pctl = (v, p) => { if (!v.length) return 0; const a = [...v].sort((x, y) => x - y), k = (a.length - 1) * p, lo = Math.floor(k), hi = Math.ceil(k); return a[lo] + (a[hi] - a[lo]) * (k - lo); };
+          const ts = (a) => Date.parse(a.published || a.first_seen || 0) || 0;
+          export function ago(iso, now = Date.now()) {
+            const t = Date.parse(iso); if (!t) return "–";
+            const m = Math.max(0, Math.round((now - t) / 60000));
+            return m < 1 ? "most" : m < 60 ? m + " perce" : m < 1440 ? Math.round(m / 60) + " órája" : Math.round(m / 1440) + " napja";
+          }
+          const atmTxt = (v) => (v * 100).toFixed(1);
+          export const safeUrl = (u) => (/^https?:\/\//i.test(String(u || "")) ? String(u) : "#");
+
+          /* ───────── adatok ───────── */
+          async function getJson(url) { const r = await fetch(url + "?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) throw new Error(url + " " + r.status); return r.json(); }
+          async function load() {
+            try {
+              const d = await getJson("data/articles.json");
+              S.arts = d.articles || []; S.meta = d.meta || null;
+              try { S.hist = (await getJson("data/metrics/atm_history.json")).points || []; } catch (e) { S.hist = []; }
+              $("empty").hidden = true;
+            } catch (e) {
+              S.arts = []; S.meta = null; $("empty").hidden = false;
+            }
+            render();
+          }
+
+          /* ───────── szűrés és sorrend ───────── */
+          export function ordered(list, mode, eng) {
+            const a = [...list];
+            if (mode === "noisy") a.sort((x, y) => y.atm - x.atm);
+            else if (mode === "clean") a.sort((x, y) => x.atm - y.atm);
+            else if (mode === "recent") a.sort((x, y) => ts(y) - ts(x));
+            else { const sc = new Map(a.map((x) => [x.id, eng.score(x).score])); a.sort((x, y) => sc.get(y.id) - sc.get(x.id) || ts(y) - ts(x)); }
+            return a;
+          }
+          const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr)), S.mode, engine);
+
+          /* ───────── HUD ───────── */
+          function renderHud(list) {
+            const day = list.filter((a) => ts(a) >= Date.now() - 864e5), v = (day.length ? day : list).map((a) => a.atm);
+            const mean = v.length ? v.reduce((x, y) => x + y, 0) / v.length : 0, p90 = pctl(v, 0.9), t = th();
+            $("m-atm").textContent = atmTxt(mean); $("m-atm").style.color = rgbCss(atmColor(mean, t));
+            $("m-p90").textContent = atmTxt(p90); $("m-p90").style.color = rgbCss(atmColor(p90, t));
+            $("m-n").textContent = String(list.length);
+            const g = S.meta && S.meta.generated_at;
+            $("m-upd").textContent = g ? ago(g) : "–";
+            const st = engine.stats();
+            $("learn").textContent = `Tanuló szűrő: λ ${st.lambda.toFixed(2)} · AUC ${st.auc === null ? "–" : st.auc.toFixed(2)} · ${st.trained} tanítás`;
+            const m = S.meta || {}, b = [];
+            if (m.official) b.push(m.official.calm === false ? "🚨 HungaroMet: érvényes figyelmeztetés" : m.official.calm === true ? "✅ HungaroMet: nincs figyelmeztetés" : "ℹ HungaroMet: állapot ismeretlen");
+            if (m.truth) b.push(m.truth.available ? "🔬 Fizikai mérés: " + ((m.truth.flags || []).length ? m.truth.flags.map((f) => TOPIC_HU[f] || f).join(", ") : "nyugodt") : "🔬 Fizikai mérés: nincs adat");
+            if (m.warming_up) b.push("📈 Trend: gyűjtés (24 óra kell)");
+            else if ((m.rising || []).length) b.push("📈 Felszálló: " + m.rising.slice(0, 3).map((r) => r.term).join(", "));
+            const errs = Object.keys(m.errors || {});
+            if (errs.length) b.push("⚠ Nem elérhető forrás: " + errs.join(", "));
+            if (g && Date.now() - Date.parse(g) > 3 * 36e5) b.push("🕒 Az adat " + ago(g) + " változott (nincs új érdemi változás, vagy áll a gyűjtés)");
+            $("banner").innerHTML = b.map((x) => `<span>${esc(x)}</span>`).join("");
+            spark();
+          }
+          function spark() {
+            const cv = $("spark"), ctx = cv.getContext && cv.getContext("2d"); if (!ctx) return;
+            const dpr = Math.min(window.devicePixelRatio || 1, 2), w = cv.clientWidth || 120, h = cv.clientHeight || 30;
+            cv.width = w * dpr; cv.height = h * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+            const pts = S.hist.filter((p) => Date.parse(p.t) > Date.now() - 7 * 864e5); if (pts.length < 2) return;
+            const t0 = Date.parse(pts[0].t), t1 = Date.parse(pts[pts.length - 1].t) || t0 + 1, mx = Math.max(0.05, ...pts.map((p) => p.p90 || p.mean));
+            const line = (key, col, dash) => { ctx.beginPath(); ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = 1.4; pts.forEach((p, i) => { const x = (Date.parse(p.t) - t0) / (t1 - t0) * (w - 2) + 1, y = h - 2 - (p[key] / mx) * (h - 4); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); };
+            line("p90", "rgba(245,158,11,.8)", [3, 3]); line("mean", "rgba(6,182,212,.95)", []);
+          }
+
+          /* ───────── lista ───────── */
+          function bar(label, v, cls) { return `<span class="bar ${cls}"><i style="width:${Math.round(v * 100)}%"></i><b>${label} ${v.toFixed(2)}</b></span>`; }
+          function card(a, sc) {
+            const c = rgbCss(atmColor(a.atm, th())), vt = votes[a.id], tr = a.truth || {};
+            const tags = (a.topics || []).map((t) => `<em>${esc(TOPIC_HU[t] || t)}</em>`).join("");
+            const badge = tr.verdict === "igazolt" ? `<em class="ok">✔ fizikailag igazolt</em>` : tr.verdict === "nem igazolt" ? `<em class="bad">⚠ fizikailag nem igazolt</em>` : "";
+            return `<article class="card${S.selected === a.id ? " sel" : ""}" data-id="${esc(a.id)}">
+           <div class="row"><span class="atm" style="--c:${c}">ATM ${atmTxt(a.atm)}</span><span class="scope">${SCOPE_HU[a.scope] || a.scope}</span><span class="time">${ago(a.published || a.first_seen)}</span></div>
+           <h3><a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" data-act="link">${esc(a.title)}</a></h3>
+           <div class="meta">${esc(a.source)}${a.geo ? " · 📍 " + esc(a.geo.name) : ""}${a.event_sources > 1 ? " · 📰 " + a.event_sources + " forrás" : ""}</div>
+           <div class="bars">${bar("G", a.g, "g")}${bar("S", a.s, "s")}${bar("V", a.v, "v")}</div>
+           <div class="tags">${tags}${badge}</div>
+           <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} · ${a.s.toFixed(2)} · ${(1 - a.v).toFixed(2)}${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
+           <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p></div>
+           <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
+          </article>`;
+          }
+          function render() {
+            const list = visible();
+            renderHud(list);
+            $("list").innerHTML = list.slice(0, S.limit).map((a) => card(a, engine.score(a))).join("") || (S.arts.length ? `<p class="dim pad">Nincs a szűrőknek megfelelő hír.</p>` : "");
+            $("more").hidden = list.length <= S.limit; $("more").textContent = `Továbbiak (${list.length - S.limit})`;
+            if (globe) {
+              const mx = Math.log2(Math.max(2, ...list.map((a) => a.event_size || 1)));
+              globe.setPoints(list.filter((a) => a.geo).map((a) => ({ id: a.id, lat: a.geo.lat, lon: a.geo.lon, atm: a.atm, size: Math.log2(a.event_size || 1) / mx })), th());
+            }
+          }
+
+          /* ───────── tanítás: szavazat, olvasási idő ───────── */
+          const byId = (id) => S.arts.find((a) => a.id === id);
+          function vote(a, label) {
+            if (votes[a.id] === label) return;
+            votes[a.id] = label; lsSet("mnt.votes.v38", votes);
+            engine.train(a, label, 1, "vote");
+          }
+          function stopReading(card) {
+            if (!reading || (card && reading.id !== card)) return;
+            const sec = (Date.now() - reading.since) / 1000, a = byId(reading.id), opened = reading.opened;
+            reading = null;
+            if (a && !votes[a.id]) engine.trainDwell(a, sec, opened);
+          }
+          document.addEventListener("visibilitychange", () => {
+            if (document.hidden) return;
+            if (reading && reading.away) { const away = (Date.now() - reading.since) / 1000, a = byId(reading.id); reading = null; if (a && away >= 8) engine.trainDwell(a, away, false); render(); }
+          });
+
+          /* ───────── események ───────── */
+          $("list").addEventListener("click", (ev) => {
+            const t = ev.target.closest("[data-act]"), cardEl = ev.target.closest(".card"); if (!cardEl) return;
+            const a = byId(cardEl.dataset.id); if (!a) return;
+            const act = t && t.dataset.act;
+            if (act === "up" || act === "down") { vote(a, act === "up" ? 1 : 0); const y = $("sheet").scrollTop; render(); $("sheet").scrollTop = y; return; }
+            if (act === "link") { stopReading(); reading = { id: a.id, since: Date.now(), away: true }; return; }
+            const d = cardEl.querySelector(".detail"), open = d.hidden;
+            if (reading && reading.id !== a.id) stopReading();
+            d.hidden = !open;
+            if (open) { reading = { id: a.id, since: Date.now(), opened: true }; S.selected = a.id; if (globe && a.geo) { globe.select(a.id); globe.focus(a.geo.lat, a.geo.lon); } }
+            else stopReading(a.id);
+          });
+          $("chips").addEventListener("click", (ev) => { const b = ev.target.closest("[data-scope]"); if (!b) return; S.scopes[b.dataset.scope] = !S.scopes[b.dataset.scope]; b.classList.toggle("off", !S.scopes[b.dataset.scope]); S.limit = 50; render(); });
+          $("mode").addEventListener("change", (ev) => { S.mode = ev.target.value; S.limit = 50; render(); });
+          $("hide").addEventListener("change", (ev) => { S.hide = ev.target.checked; render(); });
+          $("thr").addEventListener("input", (ev) => { S.thr = ev.target.value / 100; $("thr-val").textContent = atmTxt(S.thr); if (S.hide) render(); });
+          $("more").addEventListener("click", () => { S.limit += 50; render(); });
+          $("b-refresh").addEventListener("click", load);
+          $("b-focus").addEventListener("click", () => { const r = (S.meta && S.meta.region) || { lat: 47, lon: 16.6 }; if (globe) globe.focus(r.lat, r.lon); });
+          $("b-auto").addEventListener("click", () => { prefs.auto = !prefs.auto; lsSet("mnt.pref.v38", prefs); if (globe) globe.setAutoRotate(prefs.auto); $("b-auto").classList.toggle("off", !prefs.auto); });
+          $("b-sheet").addEventListener("click", () => $("app").classList.toggle("peek"));
+          $("b-settings").addEventListener("click", () => { $("settings").hidden = false; });
+          $("s-close").addEventListener("click", () => { $("settings").hidden = true; });
+          $("s-reset").addEventListener("click", () => { if (confirm("Biztosan törlöd a tanult szűrőt és a szavazataidat?")) { engine.reset(); Object.keys(votes).forEach((k) => delete votes[k]); lsSet("mnt.votes.v38", votes); render(); } });
+          $("s-2d").addEventListener("click", () => { prefs.fallback = !prefs.fallback; lsSet("mnt.pref.v38", prefs); location.reload(); });
+          $("s-2d").textContent = prefs.fallback ? "3D glóbusz bekapcsolása" : "Egyszerű 2D glóbusz (gyengébb telefonra)";
+          $("b-auto").classList.toggle("off", !prefs.auto);
+          document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") $("settings").hidden = true; });
+
+          /* ───────── indítás ───────── */
+          async function start() {
+            try {
+              globe = await createGlobe($("globe"), {
+                forceFallback: prefs.fallback, focus: [47, 16.6],
+                onPick: (p) => { S.selected = p.id; const idx = visible().findIndex((a) => a.id === p.id); if (idx >= S.limit) S.limit = idx + 1; render(); const el = document.querySelector(`.card[data-id="${CSS.escape(p.id)}"]`); if (el) { $("app").classList.remove("peek"); el.scrollIntoView({ block: "center", behavior: "smooth" }); } },
+              });
+              globe.setAutoRotate(prefs.auto);
+              $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
+            } catch (e) { $("kind").textContent = "nincs glóbusz"; }
+            await load();
+            setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
+            if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+          }
+          if (typeof document !== "undefined" && document.getElementById("globe")) start();
+          __MNT_EOF_5__
+          mkdir -p "$(dirname 'js/modules/webglGlobe.js')"
+          cat > 'js/modules/webglGlobe.js' <<'__MNT_EOF_6__'
+          /* Média-Zaj Twin v38 – 3D glóbusz (Three.js, InstancedMesh).
+             A hírek helyszíneit egyetlen InstancedMesh jeleníti meg (egy rajzolási hívás, GPU-n), ezért a telefonon is
+             folyékony. Érintés: húzás = forgatás (tehetetlenséggel), csíptetés = nagyítás, koppintás = kijelölés.
+             Ha a Three.js nem tölthető be vagy nincs WebGL, 2D-s tartalék glóbusz rajzol ugyanazzal a kezelőfelülettel. */
+
+          const D2R = Math.PI / 180;
+
+          /* lat/lon → egységgömb pont. lon = 0 a +z irányba néz (a kamera felé). */
+          export function latLonToVec3(lat, lon, r = 1) {
+            const p = lat * D2R, l = lon * D2R;
+            return [r * Math.cos(p) * Math.sin(l), r * Math.sin(p), r * Math.cos(p) * Math.cos(l)];
+          }
+
+          /* ATM → szín (zöld → borostyán → piros). th = {mid, high} a szerver küszöbei. */
+          export function atmColor(atm, th = { mid: 0.12, high: 0.25 }) {
+            const lerp = (a, b, t) => a.map((x, i) => x + (b[i] - x) * t);
+            const G = [0.20, 0.83, 0.60], Y = [0.96, 0.62, 0.04], R = [0.94, 0.27, 0.27];
+            const v = Math.max(0, atm || 0);
+            if (v <= th.mid) return lerp(G, Y, v / th.mid);
+            return lerp(Y, R, Math.min(1, (v - th.mid) / Math.max(1e-6, th.high - th.mid)));
+          }
+          export const rgbCss = (c) => `rgb(${Math.round(c[0] * 255)},${Math.round(c[1] * 255)},${Math.round(c[2] * 255)})`;
+
+          /* Azonos helyszínű cikkek: kis spirálba rendezve, hogy ne fedjék egymást. Visszatér: [{...pont, lat, lon}] */
+          export function spread(points) {
+            const seen = new Map();
+            return points.map((p) => {
+              const key = p.lat.toFixed(2) + "," + p.lon.toFixed(2), k = seen.get(key) || 0;
+              seen.set(key, k + 1);
+              if (!k) return { ...p };
+              const rad = 0.28 * Math.sqrt(k), ang = k * 2.39996;
+              return { ...p, lat: p.lat + rad * Math.sin(ang), lon: p.lon + rad * Math.cos(ang) / Math.max(0.2, Math.cos(p.lat * D2R)) };
+            });
+          }
+
+          /* Forgatás után a pont képernyő-koordinátája (ortografikus): visszaad [x, y, mélység(+ = előtte)] */
+          export function project(lat, lon, rotY, rotX) {
+            const [x, y, z] = latLonToVec3(lat, lon);
+            const cy = Math.cos(rotY), sy = Math.sin(rotY);
+            const x1 = x * cy + z * sy, z1 = -x * sy + z * cy;
+            const cx = Math.cos(rotX), sx = Math.sin(rotX);
+            return [x1, y * cx - z1 * sx, y * sx + z1 * cx];
+          }
+
+          function webglOk() {
+            try {
+              const c = document.createElement("canvas");
+              return !!(c.getContext("webgl2") || c.getContext("webgl"));
+            } catch (e) { return false; }
+          }
+
+          export async function createGlobe(container, { onPick = () => {}, focus = [47, 16.6], thresholds, forceFallback = false } = {}) {
+            let THREE = null;
+            if (!forceFallback && webglOk()) {
+              try { THREE = await import("three"); } catch (e) { THREE = null; }
+            }
+            return THREE ? createWebgl(THREE, container, { onPick, focus, thresholds }) : createFallback(container, { onPick, focus, thresholds });
+          }
+
+          /* ───────────────────────── WebGL ───────────────────────── */
+          function createWebgl(THREE, container, { onPick, focus, thresholds }) {
+            const MAX = 2048;
+            const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "high-performance" });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            renderer.domElement.className = "globe-canvas";
+            container.appendChild(renderer.domElement);
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 60);
+            let zoom = 3.4;
+            camera.position.set(0, 0, zoom);
+            const globe = new THREE.Group();
+            globe.rotation.order = "XYZ";
+            scene.add(globe);
+
+            globe.add(new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), new THREE.MeshBasicMaterial({ color: 0x050b1c })));
+            globe.add(new THREE.Mesh(new THREE.SphereGeometry(1.035, 40, 28), new THREE.MeshBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.10, side: THREE.BackSide, blending: THREE.AdditiveBlending, depthWrite: false })));
+            const g = [], e = [];
+            for (let la = -80; la <= 80; la += 20) {
+              for (let lo = 0; lo < 360; lo += 6) { const a = latLonToVec3(la, lo, 1.002), b = latLonToVec3(la, lo + 6, 1.002); (la === 0 ? e : g).push(...a, ...b); }
+            }
+            for (let lo = 0; lo < 360; lo += 20) {
+              for (let la = -90; la < 90; la += 6) { g.push(...latLonToVec3(la, lo, 1.002), ...latLonToVec3(la + 6, lo, 1.002)); }
+            }
+            const lineGeo = (arr) => { const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.Float32BufferAttribute(arr, 3)); return geo; };
+            globe.add(new THREE.LineSegments(lineGeo(g), new THREE.LineBasicMaterial({ color: 0x2563eb, transparent: true, opacity: 0.28 })));
+            globe.add(new THREE.LineSegments(lineGeo(e), new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 })));
+            const ring = [];
+            for (let a = 0; a < 360; a += 10) { const r = 3.2, p = [focus[0] + r * Math.sin(a * D2R), focus[1] + r * Math.cos(a * D2R) / Math.cos(focus[0] * D2R)], q = [focus[0] + r * Math.sin((a + 10) * D2R), focus[1] + r * Math.cos((a + 10) * D2R) / Math.cos(focus[0] * D2R)]; ring.push(...latLonToVec3(p[0], p[1], 1.004), ...latLonToVec3(q[0], q[1], 1.004)); }
+            globe.add(new THREE.LineSegments(lineGeo(ring), new THREE.LineBasicMaterial({ color: 0x8b5cf6 })));
+
+            const stars = [];
+            for (let i = 0; i < 360; i++) { const u = Math.random() * 2 - 1, t = Math.random() * 6.2832, s = Math.sqrt(1 - u * u); stars.push(9 * s * Math.cos(t), 9 * u, 9 * s * Math.sin(t)); }
+            scene.add(new THREE.Points(lineGeo(stars), new THREE.PointsMaterial({ color: 0x9fb4d8, size: 0.03, transparent: true, opacity: 0.7 })));
+
+            const mesh = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial(), MAX);
+            mesh.frustumCulled = false; mesh.count = 0;
+            globe.add(mesh);
+            const sel = new THREE.Mesh(new THREE.SphereGeometry(1, 14, 10), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false }));
+            sel.visible = false; globe.add(sel);
+
+            let pts = [], rotY = 0, rotX = 0, vY = 0, vX = 0, autoRotate = true, idleSince = performance.now(), dirty = true, alive = true, selected = null;
+            const tmp = new THREE.Object3D(), col = new THREE.Color();
+            const setView = (lat, lon) => { rotY = -lon * D2R; rotX = lat * D2R; dirty = true; };
+            setView(focus[0], focus[1]);
+
+            function setPoints(list, th = thresholds) {
+              pts = spread(list).slice(0, MAX);
+              pts.forEach((p, i) => {
+                const [x, y, z] = latLonToVec3(p.lat, p.lon, 1.012);
+                const s = 0.010 + 0.016 * Math.min(1, p.size || 0);
+                tmp.position.set(x, y, z); tmp.scale.setScalar(s); tmp.updateMatrix();
+                mesh.setMatrixAt(i, tmp.matrix);
+                const c = atmColor(p.atm, th); col.setRGB(c[0], c[1], c[2]); mesh.setColorAt(i, col);
+              });
+              mesh.count = pts.length;
+              mesh.instanceMatrix.needsUpdate = true;
+              if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+              if (selected) select(selected);
+              dirty = true;
+            }
+            function select(id) {
+              selected = id;
+              const p = pts.find((q) => q.id === id);
+              if (!p) { sel.visible = false; dirty = true; return; }
+              const [x, y, z] = latLonToVec3(p.lat, p.lon, 1.012);
+              sel.position.set(x, y, z); sel.scale.setScalar(0.028 + 0.016 * Math.min(1, p.size || 0)); sel.visible = true; dirty = true;
+            }
+            function focusOn(lat, lon) { setView(lat, lon); idleSince = performance.now(); }
+
+            const v3 = new THREE.Vector3();
+            function pickAt(clientX, clientY) {
+              const r = renderer.domElement.getBoundingClientRect(), px = clientX - r.left, py = clientY - r.top;
+              globe.updateMatrixWorld(); camera.updateMatrixWorld();
+              let best = null, bd = 30 * 30;
+              for (let i = 0; i < pts.length; i++) {
+                const [x, y, z] = latLonToVec3(pts[i].lat, pts[i].lon, 1.012);
+                v3.set(x, y, z).applyMatrix4(globe.matrixWorld);
+                if (v3.z < 0.25) continue;               // a gömb hátoldalán: nem választható
+                v3.project(camera);
+                const sx = (v3.x + 1) / 2 * r.width, sy = (1 - v3.y) / 2 * r.height, d = (sx - px) ** 2 + (sy - py) ** 2;
+                if (d < bd) { bd = d; best = pts[i]; }
+              }
+              return best;
+            }
+
+            const ptr = new Map(); let down = null, pinch = 0;
+            const el = renderer.domElement;
+            el.style.touchAction = "none";
+            el.addEventListener("pointerdown", (ev) => {
+              el.setPointerCapture(ev.pointerId); ptr.set(ev.pointerId, [ev.clientX, ev.clientY]);
+              down = { x: ev.clientX, y: ev.clientY, t: performance.now(), moved: 0 }; vX = vY = 0; idleSince = performance.now();
+              if (ptr.size === 2) { const [a, b] = [...ptr.values()]; pinch = Math.hypot(a[0] - b[0], a[1] - b[1]); }
+            });
+            el.addEventListener("pointermove", (ev) => {
+              if (!ptr.has(ev.pointerId)) return;
+              const prev = ptr.get(ev.pointerId); ptr.set(ev.pointerId, [ev.clientX, ev.clientY]); idleSince = performance.now();
+              if (ptr.size === 2) {
+                const [a, b] = [...ptr.values()], d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+                if (pinch) { zoom = Math.max(1.9, Math.min(6, zoom * pinch / d)); camera.position.z = zoom; dirty = true; }
+                pinch = d; if (down) down.moved = 99; return;
+              }
+              const dx = ev.clientX - prev[0], dy = ev.clientY - prev[1], k = 0.0052 * zoom / 3.4;
+              if (down) down.moved += Math.abs(dx) + Math.abs(dy);
+              rotY += dx * k; rotX = Math.max(-1.35, Math.min(1.35, rotX + dy * k)); vY = dx * k; vX = dy * k; dirty = true;
+            });
+            const up = (ev) => {
+              ptr.delete(ev.pointerId); pinch = 0;
+              if (down && down.moved < 7 && performance.now() - down.t < 450 && ptr.size === 0) { const p = pickAt(ev.clientX, ev.clientY); if (p) { select(p.id); onPick(p); } }
+              if (!ptr.size) down = null;
+            };
+            el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+            el.addEventListener("wheel", (ev) => { ev.preventDefault(); zoom = Math.max(1.9, Math.min(6, zoom * (1 + Math.sign(ev.deltaY) * 0.08))); camera.position.z = zoom; dirty = true; }, { passive: false });
+
+            const resize = () => {
+              const w = Math.max(1, container.clientWidth), h = Math.max(1, container.clientHeight);
+              renderer.setSize(w, h, false); el.style.width = w + "px"; el.style.height = h + "px";
+              camera.aspect = w / h; camera.updateProjectionMatrix(); dirty = true;
+            };
+            const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+            if (ro) ro.observe(container); else addEventListener("resize", resize);
+            resize();
+
+            renderer.setAnimationLoop(() => {
+              if (!alive || document.hidden) return;
+              const idle = !ptr.size && performance.now() - idleSince > 4000;
+              if (!ptr.size && (Math.abs(vY) > 1e-5 || Math.abs(vX) > 1e-5)) { rotY += vY; rotX = Math.max(-1.35, Math.min(1.35, rotX + vX)); vY *= 0.94; vX *= 0.94; dirty = true; }
+              if (autoRotate && idle) { rotY += 0.0016; dirty = true; }
+              if (!dirty) return;
+              globe.rotation.set(rotX, rotY, 0);
+              renderer.render(scene, camera);
+              dirty = false;
+            });
+
+            return {
+              kind: "webgl", setPoints, select, focus: focusOn, setAutoRotate: (b) => { autoRotate = !!b; },
+              dispose() { alive = false; renderer.setAnimationLoop(null); if (ro) ro.disconnect(); renderer.dispose(); el.remove(); },
+            };
+          }
+
+          /* ───────────────────────── 2D tartalék ───────────────────────── */
+          function createFallback(container, { onPick, focus, thresholds }) {
+            const cv = document.createElement("canvas");
+            cv.className = "globe-canvas"; container.appendChild(cv);
+            const ctx = cv.getContext("2d");
+            let pts = [], rotY = -focus[1] * D2R, rotX = focus[0] * D2R, selected = null, w = 1, h = 1, R = 100, cx = 50, cy = 50, down = null, autoRotate = true, idleSince = performance.now(), alive = true;
+            const resize = () => {
+              const dpr = Math.min(window.devicePixelRatio || 1, 2);
+              w = Math.max(1, container.clientWidth); h = Math.max(1, container.clientHeight);
+              cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + "px"; cv.style.height = h + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+              R = Math.min(w, h) * 0.38; cx = w / 2; cy = h / 2; draw();
+            };
+            const scr = (lat, lon) => { const [x, y, z] = project(lat, lon, rotY, rotX); return [cx + x * R, cy - y * R, z]; };
+            function draw() {
+              ctx.clearRect(0, 0, w, h);
+              const g = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.05); g.addColorStop(0, "#0b1530"); g.addColorStop(1, "#050b1c");
+              ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 6.2832); ctx.fill();
+              ctx.strokeStyle = "rgba(59,130,246,.3)"; ctx.lineWidth = 1;
+              for (let la = -80; la <= 80; la += 20) { ctx.beginPath(); let on = false; for (let lo = 0; lo <= 360; lo += 6) { const [x, y, z] = scr(la, lo); if (z > 0) { on ? ctx.lineTo(x, y) : ctx.moveTo(x, y); on = true; } else on = false; } ctx.stroke(); }
+              for (let lo = 0; lo < 360; lo += 20) { ctx.beginPath(); let on = false; for (let la = -90; la <= 90; la += 6) { const [x, y, z] = scr(la, lo); if (z > 0) { on ? ctx.lineTo(x, y) : ctx.moveTo(x, y); on = true; } else on = false; } ctx.stroke(); }
+              pts.forEach((p) => {
+                const [x, y, z] = scr(p.lat, p.lon); if (z <= 0.05) return;
+                const c = atmColor(p.atm, thresholds), r = 2.2 + 3.5 * Math.min(1, p.size || 0);
+                ctx.fillStyle = rgbCss(c); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+                if (p.id === selected) { ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r + 4, 0, 6.2832); ctx.stroke(); }
+              });
+            }
+            cv.style.touchAction = "none";
+            cv.addEventListener("pointerdown", (ev) => { cv.setPointerCapture(ev.pointerId); down = { x: ev.clientX, y: ev.clientY, px: ev.clientX, py: ev.clientY, t: performance.now(), moved: 0 }; idleSince = performance.now(); });
+            cv.addEventListener("pointermove", (ev) => { if (!down) return; const dx = ev.clientX - down.px, dy = ev.clientY - down.py; down.px = ev.clientX; down.py = ev.clientY; down.moved += Math.abs(dx) + Math.abs(dy); rotY += dx * 0.006; rotX = Math.max(-1.35, Math.min(1.35, rotX + dy * 0.006)); idleSince = performance.now(); draw(); });
+            cv.addEventListener("pointerup", (ev) => {
+              if (down && down.moved < 7 && performance.now() - down.t < 450) {
+                const r = cv.getBoundingClientRect(), px = ev.clientX - r.left, py = ev.clientY - r.top; let best = null, bd = 900;
+                pts.forEach((p) => { const [x, y, z] = scr(p.lat, p.lon); if (z > 0.1) { const d = (x - px) ** 2 + (y - py) ** 2; if (d < bd) { bd = d; best = p; } } });
+                if (best) { selected = best.id; draw(); onPick(best); }
+              }
+              down = null;
+            });
+            const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+            if (ro) ro.observe(container); else addEventListener("resize", resize);
+            resize();
+            const timer = setInterval(() => { if (alive && !document.hidden && autoRotate && !down && performance.now() - idleSince > 4000) { rotY += 0.004; draw(); } }, 50);
+            return {
+              kind: "2d", setPoints(list) { pts = spread(list).slice(0, 2048); draw(); }, select(id) { selected = id; draw(); },
+              focus(lat, lon) { rotY = -lon * D2R; rotX = lat * D2R; idleSince = performance.now(); draw(); }, setAutoRotate: (b) => { autoRotate = !!b; },
+              dispose() { alive = false; clearInterval(timer); if (ro) ro.disconnect(); cv.remove(); },
+            };
+          }
+          __MNT_EOF_6__
+          mkdir -p "$(dirname 'js/modules/filterEngine.js')"
+          cat > 'js/modules/filterEngine.js' <<'__MNT_EOF_7__'
+          /* Média-Zaj Twin v38 – kliensoldali öntanuló szűrő.
+             Logisztikus regresszió 65 536 dimenziós hash-elt jellemzőtéren (előjeles hash-elés), AdaGrad + L2 tanulással.
+             Tanítójel: szavazat (👍 érték / 👎 zaj) és olvasási idő. Az AUC-alapú λ-keverés a tanult p valószínűséget
+             és az előzetes (1 − ATM/plafon) tisztaság-pontot keveri: λ csak annyit kap, amennyire a modell a saját
+             korábbi szavazataidat előre tudta jelezni. Minden a telefonodon marad (localStorage). */
+          export const DIM = 65536;
+          const MASK = DIM - 1;
+          const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+
+          export function fold(s) {
+            return String(s || "").toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
+          }
+          export function fnv1a(str, seed = 2166136261) {
+            let h = seed >>> 0;
+            for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+            return h >>> 0;
+          }
+          const STOP = new Set(["the", "and", "for", "with", "that", "this", "from", "have", "has", "will", "was", "were", "are", "not", "but", "der", "die", "das", "und", "nicht", "ist", "mit", "von", "egy", "hogy", "nem", "van", "volt", "meg", "mar", "mint", "csak", "vagy"]);
+
+          /* Jellemzők: szavak, szópárok, forrás, hatókör, téma, hely, ATM-sáv, igazolás. Visszatér: Map(index → érték), L2-normált. */
+          export function featuresOf(a) {
+            const f = new Map();
+            const add = (key, val) => {
+              const idx = fnv1a(key) & MASK;
+              const sign = (fnv1a(key, 0x9e3779b9) & 1) ? 1 : -1;
+              f.set(idx, (f.get(idx) || 0) + sign * val);
+            };
+            const words = (txt) => fold(txt).match(/[a-z0-9]{3,}/g)?.filter((w) => !STOP.has(w) && !/^\d+$/.test(w)) || [];
+            const tw = words(a.title), sw = words(a.summary || "").slice(0, 40);
+            tw.forEach((w) => add("w:" + w, 1));
+            sw.forEach((w) => add("w:" + w, 0.4));
+            for (let i = 0; i < tw.length - 1; i++) add("b:" + tw[i] + "_" + tw[i + 1], 0.7);
+            add("src:" + fold(a.source), 1.2);
+            add("sc:" + a.scope, 0.6);
+            (a.topics || []).forEach((t) => add("tp:" + t, 0.8));
+            if (a.geo && a.geo.name) add("pl:" + fold(a.geo.name), 0.8);
+            const b = clamp(Math.floor((a.atm || 0) / 0.06), 0, 5);
+            add("atm:" + b, 0.5);
+            add("gs:" + Math.round((a.g || 0) * 4) + "_" + Math.round((a.s || 0) * 4), 0.4);
+            if (a.truth && a.truth.verdict) add("tr:" + a.truth.verdict, 0.6);
+            if (a.event_sources > 1) add("multi", 0.4);
+            let n2 = 0;
+            f.forEach((v) => { n2 += v * v; });
+            const k = n2 > 0 ? 1 / Math.sqrt(n2) : 1;
+            f.forEach((v, i) => f.set(i, v * k));
+            return f;
+          }
+
+          /* AUC (Mann–Whitney), egyenlő értékeknél átlagrang. Ha hiányzik pozitív vagy negatív minta: null. */
+          export function computeAUC(preds, labels) {
+            const n = preds.length;
+            const idx = [...Array(n).keys()].sort((i, j) => preds[i] - preds[j]);
+            const rank = new Array(n);
+            for (let i = 0; i < n;) {
+              let j = i;
+              while (j + 1 < n && preds[idx[j + 1]] === preds[idx[i]]) j++;
+              const r = (i + j) / 2 + 1;
+              for (let k = i; k <= j; k++) rank[idx[k]] = r;
+              i = j + 1;
+            }
+            let pos = 0, sumPos = 0;
+            for (let i = 0; i < n; i++) if (labels[i] >= 0.5) { pos++; sumPos += rank[i]; }
+            const neg = n - pos;
+            if (!pos || !neg) return null;
+            return (sumPos - pos * (pos + 1) / 2) / (pos * neg);
+          }
+
+          const memStore = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
+
+          export class FilterEngine {
+            constructor({ storage, key = "mnt.filter.v38", lr = 0.35, l2 = 1e-4, atmCap = 0.3 } = {}) {
+              this.storage = storage || (typeof localStorage !== "undefined" ? localStorage : memStore());
+              this.key = key; this.lr = lr; this.l2 = l2; this.atmCap = atmCap;
+              this.reset(false);
+              this.load();
+            }
+            reset(persist = true) {
+              this.w = new Float32Array(DIM); this.g = new Float32Array(DIM);
+              this.bias = 0; this.gb = 0; this.hist = []; this.trained = 0;
+              if (persist) { try { this.storage.removeItem(this.key); } catch (e) { /* nincs tár */ } }
+            }
+            rawP(feats) {
+              let z = this.bias;
+              feats.forEach((v, i) => { z += this.w[i] * v; });
+              return 1 / (1 + Math.exp(-clamp(z, -30, 30)));
+            }
+            predict(a) { return this.rawP(featuresOf(a)); }
+            prior(a) { return 1 - clamp((a.atm || 0) / this.atmCap, 0, 1); }
+            auc() {
+              if (this.hist.length < 10) return null;
+              return computeAUC(this.hist.map((h) => h.p), this.hist.map((h) => h.y));
+            }
+            /* λ ∈ [0, 0.9]: 0, amíg nincs legalább 5 értékes és 5 zajnak jelölt minta; utána az AUC-ból: (AUC−0.5)/0.4, a minták számával arányos bizalommal */
+            lambda() {
+              const pos = this.hist.filter((h) => h.y >= 0.5).length, neg = this.hist.length - pos;
+              if (pos < 5 || neg < 5) return 0;
+              const auc = this.auc();
+              if (auc === null) return 0;
+              return clamp((auc - 0.5) / 0.4, 0, 1) * 0.9 * Math.min(1, this.hist.length / 60);
+            }
+            score(a) {
+              const p = this.predict(a), prior = this.prior(a), lambda = this.lambda();
+              return { score: lambda * p + (1 - lambda) * prior, p, prior, lambda };
+            }
+            /* label: 1 = értékes/tény, 0 = zaj; weight: a jel erőssége. A jóslat a tanítás ELŐTT kerül az AUC-előzménybe. */
+            train(a, label, weight = 1, kind = "vote") {
+              const feats = featuresOf(a), p = this.rawP(feats);
+              this.hist.push({ p: +p.toFixed(5), y: label, w: weight, kind });
+              if (this.hist.length > 300) this.hist.shift();
+              const err = (p - label) * weight;
+              feats.forEach((v, i) => {
+                const gr = err * v + this.l2 * this.w[i];
+                this.g[i] += gr * gr;
+                this.w[i] -= this.lr * gr / Math.sqrt(this.g[i] + 1e-3);
+              });
+              this.gb += err * err;
+              this.bias -= this.lr * 0.5 * err / Math.sqrt(this.gb + 1e-3);
+              this.trained++;
+              this.save();
+              return p;
+            }
+            /* Olvasási idő: ≥ 8 mp = gyenge pozitív (legfeljebb 0.6 súly); megnyitott, de ≤ 1.5 mp alatt bezárt = gyenge negatív; közte nincs jel. */
+            trainDwell(a, seconds, opened = false) {
+              if (seconds >= 8) return this.train(a, 1, Math.min(0.6, seconds / 40), "dwell");
+              if (opened && seconds <= 1.5) return this.train(a, 0, 0.25, "dwell");
+              return null;
+            }
+            stats() { return { lambda: this.lambda(), auc: this.auc(), samples: this.hist.length, trained: this.trained }; }
+            save() {
+              try {
+                const nz = [];
+                for (let i = 0; i < DIM; i++) if (this.w[i] !== 0 || this.g[i] !== 0) nz.push([i, +this.w[i].toFixed(5), +this.g[i].toFixed(5)]);
+                if (nz.length > 20000) nz.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])).length = 20000;
+                this.storage.setItem(this.key, JSON.stringify({ v: 1, b: this.bias, gb: this.gb, n: this.trained, h: this.hist.slice(-150), nz }));
+              } catch (e) { /* megtelt a tár: a tanulás a munkamenetben marad */ }
+            }
+            load() {
+              try {
+                const o = JSON.parse(this.storage.getItem(this.key) || "null");
+                if (!o || o.v !== 1) return;
+                this.bias = o.b || 0; this.gb = o.gb || 0; this.trained = o.n || 0; this.hist = Array.isArray(o.h) ? o.h : [];
+                for (const [i, w, g] of o.nz || []) { if (i >= 0 && i < DIM) { this.w[i] = w; this.g[i] = g; } }
+              } catch (e) { /* sérült tár: üres modell */ }
+            }
+          }
+          __MNT_EOF_7__
+          mkdir -p "$(dirname 'config/sources.json')"
+          cat > 'config/sources.json' <<'__MNT_EOF_8__'
+          {
+            "version": "v38",
+            "region": {"name": "Vas megye / Alpokalja", "lat": 47.0, "lon": 16.6, "truth_radius_km": 250},
+            "limits": {"keep_hours": 48, "max_articles": 700, "history_max": 1500, "history_heartbeat_h": 6, "cluster_threshold": 0.42, "max_per_feed": 60},
+            "thresholds": {"mid": 0.12, "high": 0.25},
+            "notify": {"cooldown_h": 12, "outlier_z": 2.5, "outlier_min_atm": 0.25, "rising_ratio": 3.0, "rising_min": 8, "max_per_run": 3},
+            "feeds": [
+              {"id": "gn_vas", "name": "Google News · Vas megye", "type": "rss", "scope": "local", "lang": "hu", "trust": 0.5,
+               "url": "https://news.google.com/rss/search?q=Szombathely+OR+K%C3%B6rmend+OR+%22Vas+megye%22+OR+S%C3%A1rv%C3%A1r+OR+Szentgotth%C3%A1rd+OR+K%C5%91szeg+OR+Cell%C3%B6m%C3%B6lk+when:2d&hl=hu&gl=HU&ceid=HU:hu"},
+              {"id": "gn_burgenland", "name": "Google News · Burgenland", "type": "rss", "scope": "local", "lang": "de", "trust": 0.5,
+               "url": "https://news.google.com/rss/search?q=Burgenland+OR+G%C3%BCssing+OR+Oberwart+OR+Jennersdorf+when:2d&hl=de&gl=AT&ceid=AT:de"},
+              {"id": "gn_hu", "name": "Google News · Magyarország", "type": "rss", "scope": "national", "lang": "hu", "trust": 0.5,
+               "url": "https://news.google.com/rss?hl=hu&gl=HU&ceid=HU:hu"},
+              {"id": "gn_world", "name": "Google News · világ", "type": "rss", "scope": "international", "lang": "en", "trust": 0.5,
+               "url": "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en"},
+              {"id": "bbc_world", "name": "BBC World", "type": "rss", "scope": "international", "lang": "en", "trust": 0.8,
+               "url": "https://feeds.bbci.co.uk/news/world/rss.xml"},
+              {"id": "nypost", "name": "New York Post", "type": "rss", "scope": "international", "lang": "en", "trust": 0.45,
+               "url": "https://nypost.com/feed/"},
+              {"id": "cnn", "name": "CNN", "type": "rss", "scope": "international", "lang": "en", "trust": 0.65, "enabled": false,
+               "url": "http://rss.cnn.com/rss/edition.rss"},
+              {"id": "hungaromet", "name": "HungaroMet figyelmeztetés", "type": "official_text", "scope": "official", "lang": "hu", "trust": 0.95, "official": true,
+               "urls": ["https://www.met.hu/idojaras/veszelyjelzes/riasztas/akadalymentes", "https://www.met.hu/idojaras/veszelyjelzes/figyelmezteto_elorejelzes_mara/akadalymentes"],
+               "calm_markers": ["nincs ervenyben", "nem varhato", "nem all fenn"], "geo": [47.0, 19.5, "Magyarország"]}
+            ],
+            "broad_places": ["Burgenland", "Vas megye", "Alpokalja", "Magyarország", "Ukrajna", "Oroszország", "Irán", "Izrael", "Egyesült Államok", "Nagy-Britannia", "Franciaország", "Németország", "Ausztria", "Olaszország", "Törökország", "Kína", "Japán", "India", "Szíria", "Libanon", "Afrika", "Brazília", "Ausztrália", "Kanada", "Fülöp-szigetek", "Indonézia", "Európa", "Mexikó", "Balaton"],
+            "places": [
+              ["Körmend", ["kormend"], 46.983, 16.600, "local"], ["Szombathely", ["szombathely"], 47.230, 16.622, "local"],
+              ["Sárvár", ["sarvar"], 47.253, 16.937, "local"], ["Celldömölk", ["celldomolk"], 47.253, 17.151, "local"],
+              ["Vasvár", ["vasvar"], 47.050, 16.800, "local"], ["Szentgotthárd", ["szentgotthard"], 46.953, 16.275, "local"],
+              ["Kőszeg", ["koszeg", "guns"], 47.389, 16.541, "local"], ["Őriszentpéter", ["oriszentpeter"], 46.848, 16.389, "local"],
+              ["Répcelak", ["repcelak"], 47.421, 17.026, "local"], ["Bük", ["buk"], 47.383, 16.784, "local"],
+              ["Zalaegerszeg", ["zalaegerszeg"], 46.840, 16.844, "local"], ["Sopron", ["sopron", "odenburg"], 47.685, 16.590, "local"],
+              ["Güssing", ["gussing", "guessing", "nemetujvar"], 47.057, 16.322, "local"], ["Oberwart", ["oberwart", "felsooer"], 47.287, 16.205, "local"],
+              ["Jennersdorf", ["jennersdorf", "gyanafalva"], 46.945, 16.155, "local"], ["Eisenstadt", ["eisenstadt", "kismarton"], 47.846, 16.526, "local"],
+              ["Graz", ["graz", "grac"], 47.070, 15.439, "local"], ["Murska Sobota", ["murska sobota", "muraszombat"], 46.659, 16.161, "local"],
+              ["Lendva", ["lendava", "lendva"], 46.562, 16.453, "local"], ["Burgenland", ["burgenland", "felsoorseg"], 47.40, 16.40, "local"],
+              ["Vas megye", ["vas megye", "vas varmegye", "vasi"], 47.10, 16.75, "local"], ["Alpokalja", ["alpokalja"], 47.20, 16.60, "local"],
+              ["Budapest", ["budapest"], 47.498, 19.040, "national"], ["Győr", ["gyor"], 47.687, 17.650, "national"],
+              ["Veszprém", ["veszprem"], 47.093, 17.911, "national"], ["Pécs", ["pecs"], 46.072, 18.232, "national"],
+              ["Debrecen", ["debrecen"], 47.531, 21.627, "national"], ["Miskolc", ["miskolc"], 48.103, 20.778, "national"],
+              ["Szeged", ["szeged"], 46.253, 20.148, "national"], ["Balaton", ["balaton"], 46.83, 17.73, "national"],
+              ["Magyarország", ["magyarorszag", "hungary", "ungarn"], 47.0, 19.5, "national"],
+              ["Bécs", ["becs", "vienna", "wien"], 48.208, 16.373, "international"], ["Zágráb", ["zagrab", "zagreb"], 45.815, 15.982, "international"],
+              ["Ljubljana", ["ljubljana"], 46.056, 14.506, "international"], ["Pozsony", ["pozsony", "bratislava"], 48.149, 17.107, "international"],
+              ["Kijev", ["kijev", "kyiv", "kiev"], 50.450, 30.523, "international"], ["Ukrajna", ["ukrajna", "ukraine"], 49.0, 31.0, "international"],
+              ["Moszkva", ["moszkva", "moscow", "moskau"], 55.756, 37.617, "international"], ["Oroszország", ["oroszorszag", "russia", "russland"], 61.5, 105.0, "international"],
+              ["Gáza", ["gaza", "gazai"], 31.50, 34.47, "international"], ["Izrael", ["izrael", "israel"], 31.5, 34.8, "international"],
+              ["Teherán", ["teheran", "tehran"], 35.689, 51.389, "international"], ["Irán", ["iran"], 32.4, 53.7, "international"],
+              ["Washington", ["washington"], 38.907, -77.037, "international"], ["New York", ["new york"], 40.713, -74.006, "international"],
+              ["Egyesült Államok", ["egyesult allamok", "united states", "u.s.", "usa", "vereinigte staaten"], 39.8, -98.6, "international"],
+              ["Los Angeles", ["los angeles"], 34.052, -118.244, "international"], ["Mexikó", ["mexiko", "mexico"], 23.6, -102.5, "international"],
+              ["London", ["london"], 51.507, -0.128, "international"], ["Nagy-Britannia", ["nagy-britannia", "britain", "united kingdom", "england"], 54.0, -2.0, "international"],
+              ["Párizs", ["parizs", "paris"], 48.857, 2.352, "international"], ["Franciaország", ["franciaorszag", "france", "frankreich"], 46.6, 2.5, "international"],
+              ["Berlin", ["berlin"], 52.520, 13.405, "international"], ["Németország", ["nemetorszag", "germany", "deutschland"], 51.2, 10.4, "international"],
+              ["Ausztria", ["ausztria", "austria", "osterreich"], 47.6, 14.1, "international"], ["Brüsszel", ["brusszel", "brussels", "bruessel"], 50.850, 4.352, "international"],
+              ["Róma", ["roma", "rome"], 41.903, 12.496, "international"], ["Olaszország", ["olaszorszag", "italy", "italien"], 42.8, 12.5, "international"],
+              ["Madrid", ["madrid"], 40.417, -3.704, "international"], ["Törökország", ["torokorszag", "turkey", "turkiye", "turkei"], 39.0, 35.2, "international"],
+              ["Peking", ["peking", "beijing"], 39.904, 116.407, "international"], ["Kína", ["kina", "china"], 35.0, 103.0, "international"],
+              ["Tokió", ["tokio", "tokyo"], 35.690, 139.692, "international"], ["Japán", ["japan"], 36.2, 138.3, "international"],
+              ["Új-Delhi", ["delhi", "new delhi"], 28.614, 77.209, "international"], ["India", ["india", "indien"], 21.0, 78.0, "international"],
+              ["Szíria", ["sziria", "syria", "syrien"], 34.8, 38.9, "international"], ["Libanon", ["libanon", "lebanon"], 33.9, 35.9, "international"],
+              ["Kairó", ["kairo", "cairo"], 30.044, 31.236, "international"], ["Afrika", ["afrika", "africa"], 1.0, 17.0, "international"],
+              ["Brazília", ["brazilia", "brazil", "brasilien"], -14.2, -51.9, "international"], ["Ausztrália", ["ausztralia", "australia", "australien"], -25.3, 133.8, "international"],
+              ["Kanada", ["kanada", "canada"], 56.1, -106.3, "international"], ["Fülöp-szigetek", ["fulop-szigetek", "philippines"], 12.9, 121.8, "international"],
+              ["Indonézia", ["indonezia", "indonesia"], -0.8, 113.9, "international"], ["Európa", ["europa", "europe"], 50.0, 12.0, "international"]
+            ],
+            "lexicon": {
+              "arousal": ["sokk", "botrany", "tragedi", "borzalm", "halal", "meghalt", "halott", "elhunyt", "pusztit", "kataszt", "apokalip", "riaszt", "panik", "kegyetlen", "brutal", "lelov", "gyilk", "tuzvesz", "robban", "tamad", "haboru", "fenyeget", "horror", "terror", "szornyu", "tomeg", "shock", "tragic", "deadly", "killed", "dead", "horrific", "massacre", "explosion", "attack", "crisis", "panic", "fear", "devastat", "nightmare", "chaos", "schock", "umgekommen", "tote", "krieg", "gewalt", "angst", "drama", "katastroph"],
+              "clickbait": ["nem hiszed", "nem fogod", "ezt latod", "ez tortent", "kiderult", "leleplez", "titok", "hihetetlen", "dobbenet", "elkepeszto", "sokkolo", "ez lett", "mi var", "itt a", "video", "fotok", "galeria", "bomba", "you won't", "will shock", "what happened", "this is why", "revealed", "secret", "jaw-dropping", "unbelievable", "insane", "shocking", "bombshell", "the truth", "wait until", "unglaublich", "schockierend", "sensation", "geheimnis", "enthullt", "wahnsinn"],
+              "superlative": ["legnagyobb", "legsokkolobb", "soha", "sosem", "orokre", "minden", "egyetlen", "legrosszabb", "never", "ever", "worst", "biggest", "always", "beispiellos", "niemals", "grosste", "schlimmste"],
+              "rumor": ["allitolag", "feltehetoen", "pletyka", "nem megerositett", "unconfirmed", "reportedly", "rumor", "rumour", "allegedly", "angeblich", "geruecht", "unbestatigt"],
+              "attribution": ["szerint", "kozolte", "jelentette", "mondta", "rendorseg", "hivatalos", "meres", "according to", "said", "officials", "police said", "confirmed", "laut", "teilte mit", "bestatigte"],
+              "severity": ["piros figyelmeztet", "narancs", "veszelyhelyzet", "riasztas", "extrem", "voros", "kitelepit", "red warning", "orange warning", "emergency", "evacu", "evakuier", "unwetterwarnung", "lebensgefahr"],
+              "topics": {
+                "earthquake": ["foldrenges", "renges", "earthquake", "quake", "erdbeben", "potres", "szeizm"],
+                "solar": ["napkitores", "napvihar", "napfolt", "solar flare", "solar storm", "sonnensturm", "sonneneruption"],
+                "geomagnetic": ["geomagnes", "sarki feny", "aurora", "polarlicht", "northern lights", "magnetic storm", "magnetsturm"],
+                "storm": ["vihar", "orkan", "tornado", "szelvihar", "jegeso", "villam", "zivatar", "hurricane", "storm", "gale", "unwetter", "sturm", "neurje", "cyclone", "typhoon"],
+                "flood": ["arviz", "belviz", "aradas", "flood", "hochwasser", "ueberschwemm", "poplav", "tsunami", "cunami"]
+              },
+              "stopwords": ["a", "az", "es", "hogy", "nem", "is", "egy", "van", "volt", "meg", "mar", "mint", "csak", "vagy", "ez", "azt", "aki", "ami", "utan", "elott", "kozott", "szerint", "lett", "lesz", "ben", "ban", "nak", "nek", "val", "vel", "rol", "tol", "ert", "hoz", "hez", "mind", "igy", "ott", "itt", "ket", "het", "ora", "the", "and", "for", "with", "that", "this", "from", "have", "has", "will", "was", "were", "are", "not", "but", "his", "her", "their", "they", "you", "about", "after", "over", "into", "more", "new", "says", "said", "its", "who", "what", "when", "how", "out", "than", "also", "can", "could", "would", "there", "been", "being", "one", "two", "der", "die", "das", "und", "nicht", "ist", "mit", "von", "den", "zum", "fur", "auf", "eine", "einen", "dem", "des", "im", "zu", "auch", "nach", "bei", "wie", "aus", "wird", "sind", "hat"]
+            }
+          }
+          __MNT_EOF_8__
+          mkdir -p "$(dirname 'scripts/mnt_server.py')"
+          cat > 'scripts/mnt_server.py' <<'__MNT_EOF_9__'
+          #!/usr/bin/env python3
+          # -*- coding: utf-8 -*-
+          """Média-Zaj Twin v38 – szerveroldali gyűjtő és elemző (csak Python standard library).
+
+          Használat:
+            python3 scripts/mnt_server.py              gyűjtés + elemzés; csak érdemi változásnál ír fájlt
+            python3 scripts/mnt_server.py --notify     a kimenő riasztások küldése (NTFY_TOPIC titokkal; hiányában csendben kihagyja)
+            python3 scripts/mnt_server.py --make-icons PWA-ikonok előállítása
+          Környezeti változók (tesztelésre): MNT_FIXTURES=<könyvtár> (offline: <forrás-id>.xml, hungaromet_<n>.html),
+            MNT_ROOT, MNT_OUTBOX, MNT_FORCE=1, MNT_NOW=<ISO idő>.
+
+          ATM = G · S · (1 − V)
+            G  gerjesztés: érzelmi töltet (indulatszavak, felkiáltójel, NAGYBETŰ, kérdés-horog)           0..1
+            S  szenzáció: kattintásvadász jelleg (csalogató szavak, listás cím, három pont, felsőfok)    0..1
+            V  valóságtartalom: ellenőrizhetőség (hivatalos forrás, bizalom, számok/idézet/hivatkozás,
+               több független forrás, fizikai mérésekkel való keresztellenőrzés)                          0..1
+          """
+          import hashlib
+          import html
+          import json
+          import math
+          import os
+          import re
+          import struct
+          import sys
+          import unicodedata
+          import zlib
+          import xml.etree.ElementTree as ET
+          from datetime import datetime, timedelta, timezone
+          from email.utils import parsedate_to_datetime
+          from pathlib import Path
+          from urllib.request import Request, urlopen
+
+          ROOT = Path(os.environ.get("MNT_ROOT") or Path(__file__).resolve().parent.parent)
+          DATA = ROOT / "data"
+          MET = DATA / "metrics"
+          UA = "Mozilla/5.0 (compatible; MediaNoiseTwin/38)"
+          SCOPE_RANK = {"official": 0, "local": 1, "national": 2, "international": 3}
+
+
+          # ───────────────────────── általános segédek ─────────────────────────
+          def now():
+              v = os.environ.get("MNT_NOW")
+              return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else datetime.now(timezone.utc)
+
+
+          def iso(d):
+              return d.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+          def clamp(x, a=0.0, b=1.0):
+              return max(a, min(b, x))
+
+
+          def jload(p, default=None):
+              try:
+                  return json.loads(Path(p).read_text("utf-8"))
+              except Exception:
+                  return default
+
+
+          def jsave(p, obj, pretty=False):
+              p = Path(p)
+              p.parent.mkdir(parents=True, exist_ok=True)
+              tmp = p.with_suffix(p.suffix + ".tmp")
+              tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1 if pretty else None, separators=None if pretty else (",", ":")), "utf-8")
+              tmp.replace(p)
+
+
+          def fold(s):
+              s = unicodedata.normalize("NFKD", (s or "").lower())
+              return "".join(c for c in s if not unicodedata.combining(c)).replace("ß", "ss")
+
+
+          TAG = re.compile(r"<[^>]+>")
+          WORD = re.compile(r"[a-z0-9]{3,}")
+
+
+          def strip_html(s):
+              s = re.sub(r"(?is)<(script|style|nav|header|footer)\b.*?</\1>", " ", s or "")
+              return re.sub(r"\s+", " ", html.unescape(TAG.sub(" ", s))).strip()
+
+
+          def parse_date(s):
+              if not s:
+                  return None
+              try:
+                  d = parsedate_to_datetime(s)
+              except Exception:
+                  try:
+                      d = datetime.fromisoformat(s.replace("Z", "+00:00"))
+                  except Exception:
+                      return None
+              if d is None:
+                  return None
+              return (d if d.tzinfo else d.replace(tzinfo=timezone.utc)).astimezone(timezone.utc)
+
+
+          def hav_km(a, b, c, d):
+              p = math.pi / 180
+              x = math.sin((c - a) * p / 2) ** 2 + math.cos(a * p) * math.cos(c * p) * math.sin((d - b) * p / 2) ** 2
+              return 2 * 6371 * math.asin(math.sqrt(x))
+
+
+          def pctl(vals, p):
+              v = sorted(vals)
+              if not v:
+                  return 0.0
+              k = (len(v) - 1) * p
+              lo, hi = math.floor(k), math.ceil(k)
+              return v[lo] + (v[hi] - v[lo]) * (k - lo)
+
+
+          # ───────────────────────── hírforrások beolvasása ─────────────────────────
+          def fetch(url, key, timeout=20):
+              fx = os.environ.get("MNT_FIXTURES")
+              if fx:
+                  p = Path(fx) / key
+                  return p.read_bytes() if p.exists() else None
+              req = Request(url, headers={"User-Agent": UA, "Accept": "application/rss+xml, application/xml, text/xml, text/html;q=0.8, */*;q=0.5"})
+              with urlopen(req, timeout=timeout) as r:
+                  return r.read(3_000_000)
+
+
+          def lname(t):
+              return t.rsplit("}", 1)[-1]
+
+
+          def parse_feed(data):
+              root = ET.fromstring(data)
+              items = []
+              for el in root.iter():
+                  if lname(el.tag) not in ("item", "entry"):
+                      continue
+                  d = {}
+                  for ch in el:
+                      k = lname(ch.tag)
+                      if k == "title":
+                          d["title"] = (ch.text or "").strip()
+                      elif k == "link":
+                          if ch.get("href") and ch.get("rel", "alternate") == "alternate":
+                              d.setdefault("link", ch.get("href").strip())
+                          elif ch.text and ch.text.strip():
+                              d.setdefault("link", ch.text.strip())
+                      elif k in ("description", "summary", "content", "encoded"):
+                          d.setdefault("summary", ch.text or "")
+                      elif k in ("pubDate", "published", "updated", "date"):
+                          d.setdefault("date", (ch.text or "").strip())
+                      elif k == "source":
+                          d["publisher"] = (ch.text or "").strip()
+                      elif k in ("guid", "id"):
+                          d.setdefault("guid", (ch.text or "").strip())
+                  if d.get("title"):
+                      items.append(d)
+              return items
+
+
+          def clean_title(title, publisher):
+              t = title.strip()
+              for sep in (" - ", " – ", " | "):
+                  if sep in t:
+                      head, tail = t.rsplit(sep, 1)
+                      if publisher and fold(tail).strip() == fold(publisher).strip():
+                          return head.strip()
+                      if not publisher and len(tail) <= 40 and len(head) > 20:
+                          return head.strip()
+              return t
+
+
+          def collect(cfg, errors):
+              out = []
+              mx = cfg["limits"].get("max_per_feed", 60)
+              for f in cfg["feeds"]:
+                  if f.get("enabled") is False or f["type"] != "rss":
+                      continue
+                  try:
+                      raw = fetch(f["url"], f["id"] + ".xml")
+                      if raw is None:
+                          raise RuntimeError("nincs adat")
+                      items = parse_feed(raw)
+                  except Exception as e:
+                      errors[f["id"]] = str(e)[:120]
+                      continue
+                  for it in items[:mx]:
+                      pub = it.get("publisher") or f["name"]
+                      title = clean_title(it["title"], it.get("publisher"))
+                      summ = "" if f["id"].startswith("gn_") else strip_html(it.get("summary", ""))[:600]
+                      d = parse_date(it.get("date"))
+                      link = it.get("link", "")
+                      if not re.match(r"^https?://", link, re.I):
+                          link = ""          # nem megbízható forrás: csak http(s) hivatkozás kerülhet a lapra
+                      out.append({"title": title, "summary": summ, "link": link, "source": pub, "feed": f["id"], "scope": f["scope"],
+                                  "lang": f.get("lang", ""), "trust": f.get("trust", 0.5), "official": bool(f.get("official")),
+                                  "published": iso(d) if d else None})
+              return out
+
+
+          def collect_official(cfg, errors, t):
+              """HungaroMet: nincs nyilvános RSS/CAP, ezért a szöveges figyelmeztető oldalak tartalmát értelmezi (heurisztika)."""
+              state = {"calm": None, "excerpt": "", "checked": False}
+              arts = []
+              for f in cfg["feeds"]:
+                  if f["type"] != "official_text" or f.get("enabled") is False:
+                      continue
+                  pages = []
+                  for i, u in enumerate(f["urls"]):
+                      try:
+                          raw = fetch(u, f["id"] + "_%d.html" % i)
+                          if raw:
+                              pages.append(strip_html(raw.decode("utf-8", "ignore")))
+                      except Exception as e:
+                          errors[f["id"]] = str(e)[:120]
+                  if not pages:
+                      errors.setdefault(f["id"], "nincs adat")
+                      continue
+                  alert_pages, calm_pages = [], 0
+                  for text in pages:
+                      ft = fold(text)
+                      if any(m in ft for m in f["calm_markers"]):
+                          calm_pages += 1
+                      elif re.search(r"(sarga|narancs|piros)\s+(figyelmeztet|riaszt)|veszely", ft):
+                          alert_pages.append(text)
+                  src = alert_pages[0] if alert_pages else pages[0]
+                  i = fold(src).find("figyelmezteto elorejelzes magyarorszag")
+                  excerpt = re.sub(r"\s+", " ", src[i:i + 500] if i >= 0 else src[:400]).strip()
+                  if alert_pages:
+                      state.update({"calm": False, "excerpt": excerpt, "checked": True})
+                      if len(excerpt) > 60:
+                          arts.append({"title": "HungaroMet: érvényes figyelmeztetés – " + excerpt[:140], "summary": excerpt[:500],
+                                       "link": f["urls"][0], "source": f["name"], "feed": f["id"], "scope": "official", "lang": "hu", "trust": f.get("trust", 0.95),
+                                       "official": True, "published": iso(t), "geo": None if not f.get("geo") else {"name": f["geo"][2], "lat": f["geo"][0], "lon": f["geo"][1], "tier": "national"}})
+                  elif calm_pages == len(pages):
+                      state.update({"calm": True, "excerpt": excerpt, "checked": True})
+                  else:
+                      state.update({"calm": None, "excerpt": excerpt, "checked": True})
+              return arts, state
+
+
+          # ───────────────────────── szövegelemzés ─────────────────────────
+          class Lex:
+              def __init__(self, cfg):
+                  L = cfg["lexicon"]
+                  self.ar, self.cb, self.sup, self.rum = L["arousal"], L["clickbait"], L["superlative"], L["rumor"]
+                  self.att, self.sev, self.topics = L["attribution"], L["severity"], L["topics"]
+                  self.stop = set(L["stopwords"])
+                  self.evid = re.compile(r"\d[\d.,]*\s?(%|km|mm|cm|fok|°c|c-ot|ft|eur|euro|forint|millio|milliard|fo\b|ember|people|dead|killed|million|billion)")
+                  self.gaz = []
+                  for name, al, la, lo, tier in cfg["places"]:
+                      for a in set([fold(name)] + [fold(x) for x in al]):
+                          pat = r"(?<![a-z0-9])" + re.escape(a) + ("" if len(a) > 4 else r"(?![a-z0-9])")
+                          self.gaz.append((len(a), re.compile(pat), name, la, lo, tier))
+                  self.gaz.sort(key=lambda x: -x[0])
+                  self.broad = set(cfg.get("broad_places", []))
+
+
+          def hits(ft, lex):
+              return sum(1 for k in lex if k in ft)
+
+
+          def locate(ft_title, ft_all, L):
+              """A címben keres előbb; több találatból a konkrét hely (város) előzi meg a tágat (ország, régió), egyenlőnél a korábbi említés."""
+              for text in (ft_title, ft_all):
+                  found = []
+                  for _, rx, name, la, lo, tier in L.gaz:
+                      m = rx.search(text)
+                      if m:
+                          found.append((name in L.broad, m.start(), name, la, lo, tier))
+                  if found:
+                      _, _, name, la, lo, tier = sorted(found)[0]
+                      return {"name": name, "lat": la, "lon": lo, "tier": tier}
+              return None
+
+
+          def topics_of(ft, L):
+              return sorted(k for k, stems in L.topics.items() if hits(ft, stems))
+
+
+          def base_scores(a, L, prof):
+              text = a["title"] + " . " + a.get("summary", "")
+              ft = " " + fold(text) + " "
+              ar = hits(ft, L.ar)
+              excl = min(1.0, text.count("!") / 2)
+              caps = min(1.0, len(re.findall(r"\b[A-ZÁÉÍÓÖŐÚÜŰ]{4,}\b", a["title"])) / 3)
+              g = clamp(0.15 + 0.45 * min(1, ar / 3) + 0.15 * excl + 0.10 * caps + (0.05 if "?" in a["title"] else 0))
+              cb, sp = hits(ft, L.cb), hits(ft, L.sup)
+              listicle = 1 if re.match(r"^\s*\d{1,2}\s+[^\W\d]", a["title"]) else 0
+              ell = 1 if ("..." in a["title"] or "…" in a["title"]) else 0
+              s = clamp(0.10 + 0.30 * min(1, cb / 2) + 0.20 * listicle + 0.12 * ell + 0.18 * min(1, sp / 2) + 0.10 * excl)
+              trust = a.get("trust", 0.5)
+              if prof and prof.get("n", 0) >= 20:
+                  trust = 0.5 * trust + 0.5 * prof["v"]["mean"]
+              v = 0.35 + (0.30 if a.get("official") else 0) + (trust - 0.5) * 0.30
+              ev = len(L.evid.findall(ft)) + (1 if re.search(r"[\"“„”]", text) else 0)
+              att = hits(ft, L.att)
+              if ev + att >= 1:
+                  v += 0.10
+              if ev + att >= 3:
+                  v += 0.05
+              if hits(ft, L.rum):
+                  v -= 0.10
+              return ft, g, s, clamp(v)
+
+
+          def vec_of(a, L):
+              toks = [w for w in WORD.findall(fold(a["title"] + " " + a.get("summary", "")[:200])) if w not in L.stop and not w.isdigit()]
+              tf = {}
+              for w in toks:
+                  tf[w] = tf.get(w, 0) + 1
+              return {w: 1 + math.log(c) for w, c in tf.items()}
+
+
+          def cosine(u, v):
+              if len(u) > len(v):
+                  u, v = v, u
+              dot = sum(x * v.get(w, 0) for w, x in u.items())
+              nu = math.sqrt(sum(x * x for x in u.values()))
+              nv = math.sqrt(sum(x * x for x in v.values()))
+              return dot / (nu * nv) if nu and nv else 0.0
+
+
+          def cluster(arts, L, thr):
+              """Eseménycsoportosítás: mohó, koszinusz-hasonlóság alapján (a legkorábbi cikk adja az esemény azonosítóját)."""
+              cl = []
+              for a in sorted(arts, key=lambda x: x.get("published") or ""):
+                  va = vec_of(a, L)
+                  best, bs = None, thr
+                  for c in cl:
+                      sim = cosine(va, c["vec"])
+                      if sim >= bs:
+                          best, bs = c, sim
+                  if best is None:
+                      best = {"id": "ev-" + hashlib.sha1(a["id"].encode()).hexdigest()[:8], "vec": {}, "items": []}
+                      cl.append(best)
+                  best["items"].append(a)
+                  for w, x in va.items():
+                      best["vec"][w] = best["vec"].get(w, 0) + x
+              for c in cl:
+                  pubs = {fold(x["source"]) for x in c["items"]}
+                  for x in c["items"]:
+                      x["event"] = c["id"]
+                      x["event_size"] = len(c["items"])
+                      x["event_sources"] = len(pubs)
+              return len(cl)
+
+
+          # ───────────────────────── fizikai keresztellenőrzés ─────────────────────────
+          PLANETARY = {"solar", "geomagnetic"}
+
+
+          def truth_flags(m, t):
+              """A data/metrics/environment_truth_matrix.json tolerálás-alapú értelmezése. Visszaad: (flags|None, részletek).
+              Elfogadott alakok: {"flags":[...]}, {"anomalies":{"earthquake":{"active":true,"magnitude":5.1}, ...}}, lapos kulcsok (kp, flare_class, ...)."""
+              if not isinstance(m, dict):
+                  return None, {}
+              up = parse_date(str(m.get("updated") or m.get("generated_at") or ""))
+              if up and (t - up) > timedelta(hours=12):
+                  return None, {"stale": True}
+              flags, det = set(), {}
+              for f in m.get("flags") or []:
+                  flags.add(str(f).lower())
+              an = m.get("anomalies") if isinstance(m.get("anomalies"), dict) else m
+              for k, v in (an or {}).items():
+                  k = str(k).lower()
+                  if isinstance(v, bool):
+                      if v:
+                          flags.add(k)
+                  elif isinstance(v, dict) and (v.get("active") or v.get("anomaly")):
+                      flags.add(k)
+              def num(*ks):
+                  for src in (an, m):
+                      for k in ks:
+                          x = src.get(k) if isinstance(src, dict) else None
+                          if isinstance(x, dict):
+                              x = x.get("value", x.get("magnitude", x.get("max")))
+                          if isinstance(x, (int, float)):
+                              return float(x)
+                  return None
+              mag = num("earthquake_max_mag", "eq_max_mag", "magnitude", "earthquake")
+              kp = num("kp", "kp_index", "geomagnetic_kp")
+              gust = num("wind_gust_kmh", "gust_kmh")
+              drop = num("pressure_drop_3h", "pressure_drop")
+              sol = an.get("solar") if isinstance(an, dict) else None
+              fc = str(m.get("flare_class") or (sol.get("class", "") if isinstance(sol, dict) else "") or "").upper()
+              if mag is not None:
+                  det["earthquake_mag"] = mag
+                  if mag >= 4.5:
+                      flags.add("earthquake")
+              if kp is not None:
+                  det["kp"] = kp
+                  if kp >= 5:
+                      flags.add("geomagnetic")
+              if fc[:1] in ("M", "X"):
+                  det["flare"] = fc
+                  flags.add("solar")
+              if gust is not None:
+                  det["gust_kmh"] = gust
+                  if gust >= 60:
+                      flags.add("storm")
+              if drop is not None and drop >= 6:
+                  flags.add("storm")
+              alias = {"flare": "solar", "solar_flare": "solar", "kp": "geomagnetic", "geomagnetic_storm": "geomagnetic", "quake": "earthquake", "wind": "storm", "flood": "flood"}
+              flags = {alias.get(f, f) for f in flags}
+              return flags, det
+
+
+          def apply_truth(a, flags, cfg, L):
+              """Ha a hír fizikai anomáliáról szól és a mérés igazolja: V +0.15. Ha katasztrófáról szól, de a mérések nyugodtak: V −0.20 és S +0.15."""
+              a["truth"] = {"verdict": "n/a"}
+              tp = [x for x in a["topics"] if x in L.topics]
+              if flags is None or not tp:
+                  return
+              reg = cfg["region"]
+              in_region = bool(a.get("geo")) and hav_km(reg["lat"], reg["lon"], a["geo"]["lat"], a["geo"]["lon"]) <= reg["truth_radius_km"]
+              unlocated_local = not a.get("geo") and a["scope"] in ("local", "national", "official")
+              confirm = [x for x in tp if x in flags]
+              if confirm:
+                  a["v"] = clamp(a["v"] + 0.15)
+                  a["truth"] = {"verdict": "igazolt", "flags": confirm, "dv": 0.15}
+                  return
+              checkable = [x for x in tp if x in PLANETARY or in_region or unlocated_local]
+              if checkable and not (flags & set(tp)):
+                  a["v"] = clamp(a["v"] - 0.20)
+                  a["s"] = clamp(a["s"] + 0.15)
+                  a["truth"] = {"verdict": "nem igazolt", "topics": checkable, "dv": -0.20, "ds": 0.15}
+
+
+          # ───────────────────────── tanuló rész: Welford, trendek ─────────────────────────
+          def welford(st, x):
+              st["n"] += 1
+              d = x - st["mean"]
+              st["mean"] += d / st["n"]
+              st["m2"] += d * (x - st["mean"])
+
+
+          def wstd(st):
+              return math.sqrt(st["m2"] / (st["n"] - 1)) if st["n"] > 1 else 0.0
+
+
+          def new_prof():
+              return {"n": 0, **{k: {"n": 0, "mean": 0.0, "m2": 0.0} for k in ("atm", "g", "s", "v")}}
+
+
+          def update_profiles(profiles, arts):
+              for a in arts:
+                  if a.get("profiled"):
+                      continue
+                  p = profiles.setdefault(a["source"], new_prof())
+                  prof_atm = p["atm"]
+                  a["z"] = round((a["atm"] - prof_atm["mean"]) / wstd(prof_atm), 2) if prof_atm["n"] >= 15 and wstd(prof_atm) > 1e-6 else None
+                  for k in ("atm", "g", "s", "v"):
+                      welford(p[k], a[k])
+                  p["n"] += 1
+                  a["profiled"] = True
+              if len(profiles) > 400:
+                  for k in sorted(profiles, key=lambda k: profiles[k]["n"])[: len(profiles) - 400]:
+                      del profiles[k]
+
+
+          def term_set(a, L):
+              toks = [w for w in WORD.findall(fold(a["title"])) if w not in L.stop and not w.isdigit() and len(w) >= 4]
+              terms = set(toks)
+              seq = [w for w in WORD.findall(fold(a["title"])) if w not in L.stop and not w.isdigit()]
+              for x, y in zip(seq, seq[1:]):
+                  terms.add(x + " " + y)
+              return terms
+
+
+          def update_trends(trends, new_arts, L, t):
+              hrs = trends.setdefault("hours", {})
+              for a in new_arts:
+                  d = parse_date(a.get("published")) or t
+                  h = d.strftime("%Y-%m-%dT%H")
+                  bucket = hrs.setdefault(h, {})
+                  for w in term_set(a, L):
+                      bucket[w] = bucket.get(w, 0) + 1
+              cutoff = (t - timedelta(hours=72)).strftime("%Y-%m-%dT%H")
+              for h in [h for h in hrs if h < cutoff]:
+                  del hrs[h]
+              for h, b in hrs.items():
+                  if len(b) > 400:
+                      hrs[h] = dict(sorted(b.items(), key=lambda kv: -kv[1])[:400])
+              h_now = t.strftime("%Y-%m-%dT%H")
+              recent, base = {}, {}
+              for h, b in hrs.items():
+                  age = (t - datetime.strptime(h, "%Y-%m-%dT%H").replace(tzinfo=timezone.utc)).total_seconds() / 3600
+                  tgt = recent if age < 6 else base if age < 48 else None
+                  if tgt is not None:
+                      for w, c in b.items():
+                          tgt[w] = tgt.get(w, 0) + c
+              span = len(hrs)
+              rising = []
+              if span >= 24:
+                  for w, c in recent.items():
+                      if c >= 5:
+                          b6 = base.get(w, 0) / 7
+                          ratio = (c + 1) / (b6 + 1)
+                          if ratio >= 2:
+                              rising.append({"term": w, "recent": c, "base6h": round(b6, 1), "ratio": round(ratio, 1)})
+                  rising.sort(key=lambda r: -r["ratio"] * math.log(1 + r["recent"]))
+              return rising[:12], span < 24
+
+
+          # ───────────────────────── fő folyamat ─────────────────────────
+          def article_id(a):
+              return hashlib.sha1((fold(a["title"]) + "|" + fold(a["source"])).encode()).hexdigest()[:12]
+
+
+          def merge(old, fresh, t, keep_h, max_n):
+              by = {a["id"]: a for a in old}
+              for a in fresh:
+                  a["id"] = article_id(a)
+                  cur = by.get(a["id"])
+                  if cur is None:
+                      a["first_seen"] = iso(t)
+                      by[a["id"]] = a
+                  elif SCOPE_RANK.get(a["scope"], 9) < SCOPE_RANK.get(cur["scope"], 9):
+                      cur["scope"] = a["scope"]
+              lim = iso(t - timedelta(hours=keep_h))
+              arts = [a for a in by.values() if (a.get("published") or a.get("first_seen") or "") >= lim]
+              arts.sort(key=lambda a: a.get("published") or a.get("first_seen") or "", reverse=True)
+              return arts[:max_n]
+
+
+          def analyze(cfg, arts, profiles, flags, L):
+              thr = cfg["limits"]["cluster_threshold"]
+              for a in arts:
+                  ft, g, s, v = base_scores(a, L, profiles.get(a["source"]))
+                  a["topics"] = topics_of(ft, L)
+                  if not a.get("geo"):
+                      a["geo"] = locate(fold(a["title"]), ft, L)
+                  a["g"], a["s"], a["v"] = g, s, v
+              n_ev = cluster(arts, L, thr)
+              for a in arts:
+                  a["v"] = clamp(a["v"] + 0.06 * min(2, max(0, a.get("event_sources", 1) - 1)))
+                  apply_truth(a, flags, cfg, L)
+                  a["g"], a["s"], a["v"] = round(a["g"], 3), round(a["s"], 3), round(a["v"], 3)
+                  a["atm"] = round(a["g"] * a["s"] * (1 - a["v"]), 4)
+              return n_ev
+
+
+          def snapshot(arts, rising, flags, t):
+              last = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] or arts
+              vals = [a["atm"] for a in last]
+              by = {}
+              for sc in ("local", "national", "international", "official"):
+                  x = [a["atm"] for a in last if a["scope"] == sc]
+                  if x:
+                      by[sc] = round(sum(x) / len(x), 4)
+              return {"t": iso(t), "n": len(last), "mean": round(sum(vals) / len(vals), 4) if vals else 0, "p90": round(pctl(vals, 0.9), 4) if vals else 0,
+                      "by_scope": by, "flags": sorted(flags) if flags is not None else None, "rising": [r["term"] for r in rising[:3]]}
+
+
+          def build_alerts(cfg, arts, rising, official, new_ids):
+              n = cfg["notify"]
+              out = []
+              if official.get("calm") is False and official.get("excerpt"):
+                  out.append({"key": "official:" + hashlib.sha1(official["excerpt"].encode()).hexdigest()[:8], "title": "🚨 Hivatalos figyelmeztetés (HungaroMet)",
+                              "message": re.sub(r"\s+", " ", official["excerpt"])[:400], "priority": 4, "tags": ["rotating_light"]})
+              th = n["outlier_min_atm"]
+              outl = [a for a in arts if a["id"] in new_ids and a["scope"] in ("local", "national") and ((a.get("z") or 0) >= n["outlier_z"] or a["atm"] >= th) and a["atm"] >= th * 0.8]
+              for a in sorted(outl, key=lambda a: -a["atm"])[:2]:
+                  out.append({"key": "noise:" + a.get("event", a["id"]), "title": "📢 Kiugró zaj (ATM %.2f)" % a["atm"], "priority": 3, "tags": ["loudspeaker"],
+                              "message": "%s – %s\nG %.2f · S %.2f · V %.2f" % (a["title"][:160], a["source"], a["g"], a["s"], a["v"])})
+              for r in rising[:1]:
+                  if r["ratio"] >= n["rising_ratio"] and r["recent"] >= n["rising_min"]:
+                      out.append({"key": "rising:" + r["term"], "title": "📈 Felszálló téma: " + r["term"], "priority": 3, "tags": ["chart_with_upwards_trend"],
+                                  "message": "Az elmúlt 6 órában %d említés (a megszokott %.1f-szerese)." % (r["recent"], r["ratio"])})
+              return out[: n["max_per_run"]]
+
+
+          def run(force=False):
+              cfg = jload(ROOT / "config" / "sources.json")
+              t = now()
+              L = Lex(cfg)
+              errors = {}
+              state = jload(DATA / "state.json", {"signature": "", "cool": {}, "last_hist": ""})
+              old = (jload(DATA / "articles.json", {}) or {}).get("articles", [])
+              profiles = jload(MET / "source_profiles.json", {}) or {}
+              trends = jload(MET / "trends.json", {}) or {}
+              flags, fdet = truth_flags(jload(MET / "environment_truth_matrix.json"), t)
+              fresh = collect(cfg, errors)
+              off_arts, official = collect_official(cfg, errors, t)
+              fresh += off_arts
+              if not fresh and errors and not old:
+                  print("Nincs elérhető forrás:", errors)
+              known = {a["id"] for a in old}
+              arts = merge(old, fresh, t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"])
+              new_ids = {a["id"] for a in arts if a["id"] not in known}
+              n_ev = analyze(cfg, arts, profiles, flags, L)
+              new_arts = [a for a in arts if a["id"] in new_ids]
+              update_profiles(profiles, [a for a in arts if not a.get("profiled")])
+              rising, warming = update_trends(trends, new_arts, L, t)
+              snap = snapshot(arts, rising, flags, t)
+              sig_src = json.dumps([[a["id"], round(a["atm"], 2)] for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] + [snap["flags"], snap["rising"], official.get("calm")], sort_keys=True)
+              sig = hashlib.sha1(sig_src.encode()).hexdigest()
+              changed = force or sig != state.get("signature") or not (DATA / "articles.json").exists()
+              alerts = build_alerts(cfg, arts, rising, official, new_ids) if new_ids or official.get("calm") is False else []
+              meta = {"version": cfg["version"], "generated_at": iso(t), "region": cfg["region"], "thresholds": cfg["thresholds"], "events": n_ev,
+                      "errors": errors, "truth": {"available": flags is not None, "flags": sorted(flags) if flags is not None else None, "detail": fdet},
+                      "official": {"calm": official.get("calm"), "excerpt": official.get("excerpt", "")[:300]}, "rising": rising, "warming_up": warming}
+              if changed:
+                  jsave(DATA / "articles.json", {"meta": meta, "articles": [{k: v for k, v in a.items() if k != "trust"} for a in arts]})
+                  jsave(MET / "source_profiles.json", profiles)
+                  jsave(MET / "trends.json", trends)
+                  hist = jload(MET / "atm_history.json", {"points": []})
+                  pts = hist.get("points", [])
+                  last_t = parse_date(state.get("last_hist")) or datetime(1970, 1, 1, tzinfo=timezone.utc)
+                  if pts == [] or sig != state.get("signature") or t - last_t >= timedelta(hours=cfg["limits"]["history_heartbeat_h"]):
+                      pts.append(snap)
+                      state["last_hist"] = iso(t)
+                  jsave(MET / "atm_history.json", {"points": pts[-cfg["limits"]["history_max"]:]})
+                  state["signature"] = sig
+                  jsave(DATA / "state.json", state)
+              outbox = os.environ.get("MNT_OUTBOX") or "/tmp/mnt_outbox.json"
+              jsave(outbox, alerts)
+              if os.environ.get("GITHUB_OUTPUT"):
+                  with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                      f.write("changed=%s\n" % ("true" if changed else "false"))
+              print("MNT v38: %d cikk (%d új), %d esemény, ATM átlag %.3f, p90 %.3f, hibás forrás: %s, fizikai mérés: %s, riasztás: %d, változás: %s" % (
+                  len(arts), len(new_ids), n_ev, snap["mean"], snap["p90"], list(errors) or "nincs", "van" if flags is not None else "nincs", len(alerts), changed))
+              return {"changed": changed, "alerts": alerts, "articles": arts, "snapshot": snap, "errors": errors}
+
+
+          # ───────────────────────── ntfy ─────────────────────────
+          def notify():
+              topic = (os.environ.get("NTFY_TOPIC") or "").strip()
+              if not topic:
+                  return 0
+              cfg = jload(ROOT / "config" / "sources.json")
+              outbox = jload(os.environ.get("MNT_OUTBOX") or "/tmp/mnt_outbox.json", []) or []
+              state = jload(DATA / "state.json", {"signature": "", "cool": {}, "last_hist": ""})
+              t, cool, sent = now(), state.setdefault("cool", {}), 0
+              ch = timedelta(hours=cfg["notify"]["cooldown_h"])
+              repo = (os.environ.get("GITHUB_REPOSITORY") or "").split("/")
+              site = "https://%s.github.io/%s/" % (repo[0].lower(), repo[1]) if len(repo) == 2 else None
+              for a in outbox:
+                  last = parse_date(cool.get(a["key"]))
+                  if last and t - last < ch:
+                      continue
+                  body = {"topic": topic, "title": a["title"], "message": a["message"], "priority": a.get("priority", 3), "tags": a.get("tags", [])}
+                  if site:
+                      body["click"] = site
+                  try:
+                      req = Request("https://ntfy.sh", data=json.dumps(body).encode("utf-8"), headers={"Content-Type": "application/json", "User-Agent": UA})
+                      urlopen(req, timeout=15).read()
+                      cool[a["key"]] = iso(t)
+                      sent += 1
+                  except Exception as e:
+                      print("ntfy hiba:", str(e)[:100])
+              for k in [k for k, v in cool.items() if (parse_date(v) or t) < t - timedelta(days=3)]:
+                  del cool[k]
+              if sent:
+                  jsave(DATA / "state.json", state)
+              print("ntfy: %d értesítés elküldve" % sent)
+              return sent
+
+
+          # ───────────────────────── PWA-ikonok ─────────────────────────
+          def make_png(size):
+              def chunk(tag, data):
+                  c = struct.pack(">I", len(data)) + tag + data
+                  return c + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
+              cx = cy = (size - 1) / 2
+              rows = []
+              for y in range(size):
+                  row = bytearray([0])
+                  for x in range(size):
+                      dx, dy = (x - cx) / cx, (y - cy) / cy
+                      d = math.hypot(dx, dy)
+                      r, g, b = 3, 4, 8
+                      if d < 0.78:
+                          k = 1 - d / 0.78
+                          r, g, b = int(8 + 40 * k), int(12 + 60 * k), int(30 + 150 * k)
+                      ring = abs(d - 0.60)
+                      if ring < 0.025:
+                          r, g, b = 139, 92, 246
+                      if abs(dy) < 0.012 and d < 0.78 or abs(dx) < 0.012 and d < 0.78:
+                          r, g, b = max(r, 30), max(g, 70), max(b, 160)
+                      if hypot_pt(dx, dy, 0.18, -0.22) < 0.07:
+                          r, g, b = 245, 158, 11
+                      if d > 0.96 and d < 1.0:
+                          r, g, b = 10, 14, 28
+                      row += bytes((r, g, b, 255))
+                  rows.append(bytes(row))
+              raw = b"".join(rows)
+              return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b"")
+
+
+          def hypot_pt(x, y, px, py):
+              return math.hypot(x - px, y - py)
+
+
+          def make_icons():
+              (ROOT / "icons").mkdir(exist_ok=True)
+              for s in (192, 512):
+                  (ROOT / "icons" / ("icon-%d.png" % s)).write_bytes(make_png(s))
+              print("ikonok kész")
+
+
+          if __name__ == "__main__":
+              if "--make-icons" in sys.argv:
+                  make_icons()
+              elif "--notify" in sys.argv:
+                  notify()
+              else:
+                  run(force=os.environ.get("MNT_FORCE") == "1")
+          __MNT_EOF_9__
+          mkdir -p "$(dirname 'README.md')"
+          cat > 'README.md' <<'__MNT_EOF_10__'
+          # Média-Zaj Twin (v38)
+
+          Vas megye / Alpokalja információs zaj-mérője. **ATM = G · S · (1 − V)**
+
+          | Jel | Jelentés | Honnan |
+          |---|---|---|
+          | G | gerjesztés (érzelmi töltet) | indulatszavak, felkiáltójel, NAGYBETŰ, kérdés-horog |
+          | S | szenzáció (kattintásvadász jelleg) | csalogató szavak, listás cím, három pont, felsőfok |
+          | V | valóságtartalom (ellenőrizhetőség) | hivatalos forrás, bizalom, számok/idézet/hivatkozás, több független forrás, fizikai mérés |
+
+          A mutató **kísérleti és tájékoztató**, nem igazságmérő. A súlyok és a szólisták a `config/sources.json` és a `scripts/mnt_server.py` fájlban állíthatók.
+
+          ## Működés
+          * 15 percenként a GitHub Actions (`.github/workflows/media-noise.yml`) összegyűjti a híreket (Google News, BBC, NY Post, HungaroMet szöveges figyelmeztetések), pontozza, eseményekbe csoportosítja (koszinusz-hasonlóság), forrásprofilt vezet (Welford), felszálló kifejezéseket keres.
+          * Csak akkor ír és commitol, ha az adat érdemben változott.
+          * A kliens (`index.html`) a `data/articles.json` fájlt olvassa; a 3D glóbusz Three.js InstancedMesh, a szűrő a telefonon tanul (szavazat és olvasási idő alapján).
+
+          ## Beállítás (egyszer)
+          1. A munkafolyamat-fájlt `.github/workflows/media-noise.yml` néven hozd létre, majd **Actions › Média-Zaj Twin › Run workflow**.
+          2. **Settings › Pages**: Deploy from a branch › `main` › `/ (root)`.
+          3. Értesítéshez (nem kötelező): **Settings › Secrets and variables › Actions › New repository secret**: `NTFY_TOPIC`. Nélküle az értesítés lépése csendben kimarad.
+
+          ## Fizikai keresztellenőrzés (nem kötelező)
+          Ha létezik a `data/metrics/environment_truth_matrix.json`, a szerver összeveti vele a hírek állításait:
+          * a hír anomáliáról szól és a mérés igazolja: **V +0,15**
+          * a hír katasztrófáról szól, de a mérés nyugodt: **V −0,20 és S +0,15**
+          * a Nap/geomágneses témák bárhol ellenőrizhetők; a földrengés, vihar, árvíz csak a 250 km-es körzetben (vagy hely nélküli helyi/országos hírnél). 12 óránál régebbi mátrixot nem használ.
+
+          Elfogadott alakok (bármelyik): `{"updated":"2026-11-01T11:30:00Z","flags":["geomagnetic"]}`, `{"anomalies":{"earthquake":{"active":true,"magnitude":5.1},"solar":{"class":"M2.1"}}}`, vagy lapos kulcsok: `kp`, `earthquake_max_mag`, `wind_gust_kmh`, `pressure_drop_3h`, `flare_class`.
+
+          ## Frissítés
+          A munkafolyamat csak akkor csomagol ki, ha a `.mnt-version` fájl nem `v38`. Újrakicsomagoláshoz: Run workflow › `force_extract = igen` (felülírja a kézi módosításokat).
+          __MNT_EOF_10__
+
+          : > .nojekyll
+          echo "v38" > .mnt-version
+          python3 scripts/mnt_server.py --make-icons
+      - name: Gyűjtés és elemzés
+        id: collect
+        run: python3 scripts/mnt_server.py
+      - name: Ntfy értesítések (titok nélkül csendben kimarad)
+        continue-on-error: true
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python3 scripts/mnt_server.py --notify
+      - name: Okos commit (csak érdemi változásnál)
+        run: |
+          git config user.name "mnt-bot"
+          git config user.email "mnt-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nincs érdemi változás, nem commitolok."
+          else
+            git commit -m "Média-Zaj Twin: adatfrissítés"
+            git pull --rebase -X theirs
+            git push
+          fi
