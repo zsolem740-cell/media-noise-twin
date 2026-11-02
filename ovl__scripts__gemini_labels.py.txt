@@ -98,7 +98,7 @@ def _post(url, headers, body, timeout=60):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        raise GeminiError(e.code, e.read().decode("utf-8", "ignore")[:300])
+        raise GeminiError(e.code, e.read().decode("utf-8", "ignore")[:4000])
     except Exception as e:
         raise GeminiError(0, str(e)[:200])
 
@@ -110,6 +110,36 @@ def _get(url, headers, timeout=30):
             return json.loads(r.read().decode("utf-8"))
     except Exception as e:
         raise GeminiError(0, str(e)[:200])
+
+
+def describe(e, key):
+    """Tömör hibaleírás a naplóhoz: állapot, üzenet, a megsértett kvóta azonosítója és a javasolt várakozás (a kulcs kicserélve)."""
+    st, raw = getattr(e, "status", ""), str(getattr(e, "msg", e))
+    try:
+        er = json.loads(raw).get("error", {})
+        extra = []
+        for d in er.get("details") or []:
+            for v in d.get("violations") or []:
+                q = v.get("quotaId") or v.get("quotaMetric")
+                if q:
+                    extra.append(str(q))
+            if d.get("retryDelay"):
+                extra.append("retryDelay " + str(d["retryDelay"]))
+        return redact(f"HTTP {st} – {clean(er.get('message'), 170)}" + (" [" + "; ".join(dict.fromkeys(extra)) + "]" if extra else ""), key)
+    except Exception:
+        return redact(f"HTTP {st} – {clean(raw, 160)}", key)
+
+
+def retry_delay(e):
+    """A 429 válaszban jelzett várakozás másodpercben (RetryInfo.retryDelay), ha van."""
+    try:
+        for d in json.loads(e.msg).get("error", {}).get("details") or []:
+            m = re.match(r"^\s*([0-9.]+)s\s*$", str(d.get("retryDelay", "")))
+            if m:
+                return float(m.group(1))
+    except Exception:
+        pass
+    return None
 
 
 def resp_text(r):
@@ -177,6 +207,17 @@ def list_models(get, key):
         print("A modellek listája nem kérhető le:", redact(getattr(e, "msg", e), key))
 
 
+def call(post, sleep, url, hdr, body):
+    try:
+        return post(url, hdr, body)
+    except GeminiError as e:
+        d = retry_delay(e) if e.status == 429 else None
+        if d is None or d > 65:
+            raise
+        sleep(d + 1)
+        return post(url, hdr, body)
+
+
 def main(env=None, post=_post, get=_get, sleep=time.sleep):
     env = os.environ if env is None else env
     key = env.get("GEMINI_API_KEY", "").strip()
@@ -194,7 +235,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     if bud.get("date") != today:
         bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0}
     url, hdr = f"{API}/models/{model}:generateContent", {"x-goog-api-key": key, "Content-Type": "application/json"}
-    st = {"a": 0, "b": 0, "uj": 0, "hiba": 0, "megall": ""}
+    st = {"a": 0, "b": 0, "uj": 0, "hiba": 0, "megall": "", "b_tiltva": False}
 
     def save():
         for k in list(labels):
@@ -214,10 +255,10 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     for a in todo:
         bud["a"] += 1; bud["hivasok"] += 1; st["a"] += 1
         try:
-            r = post(url, hdr, body_a(a))
+            r = call(post, sleep, url, hdr, body_a(a))
         except GeminiError as e:
             st["hiba"] += 1
-            print(f"Gemini A: HTTP {e.status} – {redact(e.msg, key)[:160]}")
+            print(f"Gemini A: {describe(e, key)}")
             if e.status in (400, 404):
                 list_models(get, key)
             if e.status in (0, 400, 401, 403, 404, 429) or e.status >= 500:
@@ -228,23 +269,24 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
             st["hiba"] += 1; print("Gemini A: érvénytelen válasz, a hír kimarad."); save(); continue
         lab = {"ts": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "model": model, "v": VERSION, "cim": clean(a.get("title"), 120), **p, "valosag": None, "forrasok": []}
         labels[a["id"]] = lab; st["uj"] += 1
-        if p["ellenorizheto"] and p["allitas"] and bud["b"] < CAP_B and st["b"] < RUN_B:
+        if p["ellenorizheto"] and p["allitas"] and bud["b"] < CAP_B and st["b"] < RUN_B and bud.get("b_stop") != today:
             bud["b"] += 1; bud["hivasok"] += 1; st["b"] += 1
             try:
-                rb = post(url, hdr, body_b(p["allitas"], a.get("title")))
+                rb = call(post, sleep, url, hdr, body_b(p["allitas"], a.get("title")))
                 pb = parse_b(rb)
                 bud["keresesek"] += pb["keresesek"]
                 lab.update({"valosag": pb["valosag"], "valosag_indoklas": pb["valosag_indoklas"], "forrasok": pb["forrasok"], "valosag_megjegyzes": pb["megjegyzes"], "keresesek": pb["keresesek"]})
                 if pb["search_entry"]:
                     entries[a["id"]] = pb["search_entry"]
             except GeminiError as e:
-                st["hiba"] += 1; print(f"Gemini B: HTTP {e.status} – {redact(e.msg, key)[:160]}")
-                if e.status in (0, 429) or e.status >= 500:
-                    st["megall"] = f"HTTP {e.status}"; save(); break
+                st["hiba"] += 1; print(f"Gemini B: {describe(e, key)}")
+                if e.status in (0, 400, 403, 429) or e.status >= 500:
+                    bud["b_stop"] = today; st["b_tiltva"] = True      # a keresős ellenőrzés aznapra kikapcsol, az A folytatódik
+                    print("Gemini B: a keresős ellenőrzés mára kikapcsolva (a címkézés A-hívásokkal folytatódik).")
         save()
-        sleep(1.5)
+        sleep(float(env.get("GEMINI_SLEEP", "6.5")))
     save()
-    print(f"Gemini [{model}]: A {st['a']} hívás (ma {bud['a']}/{CAP_A}) · B {st['b']} (ma {bud['b']}/{CAP_B}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
+    print(f"Gemini [{model}]: A {st['a']} hívás (ma {bud['a']}/{CAP_A}) · B {st['b']} (ma {bud['b']}/{CAP_B}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · B ma letiltva' if bud.get('b_stop') == today else ''}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
     return st
 
 
