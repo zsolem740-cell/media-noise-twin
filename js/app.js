@@ -84,6 +84,17 @@ function labPaint(cardEl, a) {
   const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = labelState(l);
   labCount();
 }
+export function gemChipUpdate() {
+  const box = document.getElementById("chips"); if (!box || !box.appendChild) return;
+  let b = document.getElementById("gem-chip");
+  const n = S.arts.filter((a) => gemOf(a)).length, m = S.gemMode | 0;
+  if (!n && !m) { if (b && b.remove) b.remove(); return; }       // nincs javaslat: nincs gomb
+  if (!b) { b = document.createElement("button"); b.id = "gem-chip"; if (b.dataset) b.dataset.gem = "1"; box.appendChild(b); }
+  const fresh = S.arts.filter((a) => gemOf(a) && !labels[a.id]).length;
+  b.textContent = m === 0 ? `Gemini (${n})` : m === 1 ? `Gemini: mind (${n})` : `Gemini: új (${fresh})`;
+  b.classList.toggle("off", m === 0);
+}
+export const gemTag = (a, l = labels[a.id]) => `${gemOf(a) ? '<em class="gtag">Gemini</em>' : ""}${l && LAB_MAIN.some((f) => l[f]) ? '<em class="gtag ok">címkézve</em>' : ""}`;
 function labCount() { const el = document.getElementById("lab-count"); if (el) el.textContent = `${Object.keys(labels).length} címkézett hír (${Object.values(labels).filter((l) => LAB_MAIN.every((f) => l[f])).length} teljes), csak ezen a telefonon.`; }
 async function copyText(txt) {
   try { await navigator.clipboard.writeText(txt); return true; } catch (e) {
@@ -109,7 +120,7 @@ function labUi() {
 function injectLabCss() {
   if (typeof document === "undefined" || !document.head || !document.createElement || document.getElementById("lab-css")) return;
   const st = document.createElement("style"); st.id = "lab-css";
-  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
+  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gtag{border:1px solid var(--vi)!important;color:var(--am)!important}.gtag.ok{border-color:#3fb950!important;color:#3fb950!important}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
   document.head.appendChild(st);
 }
 
@@ -148,7 +159,8 @@ export function ordered(list, mode, eng) {
   else { const sc = new Map(a.map((x) => [x.id, eng.score(x).score])); a.sort((x, y) => sc.get(y.id) - sc.get(x.id) || ts(y) - ts(x)); }
   return a;
 }
-const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr)), S.mode, engine);
+const gemOK = (a) => { const m = S.gemMode | 0; return m === 0 || (m === 1 ? !!gemOf(a) : !!gemOf(a) && !labels[a.id]); };
+const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr) && gemOK(a)), S.mode, engine);
 
 /* ───────── HUD ───────── */
 function renderHud(list) {
@@ -194,13 +206,14 @@ function card(a, sc) {
  <h3><a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" data-act="link">${esc(a.title)}</a></h3>
  <div class="meta">${esc(a.source)}${a.geo ? " · 📍 " + esc(a.geo.name) : ""}${a.event_sources > 1 ? " · 📰 " + a.event_sources + " forrás" : ""}</div>
  <div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>
- <div class="tags">${tags}${badge}</div>
+ <div class="tags">${tags}${badge}${gemTag(a)}</div>
  <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
  <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p>${labForm(a)}</div>
  <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
 </article>`;
 }
 function render() {
+  try { gemChipUpdate(); } catch (e) { /* a szűrőgomb hibája nem akaszthatja meg a listát */ }
   const list = visible();
   renderHud(list);
   $("list").innerHTML = list.slice(0, S.limit).map((a) => card(a, engine.score(a))).join("") || (S.arts.length ? `<p class="dim pad">Nincs a szűrőknek megfelelő hír.</p>` : "");
@@ -250,6 +263,7 @@ $("list").addEventListener("change", (ev) => {
   const cardEl = el.closest(".card"), a = cardEl && byId(cardEl.dataset.id); if (!a) return;
   setNote(a, el.value); labPaint(cardEl, a);
 });
+$("chips").addEventListener("click", (ev) => { const gb = ev.target.closest("[data-gem]"); if (gb && gb.dataset && gb.dataset.gem === "1") { S.gemMode = ((S.gemMode | 0) + 1) % 3; S.limit = 50; render(); } });
 $("chips").addEventListener("click", (ev) => { const b = ev.target.closest("[data-scope]"); if (!b) return; S.scopes[b.dataset.scope] = !S.scopes[b.dataset.scope]; b.classList.toggle("off", !S.scopes[b.dataset.scope]); S.limit = 50; render(); });
 $("mode").addEventListener("change", (ev) => { S.mode = ev.target.value; S.limit = 50; render(); });
 $("hide").addEventListener("change", (ev) => { S.hide = ev.target.checked; render(); });
@@ -276,6 +290,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.2 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
