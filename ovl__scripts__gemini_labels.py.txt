@@ -15,7 +15,8 @@ from pathlib import Path
 
 API = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_MODEL = "gemini-2.5-flash"
-CAP_A, CAP_B = 30, 10              # napi plafon (hír)
+CAP_A, CAP_B = 30, 10              # napi plafon (sikeres hívások)
+MAX_ERR = 24                       # napi plafon a sikertelen kísérletekre (végtelen próbálkozás ellen)
 RUN_A, RUN_B = 8, 3                # futásonkénti plafon
 KEEP, KEEP_ENTRIES = 300, 30       # megőrzött címkék / keresési javaslat-elemek
 ENUM_ERTEK, ENUM_STILUS, ENUM_VAL = ("magas", "kozepes", "alacsony"), ("nyugodt", "felfokozott"), ("igaz", "hamis", "nem_ellenorizheto")
@@ -208,13 +209,14 @@ def list_models(get, key):
 
 
 def call(post, sleep, url, hdr, body):
+    """Egy hívás; 429-nél a Google által jelzett (legfeljebb 65 s) várakozás után, 500/502/503/504-nél 8 s után egyszer újrapróbál."""
     try:
         return post(url, hdr, body)
     except GeminiError as e:
-        d = retry_delay(e) if e.status == 429 else None
+        d = retry_delay(e) if e.status == 429 else (8.0 if e.status in (500, 502, 503, 504) else None)
         if d is None or d > 65:
             raise
-        sleep(d + 1)
+        sleep(d + 1 if e.status == 429 else d)
         return post(url, hdr, body)
 
 
@@ -233,7 +235,8 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     today = now_utc().strftime("%Y-%m-%d")
     bud = jload(MET / "gemini_budget.json", {}) or {}
     if bud.get("date") != today:
-        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0}
+        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0, "a_hiba": 0}
+    bud.setdefault("a_hiba", 0)
     url, hdr = f"{API}/models/{model}:generateContent", {"x-goog-api-key": key, "Content-Type": "application/json"}
     st = {"a": 0, "b": 0, "uj": 0, "hiba": 0, "megall": "", "b_tiltva": False}
 
@@ -251,12 +254,16 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         jsave(MET / "gemini_labels.json", {"schema": "gemini-labels-1", "model": model, "version": VERSION, "updated": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "labels": labels, "order": order, "search_entries": entries})
         jsave(MET / "gemini_budget.json", bud)
 
-    todo = pick(arts, labels, max(0, min(RUN_A, CAP_A - bud["a"])))
+    todo = pick(arts, labels, max(0, min(RUN_A, CAP_A - bud["a"])) if bud["a_hiba"] < MAX_ERR else 0)
+    if bud["a_hiba"] >= MAX_ERR:
+        print(f"Gemini: ma már {bud['a_hiba']} sikertelen kísérlet volt, holnapig szünetel.")
     for a in todo:
-        bud["a"] += 1; bud["hivasok"] += 1; st["a"] += 1
+        bud["hivasok"] += 1; st["a"] += 1
         try:
             r = call(post, sleep, url, hdr, body_a(a))
+            bud["a"] += 1                                  # csak a sikeres (kiszolgált) hívás számít a napi keretbe
         except GeminiError as e:
+            bud["a_hiba"] += 1
             st["hiba"] += 1
             print(f"Gemini A: {describe(e, key)}")
             if e.status in (400, 404):
@@ -270,9 +277,10 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         lab = {"ts": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "model": model, "v": VERSION, "cim": clean(a.get("title"), 120), **p, "valosag": None, "forrasok": []}
         labels[a["id"]] = lab; st["uj"] += 1
         if p["ellenorizheto"] and p["allitas"] and bud["b"] < CAP_B and st["b"] < RUN_B and bud.get("b_stop") != today:
-            bud["b"] += 1; bud["hivasok"] += 1; st["b"] += 1
+            bud["hivasok"] += 1; st["b"] += 1
             try:
                 rb = call(post, sleep, url, hdr, body_b(p["allitas"], a.get("title")))
+                bud["b"] += 1                              # csak a sikeres hívás számít a napi keretbe
                 pb = parse_b(rb)
                 bud["keresesek"] += pb["keresesek"]
                 lab.update({"valosag": pb["valosag"], "valosag_indoklas": pb["valosag_indoklas"], "forrasok": pb["forrasok"], "valosag_megjegyzes": pb["megjegyzes"], "keresesek": pb["keresesek"]})
@@ -286,7 +294,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         save()
         sleep(float(env.get("GEMINI_SLEEP", "6.5")))
     save()
-    print(f"Gemini [{model}]: A {st['a']} hívás (ma {bud['a']}/{CAP_A}) · B {st['b']} (ma {bud['b']}/{CAP_B}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · B ma letiltva' if bud.get('b_stop') == today else ''}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
+    print(f"Gemini [{model}]: A {st['a']} kísérlet (ma {bud['a']}/{CAP_A} sikeres, {bud['a_hiba']} sikertelen) · B {st['b']} (ma {bud['b']}/{CAP_B}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · B ma letiltva' if bud.get('b_stop') == today else ''}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
     return st
 
 
