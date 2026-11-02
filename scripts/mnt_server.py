@@ -404,6 +404,44 @@ def cluster(arts, L, thr):
 PLANETARY = {"solar", "geomagnetic"}
 
 
+RET_LIMITS = {"live_24h": 96, "daily_30d": 30, "monthly_12m": 12}
+
+
+def _accumulate(item, e):
+    """Folyamatos összesítés: egy új rekord beépítése a napi vagy a havi szintbe (a null G nem számít az átlagba)."""
+    item["n"] = item.get("n", 0) + 1
+    item["v_sum"] = round(item.get("v_sum", 0) + e["V"], 4)
+    item["s_sum"] = round(item.get("s_sum", 0) + e["S"], 4)
+    item["atm_sum"] = round(item.get("atm_sum", 0) + e["ATM"], 4)
+    if e["G"] is not None:
+        item["n_g"] = item.get("n_g", 0) + 1
+        item["g_sum"] = round(item.get("g_sum", 0) + e["G"], 3)
+        item["G_min"] = e["G"] if item.get("G_min") is None else min(item["G_min"], e["G"])
+    item["G_avg"] = round(item["g_sum"] / item["n_g"], 3) if item.get("n_g") else None
+    item["V_avg"] = round(item["v_sum"] / item["n"], 3)
+    item["S_avg"] = round(item["s_sum"] / item["n"], 3)
+    item["ATM_avg"] = round(item["atm_sum"] / item["n"], 4)
+    return item
+
+
+def fold_retention(prev_dp, entry):
+    """P8 v1.1 gördülő tár: az előző P8-fájl tárából folytatja; ugyanabban az órában nem ad új rekordot."""
+    prev_dp = prev_dp if isinstance(prev_dp, dict) else {}
+    live, daily, monthly = (list(prev_dp.get(k) or []) for k in ("live_24h", "daily_30d", "monthly_12m"))
+    if not (live and live[-1].get("hour") == entry["hour"]):
+        live.append(entry)
+        date, month = entry["t"][:10], entry["t"][:7]
+        if daily and daily[-1].get("date") == date:
+            _accumulate(daily[-1], entry)
+        else:
+            daily.append(_accumulate({"date": date}, entry))
+        if monthly and monthly[-1].get("month") == month:
+            _accumulate(monthly[-1], entry)
+        else:
+            monthly.append(_accumulate({"month": month}, entry))
+    return {"live_24h": live[-RET_LIMITS["live_24h"]:], "daily_30d": daily[-RET_LIMITS["daily_30d"]:], "monthly_12m": monthly[-RET_LIMITS["monthly_12m"]:]}
+
+
 def truth_flags(m, t):
     """Az M1 (Solaris) environment_truth_matrix.json értelmezése. Visszaad: (flags|None, részletek, G|None).
     Elsődleges alak a P8-szerződés: {"header":{...,"timestamp"}, "core_metrics":{"status","stationarity_G",...},
@@ -420,6 +458,9 @@ def truth_flags(m, t):
         return None, {"stale": True}, None
     core = m.get("core_metrics") if isinstance(m.get("core_metrics"), dict) else {}
     dyn = m.get("dynamic_payload") if isinstance(m.get("dynamic_payload"), dict) else {}
+    m1_status = str(core.get("status") or m.get("status") or "").upper()
+    if m1_status in ("INSUFFICIENT_DATA", "NO_DATA"):      # az M1 szerint nincs elég mérés: a hiány nem igazol nyugalmat, ezért nincs használható fizikai állapot
+        return None, {"status": m1_status}, None
     an = m.get("anomalies") if isinstance(m.get("anomalies"), dict) else {}
     flags, det = set(), {}
     dflags = dyn.get("flags")
@@ -663,7 +704,7 @@ class MediaZajTwin(BaseMatrixModule):
     DEFAULT_W = [1.0, 1.0, 1.0, 1.0]
 
     def __init__(self, cfg):
-        super().__init__("M2_MEDIA_ZAJ", "1.0.0")
+        super().__init__("M2_MEDIA_ZAJ", "1.1.0")
         self.cfg, self.L, self.w = cfg, Lex(cfg), list(self.DEFAULT_W)
 
     def update_weights(self, new_weights):
@@ -734,6 +775,10 @@ async def run_async(force=False):
     if not fresh and errors and not old:
         print("Nincs elérhető forrás:", errors)
     res = await mod.process_payload({"now": t, "old": old, "fresh": fresh, "profiles": profiles, "trends": trends, "official": official, "truth": truth})
+    p8, c8 = res["p8"], res["p8"]["core_metrics"]
+    prev_p8 = jload(MET / "media_noise_matrix.json")
+    p8["dynamic_payload"].update(fold_retention((prev_p8 or {}).get("dynamic_payload") if isinstance(prev_p8, dict) else None,
+                                                {"t": iso(t), "hour": iso(t)[:13], "G": c8["stationarity_G"], "S": c8["noise_S"], "V": c8["validity_V"], "ATM": c8["atm_score"]}))
     arts, new_ids, flags, g_info, rising, warming, snap = res["articles"], res["new_ids"], res["flags"], res["g"], res["rising"], res["warming"], res["snapshot"]
     sig_src = json.dumps([[a["id"], round(a["atm"], 2)] for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))]
                          + [snap["flags"], snap["rising"], official.get("calm"), round(g_info["value"], 2)], sort_keys=True)
