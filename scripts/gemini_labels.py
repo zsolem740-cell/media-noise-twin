@@ -10,13 +10,14 @@ Biztonság: a kulcs csak a GEMINI_API_KEY környezeti változóban él (GitHub-t
 külső, megbízhatatlan adat: elválasztva kerül a kérésbe, a kimenet pedig szigorúan enum-ellenőrzött.
 Kimenet: data/metrics/gemini_labels.json és data/metrics/gemini_budget.json. A modell neve a GEMINI_MODEL változóból jön (alap: gemini-2.5-flash)."""
 import json, os, re, sys, time, urllib.request, urllib.error
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 API = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_MODEL = "gemini-2.5-flash"
-CAP_A, CAP_B = 30, 10              # napi plafon (hír)
-RUN_A, RUN_B = 8, 3                # futásonkénti plafon
+CAP_A, CAP_B = 15, 5               # napi plafon (sikeres hívások): az ingyenes szint modellenkénti napi kerete kb. 20 kérés
+RUN_A, RUN_B = 5, 2                # futásonkénti plafon
+MAX_ERR = 24                       # napi plafon a sikertelen kísérletekre (végtelen próbálkozás ellen)
 KEEP, KEEP_ENTRIES = 300, 30       # megőrzött címkék / keresési javaslat-elemek
 ENUM_ERTEK, ENUM_STILUS, ENUM_VAL = ("magas", "kozepes", "alacsony"), ("nyugodt", "felfokozott"), ("igaz", "hamis", "nem_ellenorizheto")
 VERSION = "A1+B1"
@@ -59,6 +60,36 @@ def jsave(p, obj):
     tmp.replace(p)
 
 
+def caps(env):
+    """Napi és futásonkénti plafonok: alapértékek, a GEMINI_CAP_A / GEMINI_CAP_B / GEMINI_RUN_A / GEMINI_RUN_B környezeti változókkal felülírhatók."""
+    def num(k, d):
+        try:
+            return max(0, int(env.get(k, d)))
+        except Exception:
+            return d
+    return num("GEMINI_CAP_A", CAP_A), num("GEMINI_CAP_B", CAP_B), num("GEMINI_RUN_A", RUN_A), num("GEMINI_RUN_B", RUN_B)
+
+
+def quota_ids(e):
+    """A megsértett kvóták azonosítói a 429 válaszból."""
+    out = []
+    try:
+        for d in json.loads(e.msg).get("error", {}).get("details") or []:
+            for v in d.get("violations") or []:
+                out.append(str(v.get("quotaId") or v.get("quotaMetric") or ""))
+    except Exception:
+        pass
+    return out
+
+
+def model_day_quota(e):
+    """Igaz, ha a 429 a modell napi kérés-keretét jelzi (nem a keresési groundingot): ilyenkor minden hívás blokkolt a nullázódásig."""
+    ids = quota_ids(e)
+    if any(("ground" in q.lower() or "search" in q.lower()) for q in ids):
+        return False
+    return e.status == 429 and (any("PerDay" in q for q in ids) or "PerDay" in str(e.msg))
+
+
 def schema_a():
     return {"type": "OBJECT", "properties": {
         "ertek": {"type": "STRING", "enum": list(ENUM_ERTEK)}, "stilus": {"type": "STRING", "enum": list(ENUM_STILUS)},
@@ -98,7 +129,7 @@ def _post(url, headers, body, timeout=60):
         with urllib.request.urlopen(req, timeout=timeout) as r:
             return json.loads(r.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        raise GeminiError(e.code, e.read().decode("utf-8", "ignore")[:300])
+        raise GeminiError(e.code, e.read().decode("utf-8", "ignore")[:4000])
     except Exception as e:
         raise GeminiError(0, str(e)[:200])
 
@@ -110,6 +141,36 @@ def _get(url, headers, timeout=30):
             return json.loads(r.read().decode("utf-8"))
     except Exception as e:
         raise GeminiError(0, str(e)[:200])
+
+
+def describe(e, key):
+    """Tömör hibaleírás a naplóhoz: állapot, üzenet, a megsértett kvóta azonosítója és a javasolt várakozás (a kulcs kicserélve)."""
+    st, raw = getattr(e, "status", ""), str(getattr(e, "msg", e))
+    try:
+        er = json.loads(raw).get("error", {})
+        extra = []
+        for d in er.get("details") or []:
+            for v in d.get("violations") or []:
+                q = v.get("quotaId") or v.get("quotaMetric")
+                if q:
+                    extra.append(str(q))
+            if d.get("retryDelay"):
+                extra.append("retryDelay " + str(d["retryDelay"]))
+        return redact(f"HTTP {st} – {clean(er.get('message'), 170)}" + (" [" + "; ".join(dict.fromkeys(extra)) + "]" if extra else ""), key)
+    except Exception:
+        return redact(f"HTTP {st} – {clean(raw, 160)}", key)
+
+
+def retry_delay(e):
+    """A 429 válaszban jelzett várakozás másodpercben (RetryInfo.retryDelay), ha van."""
+    try:
+        for d in json.loads(e.msg).get("error", {}).get("details") or []:
+            m = re.match(r"^\s*([0-9.]+)s\s*$", str(d.get("retryDelay", "")))
+            if m:
+                return float(m.group(1))
+    except Exception:
+        pass
+    return None
 
 
 def resp_text(r):
@@ -177,6 +238,18 @@ def list_models(get, key):
         print("A modellek listája nem kérhető le:", redact(getattr(e, "msg", e), key))
 
 
+def call(post, sleep, url, hdr, body):
+    """Egy hívás; 429-nél a Google által jelzett (legfeljebb 65 s) várakozás után, 500/502/503/504-nél 8 s után egyszer újrapróbál."""
+    try:
+        return post(url, hdr, body)
+    except GeminiError as e:
+        d = retry_delay(e) if e.status == 429 else (8.0 if e.status in (500, 502, 503, 504) else None)
+        if d is None or d > 65:
+            raise
+        sleep(d + 1 if e.status == 429 else d)
+        return post(url, hdr, body)
+
+
 def main(env=None, post=_post, get=_get, sleep=time.sleep):
     env = os.environ if env is None else env
     key = env.get("GEMINI_API_KEY", "").strip()
@@ -189,12 +262,25 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     arts = (jload(root / "data" / "articles.json", {}) or {}).get("articles", [])
     store = jload(MET / "gemini_labels.json", {}) or {}
     labels, order, entries = store.get("labels") or {}, store.get("order") or [], store.get("search_entries") or {}
-    today = now_utc().strftime("%Y-%m-%d")
+    cap_a, cap_b, run_a, run_b = caps(env)
+    now = now_utc()
+    today = now.strftime("%Y-%m-%d")
     bud = jload(MET / "gemini_budget.json", {}) or {}
     if bud.get("date") != today:
-        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0}
+        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0, "a_hiba": 0, "pause_until": bud.get("pause_until")}
+    bud.setdefault("a_hiba", 0)
+    pu = bud.get("pause_until")
+    if pu:
+        try:
+            if now < datetime.fromisoformat(str(pu).replace("Z", "+00:00")):
+                print(f"Gemini: a modell napi kerete kimerült, szünet a nullázódásig ({pu}). Nem hívok.")
+                jsave(MET / "gemini_budget.json", bud)
+                return {"skipped": True, "szunet": pu}
+        except Exception:
+            pass
+        bud["pause_until"] = None
     url, hdr = f"{API}/models/{model}:generateContent", {"x-goog-api-key": key, "Content-Type": "application/json"}
-    st = {"a": 0, "b": 0, "uj": 0, "hiba": 0, "megall": ""}
+    st = {"a": 0, "b": 0, "uj": 0, "hiba": 0, "megall": "", "b_tiltva": False}
 
     def save():
         for k in list(labels):
@@ -210,14 +296,21 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         jsave(MET / "gemini_labels.json", {"schema": "gemini-labels-1", "model": model, "version": VERSION, "updated": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "labels": labels, "order": order, "search_entries": entries})
         jsave(MET / "gemini_budget.json", bud)
 
-    todo = pick(arts, labels, max(0, min(RUN_A, CAP_A - bud["a"])))
+    todo = pick(arts, labels, max(0, min(run_a, cap_a - bud["a"])) if bud["a_hiba"] < MAX_ERR else 0)
+    if bud["a_hiba"] >= MAX_ERR:
+        print(f"Gemini: ma már {bud['a_hiba']} sikertelen kísérlet volt, holnapig szünetel.")
     for a in todo:
-        bud["a"] += 1; bud["hivasok"] += 1; st["a"] += 1
+        bud["hivasok"] += 1; st["a"] += 1
         try:
-            r = post(url, hdr, body_a(a))
+            r = call(post, sleep, url, hdr, body_a(a))
+            bud["a"] += 1                                  # csak a sikeres (kiszolgált) hívás számít a napi keretbe
         except GeminiError as e:
+            bud["a_hiba"] += 1
             st["hiba"] += 1
-            print(f"Gemini A: HTTP {e.status} – {redact(e.msg, key)[:160]}")
+            print(f"Gemini A: {describe(e, key)}")
+            if model_day_quota(e):
+                bud["pause_until"] = (now + timedelta(seconds=(retry_delay(e) or 6 * 3600) + 60)).strftime("%Y-%m-%dT%H:%M:%SZ")
+                print(f"Gemini: a napi kvóta kimerült, a következő próba: {bud['pause_until']} után.")
             if e.status in (400, 404):
                 list_models(get, key)
             if e.status in (0, 400, 401, 403, 404, 429) or e.status >= 500:
@@ -228,23 +321,26 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
             st["hiba"] += 1; print("Gemini A: érvénytelen válasz, a hír kimarad."); save(); continue
         lab = {"ts": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "model": model, "v": VERSION, "cim": clean(a.get("title"), 120), **p, "valosag": None, "forrasok": []}
         labels[a["id"]] = lab; st["uj"] += 1
-        if p["ellenorizheto"] and p["allitas"] and bud["b"] < CAP_B and st["b"] < RUN_B:
-            bud["b"] += 1; bud["hivasok"] += 1; st["b"] += 1
+        if p["ellenorizheto"] and p["allitas"] and bud["b"] < cap_b and st["b"] < run_b and bud.get("b_stop") != today:
+            bud["hivasok"] += 1; st["b"] += 1
             try:
-                rb = post(url, hdr, body_b(p["allitas"], a.get("title")))
+                rb = call(post, sleep, url, hdr, body_b(p["allitas"], a.get("title")))
+                bud["b"] += 1                              # csak a sikeres hívás számít a napi keretbe
                 pb = parse_b(rb)
                 bud["keresesek"] += pb["keresesek"]
                 lab.update({"valosag": pb["valosag"], "valosag_indoklas": pb["valosag_indoklas"], "forrasok": pb["forrasok"], "valosag_megjegyzes": pb["megjegyzes"], "keresesek": pb["keresesek"]})
                 if pb["search_entry"]:
                     entries[a["id"]] = pb["search_entry"]
             except GeminiError as e:
-                st["hiba"] += 1; print(f"Gemini B: HTTP {e.status} – {redact(e.msg, key)[:160]}")
-                if e.status in (0, 429) or e.status >= 500:
-                    st["megall"] = f"HTTP {e.status}"; save(); break
+                st["hiba"] += 1; print(f"Gemini B: {describe(e, key)}")
+                if e.status in (0, 400, 403, 429) or e.status >= 500:
+                    bud["b_stop"] = today; st["b_tiltva"] = True      # a keresős ellenőrzés aznapra kikapcsol, az A folytatódik
+                    # a B hibája csak a B-t kapcsolja ki; ha valójában a modell napi kerete fogyott el, a következő A-hívás 429-e beállítja a szünetet
+                    print("Gemini B: a keresős ellenőrzés mára kikapcsolva (a címkézés A-hívásokkal folytatódik).")
         save()
-        sleep(1.5)
+        sleep(float(env.get("GEMINI_SLEEP", "6.5")))
     save()
-    print(f"Gemini [{model}]: A {st['a']} hívás (ma {bud['a']}/{CAP_A}) · B {st['b']} (ma {bud['b']}/{CAP_B}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
+    print(f"Gemini [{model}]: A {st['a']} kísérlet (ma {bud['a']}/{cap_a} sikeres, {bud['a_hiba']} sikertelen) · B {st['b']} (ma {bud['b']}/{cap_b}) · keresés ma {bud['keresesek']} · új címke {st['uj']} · hiba {st['hiba']}{' · B ma letiltva' if bud.get('b_stop') == today else ''}{' · leállt: ' + st['megall'] if st['megall'] else ''}")
     return st
 
 
