@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő).
+/* Média-Zaj Twin v40.1 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -15,6 +15,82 @@ const engine = new FilterEngine();
 const votes = lsGet("mnt.votes.v38", {});
 const prefs = lsGet("mnt.pref.v38", { fallback: false, auto: true });
 let globe = null, reading = null;
+
+/* ───────── címkézés (v40.1): hírérték, valóság, stílus, címkéző. Csak ezen a telefonon tárolódik, a tanuló szűrőt NEM tanítja. ───────── */
+const labels = lsGet("mnt.labels.v1", {});
+const labPref = lsGet("mnt.labpref.v1", { forras: "sajat" });
+export const LAB = [
+  { f: "ertek", name: "Hírérték", opts: [["magas", "magas"], ["kozepes", "közepes"], ["alacsony", "alacsony"]] },
+  { f: "valosag", name: "Valóság", opts: [["igaz", "igaz"], ["hamis", "hamis"], ["nem_ellenorizheto", "nem ellenőrizhető"]] },
+  { f: "stilus", name: "Stílus", opts: [["nyugodt", "nyugodt"], ["felfokozott", "felfokozott"]] },
+  { f: "forras", name: "Címkéző", opts: [["sajat", "saját"], ["gemini", "Gemini"]] },
+];
+const LAB_MAIN = ["ertek", "valosag", "stilus"];
+const LAB_OK = Object.fromEntries(LAB.map((r) => [r.f, new Set(r.opts.map((o) => o[0]))]));
+function saveLabels() { try { localStorage.setItem("mnt.labels.v1", JSON.stringify(labels)); return true; } catch (e) { return false; } }
+export function labelState(l) { const n = l ? LAB_MAIN.filter((f) => l[f]).length : 0; return n === 3 ? "Címkézve (3/3)" : n ? `Részben címkézve (${n}/3)` : "Még nincs címke"; }
+export function labForm(a, l = labels[a.id] || {}, pref = labPref) {
+  const rows = LAB.map((r) => { const cur = l[r.f] || (r.f === "forras" ? pref.forras : null); return `<div class="lab-row"><span>${r.name}</span><span class="seg">${r.opts.map(([v, t]) => `<button data-act="lab" data-f="${r.f}" data-v="${v}" class="${cur === v ? "on" : ""}">${t}</button>`).join("")}</span></div>`; }).join("");
+  return `<div class="lab"><h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
+}
+function labRecord(a) {
+  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras });
+}
+export function setLabel(a, f, v) {
+  if (!LAB_OK[f] || !LAB_OK[f].has(v)) return false;
+  const l = labRecord(a);
+  if (f === "forras") { l.forras = v; labPref.forras = v; lsSet("mnt.labpref.v1", labPref); }
+  else l[f] = l[f] === v ? "" : v;                              // ugyanarra koppintva törlődik
+  l.upd = new Date().toISOString();
+  if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];   // üres címke nem marad
+  return saveLabels();
+}
+export function setNote(a, text) {
+  const l = labRecord(a); l.megj = String(text || "").trim().slice(0, 200); l.upd = new Date().toISOString();
+  if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];
+  return saveLabels();
+}
+export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
+const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes"];
+export function labelsCsv(all) {
+  const num = (x) => (typeof x === "number" && isFinite(x) ? x.toFixed(4) : "");
+  const rows = Object.values(all).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
+  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, l.forras, l.megj].map(csvCell).join(","))].join("\n");
+}
+function labPaint(cardEl, a) {
+  const l = labels[a.id] || {};
+  if (cardEl.querySelectorAll) cardEl.querySelectorAll('[data-act="lab"]').forEach((b) => { const cur = l[b.dataset.f] || (b.dataset.f === "forras" ? labPref.forras : null); b.classList.toggle("on", cur === b.dataset.v); });
+  const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = labelState(l);
+  labCount();
+}
+function labCount() { const el = document.getElementById("lab-count"); if (el) el.textContent = `${Object.keys(labels).length} címkézett hír (${Object.values(labels).filter((l) => LAB_MAIN.every((f) => l[f])).length} teljes), csak ezen a telefonon.`; }
+async function copyText(txt) {
+  try { await navigator.clipboard.writeText(txt); return true; } catch (e) {
+    try { const ta = document.createElement("textarea"); ta.value = txt; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok; } catch (e2) { return false; }
+  }
+}
+function labUi() {
+  const box = document.querySelector("#settings .box"), anchor = $("s-reset");
+  if (!box || !anchor || $("s-lab")) return;
+  const w = document.createElement("div"); w.id = "s-lab"; w.className = "lab-set";
+  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea>`;
+  box.insertBefore(w, anchor);
+  $("lab-copy").addEventListener("click", async () => {
+    const n = Object.keys(labels).length, msg = $("lab-msg"), out = $("lab-out");
+    if (!n) { msg.textContent = "Még nincs címke."; return; }
+    const csv = labelsCsv(labels), ok = await copyText(csv);
+    out.hidden = ok; if (!ok) { out.value = csv; try { out.select(); } catch (e) { /* kézzel kijelölhető */ } }
+    msg.textContent = ok ? `${n} címke a vágólapon (CSV).` : "A másolás nem sikerült: a szöveg alább kijelölhető, másold ki kézzel.";
+  });
+  $("lab-clear").addEventListener("click", () => { if (confirm("Biztosan törlöd az összes címkét? (A szavazatok és a tanult szűrő megmarad.)")) { Object.keys(labels).forEach((k) => delete labels[k]); saveLabels(); labCount(); $("lab-msg").textContent = "A címkék törölve."; } });
+  labCount();
+}
+function injectLabCss() {
+  if (typeof document === "undefined" || !document.head || !document.createElement || document.getElementById("lab-css")) return;
+  const st = document.createElement("style"); st.id = "lab-css";
+  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
+  document.head.appendChild(st);
+}
 
 const th = () => (S.meta && S.meta.thresholds) || DEF_TH;
 const pctl = (v, p) => { if (!v.length) return 0; const a = [...v].sort((x, y) => x - y), k = (a.length - 1) * p, lo = Math.floor(k), hi = Math.ceil(k); return a[lo] + (a[hi] - a[lo]) * (k - lo); };
@@ -98,7 +174,7 @@ function card(a, sc) {
  <div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>
  <div class="tags">${tags}${badge}</div>
  <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
- <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p></div>
+ <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p>${labForm(a)}</div>
  <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
 </article>`;
 }
@@ -136,6 +212,8 @@ $("list").addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]"), cardEl = ev.target.closest(".card"); if (!cardEl) return;
   const a = byId(cardEl.dataset.id); if (!a) return;
   const act = t && t.dataset.act;
+  if (act === "lab") { const ok = setLabel(a, t.dataset.f, t.dataset.v); labPaint(cardEl, a); if (!ok) { const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = "Nem sikerült menteni (tele a tár?)"; } return; }
+  if (!act && ev.target.closest(".lab")) return;       // az űrlap mezői nem nyitják/zárják a részleteket
   if (act === "up" || act === "down") { vote(a, act === "up" ? 1 : 0); const y = $("sheet").scrollTop; render(); $("sheet").scrollTop = y; return; }
   if (act === "link") { stopReading(); reading = { id: a.id, since: Date.now(), away: true }; return; }
   const d = cardEl.querySelector(".detail"), open = d.hidden;
@@ -143,6 +221,11 @@ $("list").addEventListener("click", (ev) => {
   d.hidden = !open;
   if (open) { reading = { id: a.id, since: Date.now(), opened: true }; S.selected = a.id; if (globe && a.geo) { globe.select(a.id); globe.focus(a.geo.lat, a.geo.lon); } }
   else stopReading(a.id);
+});
+$("list").addEventListener("change", (ev) => {
+  const el = ev.target; if (!el || !el.classList || !el.classList.contains("lab-note")) return;
+  const cardEl = el.closest(".card"), a = cardEl && byId(cardEl.dataset.id); if (!a) return;
+  setNote(a, el.value); labPaint(cardEl, a);
 });
 $("chips").addEventListener("click", (ev) => { const b = ev.target.closest("[data-scope]"); if (!b) return; S.scopes[b.dataset.scope] = !S.scopes[b.dataset.scope]; b.classList.toggle("off", !S.scopes[b.dataset.scope]); S.limit = 50; render(); });
 $("mode").addEventListener("change", (ev) => { S.mode = ev.target.value; S.limit = 50; render(); });
@@ -153,7 +236,7 @@ $("b-refresh").addEventListener("click", load);
 $("b-focus").addEventListener("click", () => { const r = (S.meta && S.meta.region) || { lat: 47, lon: 16.6 }; if (globe) globe.focus(r.lat, r.lon); });
 $("b-auto").addEventListener("click", () => { prefs.auto = !prefs.auto; lsSet("mnt.pref.v38", prefs); if (globe) globe.setAutoRotate(prefs.auto); $("b-auto").classList.toggle("off", !prefs.auto); });
 $("b-sheet").addEventListener("click", () => $("app").classList.toggle("peek"));
-$("b-settings").addEventListener("click", () => { $("settings").hidden = false; });
+$("b-settings").addEventListener("click", () => { labUi(); labCount(); $("settings").hidden = false; });
 $("s-close").addEventListener("click", () => { $("settings").hidden = true; });
 $("s-reset").addEventListener("click", () => { if (confirm("Biztosan törlöd a tanult szűrőt és a szavazataidat?")) { engine.reset(); Object.keys(votes).forEach((k) => delete votes[k]); lsSet("mnt.votes.v38", votes); render(); } });
 $("s-2d").addEventListener("click", () => { prefs.fallback = !prefs.fallback; lsSet("mnt.pref.v38", prefs); location.reload(); });
@@ -175,4 +258,4 @@ async function start() {
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
 }
-if (typeof document !== "undefined" && document.getElementById("globe")) start();
+if (typeof document !== "undefined" && document.getElementById("globe")) { injectLabCss(); start(); }
