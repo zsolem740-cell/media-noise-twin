@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40.1 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap).
+/* Média-Zaj Twin v40.2 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -29,9 +29,18 @@ const LAB_MAIN = ["ertek", "valosag", "stilus"];
 const LAB_OK = Object.fromEntries(LAB.map((r) => [r.f, new Set(r.opts.map((o) => o[0]))]));
 function saveLabels() { try { localStorage.setItem("mnt.labels.v1", JSON.stringify(labels)); return true; } catch (e) { return false; } }
 export function labelState(l) { const n = l ? LAB_MAIN.filter((f) => l[f]).length : 0; return n === 3 ? "Címkézve (3/3)" : n ? `Részben címkézve (${n}/3)` : "Még nincs címke"; }
+const GEM_NAMES = { ertek: { magas: "magas", kozepes: "közepes", alacsony: "alacsony" }, stilus: { nyugodt: "nyugodt", felfokozott: "felfokozott" }, valosag: { igaz: "igaz", hamis: "hamis", nem_ellenorizheto: "nem ellenőrizhető" } };
+const gemOf = (a) => (S.gem && S.gem.labels && S.gem.labels[a.id]) || null;
+export function gemBlock(a, g = gemOf(a), entry = (S.gem && S.gem.search_entries && S.gem.search_entries[a.id]) || "") {
+  if (!g) return "";
+  const nm = (f, v) => (v && GEM_NAMES[f][v]) || "–";
+  const src = (g.forrasok || []).filter((x) => /^https:\/\//.test(String(x.uri || ""))).map((x) => `<a href="${esc(x.uri)}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a>`).join(" · ");
+  const se = entry ? `<iframe class="gem-se" sandbox="allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc('<base target="_blank">' + entry)}" loading="lazy"></iframe>` : "";
+  return `<div class="gem"><h4>Gemini javaslat <span class="dim">· ${esc(g.model || "")}</span></h4><p>Hírérték: <b>${nm("ertek", g.ertek)}</b> · Stílus: <b>${nm("stilus", g.stilus)}</b> · Valóság: <b>${g.valosag ? nm("valosag", g.valosag) : "nincs ítélet"}</b> · bizonyosság ${typeof g.magabiztossag === "number" ? g.magabiztossag.toFixed(2) : "–"}</p>${g.indoklas ? `<p class="dim">${esc(g.indoklas)}</p>` : ""}${src ? `<p class="dim">Források: ${src}</p>` : ""}${g.valosag_megjegyzes ? `<p class="dim">${esc(g.valosag_megjegyzes)}</p>` : ""}<button data-act="gem" class="gem-ok">Elfogadom (címkéző: Gemini)</button>${se}</div>`;
+}
 export function labForm(a, l = labels[a.id] || {}, pref = labPref) {
   const rows = LAB.map((r) => { const cur = l[r.f] || (r.f === "forras" ? pref.forras : null); return `<div class="lab-row"><span>${r.name}</span><span class="seg">${r.opts.map(([v, t]) => `<button data-act="lab" data-f="${r.f}" data-v="${v}" class="${cur === v ? "on" : ""}">${t}</button>`).join("")}</span></div>`; }).join("");
-  return `<div class="lab"><h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
+  return `<div class="lab">${gemBlock(a)}<h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
 }
 function labRecord(a) {
   return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras });
@@ -45,17 +54,29 @@ export function setLabel(a, f, v) {
   if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];   // üres címke nem marad
   return saveLabels();
 }
+export function applyGem(a, g = gemOf(a)) {
+  if (!g) return false;
+  const l = labRecord(a);
+  if (LAB_OK.ertek.has(g.ertek)) l.ertek = g.ertek;
+  if (LAB_OK.stilus.has(g.stilus)) l.stilus = g.stilus;
+  if (g.valosag && LAB_OK.valosag.has(g.valosag)) l.valosag = g.valosag;
+  l.forras = "gemini"; l.gem_bizonyossag = typeof g.magabiztossag === "number" ? g.magabiztossag : ""; l.gem_modell = String(g.model || "");
+  const okSrc = (g.forrasok || []).filter((x) => /^https:\/\//.test(String(x.uri || "")));
+  if (!l.megj && g.valosag && okSrc.length) l.megj = okSrc.map((x) => x.title).slice(0, 3).join(", ").slice(0, 200);
+  l.upd = new Date().toISOString();
+  return saveLabels();
+}
 export function setNote(a, text) {
   const l = labRecord(a); l.megj = String(text || "").trim().slice(0, 200); l.upd = new Date().toISOString();
   if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];
   return saveLabels();
 }
 export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
-const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes"];
+const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell"];
 export function labelsCsv(all) {
   const num = (x) => (typeof x === "number" && isFinite(x) ? x.toFixed(4) : "");
   const rows = Object.values(all).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, l.forras, l.megj].map(csvCell).join(","))].join("\n");
+  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, l.forras, l.megj, l.gem_bizonyossag, l.gem_modell].map(csvCell).join(","))].join("\n");
 }
 function labPaint(cardEl, a) {
   const l = labels[a.id] || {};
@@ -88,7 +109,7 @@ function labUi() {
 function injectLabCss() {
   if (typeof document === "undefined" || !document.head || !document.createElement || document.getElementById("lab-css")) return;
   const st = document.createElement("style"); st.id = "lab-css";
-  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
+  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
   document.head.appendChild(st);
 }
 
@@ -110,6 +131,7 @@ async function load() {
     const d = await getJson("data/articles.json");
     S.arts = d.articles || []; S.meta = d.meta || null;
     try { S.hist = (await getJson("data/metrics/atm_history.json")).points || []; } catch (e) { S.hist = []; }
+    try { S.gem = await getJson("data/metrics/gemini_labels.json"); } catch (e) { S.gem = null; }
     $("empty").hidden = true;
   } catch (e) {
     S.arts = []; S.meta = null; $("empty").hidden = false;
@@ -212,6 +234,7 @@ $("list").addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]"), cardEl = ev.target.closest(".card"); if (!cardEl) return;
   const a = byId(cardEl.dataset.id); if (!a) return;
   const act = t && t.dataset.act;
+  if (act === "gem") { const ok = applyGem(a); labPaint(cardEl, a); const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = ok ? "Gemini-javaslat elfogadva · " + labelState(labels[a.id]) : "Nem sikerült menteni (tele a tár?)"; return; }
   if (act === "lab") { const ok = setLabel(a, t.dataset.f, t.dataset.v); labPaint(cardEl, a); if (!ok) { const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = "Nem sikerült menteni (tele a tár?)"; } return; }
   if (!act && ev.target.closest(".lab")) return;       // az űrlap mezői nem nyitják/zárják a részleteket
   if (act === "up" || act === "down") { vote(a, act === "up" ? 1 : 0); const y = $("sheet").scrollTop; render(); $("sheet").scrollTop = y; return; }
