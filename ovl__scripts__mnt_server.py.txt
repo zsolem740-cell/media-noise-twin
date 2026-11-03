@@ -694,14 +694,14 @@ def event_record(items, L):
         nx, st = _nums(txt), (x.get("d") or {}).get("st")
         st = round(st, 3) if isinstance(st, (int, float)) and not isinstance(st, bool) else None
         rows.append([max(0, int((tx - t0).total_seconds() // 60)), _SC.get(x.get("scope"), "?"), st, round(_jacc(tk0, _toks(x["title"])), 2), hits(fold(txt), L.att),
-                      round(len(n0 & nx) / len(n0), 2) if n0 else None, len(nx - n0)])
+                      round(len(n0 & nx) / len(n0), 2) if n0 else None, len(nx - n0), len(txt)])
     path = []
     for sc in [_SC.get(first.get("scope"), "?")] + [r[1] for r in rows]:
         if sc not in path:
             path.append(sc)
     ds = [r[2] - s0 for r in rows if r[2] is not None] if s0 is not None else []
     return {"t0": iso(t0), "src0": str(first["source"])[:40], "t": str(first["title"])[:90], "lang": first.get("lang") or "", "sc0": _SC.get(first.get("scope"), "?"),
-            "geo": str((first.get("geo") or {}).get("name") or "")[:30], "n": len(seen), "amp60": 1 + sum(1 for r in rows if r[0] <= 60), "path": ">".join(path),
+            "geo": str((first.get("geo") or {}).get("name") or "")[:30], "l0": len(txt0), "n": len(seen), "amp60": 1 + sum(1 for r in rows if r[0] <= 60), "path": ">".join(path),
             "s0": round(s0, 3) if s0 is not None else None, "h0": h0, "n0": len(n0), "ds": _mean(ds), "ds_max": round(max(ds), 3) if ds else None,
             "sim": _mean([r[3] for r in rows]), "h": _mean([r[4] for r in rows]), "nk": _mean([r[5] for r in rows]), "nn": _mean([r[6] for r in rows]), "L": rows}
 
@@ -731,7 +731,7 @@ def update_event_log(prev, arts, L, t):
     while len(order) > EVENT_LOG_MAX:
         ev.pop(order.pop(0), None)
     return {"schema": "event-log-1", "version": "1.0.0", "since": log.get("since") or iso(t)[:10], "updated": iso(t), "n_total": int(log.get("n_total") or 0) + added,
-            "fields": "t0 első megjelenés, src0 első portál, n forrás, amp60 hány portál az első órában, path hatókör-útvonal (i nemzetközi, n országos, l helyi), s0 az első cím S-e, ds a későbbi címek S-ének átlagos eltérése, sim címhasonlóság (1 = szó szerinti), h0/h forrásjelző-szám az elsőben/átlag a többiben, nk az első számainak megmaradt aránya, nn új számok átlaga, L soronként [késés perc, hatókör, S cím, hasonlóság, forrásjelző, megmaradt számok, új számok]",
+            "fields": "t0 első megjelenés, src0 első portál, n forrás, amp60 hány portál az első órában, path hatókör-útvonal (i nemzetközi, n országos, l helyi), s0 az első cím S-e, ds a későbbi címek S-ének átlagos eltérése, sim címhasonlóság (1 = szó szerinti), h0/h forrásjelző-szám az elsőben/átlag a többiben, nk az első számainak megmaradt aránya, nn új számok átlaga, L soronként [késés perc, hatókör, S cím, hasonlóság, forrásjelző, megmaradt számok, új számok, szöveghossz]; l0 az első szöveghossza (a forrásjelző- és számösszevetés csak ott értelmes, ahol mindkét szöveg legalább 100 karakter)",
             "note": "csak gyűjtés: a pontozást nem érinti; az eredet a feed időbélyegén alapul, nem bizonyított eredet", "events": ev, "order": order}
 
 
@@ -743,11 +743,31 @@ def event_log_summary(lg):
     for e in evs:
         paths[e["path"]] = paths.get(e["path"], 0) + 1
     hd = [e["h0"] - e["h"] for e in evs if e.get("h") is not None]
+    ds_n = sum(1 for e in evs if e.get("ds") is not None)
+    ds_up = sum(1 for e in evs if (e.get("ds") or 0) > 0.02)
+    ds_dn = sum(1 for e in evs if e.get("ds") is not None and e["ds"] < -0.02)
+    te = hdn = hup = ne = nlost = 0                      # a forrásjelző- és számösszevetés csak a legalább 100 karakteres szövegpárokon (a rövid, összefoglaló nélküli példány mesterségesen „elveszít” számot és forrásjelzőt)
+    for e in evs:
+        q = [r for r in e.get("L", []) if len(r) > 7 and r[7] >= 100] if (e.get("l0") or 0) >= 100 else []
+        if not q:
+            continue
+        te += 1
+        hq = sum(r[4] for r in q) / len(q)
+        if hq < e["h0"]:
+            hdn += 1
+        elif hq > e["h0"]:
+            hup += 1
+        nks = [r[5] for r in q if r[5] is not None] if e.get("n0") else []
+        if nks:
+            ne += 1
+            if sum(nks) / len(nks) < 0.999:
+                nlost += 1
     return {"since": lg.get("since"), "updated": lg.get("updated"), "n_total": lg.get("n_total", 0), "n_in_file": len(evs), "mean_sources": _mean([e["n"] for e in evs]),
             "verbatim_share": round(sum(1 for x in sims if x >= 0.9) / len(sims), 3) if sims else None, "rewrite_events": sum(1 for x in sims if x < 0.9),
             "ds_mean": _mean([e["ds"] for e in evs]), "ds_up_share": round(sum(1 for e in evs if (e.get("ds") or 0) > 0.02) / max(1, sum(1 for e in evs if e.get("ds") is not None)), 3) if evs else None,
             "hedge_drop_mean": _mean(hd), "num_kept_mean": _mean([e["nk"] for e in evs]), "num_new_mean": _mean([e["nn"] for e in evs]),
-            "lag_median_min": lags[len(lags) // 2] if lags else None, "paths": dict(sorted(paths.items(), key=lambda kv: -kv[1])[:8]),
+            "lag_median_min": lags[len(lags) // 2] if lags else None, "sim_median": (sorted(sims)[len(sims) // 2] if sims else None),
+            "ds_n": ds_n, "ds_up": ds_up, "ds_down": ds_dn, "text_events": te, "hedge_down": hdn, "hedge_up": hup, "num_events": ne, "num_lost": nlost, "paths": dict(sorted(paths.items(), key=lambda kv: -kv[1])[:8]),
             "note": "leíró összesítés, nem ítélet; a kiértékelés szabályai a módszertani leírásban előre rögzítettek"}
 
 
