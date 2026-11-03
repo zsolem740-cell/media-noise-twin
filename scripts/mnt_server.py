@@ -400,6 +400,116 @@ def cluster(arts, L, thr):
     return len(cl)
 
 
+# ───────────────────────── leíró mezők (csak jelentés, szabályverzió d1) ─────────────────────────
+# Ezek a mezők NEM módosítják az S-t, a V-t, a G-t és az ATM-et: a címkékkel való validálás után kerülhetnek be a számításba.
+RULES_V = "d1"
+GENRE_STRONG = ("velemeny", "kommentar", "publicisztika", "elemzo", "elemzes", "szakerto", "politologus", "kozgazdasz", "opinion", "analysis", "analyst", "expert", "editorial", "op-ed", "commentary")
+GENRE_WEAK = ("szerint", "szerinte", "says", "warns", "figyelmeztet")
+KP_RE = re.compile(r"\bKp\b[^0-9\n]{0,24}?(\d{1,2}(?:[.,]\d)?)(?!\d)(?!\s*(?:nap|óra|ora|perc|%|cm|km|m/s|fok|°|millió|ezer|év))", re.I)
+
+
+def s_part(text, L, is_title):
+    """Az S (nyelvi zaj) képlete egyetlen szövegrészre (cím vagy törzs), egységes 1,0 súlyokkal; a fő S-t nem érinti."""
+    ft = " " + fold(text) + " "
+    ar = min(1.0, hits(ft, L.ar) / 3)
+    excl = min(1.0, text.count("!") / 2)
+    caps = min(1.0, len(re.findall(r"\b[A-ZÁÉÍÓÖŐÚÜŰ]{4,}\b", text)) / 3)
+    cb, sp = hits(ft, L.cb), hits(ft, L.sup)
+    v = 0.08 + 0.28 * ar + 0.24 * min(1, cb / 2) + 0.12 * min(1, sp / 2) + 0.10 * excl + 0.06 * caps
+    if is_title:
+        v += (0.14 if re.match(r"^\s*\d{1,2}\s+[^\W\d]", text) else 0) + (0.10 if ("..." in text or "…" in text) else 0) + (0.04 if "?" in text else 0)
+    return clamp(v)
+
+
+def body_text(a):
+    """A használható törzs: elég hosszú, és nem a cím ismétlése (az RSS gyakran csak a címet vagy a forrás nevét adja)."""
+    b = (a.get("summary") or "").strip()
+    ti = (a.get("title") or "").strip()
+    if len(b) < 60 or fold(b)[:40] == fold(ti)[:40]:
+        return None
+    return b
+
+
+def genre_of(title):
+    toks = re.findall(r"[a-z0-9\-]+", fold(title))
+    strong = sorted({x for x in GENRE_STRONG if any(tk.startswith(x) for tk in toks)})
+    weak = sorted({x for x in GENRE_WEAK if any(tk == x or tk.startswith(x) for tk in toks)})
+    return ("v" if strong else "t"), strong, weak
+
+
+def kp_conflict(a, m1):
+    """Kemény adat (csak a Kp, az M1-ből): ha a cikk Kp-értéke sem a mostanival, sem a 24 órás csúccsal nem egyezik (±2), emberi ellenőrzést kér. Nem ítél, nem módosít."""
+    if not isinstance(m1, dict) or not isinstance(m1.get("kp_index"), (int, float)):
+        return None
+    kp = float(m1["kp_index"])
+    hi = max(kp, float(m1["kp_max_24h"])) if isinstance(m1.get("kp_max_24h"), (int, float)) else kp
+    for m in KP_RE.finditer(a["title"] + " . " + (a.get("summary") or "")):
+        try:
+            v = float(m.group(1).replace(",", "."))
+        except ValueError:
+            continue
+        if 0 <= v <= 9 and abs(v - kp) > 2 and abs(v - hi) > 2:
+            return {"kind": "kp", "article": v, "measured": round(kp, 2), "max_24h": round(hi, 2), "human_check": True}
+    return None
+
+
+def _tp(a):
+    for k in ("published", "first_seen"):
+        x = a.get(k)
+        if x:
+            try:
+                return datetime.fromisoformat(str(x).replace("Z", "+00:00"))
+            except ValueError:
+                continue
+    return None
+
+
+def describe_articles(arts, L, t, m1_dyn=None):
+    """Cikkenkénti leíró mezők (a["d"], a["pc"]) és modulszintű összegzés. Csak jelentés: az S, V, G, ATM értéke nem változik."""
+    by_ev = {}
+    for a in arts:
+        by_ev.setdefault(a.get("event") or a["id"], []).append(a)
+    amp_sizes = []
+    for items in by_ev.values():
+        timed = sorted(items, key=lambda x: (_tp(x) or t, x["id"]))
+        t0 = _tp(timed[0]) or t
+        amp_sizes.append(len({fold(x["source"]) for x in items}))
+        for x in items:
+            tx = _tp(x) or t0
+            in60 = {fold(y["source"]) for y in items if (_tp(y) or t0) <= t0 + timedelta(minutes=60)}
+            body = body_text(x)
+            st = round(s_part(x["title"], L, True), 3)
+            sb = round(s_part(body, L, False), 3) if body else None
+            gen, _, _ = genre_of(x["title"])
+            d = {"rv": RULES_V, "gen": gen, "st": st, "sb": sb, "cbd": round(st - sb, 3) if sb is not None else None,
+                 "lag": max(0, int((tx - t0).total_seconds() // 60)), "amp": len(in60), "nsrc": x.get("event_sources", 1), "first": 1 if x is timed[0] else 0}
+            if x is not timed[0] and len(items) > 1:
+                d["osrc"] = timed[0]["source"][:40]
+            x["d"] = d
+            pc = kp_conflict(x, m1_dyn)
+            if pc:
+                x["pc"] = pc
+            else:
+                x.pop("pc", None)
+    last = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] or arts
+    n = max(1, len(last))
+    cbd = [a["d"]["cbd"] for a in last if a["d"]["cbd"] is not None]
+    wsum = sum(0.5 ** (max(0.0, (t - (_tp(a) or t)).total_seconds() / 3600) / 48) for a in arts) or 1.0
+    awa = sum(a["atm"] * 0.5 ** (max(0.0, (t - (_tp(a) or t)).total_seconds() / 3600) / 48) for a in arts) / wsum if arts else 0.0
+    src = {}
+    for a in last:
+        src.setdefault(a["source"], []).append(a)
+    stats = [{"source": k, "n": len(v), "s_mean": round(sum(x["s"] for x in v) / len(v), 3) if len(v) >= 10 else None, "v_mean": round(sum(x["v"] for x in v) / len(v), 3) if len(v) >= 10 else None}
+             for k, v in sorted(src.items(), key=lambda kv: -len(kv[1]))[:12]]
+    return {"rules_v": RULES_V, "genre_share": {"velemeny_elemzes": round(sum(1 for a in last if a["d"]["gen"] == "v") / n, 3), "tudositas": round(sum(1 for a in last if a["d"]["gen"] == "t") / n, 3)},
+            "clickbait": {"n": len(cbd), "mean_delta": round(sum(cbd) / len(cbd), 3) if cbd else None, "p90_delta": round(pctl(cbd, 0.9), 3) if cbd else None},
+            "amp": {"events": len(by_ev), "multi_source": sum(1 for z in amp_sizes if z > 1), "max_sources": max(amp_sizes) if amp_sizes else 0, "p90_sources": round(pctl([float(z) for z in amp_sizes], 0.9), 1) if amp_sizes else 0},
+            "physical_conflicts_24h": sum(1 for a in last if a.get("pc")), "age_weighted_atm": round(awa, 4), "source_stats": stats,
+            "basis": {"genre": "kulcsszó-jelölők a címben (heurisztika, nem kalibrált)", "origin": "az első észlelt megjelenés a feed időbélyege alapján (nem bizonyított eredet)",
+                      "clickbait": "S(cím) − S(törzs), nincs küszöb (a kalibráció a címkék után)", "age_weighted_atm": "0,5-ös hatvány, felezési idő 48 óra", "physical_conflict": "csak a Kp (M1), emberi ellenőrzéssel",
+                      "source_stats": "az átlagok csak n ≥ 10 cikknél jelennek meg"}}
+
+
 # ───────────────────────── fizikai keresztellenőrzés ─────────────────────────
 PLANETARY = {"solar", "geomagnetic"}
 
@@ -704,7 +814,7 @@ class MediaZajTwin(BaseMatrixModule):
     DEFAULT_W = [1.0, 1.0, 1.0, 1.0]
 
     def __init__(self, cfg):
-        super().__init__("M2_MEDIA_ZAJ", "1.1.0")
+        super().__init__("M2_MEDIA_ZAJ", "1.2.0")
         self.cfg, self.L, self.w = cfg, Lex(cfg), list(self.DEFAULT_W)
 
     def update_weights(self, new_weights):
@@ -715,7 +825,7 @@ class MediaZajTwin(BaseMatrixModule):
         if len(v) == 4:
             self.w = v
 
-    def p8(self, t, arts, snap, g_info, flags, rising, official):
+    def p8(self, t, arts, snap, g_info, flags, rising, official, desc=None):
         """A P8-busz alap sémája; a modul-specifikus adatok kizárólag a dynamic_payload-ban (4. szabály)."""
         last = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))] or arts
         mean = lambda k: round(sum(a[k] for a in last) / len(last), 4) if last else 0.0
@@ -727,7 +837,7 @@ class MediaZajTwin(BaseMatrixModule):
                 "dynamic_payload": {"articles_24h": len(last), "atm_p90": snap["p90"], "atm_by_scope": snap["by_scope"], "g_source": g_info["source"],
                                     "truth_flags": sorted(flags) if flags is not None else None, "official_calm": official.get("calm"),
                                     "rising_terms": [r["term"] for r in rising[:5]],
-                                    "top_distorted": [{"id": a["id"], "title": a["title"][:120], "source": a["source"], "atm": a["atm"]} for a in top]},
+                                    "top_distorted": [{"id": a["id"], "title": a["title"][:120], "source": a["source"], "atm": a["atm"]} for a in top], **({"descriptive": desc} if desc else {})},
                 "weights_vector": [round(x, 3) for x in self.w]}
 
     async def process_payload(self, raw):
@@ -743,11 +853,13 @@ class MediaZajTwin(BaseMatrixModule):
         arts = merge(raw["old"], raw["fresh"], t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"])
         new_ids = {a["id"] for a in arts if a["id"] not in known}
         n_ev = analyze(cfg, arts, raw["profiles"], flags, L, g_info["value"], self.w)
+        m1_dyn = (raw.get("truth") or {}).get("dynamic_payload") if (flags is not None and isinstance(raw.get("truth"), dict)) else None
+        desc = describe_articles(arts, L, t, m1_dyn if isinstance(m1_dyn, dict) else None)
         update_profiles(raw["profiles"], [a for a in arts if not a.get("profiled")])
         rising, warming = update_trends(raw["trends"], [a for a in arts if a["id"] in new_ids], L, t)
         snap = snapshot(arts, rising, flags, t, g_info["value"])
         return {"articles": arts, "new_ids": new_ids, "events": n_ev, "g": g_info, "flags": flags, "flags_detail": fdet, "rising": rising,
-                "warming": warming, "snapshot": snap, "p8": self.p8(t, arts, snap, g_info, flags, rising, raw["official"])}
+                "warming": warming, "snapshot": snap, "p8": self.p8(t, arts, snap, g_info, flags, rising, raw["official"], desc)}
 
 
 async def run_async(force=False):
