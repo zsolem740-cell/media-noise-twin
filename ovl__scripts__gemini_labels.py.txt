@@ -245,6 +245,13 @@ def norm_name(x):
     return re.sub(r"\s+", " ", str(x or "")).strip().lower()[:40]
 
 
+def note_err(bud, which, text, now):
+    """Az utolsó hiba (A és B külön) a kis keretfájlban is megmarad, és átvészeli a napváltást: nem kell a naplókban keresni."""
+    e = bud.get("utolso_hiba") if isinstance(bud.get("utolso_hiba"), dict) else {}
+    e[which] = {"ido": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "szoveg": str(text)[:240]}
+    bud["utolso_hiba"] = e
+
+
 def cum_add(cum, lab):
     """Halmozott számlálók (a megőrzött 300 címkén túl is): az állítás típusa, a terület, a hivatalos forrás és a kettő keresztezése."""
     cum["n"] = cum.get("n", 0) + 1
@@ -330,7 +337,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     today = now.strftime("%Y-%m-%d")
     bud = jload(MET / "gemini_budget.json", {}) or {}
     if bud.get("date") != today:
-        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0, "a_hiba": 0, "pause_until": bud.get("pause_until")}
+        bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0, "a_hiba": 0, "pause_until": bud.get("pause_until"), "utolso_hiba": bud.get("utolso_hiba")}
     bud.setdefault("a_hiba", 0)
     pu = bud.get("pause_until")
     if pu:
@@ -371,6 +378,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
             bud["a_hiba"] += 1
             st["hiba"] += 1
             print(f"Gemini A: {describe(e, key)}")
+            note_err(bud, "A", describe(e, key), now)
             if model_day_quota(e):
                 bud["pause_until"] = (now + timedelta(seconds=(retry_delay(e) or 6 * 3600) + 60)).strftime("%Y-%m-%dT%H:%M:%SZ")
                 print(f"Gemini: a napi kvóta kimerült, a következő próba: {bud['pause_until']} után.")
@@ -398,6 +406,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
                     entries[a["id"]] = pb["search_entry"]
             except GeminiError as e:
                 st["hiba"] += 1; print(f"Gemini B: {describe(e, key)}")
+                note_err(bud, "B", describe(e, key), now)
                 if e.status in (0, 400, 403, 429) or e.status >= 500:
                     bud["b_stop"] = today; st["b_tiltva"] = True      # a keresős ellenőrzés aznapra kikapcsol, az A folytatódik
                     # a B hibája csak a B-t kapcsolja ki; ha valójában a modell napi kerete fogyott el, a következő A-hívás 429-e beállítja a szünetet
