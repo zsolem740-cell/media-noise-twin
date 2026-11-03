@@ -561,8 +561,10 @@ def fx_conflict(a, rates):
 # ───────── horgony-jelölő (a1): melyik modul szókincsét említi a cikk, és áll-e mellette mértékegységes szám ─────────
 # CSAK JELÖLÉS: egyetlen cikket sem dob el, az S, V, G, ATM értékét nem érinti. A nyelv a feed beállításából jön (nincs nyelvfelismerés).
 # Jelölők (ékezet nélküli, kisbetűs szövegre): szó eleji egyezés szabad ragozással (a magyar toldalékok miatt); "=" szó egészében; "~" részszó (hosszú német összetétel); "re:" nyers reguláris kifejezés.
-ANCHOR_RULES_V = "a1"
+ANCHOR_RULES_V = "a2"                             # a2: a pénznem-szavak (forint, euró, dollár) önmagukban már nem horgonyok (összeg ≠ árfolyam)
 _EURO = "re:euro(?:ert|ban|ben|ra|re|val|vel|hoz|hez|tol|nak|nek|bol|rol|ig|t|k|s)?(?![a-z0-9])"
+_TREND_FX_A = "re:(?:forint|euro|dollar)\\w*\\W+(?:\\w+\\W+){0,2}(?:gyengul|gyengult|erosod|erosodott|zuhan|zuhant)"
+_TREND_FX_B = "re:(?:gyengul|gyengult|erosod|erosodott|zuhan|zuhant)\\w*\\W+(?:\\w+\\W+){0,2}(?:forint|euro|dollar)"
 ANCHORS = {
     "M1": {"hu": ["napszel", "napkitores", "foldrenges", "geomagnes", "kp-index", "kp index", "szellokes", "vihar", "naptevekenyseg", "sarkfeny"],
            "en": ["earthquake", "solar flare", "solar storm", "geomagnetic", "aurora", "storm", "kp-index", "kp index"],
@@ -570,14 +572,17 @@ ANCHORS = {
     "M3": {"hu": ["vizallas", "vizszint", "arviz", "aradas", "belviz", "vizugy", "kaub", "duna", "rajna"],
            "en": ["water level", "river level", "flood", "=danube", "=rhine"],
            "de": ["~wasserstand", "~hochwasser", "~niedrigwasser", "pegel", "=donau", "=rhein", "uberschwemm"]},
-    "M5": {"hu": ["arfolyam", "forint", _EURO, "re:eurozon", "dollar", "kamat", "inflaci", "jegybank", "mnb", "tozsde", "bux", "gdp"],
-           "en": ["inflation", "interest rate", "exchange rate", "central bank", "ecb", "=fed", "nasdaq", "s&p", "dow jones", "=dax", "nikkei", "crude oil", "=brent", "oil price", "stock market", "currency", "forex", "gdp", "treasury yield", "mortgage rate", _EURO, "re:eurozon"],
-           "de": ["wechselkurs", "~zinssatz", "zinsen", "inflation", "ezb", "=dax", "aktien", "borse", "leitzins", "dollar", _EURO, "re:eurozon"]},
+    "M5": {"hu": ["arfolyam", "re:eurozon", "kamat", "inflaci", "jegybank", "mnb", "tozsde", "bux", "gdp", _TREND_FX_A, _TREND_FX_B],
+           "en": ["inflation", "interest rate", "exchange rate", "central bank", "ecb", "=fed", "nasdaq", "s&p", "dow jones", "=dax", "nikkei", "crude oil", "=brent", "oil price", "stock market", "currency", "forex", "gdp", "treasury yield", "mortgage rate", "re:eurozon"],
+           "de": ["wechselkurs", "~zinssatz", "zinsen", "inflation", "ezb", "=dax", "aktien", "borse", "leitzins", "re:eurozon"]},
     "M7": {"hu": ["csapadek", "talajnedvesseg", "aszaly", "re:eso(?:ben|s|t|k|zes\\w*|vel|zik)?(?![a-z0-9])", "szarazsag"],
            "en": ["rainfall", "precipitation", "drought", "soil moisture", "downpour", "re:rain(?:s|y|fall|ing)?(?![a-z0-9])"],
            "de": ["niederschlag", "bodenfeuchte", "durre", "re:regen(?![a-z0-9])", "starkregen", "dauerregen", "trockenheit"]},
 }
 ANCHOR_UNIVERSAL = {"M5": ["eur/huf", "usd/huf", "eur/usd"]}
+# Gyenge horgonyok: pénznem-szavak. Összegeknél is előfordulnak („16 millió forint”, „56 Millionen Euro”), ezért önmagukban NEM jelölnek;
+# csak akkor, ha legalább KÉT különböző pénznem-szó áll a szövegben (árfolyam-jellegű mondat: „az euró 400 forint”).
+ANCHOR_WEAK = {"M5": {"hu": ["forint", _EURO, "dollar"], "en": [_EURO, "dollar", "forint"], "de": ["dollar", _EURO, "forint"]}}
 ANCHOR_NEG = ("sturm graz", "sk sturm", "rheinmetall", "stormy daniels", "fed up", "duna tv", "duna world", "duna arena", "brainstorm", "tisza part",
               "dunakeszi", "dunaharaszti", "dunaujvaros", "dunaferr", "dunavarsany", "dunaszerdahely", "dunaszeg", "dunafoldvar", "rhein-main", "rhein-neckar", "rheinland", "rhine-main", "rhine-neckar", "brentford")
 _UNIT = r"(?:%|\s?%|\s?szazalek\w*|\s?percent|\s?ft\b|\s?forint\w*|\s?huf\b|\s?eur\b|\s?euro\w*|\s?usd\b|\s?dollar\w*|\s?cm\b|\s?mm\b|\s?km\b|\s?fok\b|\s?°|\s?celsius|\s?ezer\b|\s?millio\w*|\s?milliard\w*|\s?million\b|\s?billion\b|\s?nt\b|\s?pont\w*|\s?points?\b)"
@@ -605,6 +610,18 @@ def anchor_tags(text, lang):
         ft = ft.replace(n, " ")
     lg = lang if lang in ("hu", "en", "de") else ""
     mods, near = set(), False
+    for mod, packs in ANCHOR_WEAK.items():
+        rules = list(packs.get(lg, [])) if lg else [r for pk in packs.values() for r in pk]
+        hit_rules, spans = set(), []
+        for r in dict.fromkeys(rules):
+            rx = _ANCHOR_RX.get(r) or _ANCHOR_RX.setdefault(r, _compile_anchor(r))
+            for m in rx.finditer(ft):
+                hit_rules.add(r); spans.append((m.start(), m.end()))
+        if len(hit_rules) >= 2:                                      # legalább két különböző pénznem-szó: árfolyam-jellegű szöveg
+            mods.add(mod)
+            for st, en in spans:
+                if _NUM_UNIT.search(ft[max(0, st - 40): en + 40]):
+                    near = True
     for mod, packs in ANCHORS.items():
         rules = list(packs.get(lg, [])) if lg else [r for pk in packs.values() for r in pk]
         rules += ANCHOR_UNIVERSAL.get(mod, [])
