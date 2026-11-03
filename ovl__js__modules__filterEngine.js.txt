@@ -90,6 +90,12 @@ export class FilterEngine {
     if (this.hist.length < 10) return null;
     return computeAUC(this.hist.map((h) => h.p), this.hist.map((h) => h.y));
   }
+  /* Csak az explicit szavazatokra (👍/👎): az olvasási idő implicit pozitívjai nélkül. Mérés, nem befolyásolja a λ-t. Legalább 10 szavazat és mindkét osztály kell. */
+  aucVotes() {
+    const v = this.hist.filter((h) => h.kind === "vote");
+    if (v.length < 10) return null;
+    return computeAUC(v.map((h) => h.p), v.map((h) => h.y));
+  }
   /* λ ∈ [0, 0.9]: 0, amíg nincs legalább 5 értékes és 5 zajnak jelölt minta; utána az AUC-ból: (AUC−0.5)/0.4, a minták számával arányos bizalommal */
   lambda() {
     const pos = this.hist.filter((h) => h.y >= 0.5).length, neg = this.hist.length - pos;
@@ -130,7 +136,7 @@ export class FilterEngine {
     const q = (x) => (x === undefined || x === null ? "" : String(x));
     return ["n,ido,id,p,prior,y,suly,fajta", ...this.hist.map((h, i) => [i + 1, h.t ? new Date(h.t).toISOString() : "", q(h.id), q(h.p), q(h.pr), q(h.y), q(h.w), q(h.kind)].join(","))].join("\n");
   }
-  stats() { return { lambda: this.lambda(), auc: this.auc(), samples: this.hist.length, trained: this.trained }; }
+  stats() { return { lambda: this.lambda(), auc: this.auc(), aucVote: this.aucVotes(), nVote: this.hist.filter((h) => h.kind === "vote").length, samples: this.hist.length, trained: this.trained }; }
   save() {
     try {
       const nz = [];

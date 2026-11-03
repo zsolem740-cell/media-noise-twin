@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40.6 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.7 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -227,7 +227,7 @@ function renderHud(list) {
   const g = S.meta && S.meta.generated_at;
   $("m-upd").textContent = g ? ago(g) : "–";
   const st = engine.stats();
-  $("learn").textContent = `Tanuló szűrő: λ ${st.lambda.toFixed(2)} · AUC ${st.auc === null ? "–" : st.auc.toFixed(2)} · ${st.trained} tanítás`;
+  $("learn").textContent = `Tanuló szűrő: λ ${st.lambda.toFixed(2)} · AUC ${st.auc === null ? "–" : st.auc.toFixed(2)}${st.aucVote === null || st.aucVote === undefined ? "" : ` (szavazatokra ${st.aucVote.toFixed(2)}, n ${st.nVote})`} · ${st.trained} tanítás`;
   const m = S.meta || {}, b = [];
   if (m.official) b.push(m.official.calm === false ? "🚨 HungaroMet: érvényes figyelmeztetés" : m.official.calm === true ? "✅ HungaroMet: nincs figyelmeztetés" : "ℹ HungaroMet: állapot ismeretlen");
   if (m.g) b.push("⚖ G fizikai nyugalom " + Number(m.g.value).toFixed(2) + " (" + ({ M1: "Solaris M1", derived: "jelzőkből becsült", default: "nincs mérés, feltételezett" }[m.g.source] || m.g.source) + ")");
@@ -347,7 +347,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.6 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.7 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);

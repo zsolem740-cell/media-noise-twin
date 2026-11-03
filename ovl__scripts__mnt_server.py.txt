@@ -562,23 +562,24 @@ def fx_conflict(a, rates):
 # CSAK JELÖLÉS: egyetlen cikket sem dob el, az S, V, G, ATM értékét nem érinti. A nyelv a feed beállításából jön (nincs nyelvfelismerés).
 # Jelölők (ékezet nélküli, kisbetűs szövegre): szó eleji egyezés szabad ragozással (a magyar toldalékok miatt); "=" szó egészében; "~" részszó (hosszú német összetétel); "re:" nyers reguláris kifejezés.
 ANCHOR_RULES_V = "a1"
-_EURO = "re:euro(?!p|viz|vis)"
+_EURO = "re:euro(?:ert|ban|ben|ra|re|val|vel|hoz|hez|tol|nak|nek|bol|rol|ig|t|k|s)?(?![a-z0-9])"
 ANCHORS = {
     "M1": {"hu": ["napszel", "napkitores", "foldrenges", "geomagnes", "kp-index", "kp index", "szellokes", "vihar", "naptevekenyseg", "sarkfeny"],
            "en": ["earthquake", "solar flare", "solar storm", "geomagnetic", "aurora", "storm", "kp-index", "kp index"],
-           "de": ["~erdbeben", "~sonnensturm", "~sonnenwind", "geomagnet", "polarlicht", "sturm", "orkan", "unwetter", "kp-index"]},
+           "de": ["~erdbeben", "~sonnensturm", "~sonnenwind", "geomagnet", "polarlicht", "sturmwarnung", "sturmtief", "orkan", "unwetter", "kp-index"]},
     "M3": {"hu": ["vizallas", "vizszint", "arviz", "aradas", "belviz", "vizugy", "kaub", "duna", "rajna"],
-           "en": ["water level", "river level", "flood", "danube", "rhine"],
-           "de": ["~wasserstand", "~hochwasser", "~niedrigwasser", "pegel", "donau", "rhein", "uberschwemm"]},
-    "M5": {"hu": ["arfolyam", "forint", _EURO, "dollar", "kamat", "inflaci", "jegybank", "mnb", "tozsde", "bux", "gdp"],
-           "en": ["inflation", "interest rate", "exchange rate", "central bank", "ecb", "=fed", "nasdaq", "s&p", "dow jones", "=dax", "nikkei", "crude", "brent", "oil price", "stock market", "currency", "forex", "gdp", "treasury yield", "mortgage rate", _EURO],
-           "de": ["wechselkurs", "~zinssatz", "zinsen", "inflation", "ezb", "=dax", "aktien", "borse", "leitzins", "dollar", _EURO]},
+           "en": ["water level", "river level", "flood", "=danube", "=rhine"],
+           "de": ["~wasserstand", "~hochwasser", "~niedrigwasser", "pegel", "=donau", "=rhein", "uberschwemm"]},
+    "M5": {"hu": ["arfolyam", "forint", _EURO, "re:eurozon", "dollar", "kamat", "inflaci", "jegybank", "mnb", "tozsde", "bux", "gdp"],
+           "en": ["inflation", "interest rate", "exchange rate", "central bank", "ecb", "=fed", "nasdaq", "s&p", "dow jones", "=dax", "nikkei", "crude oil", "=brent", "oil price", "stock market", "currency", "forex", "gdp", "treasury yield", "mortgage rate", _EURO, "re:eurozon"],
+           "de": ["wechselkurs", "~zinssatz", "zinsen", "inflation", "ezb", "=dax", "aktien", "borse", "leitzins", "dollar", _EURO, "re:eurozon"]},
     "M7": {"hu": ["csapadek", "talajnedvesseg", "aszaly", "re:eso(?:ben|s|t|k|zes\\w*|vel|zik)?(?![a-z0-9])", "szarazsag"],
            "en": ["rainfall", "precipitation", "drought", "soil moisture", "downpour", "re:rain(?:s|y|fall|ing)?(?![a-z0-9])"],
            "de": ["niederschlag", "bodenfeuchte", "durre", "re:regen(?![a-z0-9])", "starkregen", "dauerregen", "trockenheit"]},
 }
 ANCHOR_UNIVERSAL = {"M5": ["eur/huf", "usd/huf", "eur/usd"]}
-ANCHOR_NEG = ("sturm graz", "sk sturm", "rheinmetall", "stormy daniels", "fed up", "duna tv", "duna world", "duna arena", "brainstorm", "tisza part")
+ANCHOR_NEG = ("sturm graz", "sk sturm", "rheinmetall", "stormy daniels", "fed up", "duna tv", "duna world", "duna arena", "brainstorm", "tisza part",
+              "dunakeszi", "dunaharaszti", "dunaujvaros", "dunaferr", "dunavarsany", "dunaszerdahely", "dunaszeg", "dunafoldvar", "rhein-main", "rhein-neckar", "rheinland", "rhine-main", "rhine-neckar", "brentford")
 _UNIT = r"(?:%|\s?%|\s?szazalek\w*|\s?percent|\s?ft\b|\s?forint\w*|\s?huf\b|\s?eur\b|\s?euro\w*|\s?usd\b|\s?dollar\w*|\s?cm\b|\s?mm\b|\s?km\b|\s?fok\b|\s?°|\s?celsius|\s?ezer\b|\s?millio\w*|\s?milliard\w*|\s?million\b|\s?billion\b|\s?nt\b|\s?pont\w*|\s?points?\b)"
 _NUM_UNIT = re.compile(r"(?<![\d.,])\d[\d.,]*" + _UNIT)
 _KP_NUM = re.compile(r"kp[- ]index\D{0,20}\d")
@@ -643,7 +644,8 @@ def anchor_summary(last):
         if d.get("mc"):
             b["meas"] += 1
     anc = sum(v["anc"] for v in by_lang.values()); meas = sum(v["meas"] for v in by_lang.values())
-    return {"rules_v": ANCHOR_RULES_V, "by_lang": by_lang, "by_module": dict(sorted(by_mod.items())), "anc_share": round(anc / n, 3), "meas_share": round(meas / n, 3),
+    ex = [{"t": (a.get("title") or "")[:90], "m": a["d"]["anc"], "n": 1 if a["d"].get("mc") else 0, "l": a.get("lang") or ""} for a in last if a["d"].get("anc")][:25]
+    return {"rules_v": ANCHOR_RULES_V, "by_lang": by_lang, "by_module": dict(sorted(by_mod.items())), "anc_share": round(anc / n, 3), "meas_share": round(meas / n, 3), "examples": ex,
             "note": "lexikális jelölés: a cikk a modul szókincsét említi (anc), és mértékegységes szám áll mellette (meas); nem állítás-ítélet, nem szűrés"}
 
 
