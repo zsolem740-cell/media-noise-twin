@@ -37,6 +37,7 @@ from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 ROOT = Path(os.environ.get("MNT_ROOT") or Path(__file__).resolve().parent.parent)
@@ -448,7 +449,7 @@ def cluster(arts, L, thr):
 
 # ───────────────────────── leíró mezők (csak jelentés, szabályverzió d1) ─────────────────────────
 # Ezek a mezők NEM módosítják az S-t, a V-t, a G-t és az ATM-et: a címkékkel való validálás után kerülhetnek be a számításba.
-RULES_V = "d1"
+RULES_V = "d2"                                    # d2: az URL-alapú műfaj-jelölés (a d1 csak a címet nézte)
 GENRE_STRONG = ("velemeny", "kommentar", "publicisztika", "elemzo", "elemzes", "szakerto", "politologus", "kozgazdasz", "opinion", "analysis", "analyst", "expert", "editorial", "op-ed", "commentary")
 GENRE_WEAK = ("szerint", "szerinte", "says", "warns", "figyelmeztet")
 KP_RE = re.compile(r"\bKp\b[^0-9\n]{0,24}?(\d{1,2}(?:[.,]\d)?)(?!\d)(?!\s*(?:nap|óra|ora|perc|%|cm|km|m/s|fok|°|millió|ezer|év))", re.I)
@@ -476,9 +477,21 @@ def body_text(a):
     return b
 
 
-def genre_of(title):
+GENRE_URL = ("opinion", "opinions", "editorial", "editorials", "analysis", "commentary", "op-ed", "oped", "columnist", "columnists", "velemeny", "kommentar", "publicisztika", "szerkesztoi")
+
+
+def url_genre(link):
+    """Az URL útvonalának TELJES szakasza (nem szótöredék) vélemény-rovatot jelez: /opinion/, /velemeny/, /editorial/… A Google News átirányító linkjei átlátszatlanok: ott nincs jelzés."""
+    try:
+        path = fold(urlparse(str(link or "")).path)
+    except ValueError:
+        return []
+    return sorted({"url:" + seg for seg in path.split("/") if seg in GENRE_URL})
+
+
+def genre_of(title, link=None):
     toks = re.findall(r"[a-z0-9\-]+", fold(title))
-    strong = sorted({x for x in GENRE_STRONG if any(tk.startswith(x) for tk in toks)})
+    strong = sorted({x for x in GENRE_STRONG if any(tk.startswith(x) for tk in toks)}) + url_genre(link)
     weak = sorted({x for x in GENRE_WEAK if any(tk == x or tk.startswith(x) for tk in toks)})
     return ("v" if strong else "t"), strong, weak
 
@@ -559,9 +572,11 @@ def describe_articles(arts, L, t, m1_dyn=None, rates=None):
             body = body_text(x)
             st = round(s_part(x["title"], L, True), 3)
             sb = round(s_part(body, L, False), 3) if body else None
-            gen, _, _ = genre_of(x["title"])
+            gen, ghits, _ = genre_of(x["title"], x.get("link"))
             d = {"rv": RULES_V, "gen": gen, "st": st, "sb": sb, "cbd": round(st - sb, 3) if sb is not None else None,
                  "lag": max(0, int((tx - t0).total_seconds() // 60)), "amp": len(in60), "nsrc": x.get("event_sources", 1), "first": 1 if x is timed[0] else 0}
+            if any(h.startswith("url:") for h in ghits):
+                d["gu"] = 1                                # a műfaj-jelölést az URL (rovat) adta
             if x is not timed[0] and len(items) > 1:
                 d["osrc"] = timed[0]["source"][:40]
             x["d"] = d
@@ -583,9 +598,9 @@ def describe_articles(arts, L, t, m1_dyn=None, rates=None):
     return {"rules_v": RULES_V, "genre_share": {"velemeny_elemzes": round(sum(1 for a in last if a["d"]["gen"] == "v") / n, 3), "tudositas": round(sum(1 for a in last if a["d"]["gen"] == "t") / n, 3)},
             "clickbait": {"n": len(cbd), "mean_delta": round(sum(cbd) / len(cbd), 3) if cbd else None, "p90_delta": round(pctl(cbd, 0.9), 3) if cbd else None},
             "amp": {"events": len(by_ev), "multi_source": sum(1 for z in amp_sizes if z > 1), "max_sources": max(amp_sizes) if amp_sizes else 0, "p90_sources": round(pctl([float(z) for z in amp_sizes], 0.9), 1) if amp_sizes else 0},
-            "physical_conflicts_24h": sum(1 for a in last if a.get("pc")),
+            "genre_url_hits_24h": sum(1 for a in last if a["d"].get("gu")), "physical_conflicts_24h": sum(1 for a in last if a.get("pc")),
             "fx_reference": ({"EUR/HUF": rates["EUR"]["value"] if "EUR" in rates else None, "USD/HUF": rates["USD"]["value"] if "USD" in rates else None, "date": max(v["date"] for v in rates.values()), "source": "M5 (MNB hivatalos árfolyam)"} if rates else None), "age_weighted_atm": round(awa, 4), "source_stats": stats,
-            "basis": {"genre": "kulcsszó-jelölők a címben (heurisztika, nem kalibrált)", "origin": "az első észlelt megjelenés a feed időbélyege alapján (nem bizonyított eredet)",
+            "basis": {"genre": "kulcsszó-jelölők a címben és vélemény-rovat az URL-ben (heurisztika, nem kalibrált)", "origin": "az első észlelt megjelenés a feed időbélyege alapján (nem bizonyított eredet)",
                       "clickbait": "S(cím) − S(törzs), nincs küszöb (a kalibráció a címkék után)", "age_weighted_atm": "0,5-ös hatvány, felezési idő 48 óra", "physical_conflict": "a Kp (M1) és az EUR/HUF, USD/HUF árfolyam (M5, MNB hivatalos); az árfolyam-küszöb (±3%) nem kalibrált; emberi ellenőrzéssel",
                       "source_stats": "az átlagok csak n ≥ 10 cikknél jelennek meg"}}
 
@@ -808,7 +823,10 @@ def article_id(a):
     return hashlib.sha1((fold(a["title"]) + "|" + fold(a["source"])).encode()).hexdigest()[:12]
 
 
-def merge(old, fresh, t, keep_h, max_n):
+PER_SOURCE_MAX = 60       # megőrzött cikkek forrásonként (a legfrissebbek): a hírfolyam-ontó források ne nyomják el a többit; a limits.per_source_max felülírja, 0 = kikapcsolva
+
+
+def merge(old, fresh, t, keep_h, max_n, per_source=None):
     by = {a["id"]: a for a in old}
     for a in fresh:
         a["id"] = article_id(a)
@@ -821,6 +839,17 @@ def merge(old, fresh, t, keep_h, max_n):
     lim = iso(t - timedelta(hours=keep_h))
     arts = [a for a in by.values() if (a.get("published") or a.get("first_seen") or "") >= lim]
     arts.sort(key=lambda a: a.get("published") or a.get("first_seen") or "", reverse=True)
+    if per_source and per_source > 0:
+        cnt, kept = {}, []
+        for a in arts:                                   # a legfrissebbek maradnak; a hivatalos közlemények nem számítanak bele
+            if a.get("official"):
+                kept.append(a)
+                continue
+            k = fold(a.get("source") or "")
+            cnt[k] = cnt.get(k, 0) + 1
+            if cnt[k] <= per_source:
+                kept.append(a)
+        arts = kept
     return arts[:max_n]
 
 
@@ -894,7 +923,7 @@ class MediaZajTwin(BaseMatrixModule):
     DEFAULT_W = [1.0, 1.0, 1.0, 1.0]
 
     def __init__(self, cfg):
-        super().__init__("M2_MEDIA_ZAJ", "1.2.0")
+        super().__init__("M2_MEDIA_ZAJ", "1.3.0")
         self.cfg, self.L, self.w = cfg, Lex(cfg), list(self.DEFAULT_W)
 
     def update_weights(self, new_weights):
@@ -917,7 +946,9 @@ class MediaZajTwin(BaseMatrixModule):
                 "dynamic_payload": {"articles_24h": len(last), "atm_p90": snap["p90"], "atm_by_scope": snap["by_scope"], "g_source": g_info["source"],
                                     "truth_flags": sorted(flags) if flags is not None else None, "official_calm": official.get("calm"),
                                     "rising_terms": [r["term"] for r in rising[:5]],
-                                    "top_distorted": [{"id": a["id"], "title": a["title"][:120], "source": a["source"], "atm": a["atm"]} for a in top], **({"descriptive": desc} if desc else {})},
+                                    "top_distorted": [{"id": a["id"], "title": a["title"][:120], "source": a["source"], "atm": a["atm"]} for a in top],
+                                    "retention_policy": {"per_source_max": self.cfg["limits"].get("per_source_max", PER_SOURCE_MAX), "note": "forrásonként a legfrissebb N cikk marad; az ezt megelőző napi összesítők más mintából készültek"},
+                                    **({"descriptive": desc} if desc else {})},
                 "weights_vector": [round(x, 3) for x in self.w]}
 
     async def process_payload(self, raw):
@@ -930,7 +961,7 @@ class MediaZajTwin(BaseMatrixModule):
         else:
             g_info = {"value": 1.0 if not flags else max(0.1, 1 - 0.3 * len(flags)), "source": "derived"}
         known = {a["id"] for a in raw["old"]}
-        arts = merge(raw["old"], raw["fresh"], t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"])
+        arts = merge(raw["old"], raw["fresh"], t, cfg["limits"]["keep_hours"], cfg["limits"]["max_articles"], cfg["limits"].get("per_source_max", PER_SOURCE_MAX))
         new_ids = {a["id"] for a in arts if a["id"] not in known}
         n_ev = analyze(cfg, arts, raw["profiles"], flags, L, g_info["value"], self.w)
         m1_dyn = (raw.get("truth") or {}).get("dynamic_payload") if (flags is not None and isinstance(raw.get("truth"), dict)) else None
