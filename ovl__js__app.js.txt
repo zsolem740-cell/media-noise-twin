@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40.3 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.4 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -23,9 +23,18 @@ export const LAB = [
   { f: "ertek", name: "Hírérték", opts: [["magas", "magas"], ["kozepes", "közepes"], ["alacsony", "alacsony"]] },
   { f: "valosag", name: "Valóság", opts: [["igaz", "igaz"], ["hamis", "hamis"], ["nem_ellenorizheto", "nem ellenőrizhető"]] },
   { f: "stilus", name: "Stílus", opts: [["nyugodt", "nyugodt"], ["felfokozott", "felfokozott"]] },
+  { f: "tema", name: "Téma", opts: [["hetkoznapi", "hétköznapi"], ["sulyos_politikai", "súlyos / politikai"]] },
   { f: "forras", name: "Címkéző", opts: [["sajat", "saját"], ["gemini", "Gemini"]] },
 ];
 const LAB_MAIN = ["ertek", "valosag", "stilus"];
+const isEmpty = (l) => !LAB_MAIN.some((k) => l[k]) && !l.megj && !l.tema;
+const peeked = new Set(lsGet("mnt.peeks.v1", []));       // azok a hírek, amelyeknél a Gemini-javaslatot a saját címke ELŐTT megnézted
+const markPeek = (id) => { peeked.add(id); lsSet("mnt.peeks.v1", [...peeked].slice(-500)); };
+export function recSource(l) {
+  const srcs = LAB_MAIN.filter((f) => l[f]).map((f) => l["src_" + f] || l.forras || "sajat");
+  if (!srcs.length) return l.forras || "";
+  return srcs.every((x) => x === srcs[0]) ? srcs[0] : "vegyes";
+}
 const LAB_OK = Object.fromEntries(LAB.map((r) => [r.f, new Set(r.opts.map((o) => o[0]))]));
 function saveLabels() { try { localStorage.setItem("mnt.labels.v1", JSON.stringify(labels)); return true; } catch (e) { return false; } }
 export function labelState(l) { const n = l ? LAB_MAIN.filter((f) => l[f]).length : 0; return n === 3 ? "Címkézve (3/3)" : n ? `Részben címkézve (${n}/3)` : "Még nincs címke"; }
@@ -40,57 +49,71 @@ export function descBlock(a) {
 export const pcTag = (a) => (a.pc ? '<em class="bad">⚠ Kp-ellentmondás</em>' : "");
 const GEM_NAMES = { ertek: { magas: "magas", kozepes: "közepes", alacsony: "alacsony" }, stilus: { nyugodt: "nyugodt", felfokozott: "felfokozott" }, valosag: { igaz: "igaz", hamis: "hamis", nem_ellenorizheto: "nem ellenőrizhető" } };
 const gemOf = (a) => (S.gem && S.gem.labels && S.gem.labels[a.id]) || null;
-export function gemBlock(a, g = gemOf(a), entry = (S.gem && S.gem.search_entries && S.gem.search_entries[a.id]) || "") {
+export function gemBlock(a, g = gemOf(a), entry = (S.gem && S.gem.search_entries && S.gem.search_entries[a.id]) || "", open = null) {
   if (!g) return "";
+  const lx = labels[a.id];
+  const show = open !== null ? open : !!((lx && LAB_MAIN.every((f) => lx[f])) || peeked.has(a.id));   // vak mód: a javaslat a teljes saját címke (3/3) után, vagy külön kéréssel jelenik meg
   const nm = (f, v) => (v && GEM_NAMES[f][v]) || "–";
   const src = (g.forrasok || []).filter((x) => /^https:\/\//.test(String(x.uri || ""))).map((x) => `<a href="${esc(x.uri)}" target="_blank" rel="noopener noreferrer">${esc(x.title)}</a>`).join(" · ");
   const se = entry ? `<iframe class="gem-se" sandbox="allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc('<base target="_blank">' + entry)}" loading="lazy"></iframe>` : "";
-  return `<div class="gem"><h4>Gemini javaslat <span class="dim">· ${esc(g.model || "")}</span></h4><p>Hírérték: <b>${nm("ertek", g.ertek)}</b> · Stílus: <b>${nm("stilus", g.stilus)}</b> · Valóság: <b>${g.valosag ? nm("valosag", g.valosag) : "nincs ítélet"}</b> · bizonyosság ${typeof g.magabiztossag === "number" ? g.magabiztossag.toFixed(2) : "–"}</p>${g.indoklas ? `<p class="dim">${esc(g.indoklas)}</p>` : ""}${src ? `<p class="dim">Források: ${src}</p>` : ""}${g.valosag_megjegyzes ? `<p class="dim">${esc(g.valosag_megjegyzes)}</p>` : ""}<button data-act="gem" class="gem-ok">Elfogadom (címkéző: Gemini)</button>${se}</div>`;
+  return `${show ? "" : '<button data-act="gemshow" class="gem-peek">Gemini-javaslat megmutatása (előbb a saját címkéd!)</button>'}<div class="gem"${show ? "" : " hidden"}><h4>Gemini javaslat <span class="dim">· ${esc(g.model || "")}</span></h4><p>Hírérték: <b>${nm("ertek", g.ertek)}</b> · Stílus: <b>${nm("stilus", g.stilus)}</b> · Valóság: <b>${g.valosag ? nm("valosag", g.valosag) : "nincs ítélet"}</b> · bizonyosság ${typeof g.magabiztossag === "number" ? g.magabiztossag.toFixed(2) : "–"}</p>${g.indoklas ? `<p class="dim">${esc(g.indoklas)}</p>` : ""}${src ? `<p class="dim">Források: ${src}</p>` : ""}${g.valosag_megjegyzes ? `<p class="dim">${esc(g.valosag_megjegyzes)}</p>` : ""}<button data-act="gem" class="gem-ok">Elfogadom (címkéző: Gemini)</button>${se}</div>`;
 }
 export function labForm(a, l = labels[a.id] || {}, pref = labPref) {
   const rows = LAB.map((r) => { const cur = l[r.f] || (r.f === "forras" ? pref.forras : null); return `<div class="lab-row"><span>${r.name}</span><span class="seg">${r.opts.map(([v, t]) => `<button data-act="lab" data-f="${r.f}" data-v="${v}" class="${cur === v ? "on" : ""}">${t}</button>`).join("")}</span></div>`; }).join("");
   return `<div class="lab">${gemBlock(a)}<h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
 }
 function labRecord(a) {
-  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "" });
+  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, peek: peeked.has(a.id) ? 1 : 0, gj: (() => { const g = gemOf(a); return g ? { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "", biz: g.magabiztossag, modell: g.model || "" } : null; })(), s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "" });
 }
 export function setLabel(a, f, v) {
   if (!LAB_OK[f] || !LAB_OK[f].has(v)) return false;
   const l = labRecord(a);
   if (f === "forras") { l.forras = v; labPref.forras = v; }
-  else l[f] = l[f] === v ? "" : v;                              // ugyanarra koppintva törlődik
+  else {
+    l[f] = l[f] === v ? "" : v;                                  // ugyanarra koppintva törlődik
+    if (LAB_MAIN.includes(f)) { if (l[f]) l["src_" + f] = labPref.forras; else delete l["src_" + f]; }   // mezőnkénti származás
+  }
   l.upd = new Date().toISOString();
-  if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];   // üres címke nem marad
+  if (isEmpty(l)) delete labels[a.id];                                // üres címke nem marad
   return saveLabels();
 }
 export function applyGem(a, g = gemOf(a)) {
   if (!g) return false;
   const l = labRecord(a);
-  if (LAB_OK.ertek.has(g.ertek)) l.ertek = g.ertek;
-  if (LAB_OK.stilus.has(g.stilus)) l.stilus = g.stilus;
-  if (g.valosag && LAB_OK.valosag.has(g.valosag)) l.valosag = g.valosag;
-  l.forras = "gemini"; l.gem_bizonyossag = typeof g.magabiztossag === "number" ? g.magabiztossag : ""; l.gem_modell = String(g.model || "");
+  const take = { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "" };
+  const got = [];
+  for (const f of LAB_MAIN) { const v = take[f]; if (v && LAB_OK[f].has(v) && !l[f]) { l[f] = v; l["src_" + f] = "gemini"; got.push(f); } }   // csak az ÜRES mezőket tölti ki
+  if (!got.length) { if (isEmpty(l)) delete labels[a.id]; return "nincs"; }                                                                   // minden mező már ki van töltve: a saját címke marad
+  l.forras = LAB_MAIN.every((f) => !l[f] || l["src_" + f] === "gemini") ? "gemini" : "vegyes";
+  l.gem_bizonyossag = typeof g.magabiztossag === "number" ? g.magabiztossag : ""; l.gem_modell = String(g.model || "");
   const okSrc = (g.forrasok || []).filter((x) => /^https:\/\//.test(String(x.uri || "")));
-  if (!l.megj && g.valosag && okSrc.length) l.megj = okSrc.map((x) => x.title).slice(0, 3).join(", ").slice(0, 200);
+  if (!l.megj && got.includes("valosag") && okSrc.length) l.megj = okSrc.map((x) => x.title).slice(0, 3).join(", ").slice(0, 200);
   l.upd = new Date().toISOString();
   return saveLabels();
 }
 export function setNote(a, text) {
   const l = labRecord(a); l.megj = String(text || "").trim().slice(0, 200); l.upd = new Date().toISOString();
-  if (!LAB_MAIN.some((k) => l[k]) && !l.megj) delete labels[a.id];
+  if (isEmpty(l)) delete labels[a.id];
   return saveLabels();
 }
 export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
-const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj"];
-export function labelsCsv(all) {
+const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell"];
+const srcOf = (l, f) => (l[f] ? l["src_" + f] || l.forras || "sajat" : "");
+function gjCols(l, gemMap) {
+  const lg = gemMap[l.id], g = l.gj || (lg ? { ertek: lg.ertek, stilus: lg.stilus, valosag: lg.valosag || "", biz: lg.magabiztossag, modell: lg.model || "" } : null);
+  return [srcOf(l, "ertek"), srcOf(l, "valosag"), srcOf(l, "stilus"), l.peek ? 1 : 0, l.tema || "", g ? g.ertek : "", g ? g.stilus : "", g ? g.valosag : "", g && typeof g.biz === "number" ? g.biz.toFixed(2) : "", g ? g.modell : ""];
+}
+export function labelsCsv(all, gemMap = (S.gem && S.gem.labels) || {}) {
   const num = (x) => (typeof x === "number" && isFinite(x) ? x.toFixed(4) : "");
   const rows = Object.values(all).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, l.forras, l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj].map(csvCell).join(","))].join("\n");
+  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, recSource(l), l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj, ...gjCols(l, gemMap)].map(csvCell).join(","))].join("\n");
 }
 function labPaint(cardEl, a) {
   const l = labels[a.id] || {};
   if (cardEl.querySelectorAll) cardEl.querySelectorAll('[data-act="lab"]').forEach((b) => { const cur = l[b.dataset.f] || (b.dataset.f === "forras" ? labPref.forras : null); b.classList.toggle("on", cur === b.dataset.v); });
   const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = labelState(l);
+  const gb = cardEl.querySelector && cardEl.querySelector(".gem"), pk = cardEl.querySelector && cardEl.querySelector(".gem-peek");
+  if (gb && LAB_MAIN.every((f) => l[f])) { gb.hidden = false; if (pk) pk.hidden = true; }      // vak mód: a teljes (3/3) saját címke után a javaslat látható
   labCount();
 }
 export function gemChipUpdate() {
@@ -114,7 +137,7 @@ function labUi() {
   const box = document.querySelector("#settings .box"), anchor = $("s-reset");
   if (!box || !anchor || $("s-lab")) return;
   const w = document.createElement("div"); w.id = "s-lab"; w.className = "lab-set";
-  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea>`;
+  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><button id="flt-copy">Szűrő-napló másolása (CSV)</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea>`;
   box.insertBefore(w, anchor);
   $("lab-copy").addEventListener("click", async () => {
     const n = Object.keys(labels).length, msg = $("lab-msg"), out = $("lab-out");
@@ -123,13 +146,20 @@ function labUi() {
     out.hidden = ok; if (!ok) { out.value = csv; try { out.select(); } catch (e) { /* kézzel kijelölhető */ } }
     msg.textContent = ok ? `${n} címke a vágólapon (CSV).` : "A másolás nem sikerült: a szöveg alább kijelölhető, másold ki kézzel.";
   });
+  $("flt-copy").addEventListener("click", async () => {
+    const msg = $("lab-msg"), out = $("lab-out"), n = engine.hist.length;
+    if (!n) { msg.textContent = "Még nincs szűrő-napló."; return; }
+    const csv = engine.exportCsv(), ok = await copyText(csv);
+    out.hidden = ok; if (!ok) { out.value = csv; try { out.select(); } catch (e) { /* kézzel kijelölhető */ } }
+    msg.textContent = ok ? `${n} szűrő-esemény a vágólapon (CSV).` : "A másolás nem sikerült: a szöveg alább kijelölhető, másold ki kézzel.";
+  });
   $("lab-clear").addEventListener("click", () => { if (confirm("Biztosan törlöd az összes címkét? (A szavazatok és a tanult szűrő megmarad.)")) { Object.keys(labels).forEach((k) => delete labels[k]); saveLabels(); labCount(); $("lab-msg").textContent = "A címkék törölve."; } });
   labCount();
 }
 function injectLabCss() {
   if (typeof document === "undefined" || !document.head || !document.createElement || document.getElementById("lab-css")) return;
   const st = document.createElement("style"); st.id = "lab-css";
-  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gtag{border:1px solid var(--vi)!important;color:var(--am)!important}.gtag.ok{border-color:#3fb950!important;color:#3fb950!important}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
+  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gtag{border:1px solid var(--vi)!important;color:var(--am)!important}.gtag.ok{border-color:#3fb950!important;color:#3fb950!important}.gem-peek{width:100%;min-height:34px;margin-bottom:8px;border-style:dashed}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
   document.head.appendChild(st);
 }
 
@@ -256,7 +286,8 @@ $("list").addEventListener("click", (ev) => {
   const t = ev.target.closest("[data-act]"), cardEl = ev.target.closest(".card"); if (!cardEl) return;
   const a = byId(cardEl.dataset.id); if (!a) return;
   const act = t && t.dataset.act;
-  if (act === "gem") { const ok = applyGem(a); labPaint(cardEl, a); const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = ok ? "Gemini-javaslat elfogadva · " + labelState(labels[a.id]) : "Nem sikerült menteni (tele a tár?)"; return; }
+  if (act === "gemshow") { markPeek(a.id); const lp = labels[a.id]; if (lp) { lp.peek = 1; saveLabels(); } const gb = cardEl.querySelector && cardEl.querySelector(".gem"); if (gb) gb.hidden = false; t.hidden = true; return; }
+  if (act === "gem") { const ok = applyGem(a); labPaint(cardEl, a); const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = ok === "nincs" ? "Nincs üres mező: a saját címkéd megmaradt · " + labelState(labels[a.id]) : ok ? "Gemini-javaslat elfogadva (csak az üres mezők) · " + labelState(labels[a.id]) : "Nem sikerült menteni (tele a tár?)"; return; }
   if (act === "lab") { const ok = setLabel(a, t.dataset.f, t.dataset.v); labPaint(cardEl, a); if (!ok) { const st = cardEl.querySelector && cardEl.querySelector(".lab-state"); if (st) st.textContent = "Nem sikerült menteni (tele a tár?)"; } return; }
   if (!act && ev.target.closest(".lab")) return;       // az űrlap mezői nem nyitják/zárják a részleteket
   if (act === "up" || act === "down") { vote(a, act === "up" ? 1 : 0); const y = $("sheet").scrollTop; render(); $("sheet").scrollTop = y; return; }
@@ -299,7 +330,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.3 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.4 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
