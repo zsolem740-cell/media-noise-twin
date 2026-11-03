@@ -462,7 +462,7 @@ def cluster(arts, L, thr):
 
 # ───────────────────────── leíró mezők (csak jelentés, szabályverzió d1) ─────────────────────────
 # Ezek a mezők NEM módosítják az S-t, a V-t, a G-t és az ATM-et: a címkékkel való validálás után kerülhetnek be a számításba.
-RULES_V = "d2"                                    # d2: az URL-alapú műfaj-jelölés (a d1 csak a címet nézte)
+RULES_V = "d3"                                    # d2: az URL-alapú műfaj-jelölés (a d1 csak a címet nézte)
 GENRE_STRONG = ("velemeny", "kommentar", "publicisztika", "elemzo", "elemzes", "szakerto", "politologus", "kozgazdasz", "opinion", "analysis", "analyst", "expert", "editorial", "op-ed", "commentary")
 GENRE_WEAK = ("szerint", "szerinte", "says", "warns", "figyelmeztet")
 KP_RE = re.compile(r"\bKp\b[^0-9\n]{0,24}?(\d{1,2}(?:[.,]\d)?)(?!\d)(?!\s*(?:nap|óra|ora|perc|%|cm|km|m/s|fok|°|millió|ezer|év))", re.I)
@@ -558,6 +558,65 @@ def fx_conflict(a, rates):
     return None
 
 
+# ───────── horgony-jelölő (a1): melyik modul szókincsét említi a cikk, és áll-e mellette mértékegységes szám ─────────
+# CSAK JELÖLÉS: egyetlen cikket sem dob el, az S, V, G, ATM értékét nem érinti. A nyelv a feed beállításából jön (nincs nyelvfelismerés).
+# Jelölők (ékezet nélküli, kisbetűs szövegre): szó eleji egyezés szabad ragozással (a magyar toldalékok miatt); "=" szó egészében; "~" részszó (hosszú német összetétel); "re:" nyers reguláris kifejezés.
+ANCHOR_RULES_V = "a1"
+_EURO = "re:euro(?!p|viz|vis)"
+ANCHORS = {
+    "M1": {"hu": ["napszel", "napkitores", "foldrenges", "geomagnes", "kp-index", "kp index", "szellokes", "vihar", "naptevekenyseg", "sarkfeny"],
+           "en": ["earthquake", "solar flare", "solar storm", "geomagnetic", "aurora", "storm", "kp-index", "kp index"],
+           "de": ["~erdbeben", "~sonnensturm", "~sonnenwind", "geomagnet", "polarlicht", "sturm", "orkan", "unwetter", "kp-index"]},
+    "M3": {"hu": ["vizallas", "vizszint", "arviz", "aradas", "belviz", "vizugy", "kaub", "duna", "rajna"],
+           "en": ["water level", "river level", "flood", "danube", "rhine"],
+           "de": ["~wasserstand", "~hochwasser", "~niedrigwasser", "pegel", "donau", "rhein", "uberschwemm"]},
+    "M5": {"hu": ["arfolyam", "forint", _EURO, "dollar", "kamat", "inflaci", "jegybank", "mnb", "tozsde", "bux", "gdp"],
+           "en": ["inflation", "interest rate", "exchange rate", "central bank", "ecb", "=fed", "nasdaq", "s&p", "dow jones", "=dax", "nikkei", "crude", "brent", "oil price", "stock market", "currency", "forex", "gdp", "treasury yield", "mortgage rate", _EURO],
+           "de": ["wechselkurs", "~zinssatz", "zinsen", "inflation", "ezb", "=dax", "aktien", "borse", "leitzins", "dollar", _EURO]},
+    "M7": {"hu": ["csapadek", "talajnedvesseg", "aszaly", "re:eso(?:ben|s|t|k|zes\\w*|vel|zik)?(?![a-z0-9])", "szarazsag"],
+           "en": ["rainfall", "precipitation", "drought", "soil moisture", "downpour", "re:rain(?:s|y|fall|ing)?(?![a-z0-9])"],
+           "de": ["niederschlag", "bodenfeuchte", "durre", "re:regen(?![a-z0-9])", "starkregen", "dauerregen", "trockenheit"]},
+}
+ANCHOR_UNIVERSAL = {"M5": ["eur/huf", "usd/huf", "eur/usd"]}
+ANCHOR_NEG = ("sturm graz", "sk sturm", "rheinmetall", "stormy daniels", "fed up", "duna tv", "duna world", "duna arena", "brainstorm", "tisza part")
+_UNIT = r"(?:%|\s?%|\s?szazalek\w*|\s?percent|\s?ft\b|\s?forint\w*|\s?huf\b|\s?eur\b|\s?euro\w*|\s?usd\b|\s?dollar\w*|\s?cm\b|\s?mm\b|\s?km\b|\s?fok\b|\s?°|\s?celsius|\s?ezer\b|\s?millio\w*|\s?milliard\w*|\s?million\b|\s?billion\b|\s?nt\b|\s?pont\w*|\s?points?\b)"
+_NUM_UNIT = re.compile(r"(?<![\d.,])\d[\d.,]*" + _UNIT)
+_KP_NUM = re.compile(r"kp[- ]index\D{0,20}\d")
+
+
+def _compile_anchor(rule):
+    if rule.startswith("re:"):
+        return re.compile("(?<![a-z0-9])" + rule[3:])
+    if rule.startswith("="):
+        return re.compile("(?<![a-z0-9])" + re.escape(rule[1:]) + "(?![a-z0-9])")
+    if rule.startswith("~"):
+        return re.compile(re.escape(rule[1:]))
+    return re.compile("(?<![a-z0-9])" + re.escape(rule) + ("(?![a-z0-9])" if len(rule) <= 4 else ""))
+
+
+_ANCHOR_RX = {}
+
+
+def anchor_tags(text, lang):
+    """A cikk szövegében a modulok horgony-szókincse. Visszatér: (a találó modulok rendezett listája, van-e mellette mértékegységes szám). Nincs nyelvfelismerés: a feed nyelvét használja."""
+    ft = fold(text)
+    for n in ANCHOR_NEG:
+        ft = ft.replace(n, " ")
+    lg = lang if lang in ("hu", "en", "de") else ""
+    mods, near = set(), False
+    for mod, packs in ANCHORS.items():
+        rules = list(packs.get(lg, [])) if lg else [r for pk in packs.values() for r in pk]
+        rules += ANCHOR_UNIVERSAL.get(mod, [])
+        for r in rules:
+            rx = _ANCHOR_RX.get(r) or _ANCHOR_RX.setdefault(r, _compile_anchor(r))
+            for m in rx.finditer(ft):
+                mods.add(mod)
+                win = ft[max(0, m.start() - 40): m.end() + 40]
+                if _NUM_UNIT.search(win) or (mod == "M1" and _KP_NUM.search(win)):
+                    near = True
+    return sorted(mods), near
+
+
 def _tp(a):
     for k in ("published", "first_seen"):
         x = a.get(k)
@@ -567,6 +626,25 @@ def _tp(a):
             except ValueError:
                 continue
     return None
+
+
+def anchor_summary(last):
+    n = max(1, len(last))
+    by_lang, by_mod = {}, {}
+    for a in last:
+        lg = a.get("lang") or "ismeretlen"
+        b = by_lang.setdefault(lg, {"n": 0, "anc": 0, "meas": 0})
+        b["n"] += 1
+        d = a["d"]
+        if d.get("anc"):
+            b["anc"] += 1
+            for m in d["anc"]:
+                by_mod[m] = by_mod.get(m, 0) + 1
+        if d.get("mc"):
+            b["meas"] += 1
+    anc = sum(v["anc"] for v in by_lang.values()); meas = sum(v["meas"] for v in by_lang.values())
+    return {"rules_v": ANCHOR_RULES_V, "by_lang": by_lang, "by_module": dict(sorted(by_mod.items())), "anc_share": round(anc / n, 3), "meas_share": round(meas / n, 3),
+            "note": "lexikális jelölés: a cikk a modul szókincsét említi (anc), és mértékegységes szám áll mellette (meas); nem állítás-ítélet, nem szűrés"}
 
 
 def describe_articles(arts, L, t, m1_dyn=None, rates=None):
@@ -588,6 +666,11 @@ def describe_articles(arts, L, t, m1_dyn=None, rates=None):
             gen, ghits, _ = genre_of(x["title"], x.get("link"))
             d = {"rv": RULES_V, "gen": gen, "st": st, "sb": sb, "cbd": round(st - sb, 3) if sb is not None else None,
                  "lag": max(0, int((tx - t0).total_seconds() // 60)), "amp": len(in60), "nsrc": x.get("event_sources", 1), "first": 1 if x is timed[0] else 0}
+            anc, mc = anchor_tags(x["title"] + " . " + (x.get("summary") or ""), x.get("lang") or "")
+            if anc:
+                d["anc"] = anc
+                if mc:
+                    d["mc"] = 1                                # mértékegységes szám áll a horgony-szó mellett (lexikális jelölt, nem állítás-ítélet)
             if any(h.startswith("url:") for h in ghits):
                 d["gu"] = 1                                # a műfaj-jelölést az URL (rovat) adta
             if x is not timed[0] and len(items) > 1:
@@ -611,7 +694,7 @@ def describe_articles(arts, L, t, m1_dyn=None, rates=None):
     return {"rules_v": RULES_V, "genre_share": {"velemeny_elemzes": round(sum(1 for a in last if a["d"]["gen"] == "v") / n, 3), "tudositas": round(sum(1 for a in last if a["d"]["gen"] == "t") / n, 3)},
             "clickbait": {"n": len(cbd), "mean_delta": round(sum(cbd) / len(cbd), 3) if cbd else None, "p90_delta": round(pctl(cbd, 0.9), 3) if cbd else None},
             "amp": {"events": len(by_ev), "multi_source": sum(1 for z in amp_sizes if z > 1), "max_sources": max(amp_sizes) if amp_sizes else 0, "p90_sources": round(pctl([float(z) for z in amp_sizes], 0.9), 1) if amp_sizes else 0},
-            "genre_url_hits_24h": sum(1 for a in last if a["d"].get("gu")), "physical_conflicts_24h": sum(1 for a in last if a.get("pc")),
+            "anchors": anchor_summary(last), "genre_url_hits_24h": sum(1 for a in last if a["d"].get("gu")), "physical_conflicts_24h": sum(1 for a in last if a.get("pc")),
             "fx_reference": ({"EUR/HUF": rates["EUR"]["value"] if "EUR" in rates else None, "USD/HUF": rates["USD"]["value"] if "USD" in rates else None, "date": max(v["date"] for v in rates.values()), "source": "M5 (MNB hivatalos árfolyam)"} if rates else None), "age_weighted_atm": round(awa, 4), "source_stats": stats,
             "basis": {"genre": "kulcsszó-jelölők a címben és vélemény-rovat az URL-ben (heurisztika, nem kalibrált)", "origin": "az első észlelt megjelenés a feed időbélyege alapján (nem bizonyított eredet)",
                       "clickbait": "S(cím) − S(törzs), nincs küszöb (a kalibráció a címkék után)", "age_weighted_atm": "0,5-ös hatvány, felezési idő 48 óra", "physical_conflict": "a Kp (M1) és az EUR/HUF, USD/HUF árfolyam (M5, MNB hivatalos); az árfolyam-küszöb (±3%) nem kalibrált; emberi ellenőrzéssel",

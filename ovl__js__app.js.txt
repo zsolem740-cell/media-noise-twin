@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40.5 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.6 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -47,8 +47,10 @@ export function descBlock(a) {
   const cb = typeof d.cbd === "number" ? (d.cbd >= 0 ? "+" : "") + d.cbd.toFixed(2) : "–";
   const orig = d.first ? "első észlelt megjelenés" : `${Number(d.lag) || 0} perccel az első után${d.osrc ? " · eredet: " + esc(d.osrc) : ""}`;
   const pc = a.pc ? " · " + pcText(a.pc) : "";
-  return `<p class="dim desc">Leíró mutatók (${esc(d.rv || "d1")}, nem pontoz): műfaj ${d.gen === "v" ? "vélemény/elemzés" : "tudósítás"} · S cím ${f2(d.st)} / törzs ${f2(d.sb)} (különbség ${cb}) · ${orig} · ${Number(d.amp) || 1} portál az első órában${pc}</p>`;
+  const hg = Array.isArray(d.anc) && d.anc.length ? ` · horgony: ${d.anc.map((m) => esc(m)).join(", ")}${d.mc ? " (mértékegységes számmal)" : ""}` : "";
+  return `<p class="dim desc">Leíró mutatók (${esc(d.rv || "d1")}, nem pontoz): műfaj ${d.gen === "v" ? "vélemény/elemzés" : "tudósítás"} · S cím ${f2(d.st)} / törzs ${f2(d.sb)} (különbség ${cb}) · ${orig} · ${Number(d.amp) || 1} portál az első órában${hg}${pc}</p>`;
 }
+export const ancTag = (a) => (a.d && Array.isArray(a.d.anc) && a.d.anc.length ? `<em class="gtag">${a.d.anc.map((m) => esc(m)).join(" ")}${a.d.mc ? " #" : ""}</em>` : "");
 export const pcTag = (a) => (a.pc ? `<em class="bad">⚠ ${a.pc.kind === "fx" ? "Árfolyam" : "Kp"}-ellentmondás</em>` : "");
 const GEM_NAMES = { ertek: { magas: "magas", kozepes: "közepes", alacsony: "alacsony" }, stilus: { nyugodt: "nyugodt", felfokozott: "felfokozott" }, valosag: { igaz: "igaz", hamis: "hamis", nem_ellenorizheto: "nem ellenőrizhető" } };
 const gemOf = (a) => (S.gem && S.gem.labels && S.gem.labels[a.id]) || null;
@@ -66,7 +68,7 @@ export function labForm(a, l = labels[a.id] || {}, pref = labPref) {
   return `<div class="lab">${gemBlock(a)}<h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
 }
 function labRecord(a) {
-  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, peek: peeked.has(a.id) ? 1 : 0, gj: (() => { const g = gemOf(a); return g ? { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "", biz: g.magabiztossag, modell: g.model || "" } : null; })(), s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "" });
+  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, peek: peeked.has(a.id) ? 1 : 0, gj: (() => { const g = gemOf(a); return g ? { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "", biz: g.magabiztossag, modell: g.model || "" } : null; })(), s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "", nyelv: String(a.lang || ""), horgony: a.d && Array.isArray(a.d.anc) ? a.d.anc.join("|") : "", hszam: a.d && a.d.mc ? 1 : 0 });
 }
 export function setLabel(a, f, v) {
   if (!LAB_OK[f] || !LAB_OK[f].has(v)) return false;
@@ -100,7 +102,7 @@ export function setNote(a, text) {
   return saveLabels();
 }
 export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
-const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell"];
+const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell", "nyelv", "horgony", "horgony_szammal"];
 const srcOf = (l, f) => (l[f] ? l["src_" + f] || l.forras || "sajat" : "");
 function gjCols(l, gemMap) {
   const lg = gemMap[l.id], g = l.gj || (lg ? { ertek: lg.ertek, stilus: lg.stilus, valosag: lg.valosag || "", biz: lg.magabiztossag, modell: lg.model || "" } : null);
@@ -109,7 +111,7 @@ function gjCols(l, gemMap) {
 export function labelsCsv(all, gemMap = (S.gem && S.gem.labels) || {}) {
   const num = (x) => (typeof x === "number" && isFinite(x) ? x.toFixed(4) : "");
   const rows = Object.values(all).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, recSource(l), l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj, ...gjCols(l, gemMap)].map(csvCell).join(","))].join("\n");
+  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, recSource(l), l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj, ...gjCols(l, gemMap), l.nyelv, l.horgony, l.hszam].map(csvCell).join(","))].join("\n");
 }
 function labPaint(cardEl, a) {
   const l = labels[a.id] || {};
@@ -118,6 +120,16 @@ function labPaint(cardEl, a) {
   const gb = cardEl.querySelector && cardEl.querySelector(".gem"), pk = cardEl.querySelector && cardEl.querySelector(".gem-peek");
   if (gb && LAB_MAIN.every((f) => l[f])) { gb.hidden = false; if (pk) pk.hidden = true; }      // vak mód: a teljes (3/3) saját címke után a javaslat látható
   labCount();
+}
+export function ancChipUpdate() {
+  const box = document.getElementById("chips"); if (!box || !box.appendChild) return;
+  let b = document.getElementById("anc-chip");
+  const hasA = (a) => !!(a.d && Array.isArray(a.d.anc) && a.d.anc.length), hasN = (a) => !!(a.d && a.d.mc);
+  const n = S.arts.filter(hasA).length, k = S.arts.filter(hasN).length, m = S.ancMode | 0;
+  if (!n && !m) { if (b && b.remove) b.remove(); return; }          // nincs jelölt hír: nincs gomb
+  if (!b) { b = document.createElement("button"); b.id = "anc-chip"; if (b.dataset) b.dataset.anc = "1"; box.appendChild(b); }
+  b.textContent = m === 0 ? `Horgony (${n})` : m === 1 ? `Horgony: mind (${n})` : `Horgony: számmal (${k})`;
+  b.classList.toggle("off", m === 0);
 }
 export function gemChipUpdate() {
   const box = document.getElementById("chips"); if (!box || !box.appendChild) return;
@@ -201,8 +213,9 @@ export function ordered(list, mode, eng) {
   else { const sc = new Map(a.map((x) => [x.id, eng.score(x).score])); a.sort((x, y) => sc.get(y.id) - sc.get(x.id) || ts(y) - ts(x)); }
   return a;
 }
+const ancOK = (a) => { const m = S.ancMode | 0; return m === 0 || (m === 1 ? !!(a.d && Array.isArray(a.d.anc) && a.d.anc.length) : !!(a.d && a.d.mc)); };
 const gemOK = (a) => { const m = S.gemMode | 0; return m === 0 || (m === 1 ? !!gemOf(a) : !!gemOf(a) && !labels[a.id]); };
-const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr) && gemOK(a)), S.mode, engine);
+const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr) && gemOK(a) && ancOK(a)), S.mode, engine);
 
 /* ───────── HUD ───────── */
 function renderHud(list) {
@@ -248,7 +261,7 @@ function card(a, sc) {
  <h3><a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" data-act="link">${esc(a.title)}</a></h3>
  <div class="meta">${esc(a.source)}${a.geo ? " · 📍 " + esc(a.geo.name) : ""}${a.event_sources > 1 ? " · 📰 " + a.event_sources + " forrás" : ""}</div>
  <div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>
- <div class="tags">${tags}${badge}${pcTag(a)}${gemTag(a)}</div>
+ <div class="tags">${tags}${badge}${pcTag(a)}${ancTag(a)}${gemTag(a)}</div>
  <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
  <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p>${descBlock(a)}${labForm(a)}</div>
  <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
@@ -256,6 +269,7 @@ function card(a, sc) {
 }
 function render() {
   try { gemChipUpdate(); } catch (e) { /* a szűrőgomb hibája nem akaszthatja meg a listát */ }
+  try { ancChipUpdate(); } catch (e) { /* a horgony-gomb hibája sem */ }
   const list = visible();
   renderHud(list);
   $("list").innerHTML = list.slice(0, S.limit).map((a) => card(a, engine.score(a))).join("") || (S.arts.length ? `<p class="dim pad">Nincs a szűrőknek megfelelő hír.</p>` : "");
@@ -306,7 +320,7 @@ $("list").addEventListener("change", (ev) => {
   const cardEl = el.closest(".card"), a = cardEl && byId(cardEl.dataset.id); if (!a) return;
   setNote(a, el.value); labPaint(cardEl, a);
 });
-$("chips").addEventListener("click", (ev) => { const gb = ev.target.closest("[data-gem]"); if (gb && gb.dataset && gb.dataset.gem === "1") { S.gemMode = ((S.gemMode | 0) + 1) % 3; S.limit = 50; render(); } });
+$("chips").addEventListener("click", (ev) => { const ab = ev.target.closest("[data-anc]"); if (ab && ab.dataset && ab.dataset.anc === "1") { S.ancMode = ((S.ancMode | 0) + 1) % 3; S.limit = 50; render(); return; } const gb = ev.target.closest("[data-gem]"); if (gb && gb.dataset && gb.dataset.gem === "1") { S.gemMode = ((S.gemMode | 0) + 1) % 3; S.limit = 50; render(); } });
 $("chips").addEventListener("click", (ev) => { const b = ev.target.closest("[data-scope]"); if (!b) return; S.scopes[b.dataset.scope] = !S.scopes[b.dataset.scope]; b.classList.toggle("off", !S.scopes[b.dataset.scope]); S.limit = 50; render(); });
 $("mode").addEventListener("change", (ev) => { S.mode = ev.target.value; S.limit = 50; render(); });
 $("hide").addEventListener("change", (ev) => { S.hide = ev.target.checked; render(); });
@@ -333,7 +347,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.5 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.6 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
