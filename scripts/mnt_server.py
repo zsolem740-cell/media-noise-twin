@@ -635,6 +635,122 @@ def anchor_tags(text, lang):
     return sorted(mods), near
 
 
+# ───────── esemény-terjedési napló (csak gyűjtés): ki volt az első, hány portál vette át, mennyit változott a szöveg ─────────
+# A pontozást (S, V, G, ATM) NEM érinti, a cikkeket nem módosítja. A kiértékelés szabályait előre rögzítettük (módszertani leírás, validációs sprint).
+EVENT_LOG_MAX = 1500                 # a legutóbbi N többforrású esemény marad a fájlban
+EVENT_LOG_LIVE_H = 40                # csak az ennél frissebb első cikkű eseményt írja újra (a 48 órás ablakból kiöregedő cikkek ne csonkítsák)
+_SC = {"official": "o", "local": "l", "national": "n", "international": "i"}
+_NUM_RX = re.compile(r"(?<![\d.,])\d[\d.,]*\d|\d")
+
+
+def _nums(text):
+    out = set()
+    for m in _NUM_RX.findall(text or ""):
+        k = re.sub(r"[.,]", "", m) if re.fullmatch(r"\d{1,3}(?:[.,]\d{3})+", m) else m.replace(",", ".")
+        if re.fullmatch(r"(?:19|20)\d\d", k):          # évszám: nem mennyiség
+            continue
+        out.add(k)
+    return out
+
+
+def _toks(s_):
+    return {w for w in re.findall(r"[a-z0-9]+", fold(s_)) if len(w) >= 3}
+
+
+def _jacc(a, b):
+    u = a | b
+    return len(a & b) / len(u) if u else 0.0
+
+
+def _mean(v):
+    v = [x for x in v if x is not None]
+    return round(sum(v) / len(v), 3) if v else None
+
+
+def event_record(items, L):
+    """Egy többforrású esemény terjedési és torzulási jellemzői, forrásonként a legkorábbi példánnyal. Nincs benne ítélet, csak mért darabszám, hasonlóság és különbség."""
+    its = sorted(items, key=lambda x: x.get("published") or x.get("first_seen") or "")
+    first = its[0]
+    t0 = parse_date(first.get("published") or first.get("first_seen"))
+    if t0 is None:
+        return None
+    seen, later = {fold(first["source"])}, []
+    for x in its[1:]:
+        k = fold(x["source"])
+        tx = parse_date(x.get("published") or x.get("first_seen"))
+        if k in seen or tx is None:
+            continue
+        seen.add(k)
+        later.append((tx, x))
+    if not later:
+        return None
+    txt0 = first["title"] + " . " + (first.get("summary") or "")
+    n0, h0, tk0 = _nums(txt0), hits(fold(txt0), L.att), _toks(first["title"])
+    s0 = (first.get("d") or {}).get("st")
+    s0 = s0 if isinstance(s0, (int, float)) and not isinstance(s0, bool) else None
+    rows = []
+    for tx, x in later[:12]:
+        txt = x["title"] + " . " + (x.get("summary") or "")
+        nx, st = _nums(txt), (x.get("d") or {}).get("st")
+        st = round(st, 3) if isinstance(st, (int, float)) and not isinstance(st, bool) else None
+        rows.append([max(0, int((tx - t0).total_seconds() // 60)), _SC.get(x.get("scope"), "?"), st, round(_jacc(tk0, _toks(x["title"])), 2), hits(fold(txt), L.att),
+                      round(len(n0 & nx) / len(n0), 2) if n0 else None, len(nx - n0)])
+    path = []
+    for sc in [_SC.get(first.get("scope"), "?")] + [r[1] for r in rows]:
+        if sc not in path:
+            path.append(sc)
+    ds = [r[2] - s0 for r in rows if r[2] is not None] if s0 is not None else []
+    return {"t0": iso(t0), "src0": str(first["source"])[:40], "t": str(first["title"])[:90], "lang": first.get("lang") or "", "sc0": _SC.get(first.get("scope"), "?"),
+            "geo": str((first.get("geo") or {}).get("name") or "")[:30], "n": len(seen), "amp60": 1 + sum(1 for r in rows if r[0] <= 60), "path": ">".join(path),
+            "s0": round(s0, 3) if s0 is not None else None, "h0": h0, "n0": len(n0), "ds": _mean(ds), "ds_max": round(max(ds), 3) if ds else None,
+            "sim": _mean([r[3] for r in rows]), "h": _mean([r[4] for r in rows]), "nk": _mean([r[5] for r in rows]), "nn": _mean([r[6] for r in rows]), "L": rows}
+
+
+def update_event_log(prev, arts, L, t):
+    """A többforrású események naplója: az új események hozzáadódnak, a még friss eseményeknél a rekord a bővülő csoporttal újraszámolódik, a régiek változatlanok."""
+    log = prev if isinstance(prev, dict) and isinstance(prev.get("events"), dict) else {}
+    ev, order = dict(log.get("events") or {}), [x for x in (log.get("order") or []) if x in (log.get("events") or {})]
+    by = {}
+    for a in arts:
+        if a.get("event"):
+            by.setdefault(a["event"], []).append(a)
+    horizon, added = t - timedelta(hours=EVENT_LOG_LIVE_H), 0
+    for eid, items in by.items():
+        if len({fold(x["source"]) for x in items}) < 2:
+            continue
+        ft = min((d for d in (parse_date(x.get("published") or x.get("first_seen")) for x in items) if d is not None), default=None)
+        if ft is None or ft < horizon:
+            continue
+        rec = event_record(items, L)
+        if rec is None:
+            continue
+        if eid not in ev:
+            order.append(eid)
+            added += 1
+        ev[eid] = rec
+    while len(order) > EVENT_LOG_MAX:
+        ev.pop(order.pop(0), None)
+    return {"schema": "event-log-1", "version": "1.0.0", "since": log.get("since") or iso(t)[:10], "updated": iso(t), "n_total": int(log.get("n_total") or 0) + added,
+            "fields": "t0 első megjelenés, src0 első portál, n forrás, amp60 hány portál az első órában, path hatókör-útvonal (i nemzetközi, n országos, l helyi), s0 az első cím S-e, ds a későbbi címek S-ének átlagos eltérése, sim címhasonlóság (1 = szó szerinti), h0/h forrásjelző-szám az elsőben/átlag a többiben, nk az első számainak megmaradt aránya, nn új számok átlaga, L soronként [késés perc, hatókör, S cím, hasonlóság, forrásjelző, megmaradt számok, új számok]",
+            "note": "csak gyűjtés: a pontozást nem érinti; az eredet a feed időbélyegén alapul, nem bizonyított eredet", "events": ev, "order": order}
+
+
+def event_log_summary(lg):
+    evs = list((lg.get("events") or {}).values())
+    sims = [e["sim"] for e in evs if e.get("sim") is not None]
+    lags = sorted(r[0] for e in evs for r in e.get("L", []))
+    paths = {}
+    for e in evs:
+        paths[e["path"]] = paths.get(e["path"], 0) + 1
+    hd = [e["h0"] - e["h"] for e in evs if e.get("h") is not None]
+    return {"since": lg.get("since"), "updated": lg.get("updated"), "n_total": lg.get("n_total", 0), "n_in_file": len(evs), "mean_sources": _mean([e["n"] for e in evs]),
+            "verbatim_share": round(sum(1 for x in sims if x >= 0.9) / len(sims), 3) if sims else None, "rewrite_events": sum(1 for x in sims if x < 0.9),
+            "ds_mean": _mean([e["ds"] for e in evs]), "ds_up_share": round(sum(1 for e in evs if (e.get("ds") or 0) > 0.02) / max(1, sum(1 for e in evs if e.get("ds") is not None)), 3) if evs else None,
+            "hedge_drop_mean": _mean(hd), "num_kept_mean": _mean([e["nk"] for e in evs]), "num_new_mean": _mean([e["nn"] for e in evs]),
+            "lag_median_min": lags[len(lags) // 2] if lags else None, "paths": dict(sorted(paths.items(), key=lambda kv: -kv[1])[:8]),
+            "note": "leíró összesítés, nem ítélet; a kiértékelés szabályai a módszertani leírásban előre rögzítettek"}
+
+
 def _tp(a):
     for k in ("published", "first_seen"):
         x = a.get(k)
@@ -1147,6 +1263,14 @@ async def run_async(force=False):
             pts.append(snap)
             state["last_hist"] = iso(t)
         jsave(MET / "atm_history.json", {"points": pts[-cfg["limits"]["history_max"]:]})
+        try:                                                    # terjedési napló: csak gyűjtés, a hibája nem akaszthatja meg a fő futást; óránként egyszer ír (a git-előzmény ne hízzon)
+            prev_log = jload(MET / "event_log.json", None)
+            elog = update_event_log(prev_log, arts, mod.L, t)
+            if not isinstance(prev_log, dict) or str(prev_log.get("updated", ""))[:13] != iso(t)[:13]:
+                jsave(MET / "event_log.json", elog)
+                jsave(MET / "event_log_summary.json", event_log_summary(elog), pretty=True)
+        except Exception as e:
+            print("Terjedési napló: kihagyva (%s)" % str(e)[:100])
         state["signature"] = sig
         state["schema"] = "v39"
         jsave(DATA / "state.json", state)
