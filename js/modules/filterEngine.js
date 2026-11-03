@@ -105,7 +105,7 @@ export class FilterEngine {
   /* label: 1 = értékes/tény, 0 = zaj; weight: a jel erőssége. A jóslat a tanítás ELŐTT kerül az AUC-előzménybe. */
   train(a, label, weight = 1, kind = "vote") {
     const feats = featuresOf(a), p = this.rawP(feats);
-    this.hist.push({ p: +p.toFixed(5), y: label, w: weight, kind });
+    this.hist.push({ p: +p.toFixed(5), y: label, w: weight, kind, id: a.id, pr: +this.prior(a).toFixed(4), t: Date.now() });   // az azonosító, az előzetes pont és az idő az utólagos elemzéshez kell
     if (this.hist.length > 300) this.hist.shift();
     const err = (p - label) * weight;
     feats.forEach((v, i) => {
@@ -125,13 +125,18 @@ export class FilterEngine {
     if (opened && seconds <= 1.5) return this.train(a, 0, 0.25, "dwell");
     return null;
   }
+  /* A teljes AUC-előzmény CSV-ben (elemzéshez): sorszám, idő, hír-azonosító, a tanítás ELŐTTI jóslat, az előzetes (1 − ATM/plafon) pont, címke, súly, fajta. */
+  exportCsv() {
+    const q = (x) => (x === undefined || x === null ? "" : String(x));
+    return ["n,ido,id,p,prior,y,suly,fajta", ...this.hist.map((h, i) => [i + 1, h.t ? new Date(h.t).toISOString() : "", q(h.id), q(h.p), q(h.pr), q(h.y), q(h.w), q(h.kind)].join(","))].join("\n");
+  }
   stats() { return { lambda: this.lambda(), auc: this.auc(), samples: this.hist.length, trained: this.trained }; }
   save() {
     try {
       const nz = [];
       for (let i = 0; i < DIM; i++) if (this.w[i] !== 0 || this.g[i] !== 0) nz.push([i, +this.w[i].toFixed(5), +this.g[i].toFixed(5)]);
       if (nz.length > 20000) nz.sort((x, y) => Math.abs(y[1]) - Math.abs(x[1])).length = 20000;
-      this.storage.setItem(this.key, JSON.stringify({ v: 1, b: this.bias, gb: this.gb, n: this.trained, h: this.hist.slice(-150), nz }));
+      this.storage.setItem(this.key, JSON.stringify({ v: 1, b: this.bias, gb: this.gb, n: this.trained, h: this.hist.slice(-300), nz }));
     } catch (e) { /* megtelt a tár: a tanulás a munkamenetben marad */ }
   }
   load() {
