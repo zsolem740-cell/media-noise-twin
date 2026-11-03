@@ -185,12 +185,26 @@ def parse_feed(data):
     return items
 
 
+def clean_source(s):
+    """Kiadó-név rendbetétele: a Google News néha elválasztójellel kezdődő nevet ad (például „| hvg.hu”), ami külön „forrásnak” számítana."""
+    t = re.sub(r"\s+", " ", str(s or "")).strip()
+    t = re.sub(r"^[\s|·•:/\\\-–—]+", "", t)
+    t = re.sub(r"[\s|·•:/\\\-–—]+$", "", t)
+    return t.strip()
+
+
+def entry_pub_title(it, f):
+    """A kiadó és a cím egy feed-elemből: a kiadó neve rendbetéve, a cím végi kiadó-név levágása a nyers és a rendbetett névvel is működik."""
+    raw = it.get("publisher")
+    return clean_source(raw) or f["name"], clean_title(it["title"], raw)
+
+
 def clean_title(title, publisher):
     t = title.strip()
     for sep in (" - ", " – ", " | "):
         if sep in t:
             head, tail = t.rsplit(sep, 1)
-            if publisher and fold(tail).strip() == fold(publisher).strip():
+            if publisher and fold(clean_source(tail)) == fold(clean_source(publisher)):
                 return head.strip()
             if not publisher and len(tail) <= 40 and len(head) > 20:
                 return head.strip()
@@ -283,8 +297,7 @@ async def collect(cfg, errors):
             errors[f["id"]] = err
             continue
         for it in items[:mx]:
-            pub = it.get("publisher") or f["name"]
-            title = clean_title(it["title"], it.get("publisher"))
+            pub, title = entry_pub_title(it, f)
             summ = "" if f["id"].startswith("gn_") else strip_html(it.get("summary", ""))[:600]
             d = parse_date(it.get("date"))
             link = it.get("link", "")
@@ -827,6 +840,11 @@ PER_SOURCE_MAX = 60       # megőrzött cikkek forrásonként (a legfrissebbek):
 
 
 def merge(old, fresh, t, keep_h, max_n, per_source=None):
+    for a in old:
+        cs = clean_source(a.get("source"))
+        if cs and cs != a.get("source"):
+            a["source"] = cs
+            a["id"] = article_id(a)
     by = {a["id"]: a for a in old}
     for a in fresh:
         a["id"] = article_id(a)
