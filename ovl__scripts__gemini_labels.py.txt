@@ -56,11 +56,11 @@ def jload(p, d):
         return d
 
 
-def jsave(p, obj):
+def jsave(p, obj, pretty=False):
     p = Path(p)
     p.parent.mkdir(parents=True, exist_ok=True)
     tmp = p.with_suffix(p.suffix + ".tmp")
-    tmp.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1) if pretty else json.dumps(obj, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     tmp.replace(p)
 
 
@@ -310,7 +310,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         try:
             if now < datetime.fromisoformat(str(pu).replace("Z", "+00:00")):
                 print(f"Gemini: a modell napi kerete kimerült, szünet a nullázódásig ({pu}). Nem hívok.")
-                jsave(MET / "gemini_budget.json", bud)
+                jsave(MET / "gemini_budget.json", {**bud, "summary": cum_final(cum)}, pretty=True)
                 return {"skipped": True, "szunet": pu}
         except Exception:
             pass
@@ -330,7 +330,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
         while len(entries) > KEEP_ENTRIES:
             entries.pop(next(iter(entries)))
         jsave(MET / "gemini_labels.json", {"schema": "gemini-labels-1", "model": model, "version": VERSION, "updated": now_utc().strftime("%Y-%m-%dT%H:%M:%SZ"), "summary": cum_final(cum), "labels": labels, "order": order, "search_entries": entries})
-        jsave(MET / "gemini_budget.json", bud)
+        jsave(MET / "gemini_budget.json", {**bud, "summary": cum_final(cum)}, pretty=True)      # a kis, tagolt fájlban az összegzés telefonon is olvasható
 
     todo = pick(arts, labels, max(0, min(run_a, cap_a - bud["a"])) if bud["a_hiba"] < MAX_ERR else 0)
     if bud["a_hiba"] >= MAX_ERR:
