@@ -218,6 +218,52 @@ async def refresh_m1(cfg, errors):
     return None
 
 
+M5_URLS = ["https://zsolem740-cell.github.io/solaris/data/metrics/finance_matrix.json", "https://raw.githubusercontent.com/zsolem740-cell/solaris/main/data/metrics/finance_matrix.json"]
+
+
+async def refresh_m5(cfg, errors):
+    """Az M5 (Solaris, hivatalos MNB/EKB árfolyamok) P8-csomagjának letöltése: először a Pages, majd a raw. Érvénytelen vagy hiányzó csomagnál None (ilyenkor az árfolyam-ellenőrzés kimarad)."""
+    m5 = cfg.get("m5") or {}
+    if m5.get("enabled") is False:
+        return None
+    for i, u in enumerate(m5.get("urls") or M5_URLS):
+        try:
+            raw = await afetch(u, "m5_%d.json" % i)
+            if not raw:
+                continue
+            d = json.loads(raw.decode("utf-8", "ignore"))
+            hdr = d.get("header") if isinstance(d, dict) else None
+            dp = d.get("dynamic_payload") if isinstance(d, dict) else None
+            if isinstance(hdr, dict) and str(hdr.get("module_id", "")).startswith("M5") and isinstance(d.get("core_metrics"), dict) and isinstance(dp, dict) and isinstance(dp.get("channels"), dict):
+                errors.pop("m5", None)
+                return d
+            errors["m5"] = "érvénytelen M5-csomag"
+        except Exception as e:
+            errors["m5"] = str(e)[:100]
+    errors.setdefault("m5", "nincs adat")
+    return None
+
+
+def fin_rates(m, t):
+    """Az M5 hivatalos forint-árfolyamai: {"EUR": {"value", "date"}, "USD": {...}} vagy None. 12 óránál régebbi fájlt és 5 napnál régebbi közzétételt nem használ."""
+    if not isinstance(m, dict):
+        return None
+    hdr = m.get("header") if isinstance(m.get("header"), dict) else {}
+    ts = hdr.get("timestamp")
+    if not (isinstance(ts, (int, float)) and not isinstance(ts, bool) and ts > 1e9):
+        return None
+    if (t - datetime.fromtimestamp(ts, tz=timezone.utc)) > timedelta(hours=12):
+        return None
+    ch = (m.get("dynamic_payload") or {}).get("channels") or {}
+    out = {}
+    for cur, cid in (("EUR", "huf_eur"), ("USD", "huf_usd")):
+        x = ch.get(cid) if isinstance(ch, dict) else None
+        if (isinstance(x, dict) and isinstance(x.get("value"), (int, float)) and not isinstance(x.get("value"), bool) and x["value"] > 0
+                and isinstance(x.get("age_days"), (int, float)) and not isinstance(x.get("age_days"), bool) and 0 <= x["age_days"] <= 5 and isinstance(x.get("date"), str)):
+            out[cur] = {"value": float(x["value"]), "date": x["date"]}
+    return out or None
+
+
 async def collect(cfg, errors):
     feeds = [f for f in cfg["feeds"] if f.get("enabled") is not False and f["type"] == "rss"]
 
@@ -453,6 +499,39 @@ def kp_conflict(a, m1):
     return None
 
 
+FX_THR_PCT = 3.0                                 # ideiglenes, NEM kalibrált küszöb (jelentés-jellegű; a címkék után igazítjuk)
+FX_RANGE = {"EUR": (150.0, 900.0), "USD": (120.0, 800.0)}
+_CUR = r"\b(eur[óo]\w*|euro\w*|eur\b|doll[áa]r\w*|dollar\w*|usd\b)"
+_NUM = r"(?<![\d.,])(?<!\d\s)(\d{3}(?:[.,]\d{1,2})?)(?!\d)"
+_HUF = r"\s*(?:forint\w*|ft\b|huf\b)"
+FX_A = re.compile(_CUR + r"[^0-9\n]{0,30}?" + _NUM + _HUF, re.I)
+FX_B = re.compile(_NUM + _HUF + r"[^0-9\n]{0,24}?" + _CUR, re.I)
+
+
+def fx_conflict(a, rates):
+    """Kemény adat (az M5-ből, MNB hivatalos árfolyam): ha a cikk euró- vagy dollár-árfolyamot állít forintban, és az több mint 3%-kal eltér a hivatalostól, emberi ellenőrzést kér.
+    Nem ítél, nem módosít. Előrejelzésnél vagy képletes szövegnél téves jelzés lehet, ezért csak „ellenőrizd”."""
+    if not rates:
+        return None
+    text = a["title"] + " . " + (a.get("summary") or "")
+    for rx in (FX_A, FX_B):
+        for m in rx.finditer(text):
+            cur_s, num_s = (m.group(1), m.group(2)) if rx is FX_A else (m.group(2), m.group(1))
+            cur = "EUR" if cur_s.lower().startswith("eur") else "USD"
+            try:
+                claim = float(num_s.replace(",", "."))
+            except ValueError:
+                continue
+            lo, hi = FX_RANGE[cur]
+            off = rates.get(cur)
+            if not off or not (lo <= claim <= hi):
+                continue
+            diff = (claim / off["value"] - 1) * 100
+            if abs(diff) > FX_THR_PCT:
+                return {"kind": "fx", "pair": cur + "/HUF", "article": claim, "official": round(off["value"], 2), "date": off["date"], "diff_pct": round(diff, 1), "thr_pct": FX_THR_PCT, "human_check": True}
+    return None
+
+
 def _tp(a):
     for k in ("published", "first_seen"):
         x = a.get(k)
@@ -464,7 +543,7 @@ def _tp(a):
     return None
 
 
-def describe_articles(arts, L, t, m1_dyn=None):
+def describe_articles(arts, L, t, m1_dyn=None, rates=None):
     """Cikkenkénti leíró mezők (a["d"], a["pc"]) és modulszintű összegzés. Csak jelentés: az S, V, G, ATM értéke nem változik."""
     by_ev = {}
     for a in arts:
@@ -486,7 +565,7 @@ def describe_articles(arts, L, t, m1_dyn=None):
             if x is not timed[0] and len(items) > 1:
                 d["osrc"] = timed[0]["source"][:40]
             x["d"] = d
-            pc = kp_conflict(x, m1_dyn)
+            pc = kp_conflict(x, m1_dyn) or fx_conflict(x, rates)
             if pc:
                 x["pc"] = pc
             else:
@@ -504,9 +583,10 @@ def describe_articles(arts, L, t, m1_dyn=None):
     return {"rules_v": RULES_V, "genre_share": {"velemeny_elemzes": round(sum(1 for a in last if a["d"]["gen"] == "v") / n, 3), "tudositas": round(sum(1 for a in last if a["d"]["gen"] == "t") / n, 3)},
             "clickbait": {"n": len(cbd), "mean_delta": round(sum(cbd) / len(cbd), 3) if cbd else None, "p90_delta": round(pctl(cbd, 0.9), 3) if cbd else None},
             "amp": {"events": len(by_ev), "multi_source": sum(1 for z in amp_sizes if z > 1), "max_sources": max(amp_sizes) if amp_sizes else 0, "p90_sources": round(pctl([float(z) for z in amp_sizes], 0.9), 1) if amp_sizes else 0},
-            "physical_conflicts_24h": sum(1 for a in last if a.get("pc")), "age_weighted_atm": round(awa, 4), "source_stats": stats,
+            "physical_conflicts_24h": sum(1 for a in last if a.get("pc")),
+            "fx_reference": ({"EUR/HUF": rates["EUR"]["value"] if "EUR" in rates else None, "USD/HUF": rates["USD"]["value"] if "USD" in rates else None, "date": max(v["date"] for v in rates.values()), "source": "M5 (MNB hivatalos árfolyam)"} if rates else None), "age_weighted_atm": round(awa, 4), "source_stats": stats,
             "basis": {"genre": "kulcsszó-jelölők a címben (heurisztika, nem kalibrált)", "origin": "az első észlelt megjelenés a feed időbélyege alapján (nem bizonyított eredet)",
-                      "clickbait": "S(cím) − S(törzs), nincs küszöb (a kalibráció a címkék után)", "age_weighted_atm": "0,5-ös hatvány, felezési idő 48 óra", "physical_conflict": "csak a Kp (M1), emberi ellenőrzéssel",
+                      "clickbait": "S(cím) − S(törzs), nincs küszöb (a kalibráció a címkék után)", "age_weighted_atm": "0,5-ös hatvány, felezési idő 48 óra", "physical_conflict": "a Kp (M1) és az EUR/HUF, USD/HUF árfolyam (M5, MNB hivatalos); az árfolyam-küszöb (±3%) nem kalibrált; emberi ellenőrzéssel",
                       "source_stats": "az átlagok csak n ≥ 10 cikknél jelennek meg"}}
 
 
@@ -854,7 +934,7 @@ class MediaZajTwin(BaseMatrixModule):
         new_ids = {a["id"] for a in arts if a["id"] not in known}
         n_ev = analyze(cfg, arts, raw["profiles"], flags, L, g_info["value"], self.w)
         m1_dyn = (raw.get("truth") or {}).get("dynamic_payload") if (flags is not None and isinstance(raw.get("truth"), dict)) else None
-        desc = describe_articles(arts, L, t, m1_dyn if isinstance(m1_dyn, dict) else None)
+        desc = describe_articles(arts, L, t, m1_dyn if isinstance(m1_dyn, dict) else None, fin_rates(raw.get("fin"), t))
         update_profiles(raw["profiles"], [a for a in arts if not a.get("profiled")])
         rising, warming = update_trends(raw["trends"], [a for a in arts if a["id"] in new_ids], L, t)
         snap = snapshot(arts, rising, flags, t, g_info["value"])
@@ -874,6 +954,7 @@ async def run_async(force=False):
     profiles = jload(MET / "source_profiles.json", {}) or {}
     trends = jload(MET / "trends.json", {}) or {}
     local_truth = jload(MET / "environment_truth_matrix.json")
+    fin = await refresh_m5(cfg, errors)                     # az M5 hivatalos árfolyamai (csak jelentés-jellegű ellenőrzéshez); hiány esetén kimarad
     m1 = await refresh_m1(cfg, errors)                      # élő M1-csomag; ha nem érhető el, a helyi másolat (a 12 órás elavulási szabállyal)
     truth, origin = (m1, "fetched") if m1 is not None else (local_truth, "local" if local_truth else "none")
     schema_changed = state.get("schema") != "v39"
@@ -886,7 +967,7 @@ async def run_async(force=False):
     fresh += off_arts
     if not fresh and errors and not old:
         print("Nincs elérhető forrás:", errors)
-    res = await mod.process_payload({"now": t, "old": old, "fresh": fresh, "profiles": profiles, "trends": trends, "official": official, "truth": truth})
+    res = await mod.process_payload({"now": t, "old": old, "fresh": fresh, "profiles": profiles, "trends": trends, "official": official, "truth": truth, "fin": fin})
     p8, c8 = res["p8"], res["p8"]["core_metrics"]
     prev_p8 = jload(MET / "media_noise_matrix.json")
     p8["dynamic_payload"].update(fold_retention((prev_p8 or {}).get("dynamic_payload") if isinstance(prev_p8, dict) else None,

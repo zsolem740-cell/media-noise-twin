@@ -1,4 +1,4 @@
-/* Média-Zaj Twin v40.4 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.5 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
@@ -38,15 +38,18 @@ export function recSource(l) {
 const LAB_OK = Object.fromEntries(LAB.map((r) => [r.f, new Set(r.opts.map((o) => o[0]))]));
 function saveLabels() { try { localStorage.setItem("mnt.labels.v1", JSON.stringify(labels)); return true; } catch (e) { return false; } }
 export function labelState(l) { const n = l ? LAB_MAIN.filter((f) => l[f]).length : 0; return n === 3 ? "Címkézve (3/3)" : n ? `Részben címkézve (${n}/3)` : "Még nincs címke"; }
+export const pcText = (p) => (p.kind === "fx"
+  ? `⚠ Árfolyam-ellentmondás: a cikk ${Number(p.article)} Ft/${String(p.pair).startsWith("USD") ? "dollár" : "euró"}, a hivatalos (MNB, ${esc(p.date)}) ${Number(p.official)}, eltérés ${Number(p.diff_pct) >= 0 ? "+" : ""}${Number(p.diff_pct)}% (ellenőrizd)`
+  : `⚠ Kp-ellentmondás: a cikk ${Number(p.article)}, mért ${Number(p.measured)}, 24 órás csúcs ${Number(p.max_24h)} (ellenőrizd)`);
 export function descBlock(a) {
   const d = a.d; if (!d) return "";
   const f2 = (x) => (typeof x === "number" ? x.toFixed(2) : "–");
   const cb = typeof d.cbd === "number" ? (d.cbd >= 0 ? "+" : "") + d.cbd.toFixed(2) : "–";
   const orig = d.first ? "első észlelt megjelenés" : `${Number(d.lag) || 0} perccel az első után${d.osrc ? " · eredet: " + esc(d.osrc) : ""}`;
-  const pc = a.pc ? ` · ⚠ Kp-ellentmondás: a cikk ${Number(a.pc.article)}, mért ${Number(a.pc.measured)}, 24 órás csúcs ${Number(a.pc.max_24h)} (ellenőrizd)` : "";
+  const pc = a.pc ? " · " + pcText(a.pc) : "";
   return `<p class="dim desc">Leíró mutatók (${esc(d.rv || "d1")}, nem pontoz): műfaj ${d.gen === "v" ? "vélemény/elemzés" : "tudósítás"} · S cím ${f2(d.st)} / törzs ${f2(d.sb)} (különbség ${cb}) · ${orig} · ${Number(d.amp) || 1} portál az első órában${pc}</p>`;
 }
-export const pcTag = (a) => (a.pc ? '<em class="bad">⚠ Kp-ellentmondás</em>' : "");
+export const pcTag = (a) => (a.pc ? `<em class="bad">⚠ ${a.pc.kind === "fx" ? "Árfolyam" : "Kp"}-ellentmondás</em>` : "");
 const GEM_NAMES = { ertek: { magas: "magas", kozepes: "közepes", alacsony: "alacsony" }, stilus: { nyugodt: "nyugodt", felfokozott: "felfokozott" }, valosag: { igaz: "igaz", hamis: "hamis", nem_ellenorizheto: "nem ellenőrizhető" } };
 const gemOf = (a) => (S.gem && S.gem.labels && S.gem.labels[a.id]) || null;
 export function gemBlock(a, g = gemOf(a), entry = (S.gem && S.gem.search_entries && S.gem.search_entries[a.id]) || "", open = null) {
@@ -330,7 +333,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.4 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.5 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
