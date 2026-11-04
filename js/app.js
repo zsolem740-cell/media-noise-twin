@@ -1,8 +1,9 @@
-/* Média-Zaj Twin v40.7 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.8 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
+export const APP_VERSION = "40.8";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
@@ -121,6 +122,54 @@ function labPaint(cardEl, a) {
   if (gb && LAB_MAIN.every((f) => l[f])) { gb.hidden = false; if (pk) pk.hidden = true; }      // vak mód: a teljes (3/3) saját címke után a javaslat látható
   labCount();
 }
+/* ───────── Állapot (v40.8): egy gombbal összegyűjti az üzemfigyelőt, a Gemini-keretet, a mérőszámokat és a helyi címke-állapotot, és vágólapra másolja ───────── */
+export function overlapStats(labelsAll, gem) {
+  const gl = (gem && gem.labels) || {}, isA3 = (g) => String((g && g.v) || "").startsWith("A3");
+  let total = 0, complete = 0, all = 0, a3 = 0, blind = 0;
+  for (const l of Object.values(labelsAll || {})) {
+    total++;
+    if (!LAB_MAIN.every((f) => l[f])) continue;
+    complete++;
+    const g = gl[l.id];
+    if (!g) continue;
+    all++;
+    if (!isA3(g)) continue;
+    a3++;
+    if (LAB_MAIN.every((f) => (l["src_" + f] || l.forras || "sajat") === "sajat") && !l.peek) blind++;     // saját, vak (a javaslatot a címke előtt nem nézted meg)
+  }
+  return { total, complete, all, a3, blind, gemA3: Object.values(gl).filter(isA3).length, gemAll: Object.keys(gl).length };
+}
+export function buildStatus(d, loc, now = new Date()) {
+  const q = (v) => (v === undefined || v === null || v === "" ? "–" : String(v)), n2 = (x, k = 2) => (typeof x === "number" && isFinite(x) ? x.toFixed(k) : "–");
+  const L = [`ÁLLAPOT · ${now.toISOString().slice(0, 16)}Z · kliens v${APP_VERSION}`];
+  const h = d.health;
+  if (h && Array.isArray(h.checks)) {
+    L.push(`ÜZEMFIGYELŐ: ${String(h.overall).toUpperCase()} (${q(h.generated)})`);
+    for (const c of h.checks) L.push(`- ${q(c.id)} ${q(c.level)}: ${String(c.text).slice(0, 170)}`);
+    const v = h.versions || {};
+    L.push(`VERZIÓK: szerver ${q(v.server)} · szabály ${q(v.rules_v)} · horgony ${q(v.anchor_rules)} · kód ${q(v.code_sha)} · kliens(fájl) ${q(v.client)} · kliens(fut) ${APP_VERSION}`);
+  } else L.push("ÜZEMFIGYELŐ: nincs adat (a health.json nem elérhető)");
+  const b = d.budget;
+  if (b) {
+    const eh = b.utolso_hiba && typeof b.utolso_hiba === "object" ? Object.entries(b.utolso_hiba).map(([k, e]) => `${k} ${q(e && e.ido)} ${String((e && e.szoveg) || "").slice(0, 110)}`).join(" | ") : "nincs";
+    L.push(`GEMINI-KERET: ${q(b.date)} · A ${q(b.a)} B ${q(b.b)} · hívás ${q(b.hivasok)} · A-hiba ${q(b.a_hiba)} · szünet ${q(b.pause_until)} · B-tiltás ${q(b.b_stop)} · utolsó hiba: ${eh}`);
+    const s = b.summary;
+    if (s) L.push(`GEMINI-ÖSSZESÍTŐ: n ${q(s.n)} · mérhető állítás ${q(s.merheto_allitas)} (${n2(s.merheto_allitas_arany)}) · meglévő modullal ${q(s.merheto_meglevo)} · új modul ${q(s.uj_modul_igeny)} · kezdet ${q(s.since)}`);
+  } else L.push("GEMINI-KERET: nincs adat");
+  const m = d.matrix;
+  if (m && m.core_metrics) {
+    const c = m.core_metrics, dp = m.dynamic_payload || {}, an = (dp.descriptive && dp.descriptive.anchors) || {};
+    L.push(`MÉRŐSZÁMOK (M2 ${q(m.header && m.header.version)}): ATM ${n2(c.atm_score, 4)} · G ${n2(c.stationarity_G, 3)} (${q(dp.g_source)}) · S ${n2(c.noise_S, 4)} · V ${n2(c.validity_V, 4)} · cikk 24 órában ${q(dp.articles_24h)}`);
+    L.push(`HORGONY (${q(an.rules_v)}): horgonyos ${n2(an.anc_share, 3)} · számmal ${n2(an.meas_share, 3)} · modulok ${an.by_module ? JSON.stringify(an.by_module) : "–"}`);
+  } else L.push("MÉRŐSZÁMOK: nincs adat");
+  const e = d.elog;
+  if (e) L.push(`TERJEDÉS: események ${q(e.n_total)} · átírt ${q(e.rewrite_events)} · hangnem fel/le ${q(e.ds_up)}/${q(e.ds_down)} (n ${q(e.ds_n)}) · szövegpár-esemény ${q(e.text_events)} · forrásjelző le/fel ${q(e.hedge_down)}/${q(e.hedge_up)} · számvesztő ${q(e.num_lost)}/${q(e.num_events)} · késés medián ${q(e.lag_median_min)} perc · útvonalak ${e.paths ? JSON.stringify(e.paths) : "–"}`);
+  else L.push("TERJEDÉS: nincs adat");
+  const st = loc.stats || {}, o = overlapStats(loc.labels, loc.gem);
+  L.push(`SZŰRŐ: λ ${n2(st.lambda)} · AUC ${n2(st.auc)} · szavazatokra ${n2(st.aucVote)} (n ${q(st.nVote)}) · tanítás ${q(st.trained)}`);
+  L.push(`CÍMKÉK: ${o.total} címkézett (${o.complete} teljes) · Gemini-címke összesen ${o.gemAll} (A3: ${o.gemA3}) · átfedő teljes címke ${o.all} (A3: ${o.a3}) · ebből saját és vak (A3) ${o.blind}, cél: 40`);
+  return L.join("\n");
+}
 export function ancChipUpdate() {
   const box = document.getElementById("chips"); if (!box || !box.appendChild) return;
   let b = document.getElementById("anc-chip");
@@ -152,7 +201,7 @@ function labUi() {
   const box = document.querySelector("#settings .box"), anchor = $("s-reset");
   if (!box || !anchor || $("s-lab")) return;
   const w = document.createElement("div"); w.id = "s-lab"; w.className = "lab-set";
-  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><button id="flt-copy">Szűrő-napló másolása (CSV)</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea>`;
+  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><button id="flt-copy">Szűrő-napló másolása (CSV)</button><button id="st-copy">Állapot másolása</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea><textarea id="st-out" readonly hidden></textarea>`;
   box.insertBefore(w, anchor);
   $("lab-copy").addEventListener("click", async () => {
     const n = Object.keys(labels).length, msg = $("lab-msg"), out = $("lab-out");
@@ -168,13 +217,23 @@ function labUi() {
     out.hidden = ok; if (!ok) { out.value = csv; try { out.select(); } catch (e) { /* kézzel kijelölhető */ } }
     msg.textContent = ok ? `${n} szűrő-esemény a vágólapon (CSV).` : "A másolás nem sikerült: a szöveg alább kijelölhető, másold ki kézzel.";
   });
+  $("st-copy").addEventListener("click", async () => {
+    const msg = $("lab-msg"), out = $("st-out");
+    msg.textContent = "Állapot lekérése…";
+    const g = async (u) => { try { return await getJson(u); } catch (e) { return null; } };
+    const [health, budget, elog, matrix] = await Promise.all([g("data/metrics/health.json"), g("data/metrics/gemini_budget.json"), g("data/metrics/event_log_summary.json"), g("data/metrics/media_noise_matrix.json")]);
+    const txt = buildStatus({ health, budget, elog, matrix }, { labels, stats: engine.stats(), gem: S.gem });
+    out.value = txt; out.hidden = false;
+    const ok = await copyText(txt);
+    msg.textContent = ok ? "Az állapot a vágólapon van: illeszd be a beszélgetésbe." : "A másolás nem sikerült: a szöveg kijelölhető, másold ki kézzel.";
+  });
   $("lab-clear").addEventListener("click", () => { if (confirm("Biztosan törlöd az összes címkét? (A szavazatok és a tanult szűrő megmarad.)")) { Object.keys(labels).forEach((k) => delete labels[k]); saveLabels(); labCount(); $("lab-msg").textContent = "A címkék törölve."; } });
   labCount();
 }
 function injectLabCss() {
   if (typeof document === "undefined" || !document.head || !document.createElement || document.getElementById("lab-css")) return;
   const st = document.createElement("style"); st.id = "lab-css";
-  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gtag{border:1px solid var(--vi)!important;color:var(--am)!important}.gtag.ok{border-color:#3fb950!important;color:#3fb950!important}.gem-peek{width:100%;min-height:34px;margin-bottom:8px;border-style:dashed}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
+  st.textContent = ".lab{margin-top:8px;padding:8px;border:1px dashed var(--line);border-radius:10px}.lab h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.lab-row{display:flex;align-items:center;gap:6px;margin:4px 0}.lab-row>span:first-child{width:62px;flex:none;font-size:11px;color:var(--dim)}.seg{display:flex;gap:4px;flex:1;flex-wrap:wrap}.seg button{flex:1;min-width:0;padding:4px 6px;min-height:30px;font-size:11px;border-radius:8px}.seg button.on{background:rgba(139,92,246,.35);border-color:var(--vi)}.seg button[data-v=nem_ellenorizheto]{flex-basis:100%}.gem{margin-bottom:8px;padding:8px;border:1px solid var(--vi);border-radius:10px;background:rgba(139,92,246,.10)}.gem h4{margin:0 0 4px;font-size:11px;color:var(--am);font-weight:600}.gem p{margin:4px 0;font-size:12px;overflow-wrap:anywhere}.gem a{color:var(--am)}.gtag{border:1px solid var(--vi)!important;color:var(--am)!important}.gtag.ok{border-color:#3fb950!important;color:#3fb950!important}.gem-peek{width:100%;min-height:34px;margin-bottom:8px;border-style:dashed}.gem-ok{width:100%;min-height:34px;margin-top:4px}.gem-se{width:100%;height:80px;border:0;border-radius:8px;margin-top:6px;background:#fff}.lab-note{width:100%;margin-top:4px;font:inherit;font-size:11px;color:var(--ink);background:rgba(5,10,24,.6);border:1px solid var(--line);border-radius:8px;padding:6px}.lab-set{display:flex;flex-direction:column;gap:6px}#lab-out,#st-out{width:100%;height:90px;font:inherit;font-size:10px;color:var(--ink);background:rgba(5,10,24,.7);border:1px solid var(--line);border-radius:8px}";
   document.head.appendChild(st);
 }
 
@@ -347,7 +406,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.7 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.8 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
