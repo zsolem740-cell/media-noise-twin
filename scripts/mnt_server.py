@@ -771,6 +771,89 @@ def event_log_summary(lg):
             "note": "leíró összesítés, nem ítélet; a kiértékelés szabályai a módszertani leírásban előre rögzítettek"}
 
 
+# ───────── üzemfigyelő (health): a futás és az adatforrások állapota; a pontozást nem érinti ─────────
+# Üzemi eszköz, nem mérési modul. Nem tud jelenteni a saját összeomlásáról: a teljes kiesést kívülről a Solaris p8check és a GitHub Actions jelzi.
+HEALTH_LEVELS = ("ok", "warn", "fail")
+
+
+def client_version(root):
+    """A kliens verziója a js/app.js fejlécéből (megmutatja, melyik feltöltött fájl fut ténylegesen a tárban)."""
+    try:
+        head = (Path(root) / "js" / "app.js").read_text(encoding="utf-8")[:240]
+        m = re.search(r"\bv(\d+(?:\.\d+)+)", head)
+        return m.group(1) if m else None
+    except OSError:
+        return None
+
+
+def code_sha():
+    try:
+        return hashlib.sha1(Path(__file__).read_bytes()).hexdigest()[:10]
+    except Exception:
+        return None
+
+
+def _age_h(iso_s, t):
+    d = parse_date(iso_s) if isinstance(iso_s, str) else None
+    return (t - d).total_seconds() / 3600 if d else None
+
+
+def health_report(t, cfg, arts, errors, g_info, m1, rates, p8, gem_budget, event_log_updated, versions):
+    checks = []
+
+    def add(i, lvl, txt):
+        checks.append({"id": i, "level": lvl, "text": txt})
+    feed_ids = {f["id"] for f in (cfg.get("feeds") or []) if isinstance(f, dict) and f.get("id")}
+    bad = sorted(k for k in (errors or {}) if k in feed_ids)
+    if feed_ids:
+        lvl = "fail" if len(bad) >= max(3, len(feed_ids) / 2) else "warn" if bad else "ok"
+        add("feeds", lvl, "%d/%d hírforrás elérhető%s" % (len(feed_ids) - len(bad), len(feed_ids), (" · nem elérhető: " + ", ".join(bad[:6])) if bad else ""))
+    last24 = [a for a in arts if (a.get("published") or "") >= iso(t - timedelta(hours=24))]
+    newest = max((a.get("published") or "" for a in arts), default="")
+    age = _age_h(newest, t)
+    lvl = "fail" if len(last24) < 20 else "warn" if (len(last24) < 150 or (age is not None and age > 3)) else "ok"
+    add("articles", lvl, "%d cikk a 24 órában · a legfrissebb %s" % (len(last24), ("%.1f órás" % age) if age is not None else "ismeretlen"))
+    src = (g_info or {}).get("source")
+    add("g_source", "ok" if src == "M1" else "warn" if src == "derived" else "fail", {"M1": "a G az M1 mért értékéből jön", "derived": "a G jelzőkből becsült (nincs teljes M1-mérés)"}.get(src, "a G FELTÉTELEZETT (nincs M1-mérés, G = 1,0): az ATM felfelé torzít"))
+    ts = (m1 or {}).get("header", {}).get("timestamp") if isinstance(m1, dict) else None
+    mage = (t - datetime.fromtimestamp(ts, tz=timezone.utc)).total_seconds() / 3600 if isinstance(ts, (int, float)) and not isinstance(ts, bool) else None
+    add("m1_age", "fail" if mage is None or mage > 12 else "warn" if mage > 3 else "ok", "az M1-fájl %s" % (("%.1f órás" % mage) if mage is not None else "hiányzik vagy érvénytelen"))
+    add("m5", "ok" if rates and len(rates) == 2 else "warn", "M5 hivatalos árfolyamok: %s" % ("mindkettő friss" if rates and len(rates) == 2 else "hiányos vagy elavult (az árfolyam-ellenőrzés kimarad)"))
+    try:
+        size = len(json.dumps(p8, ensure_ascii=False).encode("utf-8"))
+        cm = p8["core_metrics"]
+        vals = [cm["stationarity_G"], cm["noise_S"], cm["validity_V"], cm["atm_score"]]
+        good = size <= 50 * 1024 and all(isinstance(v, (int, float)) and not isinstance(v, bool) and 0 <= v <= 1 for v in vals) and cm["status"] in ("NOMINAL", "ELEVATED", "NOISE_ALERT", "ANOMALY", "INSUFFICIENT_DATA", "NO_DATA") and bool(p8["header"].get("version"))
+        add("p8_self", "ok" if good else "fail", "az M2 P8-fájl %d bájt, értékek %s" % (size, "érvényesek" if good else "ÉRVÉNYTELENEK"))
+    except (KeyError, TypeError):
+        add("p8_self", "fail", "az M2 P8-fájl szerkezete hibás")
+    if not isinstance(gem_budget, dict):
+        add("gemini", "warn", "nincs Gemini-keretfájl")
+    else:
+        notes, lvl = [], "ok"
+        if str(gem_budget.get("date") or "") < iso(t - timedelta(days=1))[:10]:
+            lvl = "warn"
+            notes.append("a keretfájl %s napi, a Gemini-futás nem frissítette" % gem_budget.get("date"))
+        for which, e in (gem_budget.get("utolso_hiba") or {}).items() if isinstance(gem_budget.get("utolso_hiba"), dict) else []:
+            ea = _age_h((e or {}).get("ido"), t)
+            if ea is not None and ea <= 24:
+                lvl = "warn"
+                notes.append("%s-hívás hiba %.0f órája: %s" % (which, ea, str((e or {}).get("szoveg"))[:90]))
+        if gem_budget.get("pause_until"):
+            notes.append("szünet: %s-ig" % gem_budget["pause_until"])
+        add("gemini", lvl, "A %s, B %s a mai kerethez%s" % (gem_budget.get("a", "?"), gem_budget.get("b", "?"), (" · " + " · ".join(notes)) if notes else ""))
+    ea = _age_h(event_log_updated, t)
+    add("event_log", "ok" if ea is not None and ea <= 3 else "warn" if ea is not None and ea <= 12 else "fail", "a terjedési napló %s" % (("%.1f órás" % ea) if ea is not None else "nem létezik"))
+    overall = "fail" if any(c["level"] == "fail" for c in checks) else "warn" if any(c["level"] == "warn" for c in checks) else "ok"
+    return {"schema": "health-1", "generated": iso(t), "overall": overall, "checks": checks, "versions": versions,
+            "note": "üzemi állapotjelentés, nem mérés; a saját összeomlásáról nem tud jelenteni (azt a GitHub Actions és a Solaris p8check jelzi)"}
+
+
+def health_alerts(rep):
+    """Csak a FAIL szintű ellenőrzésekből lesz értesítés (a meglévő ntfy-dedupe-pal); a figyelmeztetés a fájlban olvasható."""
+    return [{"key": "health:" + c["id"], "title": "⚠ Üzemhiba: " + c["id"], "message": c["text"][:300], "priority": 3, "tags": ["warning"]} for c in rep["checks"] if c["level"] == "fail"]
+
+
 def _tp(a):
     for k in ("published", "first_seen"):
         x = a.get(k)
@@ -1294,6 +1377,19 @@ async def run_async(force=False):
         state["signature"] = sig
         state["schema"] = "v39"
         jsave(DATA / "state.json", state)
+    try:                                                        # üzemfigyelő: a hibája nem akaszthatja meg a fő futást; óránként egyszer vagy az állapot változásakor ír
+        elog_prev = jload(MET / "event_log.json", None)
+        hr = health_report(t, cfg, arts, errors, g_info, m1, fin_rates(fin, t), res["p8"], jload(MET / "gemini_budget.json", None),
+                           elog_prev.get("updated") if isinstance(elog_prev, dict) else None,
+                           {"server": mod.version, "rules_v": RULES_V, "anchor_rules": ANCHOR_RULES_V, "client": client_version(ROOT), "code_sha": code_sha()})
+        prev_h = jload(MET / "health.json", None)
+        sig_n = [[c["id"], c["level"]] for c in hr["checks"]]
+        sig_p = [[c.get("id"), c.get("level")] for c in prev_h.get("checks", [])] if isinstance(prev_h, dict) else None
+        if not isinstance(prev_h, dict) or str(prev_h.get("generated", ""))[:13] != iso(t)[:13] or sig_n != sig_p:
+            jsave(MET / "health.json", hr, pretty=True)
+        alerts = alerts + health_alerts(hr)
+    except Exception as e:
+        print("Üzemfigyelő: kihagyva (%s)" % str(e)[:100])
     outbox = os.environ.get("MNT_OUTBOX") or "/tmp/mnt_outbox.json"
     jsave(outbox, alerts)
     if os.environ.get("GITHUB_OUTPUT"):
