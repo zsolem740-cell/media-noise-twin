@@ -1,9 +1,9 @@
-/* Média-Zaj Twin v40.10 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.11 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
-export const APP_VERSION = "40.10";
+export const APP_VERSION = "40.11";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
@@ -144,6 +144,18 @@ export function overlapStats(labelsAll, gem) {
   }
   return { total, complete, all, a3, blind, vak, vakTeljes, gemA3: Object.values(gl).filter(isA3).length, gemAll: Object.keys(gl).length };
 }
+/* Stílus-címkék az S-teszthez (csak a SAJÁT stílus-címkék számítanak; a Gemini-ből elfogadott nem): osztályonként legalább 12 kell */
+export function styleStats(labelsAll) {
+  const r = { nyugodt: 0, felfokozott: 0, vakNyugodt: 0, vakFelfokozott: 0, temaH: 0, temaS: 0, temaNincs: 0 };
+  for (const l of Object.values(labelsAll || {})) {
+    if (l.stilus !== "nyugodt" && l.stilus !== "felfokozott") continue;
+    if ((l.src_stilus || l.forras || "sajat") !== "sajat") continue;
+    r[l.stilus]++;
+    if (l.vak) r[l.stilus === "nyugodt" ? "vakNyugodt" : "vakFelfokozott"]++;
+    if (l.tema === "hetkoznapi") r.temaH++; else if (l.tema === "sulyos_politikai") r.temaS++; else r.temaNincs++;
+  }
+  return r;
+}
 export function buildStatus(d, loc, now = new Date()) {
   const q = (v) => (v === undefined || v === null || v === "" ? "–" : String(v)), n2 = (x, k = 2) => (typeof x === "number" && isFinite(x) ? x.toFixed(k) : "–");
   const L = [`ÁLLAPOT · ${now.toISOString().slice(0, 16)}Z · kliens v${APP_VERSION}`];
@@ -174,6 +186,8 @@ export function buildStatus(d, loc, now = new Date()) {
   L.push(`SZŰRŐ: λ ${n2(st.lambda)} · AUC ${n2(st.auc)} · szavazatokra ${n2(st.aucVote)} (n ${q(st.nVote)}) · tanítás ${q(st.trained)}`);
   L.push(`NÉZET: vak ${loc.blind ? "BE" : "KI"} · olvasási idő tanítása ${loc.dwell ? "BE" : "KI"}`);
   L.push(`CÍMKÉK: ${o.total} címkézett (${o.complete} teljes) · vak nézetben készült ${o.vak} (teljes: ${o.vakTeljes}) · Gemini-címke összesen ${o.gemAll} (A3: ${o.gemA3}) · átfedő teljes címke ${o.all} (A3: ${o.a3}) · ebből saját és vak (A3) ${o.blind}, cél: 40`);
+  const ss = styleStats(loc.labels);
+  L.push(`STÍLUS (saját címkék): nyugodt ${ss.nyugodt} · felfokozott ${ss.felfokozott} (vak nézetben: ${ss.vakNyugodt} és ${ss.vakFelfokozott}) · téma: hétköznapi ${ss.temaH} · súlyos ${ss.temaS} · kitöltetlen ${ss.temaNincs} · az S-teszthez összesen legalább 50 és osztályonként legalább 12 kell`);
   return L.join("\n");
 }
 export function ancChipUpdate() {
@@ -421,7 +435,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.10 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.11 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
