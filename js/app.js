@@ -1,9 +1,9 @@
-/* Média-Zaj Twin v40.11 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.12 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
-export const APP_VERSION = "40.11";
+export const APP_VERSION = "40.12";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
@@ -105,7 +105,8 @@ export function setNote(a, text) {
   if (isEmpty(l)) delete labels[a.id];
   return saveLabels();
 }
-export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
+/* képletinjekció elleni védelem; a tiszta (akár negatív) szám nem képlet, azt nem jelöljük */
+export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t) && !/^-?\d+(\.\d+)?$/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
 const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell", "nyelv", "horgony", "horgony_szammal", "vak"];
 const srcOf = (l, f) => (l[f] ? l["src_" + f] || l.forras || "sajat" : "");
 function gjCols(l, gemMap) {
@@ -360,7 +361,8 @@ function render() {
   const list = visible();
   renderHud(list);
   $("list").innerHTML = list.slice(0, S.limit).map((a) => card(a, engine.score(a))).join("") || (S.arts.length ? `<p class="dim pad">Nincs a szűrőknek megfelelő hír.</p>` : "");
-  $("more").hidden = list.length <= S.limit; $("more").textContent = `Továbbiak (${list.length - S.limit})`;
+  const noMore = list.length <= S.limit;
+  $("more").hidden = noMore; $("more").style.display = noMore ? "none" : ""; $("more").textContent = `Továbbiak (${Math.max(0, list.length - S.limit)})`;      // a .more{display:block} felülírná a „hidden” jelölést, ezért kell a közvetlen display
   if (globe) {
     const mx = Math.log2(Math.max(2, ...list.map((a) => a.event_size || 1)));
     globe.setPoints(list.filter((a) => a.geo).map((a) => ({ id: a.id, lat: a.geo.lat, lon: a.geo.lon, atm: blind ? 0 : a.atm, size: Math.log2(a.event_size || 1) / mx })), th());
@@ -435,7 +437,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.11 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.12 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);

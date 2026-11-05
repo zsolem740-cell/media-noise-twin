@@ -667,7 +667,23 @@ def _mean(v):
     return round(sum(v) / len(v), 3) if v else None
 
 
-def event_record(items, L):
+SRC_TABLE_MAX = 500                  # a forrásnév-tábla legfeljebb ennyi nevet tárol (a sorok az indexüket őrzik, így a fájl kompakt marad)
+
+
+def _sid(srcs, name):
+    """A forrásnév indexe a táblában (új nevet felvesz); ha a tábla megtelt: -1. Ha nincs tábla, a rövidített nevet adja vissza."""
+    n = str(name or "")[:40]
+    if srcs is None:
+        return n
+    if n in srcs:
+        return srcs.index(n)
+    if len(srcs) < SRC_TABLE_MAX:
+        srcs.append(n)
+        return len(srcs) - 1
+    return -1
+
+
+def event_record(items, L, srcs=None):
     """Egy többforrású esemény terjedési és torzulási jellemzői, forrásonként a legkorábbi példánnyal. Nincs benne ítélet, csak mért darabszám, hasonlóság és különbség."""
     its = sorted(items, key=lambda x: x.get("published") or x.get("first_seen") or "")
     first = its[0]
@@ -694,7 +710,7 @@ def event_record(items, L):
         nx, st = _nums(txt), (x.get("d") or {}).get("st")
         st = round(st, 3) if isinstance(st, (int, float)) and not isinstance(st, bool) else None
         rows.append([max(0, int((tx - t0).total_seconds() // 60)), _SC.get(x.get("scope"), "?"), st, round(_jacc(tk0, _toks(x["title"])), 2), hits(fold(txt), L.att),
-                      round(len(n0 & nx) / len(n0), 2) if n0 else None, len(nx - n0), len(txt)])
+                      round(len(n0 & nx) / len(n0), 2) if n0 else None, len(nx - n0), len(txt), _sid(srcs, x.get("source")), str(x.get("lang") or "")[:5]])
     path = []
     for sc in [_SC.get(first.get("scope"), "?")] + [r[1] for r in rows]:
         if sc not in path:
@@ -710,6 +726,7 @@ def update_event_log(prev, arts, L, t):
     """A többforrású események naplója: az új események hozzáadódnak, a még friss eseményeknél a rekord a bővülő csoporttal újraszámolódik, a régiek változatlanok."""
     log = prev if isinstance(prev, dict) and isinstance(prev.get("events"), dict) else {}
     ev, order = dict(log.get("events") or {}), [x for x in (log.get("order") or []) if x in (log.get("events") or {})]
+    srcs = [str(x) for x in (log.get("srcs") or []) if isinstance(x, str)]
     by = {}
     for a in arts:
         if a.get("event"):
@@ -721,7 +738,7 @@ def update_event_log(prev, arts, L, t):
         ft = min((d for d in (parse_date(x.get("published") or x.get("first_seen")) for x in items) if d is not None), default=None)
         if ft is None or ft < horizon:
             continue
-        rec = event_record(items, L)
+        rec = event_record(items, L, srcs)
         if rec is None:
             continue
         if eid not in ev:
@@ -730,9 +747,9 @@ def update_event_log(prev, arts, L, t):
         ev[eid] = rec
     while len(order) > EVENT_LOG_MAX:
         ev.pop(order.pop(0), None)
-    return {"schema": "event-log-1", "version": "1.0.0", "since": log.get("since") or iso(t)[:10], "updated": iso(t), "n_total": int(log.get("n_total") or 0) + added,
-            "fields": "t0 első megjelenés, src0 első portál, n forrás, amp60 hány portál az első órában, path hatókör-útvonal (i nemzetközi, n országos, l helyi), s0 az első cím S-e, ds a későbbi címek S-ének átlagos eltérése, sim címhasonlóság (1 = szó szerinti), h0/h forrásjelző-szám az elsőben/átlag a többiben, nk az első számainak megmaradt aránya, nn új számok átlaga, L soronként [késés perc, hatókör, S cím, hasonlóság, forrásjelző, megmaradt számok, új számok, szöveghossz]; l0 az első szöveghossza (a forrásjelző- és számösszevetés csak ott értelmes, ahol mindkét szöveg legalább 100 karakter)",
-            "note": "csak gyűjtés: a pontozást nem érinti; az eredet a feed időbélyegén alapul, nem bizonyított eredet", "events": ev, "order": order}
+    return {"schema": "event-log-1", "version": "1.1.0", "since": log.get("since") or iso(t)[:10], "updated": iso(t), "n_total": int(log.get("n_total") or 0) + added,
+            "fields": "t0 első megjelenés, src0 első portál, n forrás, amp60 hány portál az első órában, path hatókör-útvonal (i nemzetközi, n országos, l helyi), s0 az első cím S-e, ds a későbbi címek S-ének átlagos eltérése, sim címhasonlóság (1 = szó szerinti), h0/h forrásjelző-szám az elsőben/átlag a többiben, nk az első számainak megmaradt aránya, nn új számok átlaga, L soronként [késés perc, hatókör, S cím, hasonlóság, forrásjelző, megmaradt számok, új számok, szöveghossz, a későbbi cikk forrása (az srcs lista indexe, -1 = a tábla megtelt), a későbbi cikk nyelve] (az 1.1.0 előtti események soraiban az utolsó két mező hiányzik); lang az első cikk nyelve; l0 az első szöveghossza (a forrásjelző- és számösszevetés csak ott értelmes, ahol mindkét szöveg legalább 100 karakter)",
+            "note": "csak gyűjtés: a pontozást nem érinti; az eredet a feed időbélyegén alapul, nem bizonyított eredet", "srcs": srcs, "events": ev, "order": order}
 
 
 def event_log_summary(lg):
@@ -793,6 +810,17 @@ def code_sha():
         return None
 
 
+def _pt_day_start(t):
+    """Az aktuális Google-kvótanap kezdete (csendes-óceáni éjfél) UTC-ben; ha nincs időzóna-adatbázis: fix 08:00 UTC."""
+    try:
+        from zoneinfo import ZoneInfo
+        pt = t.astimezone(ZoneInfo("America/Los_Angeles"))
+        return pt.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc)
+    except Exception:
+        d = t.replace(hour=8, minute=0, second=0, microsecond=0)
+        return d if t >= d else d - timedelta(days=1)
+
+
 def _age_h(iso_s, t):
     d = parse_date(iso_s) if isinstance(iso_s, str) else None
     return (t - d).total_seconds() / 3600 if d else None
@@ -834,11 +862,19 @@ def health_report(t, cfg, arts, errors, g_info, m1, rates, p8, gem_budget, event
         if str(gem_budget.get("date") or "") < iso(t - timedelta(days=1))[:10]:
             lvl = "warn"
             notes.append("a keretfájl %s napi, a Gemini-futás nem frissítette" % gem_budget.get("date"))
+        pu = parse_date(str(gem_budget.get("pause_until"))) if gem_budget.get("pause_until") else None
+        pause_on = bool(pu and pu > t)
+        day0 = _pt_day_start(t)
         for which, e in (gem_budget.get("utolso_hiba") or {}).items() if isinstance(gem_budget.get("utolso_hiba"), dict) else []:
             ea = _age_h((e or {}).get("ido"), t)
             if ea is not None and ea <= 24:
+                txt = str((e or {}).get("szoveg"))
+                ed = parse_date((e or {}).get("ido")) if isinstance((e or {}).get("ido"), str) else None
+                if txt.startswith("HTTP 429") and (pause_on or (ed is not None and ed < day0)):
+                    notes.append("%s-hívás kvótahiba (429) %.0f órája: tervezett (a napi keret kimerült, a szünet a nullázódásig tart)" % (which, ea))   # nem figyelmeztetés: a keret természetes határa
+                    continue
                 lvl = "warn"
-                notes.append("%s-hívás hiba %.0f órája: %s" % (which, ea, str((e or {}).get("szoveg"))[:90]))
+                notes.append("%s-hívás hiba %.0f órája: %s" % (which, ea, txt[:90]))
         if gem_budget.get("pause_until"):
             notes.append("szünet: %s-ig" % gem_budget["pause_until"])
         add("gemini", lvl, "A %s, B %s a mai kerethez%s" % (gem_budget.get("a", "?"), gem_budget.get("b", "?"), (" · " + " · ".join(notes)) if notes else ""))
