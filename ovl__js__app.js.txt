@@ -1,9 +1,9 @@
-/* Média-Zaj Twin v40.9 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.10 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
-export const APP_VERSION = "40.9";
+export const APP_VERSION = "40.10";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
@@ -286,11 +286,12 @@ export function ordered(list, mode, eng) {
 }
 const ancOK = (a) => { const m = S.ancMode | 0; return m === 0 || (m === 1 ? !!(a.d && Array.isArray(a.d.anc) && a.d.anc.length) : !!(a.d && a.d.mc)); };
 const gemOK = (a) => { const m = S.gemMode | 0; return m === 0 || (m === 1 ? !!gemOf(a) : !!gemOf(a) && !labels[a.id]); };
-const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (!S.hide || a.atm <= S.thr) && gemOK(a) && ancOK(a)), S.mode, engine);
+const visible = () => ordered(S.arts.filter((a) => S.scopes[a.scope] && (blind || !S.hide || a.atm <= S.thr) && gemOK(a) && ancOK(a)), blind ? "recent" : S.mode, engine);
 
 /* ───────── HUD ───────── */
 function renderHud(list) {
-  const day = list.filter((a) => ts(a) >= Date.now() - 864e5), v = (day.length ? day : list).map((a) => a.atm);
+  const base = blind ? S.arts : list;               // vak nézetben az egész adatfolyamból: egy rövid, szűrt lista átlaga egyetlen hír ATM-jét árulná el
+  const day = base.filter((a) => ts(a) >= Date.now() - 864e5), v = (day.length ? day : base).map((a) => a.atm);
   const mean = v.length ? v.reduce((x, y) => x + y, 0) / v.length : 0, p90 = pctl(v, 0.9), t = th();
   $("m-atm").textContent = atmTxt(mean); $("m-atm").style.color = rgbCss(atmColor(mean, t));
   $("m-p90").textContent = atmTxt(p90); $("m-p90").style.color = rgbCss(atmColor(p90, t));
@@ -339,6 +340,7 @@ function card(a, sc) {
 </article>`;
 }
 function render() {
+  try { for (const id of ["mode", "hide", "thr"]) { const el = $(id); if (el) el.disabled = blind; } } catch (e) { /* csak a vezérlők letiltása */ }      // vak nézetben a rendezés és a zaj-küszöb inaktív (az ATM-ből származna)
   try { gemChipUpdate(); } catch (e) { /* a szűrőgomb hibája nem akaszthatja meg a listát */ }
   try { ancChipUpdate(); } catch (e) { /* a horgony-gomb hibája sem */ }
   const list = visible();
@@ -419,7 +421,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.9 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.10 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);
