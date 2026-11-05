@@ -1,9 +1,9 @@
-/* Média-Zaj Twin v40.8 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
+/* Média-Zaj Twin v40.9 – kliensoldali alkalmazás (HUD, lista, glóbusz, tanuló szűrő, címkéző űrlap, Gemini-javaslat).
    ATM = G·S·(1−V): G = fizikai nyugalom (M1, az egész környezetre közös), S = a hír nyelvi zaja, V = a hír érvényessége. */
 import { createGlobe, atmColor, rgbCss } from "./modules/webglGlobe.js";
 import { FilterEngine } from "./modules/filterEngine.js";
 
-export const APP_VERSION = "40.8";
+export const APP_VERSION = "40.9";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const SCOPE_HU = { official: "Hivatalos", local: "Helyi", national: "Országos", international: "Nemzetközi" };
@@ -12,7 +12,10 @@ const DEF_TH = { mid: 0.12, high: 0.25 };
 const S = { arts: [], meta: null, hist: [], scopes: { official: true, local: true, national: true, international: true }, mode: "learned", hide: false, thr: 0.25, limit: 50, selected: null };
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* tele a tár */ } };
-const engine = new FilterEngine();
+const engine = new FilterEngine();                   // az olvasási idő nem tanít (2026-11-05, előre rögzített szabály)
+let blind = lsGet("mnt.blind.v1", true) !== false;     // Vak nézet: alapból BE a sprint alatt (az ATM, S és V rejtve a kártyákon, hogy a címke ne ezek hatására készüljön)
+export const isBlind = () => blind;
+export const setBlind = (on) => { blind = !!on; lsSet("mnt.blind.v1", blind); return blind; };
 const votes = lsGet("mnt.votes.v38", {});
 const prefs = lsGet("mnt.pref.v38", { fallback: false, auto: true });
 let globe = null, reading = null;
@@ -69,7 +72,7 @@ export function labForm(a, l = labels[a.id] || {}, pref = labPref) {
   return `<div class="lab">${gemBlock(a)}<h4>Címkézés (kutatás)</h4>${rows}<input class="lab-note" maxlength="200" placeholder="megjegyzés vagy forráslink (hamisnál ajánlott)" value="${esc(l.megj || "")}"><p class="dim lab-state">${labelState(l)}</p></div>`;
 }
 function labRecord(a) {
-  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, peek: peeked.has(a.id) ? 1 : 0, gj: (() => { const g = gemOf(a); return g ? { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "", biz: g.magabiztossag, modell: g.model || "" } : null; })(), s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "", nyelv: String(a.lang || ""), horgony: a.d && Array.isArray(a.d.anc) ? a.d.anc.join("|") : "", hszam: a.d && a.d.mc ? 1 : 0 });
+  return labels[a.id] || (labels[a.id] = { id: a.id, ts: new Date().toISOString(), cim: String(a.title || "").slice(0, 200), link: safeUrl(a.link), cikk_forras: String(a.source || ""), megjelent: a.published || "", atm: a.atm, g: a.g, s: a.s, v: a.v, fiz: (a.truth && a.truth.verdict) || "", forras: labPref.forras, peek: peeked.has(a.id) ? 1 : 0, gj: (() => { const g = gemOf(a); return g ? { ertek: g.ertek, stilus: g.stilus, valosag: g.valosag || "", biz: g.magabiztossag, modell: g.model || "" } : null; })(), s_cim: a.d ? a.d.st : null, s_torzs: a.d ? a.d.sb : null, cbd: a.d ? a.d.cbd : null, mufaj: a.d ? (a.d.gen === "v" ? "velemeny_elemzes" : "tudositas") : "", nyelv: String(a.lang || ""), horgony: a.d && Array.isArray(a.d.anc) ? a.d.anc.join("|") : "", hszam: a.d && a.d.mc ? 1 : 0, vak: blind ? 1 : 0 });
 }
 export function setLabel(a, f, v) {
   if (!LAB_OK[f] || !LAB_OK[f].has(v)) return false;
@@ -103,7 +106,7 @@ export function setNote(a, text) {
   return saveLabels();
 }
 export function csvCell(x) { let t = String(x ?? "").replace(/[\r\n]+/g, " "); if (/^[=+\-@\t]/.test(t)) t = "'" + t; return /[",;]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; }
-const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell", "nyelv", "horgony", "horgony_szammal"];
+const CSV_COLS = ["id", "idopont", "cim", "link", "cikk_forras", "megjelent", "atm", "g", "s", "v", "fizikai_itelet", "hirertek", "valosag", "stilus", "cimkezo", "megjegyzes", "gem_bizonyossag", "gem_modell", "s_cim", "s_torzs", "clickbait_delta", "mufaj", "src_hirertek", "src_valosag", "src_stilus", "peek", "tema", "gj_hirertek", "gj_stilus", "gj_valosag", "gj_bizonyossag", "gj_modell", "nyelv", "horgony", "horgony_szammal", "vak"];
 const srcOf = (l, f) => (l[f] ? l["src_" + f] || l.forras || "sajat" : "");
 function gjCols(l, gemMap) {
   const lg = gemMap[l.id], g = l.gj || (lg ? { ertek: lg.ertek, stilus: lg.stilus, valosag: lg.valosag || "", biz: lg.magabiztossag, modell: lg.model || "" } : null);
@@ -112,7 +115,7 @@ function gjCols(l, gemMap) {
 export function labelsCsv(all, gemMap = (S.gem && S.gem.labels) || {}) {
   const num = (x) => (typeof x === "number" && isFinite(x) ? x.toFixed(4) : "");
   const rows = Object.values(all).sort((a, b) => String(a.ts).localeCompare(String(b.ts)));
-  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, recSource(l), l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj, ...gjCols(l, gemMap), l.nyelv, l.horgony, l.hszam].map(csvCell).join(","))].join("\n");
+  return [CSV_COLS.join(","), ...rows.map((l) => [l.id, l.ts, l.cim, l.link, l.cikk_forras, l.megjelent, num(l.atm), num(l.g), num(l.s), num(l.v), l.fiz, l.ertek, l.valosag, l.stilus, recSource(l), l.megj, l.gem_bizonyossag, l.gem_modell, num(l.s_cim), num(l.s_torzs), num(l.cbd), l.mufaj, ...gjCols(l, gemMap), l.nyelv, l.horgony, l.hszam, l.vak ? 1 : 0].map(csvCell).join(","))].join("\n");
 }
 function labPaint(cardEl, a) {
   const l = labels[a.id] || {};
@@ -125,11 +128,13 @@ function labPaint(cardEl, a) {
 /* ───────── Állapot (v40.8): egy gombbal összegyűjti az üzemfigyelőt, a Gemini-keretet, a mérőszámokat és a helyi címke-állapotot, és vágólapra másolja ───────── */
 export function overlapStats(labelsAll, gem) {
   const gl = (gem && gem.labels) || {}, isA3 = (g) => String((g && g.v) || "").startsWith("A3");
-  let total = 0, complete = 0, all = 0, a3 = 0, blind = 0;
+  let total = 0, complete = 0, all = 0, a3 = 0, blind = 0, vak = 0, vakTeljes = 0;
   for (const l of Object.values(labelsAll || {})) {
     total++;
+    if (l.vak) vak++;
     if (!LAB_MAIN.every((f) => l[f])) continue;
     complete++;
+    if (l.vak) vakTeljes++;
     const g = gl[l.id];
     if (!g) continue;
     all++;
@@ -137,7 +142,7 @@ export function overlapStats(labelsAll, gem) {
     a3++;
     if (LAB_MAIN.every((f) => (l["src_" + f] || l.forras || "sajat") === "sajat") && !l.peek) blind++;     // saját, vak (a javaslatot a címke előtt nem nézted meg)
   }
-  return { total, complete, all, a3, blind, gemA3: Object.values(gl).filter(isA3).length, gemAll: Object.keys(gl).length };
+  return { total, complete, all, a3, blind, vak, vakTeljes, gemA3: Object.values(gl).filter(isA3).length, gemAll: Object.keys(gl).length };
 }
 export function buildStatus(d, loc, now = new Date()) {
   const q = (v) => (v === undefined || v === null || v === "" ? "–" : String(v)), n2 = (x, k = 2) => (typeof x === "number" && isFinite(x) ? x.toFixed(k) : "–");
@@ -167,7 +172,8 @@ export function buildStatus(d, loc, now = new Date()) {
   else L.push("TERJEDÉS: nincs adat");
   const st = loc.stats || {}, o = overlapStats(loc.labels, loc.gem);
   L.push(`SZŰRŐ: λ ${n2(st.lambda)} · AUC ${n2(st.auc)} · szavazatokra ${n2(st.aucVote)} (n ${q(st.nVote)}) · tanítás ${q(st.trained)}`);
-  L.push(`CÍMKÉK: ${o.total} címkézett (${o.complete} teljes) · Gemini-címke összesen ${o.gemAll} (A3: ${o.gemA3}) · átfedő teljes címke ${o.all} (A3: ${o.a3}) · ebből saját és vak (A3) ${o.blind}, cél: 40`);
+  L.push(`NÉZET: vak ${loc.blind ? "BE" : "KI"} · olvasási idő tanítása ${loc.dwell ? "BE" : "KI"}`);
+  L.push(`CÍMKÉK: ${o.total} címkézett (${o.complete} teljes) · vak nézetben készült ${o.vak} (teljes: ${o.vakTeljes}) · Gemini-címke összesen ${o.gemAll} (A3: ${o.gemA3}) · átfedő teljes címke ${o.all} (A3: ${o.a3}) · ebből saját és vak (A3) ${o.blind}, cél: 40`);
   return L.join("\n");
 }
 export function ancChipUpdate() {
@@ -201,8 +207,14 @@ function labUi() {
   const box = document.querySelector("#settings .box"), anchor = $("s-reset");
   if (!box || !anchor || $("s-lab")) return;
   const w = document.createElement("div"); w.id = "s-lab"; w.className = "lab-set";
-  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><button id="flt-copy">Szűrő-napló másolása (CSV)</button><button id="st-copy">Állapot másolása</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea><textarea id="st-out" readonly hidden></textarea>`;
+  w.innerHTML = `<p class="dim" id="lab-count"></p><button id="blind-toggle"></button><button id="lab-copy">Címkék másolása (CSV)</button><button id="lab-clear" class="ghost">Címkék törlése</button><button id="flt-copy">Szűrő-napló másolása (CSV)</button><button id="st-copy">Állapot másolása</button><p class="dim" id="lab-msg"></p><textarea id="lab-out" readonly hidden></textarea><textarea id="st-out" readonly hidden></textarea>`;
   box.insertBefore(w, anchor);
+  const blindTxt = () => { $("blind-toggle").textContent = blind ? "Vak nézet: BE (az ATM, S és V rejtve)" : "Vak nézet: KI (az ATM, S és V látszik)"; };
+  $("blind-toggle").addEventListener("click", () => {
+    setBlind(!blind); blindTxt(); render();
+    $("lab-msg").textContent = blind ? "Vak nézet bekapcsolva: a mostantól készülő címkék „vak” jelölést kapnak." : "Vak nézet kikapcsolva: a mostantól készülő címkék NEM vakok (a CSV „vak” oszlopa 0).";
+  });
+  blindTxt();
   $("lab-copy").addEventListener("click", async () => {
     const n = Object.keys(labels).length, msg = $("lab-msg"), out = $("lab-out");
     if (!n) { msg.textContent = "Még nincs címke."; return; }
@@ -222,7 +234,7 @@ function labUi() {
     msg.textContent = "Állapot lekérése…";
     const g = async (u) => { try { return await getJson(u); } catch (e) { return null; } };
     const [health, budget, elog, matrix] = await Promise.all([g("data/metrics/health.json"), g("data/metrics/gemini_budget.json"), g("data/metrics/event_log_summary.json"), g("data/metrics/media_noise_matrix.json")]);
-    const txt = buildStatus({ health, budget, elog, matrix }, { labels, stats: engine.stats(), gem: S.gem });
+    const txt = buildStatus({ health, budget, elog, matrix }, { labels, stats: engine.stats(), gem: S.gem, blind, dwell: engine.dwellOn });
     out.value = txt; out.hidden = false;
     const ok = await copyText(txt);
     msg.textContent = ok ? "Az állapot a vágólapon van: illeszd be a beszélgetésbe." : "A másolás nem sikerült: a szöveg kijelölhető, másold ki kézzel.";
@@ -316,13 +328,13 @@ function card(a, sc) {
   const tags = (a.topics || []).map((t) => `<em>${esc(TOPIC_HU[t] || t)}</em>`).join("");
   const badge = tr.verdict === "igazolt" ? `<em class="ok">✔ fizikailag igazolt</em>` : tr.verdict === "nem igazolt" ? `<em class="bad">⚠ fizikailag nem igazolt</em>` : "";
   return `<article class="card${S.selected === a.id ? " sel" : ""}" data-id="${esc(a.id)}">
- <div class="row"><span class="atm" style="--c:${c}">ATM ${atmTxt(a.atm)}</span><span class="scope">${SCOPE_HU[a.scope] || a.scope}</span><span class="time">${ago(a.published || a.first_seen)}</span></div>
+ <div class="row"><span class="atm" style="--c:${blind ? "#64748b" : c}">ATM ${blind ? "–" : atmTxt(a.atm)}</span><span class="scope">${SCOPE_HU[a.scope] || a.scope}</span><span class="time">${ago(a.published || a.first_seen)}</span></div>
  <h3><a href="${esc(safeUrl(a.link))}" target="_blank" rel="noopener noreferrer" data-act="link">${esc(a.title)}</a></h3>
  <div class="meta">${esc(a.source)}${a.geo ? " · 📍 " + esc(a.geo.name) : ""}${a.event_sources > 1 ? " · 📰 " + a.event_sources + " forrás" : ""}</div>
- <div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>
+ ${blind ? "" : `<div class="bars">${bar("S zaj", a.s, "s")}${bar("V érvényes", a.v, "v")}</div>`}
  <div class="tags">${tags}${badge}${pcTag(a)}${ancTag(a)}${gemTag(a)}</div>
- <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
- <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p>${descBlock(a)}${labForm(a)}</div>
+ <div class="detail" hidden>${a.summary ? `<p>${esc(a.summary)}</p>` : ""}${blind ? `<p class="dim">Vak nézet: az ATM, S és V értékek rejtve (⚙ Beállítások).</p>` : `<p class="dim">ATM = G·S·(1−V) = ${a.g.toFixed(2)} (fizikai nyugalom) · ${a.s.toFixed(2)} (zaj) · ${(1 - a.v).toFixed(2)} (1 − érvényesség)${tr.verdict && tr.verdict !== "n/a" ? ` · fizikai ellenőrzés: ${esc(tr.verdict)} (V ${tr.dv > 0 ? "+" : ""}${tr.dv}${tr.ds ? ", S +" + tr.ds : ""})` : ""}</p>
+ <p class="dim">Tanult pontszám: ${sc.score.toFixed(2)} (p ${sc.p.toFixed(2)} · tisztaság ${sc.prior.toFixed(2)} · λ ${sc.lambda.toFixed(2)})${a.z != null ? " · forrás-eltérés z " + a.z : ""}</p>${descBlock(a)}`}${labForm(a)}</div>
  <div class="votes"><button data-act="up" class="${vt === 1 ? "on" : ""}">👍 Hasznos</button><button data-act="down" class="${vt === 0 ? "on" : ""}">👎 Zaj</button><button data-act="open" class="ghost">Részletek</button></div>
 </article>`;
 }
@@ -335,7 +347,7 @@ function render() {
   $("more").hidden = list.length <= S.limit; $("more").textContent = `Továbbiak (${list.length - S.limit})`;
   if (globe) {
     const mx = Math.log2(Math.max(2, ...list.map((a) => a.event_size || 1)));
-    globe.setPoints(list.filter((a) => a.geo).map((a) => ({ id: a.id, lat: a.geo.lat, lon: a.geo.lon, atm: a.atm, size: Math.log2(a.event_size || 1) / mx })), th());
+    globe.setPoints(list.filter((a) => a.geo).map((a) => ({ id: a.id, lat: a.geo.lat, lon: a.geo.lon, atm: blind ? 0 : a.atm, size: Math.log2(a.event_size || 1) / mx })), th());
   }
 }
 
@@ -399,6 +411,7 @@ document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") $("setti
 
 /* ───────── indítás ───────── */
 async function start() {
+  if (blind) { S.mode = "recent"; try { $("mode").value = "recent"; } catch (e) { /* csak a legördülő */ } }
   try {
     globe = await createGlobe($("globe"), {
       forceFallback: prefs.fallback, focus: [47, 16.6],
@@ -406,7 +419,7 @@ async function start() {
     });
     globe.setAutoRotate(prefs.auto);
     $("kind").textContent = globe.kind === "webgl" ? "WebGL" : "2D";
-    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.8 ·"); } catch (e) { /* csak felirat */ }
+    try { const sm = document.querySelector(".title small"); if (sm && sm.innerHTML) sm.innerHTML = sm.innerHTML.replace("· v40 ·", "· v40.9 ·"); } catch (e) { /* csak felirat */ }
   } catch (e) { $("kind").textContent = "nincs glóbusz"; }
   await load();
   setInterval(() => { if (!document.hidden) load(); }, 5 * 60 * 1000);

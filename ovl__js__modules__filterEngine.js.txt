@@ -1,6 +1,6 @@
 /* Média-Zaj Twin v40 – kliensoldali öntanuló szűrő.
    Logisztikus regresszió 65 536 dimenziós hash-elt jellemzőtéren (előjeles hash-elés), AdaGrad + L2 tanulással.
-   Tanítójel: szavazat (👍 érték / 👎 zaj) és olvasási idő. Az AUC-alapú λ-keverés a tanult p valószínűséget
+   Tanítójel: szavazat (👍 érték / 👎 zaj). Az olvasási idő 2026-11-05-től nem tanít (előre rögzített szabály: az olvasási idő pozitívjai a 👎 hírek alatt pontoztak, AUC 0,32; a címkézéshez nyitott részletek szennyezték a jelet). Az AUC-alapú λ-keverés a tanult p valószínűséget
    és az előzetes (1 − ATM/plafon) tisztaság-pontot keveri: λ csak annyit kap, amennyire a modell a saját
    korábbi szavazataidat előre tudta jelezni. Minden a telefonodon marad (localStorage). */
 export const DIM = 65536;
@@ -68,9 +68,9 @@ export function computeAUC(preds, labels) {
 const memStore = () => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
 
 export class FilterEngine {
-  constructor({ storage, key = "mnt.filter.v38", lr = 0.35, l2 = 1e-4, atmCap = 0.3 } = {}) {
+  constructor({ storage, key = "mnt.filter.v38", lr = 0.35, l2 = 1e-4, atmCap = 0.3, dwell = false } = {}) {
     this.storage = storage || (typeof localStorage !== "undefined" ? localStorage : memStore());
-    this.key = key; this.lr = lr; this.l2 = l2; this.atmCap = atmCap;
+    this.key = key; this.lr = lr; this.l2 = l2; this.atmCap = atmCap; this.dwellOn = !!dwell;
     this.reset(false);
     this.load();
   }
@@ -125,8 +125,9 @@ export class FilterEngine {
     this.save();
     return p;
   }
-  /* Olvasási idő: ≥ 8 mp = gyenge pozitív (legfeljebb 0.6 súly); megnyitott, de ≤ 1.5 mp alatt bezárt = gyenge negatív; közte nincs jel. */
+  /* Olvasási idő: alapból KIKAPCSOLVA (dwellOn = false), nem tanít és nem kerül a naplóba. Bekapcsolva: ≥ 8 mp = gyenge pozitív (legfeljebb 0.6 súly); megnyitott, de ≤ 1.5 mp alatt bezárt = gyenge negatív; közte nincs jel. */
   trainDwell(a, seconds, opened = false) {
+    if (!this.dwellOn) return null;
     if (seconds >= 8) return this.train(a, 1, Math.min(0.6, seconds / 40), "dwell");
     if (opened && seconds <= 1.5) return this.train(a, 0, 0.25, "dwell");
     return null;
