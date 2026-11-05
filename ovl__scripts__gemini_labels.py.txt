@@ -46,6 +46,16 @@ def redact(msg, key):
     return t.replace(key, "[kulcs]") if key else t
 
 
+def quota_day(now):
+    """A Google napi kerete a csendes-óceáni (PT) idő szerinti éjfélkor nullázódik (télen 08:00 UTC, nyáron 07:00 UTC), nem UTC-éjfélkor.
+    Ha ehhez igazítjuk a számlálót, az éjszakai (00:00–08:00 UTC) próbálkozások nem terhelik hiába az új napot, és a B-hívás letiltása nem tart túl a nullázódáson."""
+    try:
+        from zoneinfo import ZoneInfo
+        return now.astimezone(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d")
+    except Exception:                                         # ha nincs időzóna-adatbázis: fix 8 órás eltolás (téli idő)
+        return (now - timedelta(hours=8)).strftime("%Y-%m-%d")
+
+
 def now_utc():
     v = os.environ.get("MNT_NOW")
     return datetime.fromisoformat(v.replace("Z", "+00:00")) if v else datetime.now(timezone.utc)
@@ -255,6 +265,7 @@ def note_err(bud, which, text, now):
 def cum_add(cum, lab):
     """Halmozott számlálók (a megőrzött 300 címkén túl is): az állítás típusa, a terület, a hivatalos forrás és a kettő keresztezése."""
     cum["n"] = cum.get("n", 0) + 1
+    cum["n_mod"] = cum.get("n_mod", 0) + 1
     for k, f in (("by_tipus", "tipus"), ("by_terulet", "terulet"), ("by_forras", "hivatalos_forras")):
         d = cum.setdefault(k, {})
         d[lab[f]] = d.get(lab[f], 0) + 1
@@ -283,11 +294,11 @@ def cum_final(cum):
     n = cum.get("n", 0)
     meas = sum((cum.get("by_tipus") or {}).get(k, 0) for k in MERHETO_TIPUS)
     src = sum(v for k, v in (cum.get("by_forras") or {}).items() if k != "nincs")
-    mg, uj = cum.get("merheto_meglevo", 0), cum.get("uj_modul_igeny", 0)
+    mg, uj, nm = cum.get("merheto_meglevo", 0), cum.get("uj_modul_igeny", 0), cum.get("n_mod", 0)
     top = dict(sorted((cum.get("nevek") or {}).items(), key=lambda kv: (-kv[1], kv[0]))[:15])
-    return {**{k: v for k, v in cum.items() if k != "nevek"}, "n": n, "merheto_meglevo": mg, "merheto_meglevo_arany": round(mg / n, 3) if n else None,
-            "uj_modul_igeny": uj, "uj_modul_igeny_arany": round(uj / n, 3) if n else None, "egyeb_hivatalos_nevek": top, "merheto_allitas": meas, "merheto_allitas_arany": round(meas / n, 3) if n else None, "hivatalos_forrassal": src, "hivatalos_forrassal_arany": round(src / n, 3) if n else None,
-            "megjegyzes": "merheto_allitas = szám vagy esemény típusú állítás (szinte minden hírre igaz, ezért kedvező kép); merheto_meglevo = ezek közül, amelyek a MEGLÉVŐ modulokkal (M1, M3, M5, M7) mérhetők: ez a szigorú mutató; uj_modul_igeny = statisztika vagy egyéb hivatalos adat kellene hozzá; egyeb_hivatalos_nevek = a Gemini által megnevezett szervek gyakorisága (a modell ítélete, nem mérés; 60 név fölött közelítő)"}
+    return {**{k: v for k, v in cum.items() if k != "nevek"}, "n": n, "merheto_meglevo": mg, "merheto_meglevo_arany": round(mg / nm, 3) if nm else None,
+            "uj_modul_igeny": uj, "uj_modul_igeny_arany": round(uj / nm, 3) if nm else None, "n_mod": nm, "egyeb_hivatalos_nevek": top, "merheto_allitas": meas, "merheto_allitas_arany": round(meas / n, 3) if n else None, "hivatalos_forrassal": src, "hivatalos_forrassal_arany": round(src / n, 3) if n else None,
+            "megjegyzes": "merheto_allitas = szám vagy esemény típusú állítás (szinte minden hírre igaz, ezért kedvező kép); merheto_meglevo = ezek közül, amelyek a MEGLÉVŐ modulokkal (M1, M3, M5, M7) mérhetők: ez a szigorú mutató (az arány nevezője n_mod: csak az A3 verzió címkéi, mert az A2-címkékre ez a számláló nem készült); uj_modul_igeny = statisztika vagy egyéb hivatalos adat kellene hozzá; egyeb_hivatalos_nevek = a Gemini által megnevezett szervek gyakorisága (a modell ítélete, nem mérés; 60 név fölött közelítő)"}
 
 
 def pick(arts, labels, n):
@@ -331,10 +342,12 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     store = jload(MET / "gemini_labels.json", {}) or {}
     labels, order, entries = store.get("labels") or {}, store.get("order") or [], store.get("search_entries") or {}
     cum = store.get("summary") if isinstance(store.get("summary"), dict) else {}
-    cum = {k: v for k, v in cum.items() if k in ("n", "since", "by_tipus", "by_terulet", "by_forras", "tipus_x_terulet", "by_modul", "merheto_meglevo", "uj_modul_igeny", "nevek")}
+    cum = {k: v for k, v in cum.items() if k in ("n", "since", "by_tipus", "by_terulet", "by_forras", "tipus_x_terulet", "by_modul", "merheto_meglevo", "uj_modul_igeny", "nevek", "n_mod")}
+    if "n_mod" not in cum:                                    # átállás: az új számlálók nevezője csak az A3-címkék száma (az A2-címkék nem számlálódtak bele)
+        cum["n_mod"] = sum(1 for l in labels.values() if str((l or {}).get("v", "")).startswith("A3"))
     cap_a, cap_b, run_a, run_b = caps(env)
     now = now_utc()
-    today = now.strftime("%Y-%m-%d")
+    today = quota_day(now)
     bud = jload(MET / "gemini_budget.json", {}) or {}
     if bud.get("date") != today:
         bud = {"date": today, "a": 0, "b": 0, "keresesek": 0, "hivasok": 0, "a_hiba": 0, "pause_until": bud.get("pause_until"), "utolso_hiba": bud.get("utolso_hiba")}
