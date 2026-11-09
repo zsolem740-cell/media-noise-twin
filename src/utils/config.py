@@ -65,6 +65,13 @@ def _order_trust(trust: dict, base_keys: list[str]) -> dict:
 
 
 def validate(cfg: dict) -> None:
+    rs = cfg.get("research")
+    if rs is not None:
+        if not isinstance(rs, dict) or not isinstance(rs.get("companies", []), list):
+            raise ValueError('a "research" objektum legyen, benne a "companies" lista')
+        for co in rs.get("companies", []):
+            if not (isinstance(co, dict) and isinstance(co.get("id"), str) and isinstance(co.get("symbol"), str) and isinstance(co.get("names", []), list)):
+                raise ValueError('minden "research.companies" elemhez kell "id", "symbol" és "names" (lista)')
     al = cfg.get("domain_aliases", {})
     if not isinstance(al, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in al.items()):
         raise ValueError('a "domain_aliases" {"regi": "uj"} szótár legyen')

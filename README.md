@@ -68,3 +68,6 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - Postaláda: a workflow a repó `inbox/*.txt` fájljait (base64-es tar.gz frissítés-csomagok) magától kicsomagolja, ellenőrzi (csak src/, public/, config/sources.json, requirements.txt, README.md, PROJECT_VERSION, .gitignore; nem nyúl a config/user.json-hoz és a workflow-hoz), és hiba esetén a csomagot az `inbox/failed/` mappába teszi. A napló: `inbox/LOG.md`.
 - A projekt a repó fájljaiban él (a workflow csak egyszer bontja ki: `PROJECT_VERSION` hiányában).
 - Forrásnevek egyesítése (edition.cnn.com → cnn.com; egyedi: `domain_aliases`), töltelékszavak kiszűrése a felszálló kifejezésekből, „Diagnosztika másolása" gomb az Öntanuló AI panelben.
+
+## v46
+- Passzív piaci napló (`src/research/`): cégenként naponta összegzi a híreket (darab, ATM, a cím által állított irány), a napi záróárakat a stooq.com-ról tölti le (kulcs nélkül, legfeljebb 6 óránként), és magától kiértékeli, hogy az árfolyam igazolja-e a határozott piaci állításokat (permutációs teszt, AUC). A felületet és a pontozást nem érinti; az eredmény az `atm_history.json` `research` kulcsában van, az állapot a „Diagnosztika másolása" gombbal olvasható. Kutatási eszköz, nem befektetési tanács. Cégek és szavak: `config/sources.json` → `research` (a `config/user.json`-ban: `"research": {"companies_add": [...]}`).

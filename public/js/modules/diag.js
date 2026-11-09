@@ -1,7 +1,7 @@
 // Diagnosztika: tömör, pontos szöveg a vágólapra (beszélgetésbe illesztéshez, kevés tokenért).
 import { quantile, fmtAtm, scoringMode } from './model.js';
 
-export const APP_VERSION = 'v45';
+export const APP_VERSION = 'v46';
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
 export function buildDiag(s) {
@@ -38,6 +38,20 @@ export function buildDiag(s) {
 
   const src = (data.insights && data.insights.sources) || [];
   if (src.length) L.push('források (≥5 hír, legzajosabb): ' + src.slice(0, 5).map(x => `${x.domain} ${fmtAtm(x.mean_ATM)} (${x.n})`).join(', '));
+
+  const rs = data.research && data.research.status;
+  if (rs) {
+    const okN = rs.ok ? rs.ok.length : 0, failN = rs.failed ? Object.keys(rs.failed).length : 0;
+    let t = `piaci napló: ${rs.news_days || 0} hírnap · ár ${okN}/${okN + failN} OK · utolsó ár ${rs.price_last || '–'}`;
+    const f = rs.failed ? Object.entries(rs.failed).slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') : '';
+    if (f) t += ` · hiba: ${f}`;
+    if (rs.match_now) t += ` · most ${rs.match_now.n} cégegyezés`;
+    const e = rs.eval;
+    if (e) t += e.state === 'kész'
+      ? ` · igazolt ${Math.round(e.confirmed * 100)}% (véletlen ${Math.round(e.baseline * 100)}%, p=${e.p_confirm}) · ATM→eltúlzott AUC ${e.auc} (p=${e.p_auc})`
+      : ` · értékelés: gyűjt ${e.n}/${e.need}`;
+    L.push(t);
+  }
 
   const top = [...rows].sort((a, b) => b.atm - a.atm).slice(0, 3);
   if (top.length) L.push('legzajosabb hírek: ' + top.map(r => `${fmtAtm(r.atm)} · ${cut(r.title || '', 55)} (${r.source_domain || '?'})`).join(' | '));

@@ -265,7 +265,15 @@ def main() -> int:
     out = build_history(raw["items"], prev["items"] if prev else [], cfg, prev.get("profiles") if prev else None)
     out["notified"] = prev.get("notified", {}) if prev else {}
     out["config"] = cfg_status
-    if prev and prev.get("items") == out["items"] and prev.get("model") == out["model"] and prev.get("config") == cfg_status:
+    try:  # passzív piaci napló: egy hiba sosem állíthatja meg a fő futást
+        from src.research import market_log
+        research = market_log.update(prev.get("research") if prev else None, out["items"], cfg)
+    except Exception as exc:
+        print(f"[FIGYELEM] piaci napló kihagyva: {exc}", file=sys.stderr)
+        research = prev.get("research") if prev else None
+    if research is not None:
+        out["research"] = research
+    if prev and prev.get("items") == out["items"] and prev.get("model") == out["model"] and prev.get("config") == cfg_status and prev.get("research") == out.get("research"):
         print("Nincs változás, a fájl érintetlen marad.")
         return 0
     HISTORY.parent.mkdir(parents=True, exist_ok=True)
