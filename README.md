@@ -1,39 +1,70 @@
-# Média-Zaj Twin (v40)
+# media-noise-twin
+Geolokalizált információs zaj- és algoritmikus torzításmérő (Vas megye / Alpokalja, HU/AT/SI).
 
-Vas megye / Alpokalja információs zaj-mérője. **ATM = G · S · (1 − V)**
+## Modell
+`ATM = G_k · S_i · (1 − V_i)`
+- V_i valóságindex: hivatalos 0.95 · helyi sajtó 0.70 · egyéb 0.45
+- S_i szenzációszint: kulcsszavak 50% · felkiáltójelek 25% · NAGYBETŰS szavak 25%
+- G_k geo-súly: HU-VA 1.0 · HU-NAT 0.90 · AT-1 0.85 · SI-1 0.80 · INT 0.60
 
-| Jel | Jelentés | Honnan |
-|---|---|---|
-| G | fizikai nyugalom (stationarity), 0..1: 1,0 = nyugodt környezet, kicsi = fizikai anomália | az M1 (Solaris) `environment_truth_matrix.json` `core_metrics.stationarity_G` mezője; mérés nélkül 1,0 (feltételezett) |
-| S | a hír nyelvi zaja, 0..1 | indulatszavak, felkiáltójel, NAGYBETŰ, csalogató szavak, listás cím, három pont, felsőfok |
-| V | érvényesség, 0..1: a hír állításainak egyezése a fizikai méréssel és az ellenőrizhetőség | hivatalos forrás, bizalom, számok/idézet/hivatkozás, több független forrás, fizikai keresztellenőrzés |
+## Futtatás
+```
+pip install -r requirements.txt
+python -m src.collectors.google_news   # -> data/raw/latest.json
+python -m src.core.atm_engine          # -> data/metrics/atm_history.json
+```
+Források, geofence és trust-domainek: `config/sources.json`.
 
-Az ATM akkor nagy, ha a fizikai környezet nyugodt (G nagy), a hír hangos (S nagy), és az állításai nem érvényesek (V kicsi).
+## Telepítés (GitHub)
+1. Repo létrehozása, push a `main` ágra.
+2. Settings → Pages → Source: **GitHub Actions**.
+3. Actions fül → `ingest-and-analyze` → Run workflow (utána 15 percenként fut).
+4. Az adat változásakor a workflow commitol és elindítja a `deploy-pages`-t.
+5. Telefonon: Chrome → az oldal megnyitása → „Telepítés" (a Megosztás-célpont csak telepített PWA-nál jelenik meg).
 
-A mutató **kísérleti és tájékoztató**, nem igazságmérő. A súlyok és a szólisták a `config/sources.json` és a `scripts/mnt_server.py` fájlban állíthatók.
+## PWA
+- Offline-first: IndexedDB-ben az utolsó mátrix, a `sw.js` gyorsítótárazza a felületet.
+- Share Target (`GET`): a megosztott cím/szöveg/URL az `app.js`-ben kerül elemzésre. A cikk oldalát a böngésző nem tudja letölteni (CORS), ezért az S_i a megosztott szövegből számolódik.
+- Human-in-the-Loop (csak helyben): Tény +1 / Clickbait −1, olvasási idő ≥45 s +0,5, <10 s −0,5. Forrásonként ±0,03/pont, legfeljebb ±0,15 korrekció a V_i-n.
 
-## Működés
-* 15 percenként a GitHub Actions (`.github/workflows/media-noise.yml`) összegyűjti a híreket (Google News, BBC, NY Post, HungaroMet szöveges figyelmeztetések), pontozza, eseményekbe csoportosítja (koszinusz-hasonlóság), forrásprofilt vezet (Welford), felszálló kifejezéseket keres.
-* Csak akkor ír és commitol, ha az adat érdemben változott.
-* A kliens (`index.html`) a `data/articles.json` fájlt olvassa; a 3D glóbusz Three.js InstancedMesh, a szűrő a telefonon tanul (szavazat és olvasási idő alapján).
+## v38 – moduláris HUD + AI (kulcs nélkül)
+- `public/js/modules/`: model (pontszámítás) · learner (öntanuló logisztikus regresszió) · globe (Canvas glóbusz) · filterEngine · uiRenderer · store (IndexedDB) · dataLoader · share.
+- Telefonon tanul: a Tény/Clickbait szavazatok és az olvasási idő finomítják az AI-t (S = szabály és AI keveréke, az AI súlya 20% → 70%).
+- Szerveren tanul (`src/core/insights.py`): forrásonkénti Welford-alapvonal, anomália (z ≥ 2), 24 órás trend, felszálló kifejezések.
+- `src/utils/geo.py`: város/ország-szótár a glóbusz pontjaihoz.
 
-## Beállítás (egyszer)
-1. A munkafolyamat-fájlt `.github/workflows/media-noise.yml` néven hozd létre, majd **Actions › Média-Zaj Twin › Run workflow**.
-2. **Settings › Pages**: Deploy from a branch › `main` › `/ (root)`.
-3. Értesítéshez (nem kötelező): **Settings › Secrets and variables › Actions › New repository secret**: `NTFY_TOPIC`. Nélküle az értesítés lépése csendben kimarad.
+## v39 – bővítések
+- **Hivatalos forrás:** a HungaroMet szöveges figyelmeztetése (országos + Vas vármegye) hírként, riasztáskor ntfy értesítéssel.
+- **Közvetlen RSS:** New York Post, BBC (a CNN saját RSS-e 2024 óta nem frissül, ezért a CNN a Google News `site:` keresésen át jön).
+- **Cikkszöveg:** az új hírek bevezetőjéből kulcsszó-, felkiáltójel- és cím–szöveg egyezés jelek (`src/collectors/article.py`).
+- **Események:** `src/core/insights.py` – ugyanarról szóló hírek csoportosítása, forrásonkénti hangnem-szórás.
+- **Tanuló V:** a tartósan zajos forrás hitelessége csökken (Bayes-zsugorítás, ±0,15).
+- **Dinamikus küszöbök:** sárga/piros az adat 70./95. percentilise (alsó korláttal).
+- **Kalibráció:** a saját szavazatokból AUC-mérés és az AI-súly (λ) optimalizálása; szavazatok exportja JSON-ban.
+- **Értesítés:** `NTFY_TOPIC` titok (GitHub Secrets) → `src/core/notify.py`.
 
-## Fizikai keresztellenőrzés (nem kötelező)
-A szerver az M1 (Solaris) fizikai tényvektorát a `config/sources.json` `m1.urls` címeiről tölti le (alapból a Solaris Pages-oldaláról, tartalékként a raw-címről), és a pillanatképet a `data/metrics/environment_truth_matrix.json` fájlba menti. Ha létezik ez a fájl (P8-séma: `header` / `core_metrics` / `dynamic_payload` / `weights_vector`), a szerver összeveti vele a hírek állításait. Az `ANOMALY` státusz aktív napkitörés- és geomágneses anomáliát jelent; a számértékek (Kp ≥ 5, Bz ≤ −10 nT, M/X kitörés, szél ≥ 700 km/s) külön is jelzőt adnak:
-* a hír anomáliáról szól és a mérés igazolja: **V +0,15**
-* a hír katasztrófáról szól, de a mérés nyugodt: **V −0,20 és S +0,15**
-* a Nap/geomágneses témák bárhol ellenőrizhetők; a földrengés, vihar, árvíz csak a 250 km-es körzetben (vagy hely nélküli helyi/országos hírnél). 12 óránál régebbi mátrixot nem használ.
+## v41 – WebGL glóbusz
+- `public/js/modules/globe3d.js`: Three.js glóbusz (InstancedMesh pontok, partvonalak, glóbusz-izzás). A könyvtárat futásidőben tölti be (jsDelivr, három@0.160.0), a service worker gyorsítótárazza.
+- Hiba, offline első indítás vagy WebGL hiánya esetén automatikusan a Canvas-glóbusz (`globe.js`) marad; a **3D/2D** gomb kézzel vált, a választást megjegyzi.
 
-Kimenet a P8-buszra: `data/metrics/media_noise_matrix.json` (`M2_MEDIA_ZAJ`). Az M8 Sentinel a `data/metrics/weights_M2.json` fájllal hangolhatja a súlyokat (`[indulat, csalogatás, bizonyíték, megerősítés]`, 0..2).
+## v42 – szerkeszthető beállítás
+- `config/user.json` a repóban: csak a módosítandó részeket kell megadni, a többi az alapbeállításból jön (minta: `config/user.example.json`).
+- Szabályok: objektum mezőnként fésülődik, lista cserélődik; `*_add` / `*_remove` hozzáad / töröl; `regions` kóddal módosít (`enabled: false` kikapcsol); `trust` új szintje felülírja a beépítetteket; `clickbait_add` új kulcsszavak.
+- Hibás fájl esetén az alapbeállítás marad, a hiba a Szerver-elemzés panelen is látszik.
+- A fájl mentése azonnal elindítja a futást (push-eseményre).
+- Az Öntanuló AI panel „Javaslat készítése" gombja a szavazatokból kész `user.json`-részletet állít össze.
 
-Régebbi, laza alakok is elfogadottak: `{"updated":"2026-11-01T11:30:00Z","flags":["geomagnetic"]}`, `{"anomalies":{"earthquake":{"active":true,"magnitude":5.1},"solar":{"class":"M2.1"}}}`, vagy lapos kulcsok: `kp`, `earthquake_max_mag`, `wind_gust_kmh`, `pressure_drop_3h`, `flare_class`.
+## v43 – egész számú, gyökös pontozás
+- `ATM = round( √( G% · S% · (100 − V%) ) )`: a tagok egész százalékok (.5-nél felfelé kerekítve), az eredmény egész szám (0–~742; tanult V mellett legfeljebb ~975).
+- A 0,5% alatti szenzációszint 0-ra kerekedik (kiesik a halk zaj); a gyök felerősíti a kis értékeket és lágyítja a nagyokat.
+- A küszöbök alsó korlátját a program átszámolja (0,05 → 224, 0,15 → 387), a percentilis alapú részük változatlan elv.
+- Visszaállás a régi tizedes képletre: `config/user.json` → `{"scoring": {"mode": "classic"}}`.
 
-## Frissítés
-A munkafolyamat csak akkor csomagol ki, ha a `.mnt-version` fájl nem `v40`. Újrakicsomagoláshoz: Run workflow › `force_extract = igen` (felülírja a kézi módosításokat).
+## v44
+- `exclude_domains`: az EU-s látogatókat blokkoló vagy képaláírás-szemetet adó források (Post Register, WV News stb.) kiesnek a gyűjtéskor és a régi adatokból is. Bővítés: `config/user.json` → `{"exclude_domains_add": ["pelda.com"]}`, visszavétel: `exclude_domains_remove`.
+- AI-alapszint levonása: a telefon az AI-becslésből levonja a szabály szerint nyugodt hírek mediánját (legalább 30 ilyen hírnél), így a gyök nem erősíti fel az alapzajt.
 
-## Felülíró fájlok (nem kell újra beilleszteni a munkafolyamatot)
-A tár gyökerébe `.txt`-ként feltöltött `ovl__<útvonal>.txt` fájl minden futás előtt a megfelelő helyre másolódik: az útvonalban a `/` helyett `__` áll. Például `ovl__scripts__mnt_server.py.txt` → `scripts/mnt_server.py`, `ovl__config__sources.json.txt` → `config/sources.json`. A hibás Python- vagy JSON-fájlt kihagyja, a `.github` mappába nem ír.
+## v45
+- Postaláda: a workflow a repó `inbox/*.txt` fájljait (base64-es tar.gz frissítés-csomagok) magától kicsomagolja, ellenőrzi (csak src/, public/, config/sources.json, requirements.txt, README.md, PROJECT_VERSION, .gitignore; nem nyúl a config/user.json-hoz és a workflow-hoz), és hiba esetén a csomagot az `inbox/failed/` mappába teszi. A napló: `inbox/LOG.md`.
+- A projekt a repó fájljaiban él (a workflow csak egyszer bontja ki: `PROJECT_VERSION` hiányában).
+- Forrásnevek egyesítése (edition.cnn.com → cnn.com; egyedi: `domain_aliases`), töltelékszavak kiszűrése a felszálló kifejezésekből, „Diagnosztika másolása" gomb az Öntanuló AI panelben.

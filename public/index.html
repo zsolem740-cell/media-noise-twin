@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Média-Zaj Twin</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<header class="top">
+  <div><h1>MÉDIA-ZAJ <span>TWIN</span></h1><div class="sub">v45 · 3D · öntanuló AI</div></div>
+  <div id="status" class="status">betöltés…</div>
+</header>
+<main>
+  <section class="kpis">
+    <div class="kpi glass"><span class="k">ATM átlag</span><b id="kpi-atm">–</b></div>
+    <div class="kpi glass"><span class="k">Top 10% (p90)</span><b id="kpi-p90">–</b></div>
+    <div class="kpi glass"><span class="k">Hírek</span><b id="kpi-n">–</b></div>
+    <div class="kpi glass"><span class="k">Frissítve</span><b id="kpi-fresh">–</b></div>
+  </section>
+
+  <section id="globeWrap" class="globe-wrap glass">
+    <canvas id="globe" class="globecv" aria-label="Hírek glóbusza"></canvas>
+    <div class="gctl">
+      <button id="gZoomIn" type="button" aria-label="Nagyítás">+</button>
+      <button id="gZoomOut" type="button" aria-label="Kicsinyítés">−</button>
+      <button id="gFull" type="button" aria-label="Teljes képernyő">⤢</button>
+      <button id="gMode" type="button" aria-label="Glóbusz: 3D vagy 2D nézet">2D</button>
+    </div>
+    <div id="pick" class="pick" hidden></div>
+  </section>
+
+  <nav id="filters" class="chips" aria-label="Régió"></nav>
+
+  <section class="controls glass">
+    <button id="sortBtn" class="btn small" type="button">Rendezés: idő</button>
+    <select id="typeSel" aria-label="Szavazat szerinti szűrés">
+      <option value="all">Minden hír</option>
+      <option value="unvoted">Még nem szavazott</option>
+      <option value="fact">Általam tényként jelölt</option>
+      <option value="bait">Általam clickbait-nek jelölt</option>
+    </select>
+    <label class="range">ATM korlát: <b id="atmVal">nincs korlát</b>
+      <input id="atmRange" type="range" min="0.05" max="0.6" step="0.01" value="0.6">
+    </label>
+    <span id="thInfo" class="muted"></span>
+    <span id="personal" class="muted"></span>
+  </section>
+
+  <details id="aiBox" class="glass panel"><summary>Öntanuló AI</summary><div id="aiBody" class="body"></div></details>
+  <details id="insBox" class="glass panel"><summary>Szerver-elemzés (trend, anomália, témák)</summary><div id="insBody" class="body"></div></details>
+
+  <section id="list" class="list"></section>
+  <p id="empty" class="muted center" hidden>Nincs a szűrőnek megfelelő hír.</p>
+</main>
+
+<dialog id="shareModal">
+  <h2>Megosztott tartalom elemzése</h2>
+  <label>Cím / szöveg
+    <textarea id="shareText" rows="4" placeholder="Illeszd be a hír címét vagy szövegét"></textarea>
+  </label>
+  <label>URL
+    <input id="shareUrl" type="url" inputmode="url" placeholder="https://…">
+  </label>
+  <label>Régió
+    <select id="shareRegion"></select>
+  </label>
+  <div id="shareResult" class="result"></div>
+  <div class="row">
+    <button id="analyzeBtn" class="btn" type="button">Elemzés</button>
+    <button id="closeBtn" class="btn ghost" type="button">Bezár</button>
+  </div>
+</dialog>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
