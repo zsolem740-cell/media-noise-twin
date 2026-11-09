@@ -54,7 +54,7 @@ def collect_pairs(res: dict, comps: list, rc: dict) -> list:
     min_claims = rc.get("min_claims", 1)
     pairs = []
     for c in comps:
-        sp, bp = res["prices"].get(c["symbol"]), res["prices"].get(c["bench_symbol"])
+        sp, bp = res["prices"].get(c["key"]), res["prices"].get(c["bench_key"])
         if not sp or not bp:
             continue
         z = abnormal_z(sp, bp)

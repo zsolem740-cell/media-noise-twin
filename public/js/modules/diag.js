@@ -1,7 +1,7 @@
 // Diagnosztika: tömör, pontos szöveg a vágólapra (beszélgetésbe illesztéshez, kevés tokenért).
 import { quantile, fmtAtm, scoringMode } from './model.js';
 
-export const APP_VERSION = 'v46';
+export const APP_VERSION = 'v46.1';
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
 export function buildDiag(s) {
@@ -42,7 +42,8 @@ export function buildDiag(s) {
   const rs = data.research && data.research.status;
   if (rs) {
     const okN = rs.ok ? rs.ok.length : 0, failN = rs.failed ? Object.keys(rs.failed).length : 0;
-    let t = `piaci napló: ${rs.news_days || 0} hírnap · ár ${okN}/${okN + failN} OK · utolsó ár ${rs.price_last || '–'}`;
+    const via = rs.via && Object.keys(rs.via).length ? ' (' + Object.entries(rs.via).map(([k, v]) => `${k} ${v}`).join(', ') + ')' : '';
+    let t = `piaci napló: ${rs.news_days || 0} hírnap · ár ${okN}/${okN + failN} OK${via} · utolsó ár ${rs.price_last || '–'}`;
     const f = rs.failed ? Object.entries(rs.failed).slice(0, 3).map(([k, v]) => `${k} (${v})`).join(', ') : '';
     if (f) t += ` · hiba: ${f}`;
     if (rs.match_now) t += ` · most ${rs.match_now.n} cégegyezés`;

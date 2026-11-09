@@ -2,7 +2,8 @@
 
 Mit csinál (a felületet és a pontozást NEM érinti):
  1) naponta cégenként összegzi a cégekről szóló híreket (darab, átlagos ATM/S, a cím által állított irány),
- 2) legfeljebb néhány óránként letölti a napi záróárakat (stooq.com, kulcs nélkül),
+ 2) legfeljebb néhány óránként letölti a napi záróárakat (forráslánc: Yahoo grafikon-végpont kulcs nélkül,
+    majd Stooq, ha van hozzá kulcs; a Stooq 2026 márciusától kulcs nélkül nem ad adatot),
  3) kiértékeli, hogy az árfolyam igazolja-e a határozott piaci állításokat (lásd evaluate.py).
 Az eredmény az atm_history.json "research" kulcsában van; az állapot a Diagnosztika másolása gombbal olvasható.
 """
@@ -10,9 +11,14 @@ from __future__ import annotations
 
 import copy
 import csv
+import hashlib
 import io
+import json
+import os
 import re
-from datetime import timedelta
+import time
+from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 
 from src.research.evaluate import evaluate
 from src.utils.network import make_session
@@ -31,12 +37,16 @@ def _direction(title: str, up, down) -> int:
     return 1 if u and not d else -1 if d and not u else 0
 
 
+def _bench_syms(rc: dict, bench: str) -> dict:
+    b = (rc.get("benchmarks") or {}).get(bench, {})
+    return {"stooq": b} if isinstance(b, str) else dict(b)
+
+
 def build_companies(rc: dict) -> list[dict]:
-    bench = rc.get("benchmarks", {})
     out = []
     for c in rc.get("companies", []):
-        out.append({"id": c["id"], "symbol": c["symbol"], "bench_symbol": bench.get(c.get("bench"), c.get("bench")),
-                    "rx": _rx(c.get("names", []))})
+        out.append({"id": c["id"], "key": c["id"], "bench": c.get("bench"), "bench_key": f"bench_{c.get('bench')}",
+                    "syms": {"yahoo": c.get("yahoo"), "stooq": c.get("symbol")}, "rx": _rx(c.get("names", []))})
     return out
 
 
@@ -79,13 +89,43 @@ def news_daily(items: list[dict], comps: list[dict], rc: dict, now) -> tuple[dic
     return out, {"n": sum(now_hits.values()), "top": top}
 
 
-def fetch_stooq(session, symbol: str, d1, d2) -> dict:
-    url = f"https://stooq.com/q/d/l/?s={symbol}&d1={d1:%Y%m%d}&d2={d2:%Y%m%d}&i=d"
-    r = session.get(url)
+YAHOO_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+
+
+def fetch_yahoo(session, symbol: str, d1, d2) -> dict:
+    p1 = int(datetime(d1.year, d1.month, d1.day, tzinfo=timezone.utc).timestamp())
+    p2 = int(datetime(d2.year, d2.month, d2.day, tzinfo=timezone.utc).timestamp()) + 86400
+    r = session.get("https://query1.finance.yahoo.com/v8/finance/chart/" + quote(symbol, safe=""),
+                    params={"period1": p1, "period2": p2, "interval": "1d"},
+                    headers={"User-Agent": YAHOO_UA, "Accept": "application/json"})
+    if r.status_code != 200:
+        raise ValueError(f"HTTP {r.status_code}")
+    chart = r.json().get("chart") or {}
+    result = chart.get("result")
+    if not result:
+        raise ValueError(str((chart.get("error") or {}).get("code") or "üres")[:18])
+    r0 = result[0]
+    ts = r0.get("timestamp") or []
+    closes = (((r0.get("indicators") or {}).get("quote") or [{}])[0]).get("close") or []
+    off = int((r0.get("meta") or {}).get("gmtoffset") or 0)  # a tőzsde helyi napja szerint
+    out = {}
+    for t, c in zip(ts, closes):
+        if c is not None:
+            out[datetime.fromtimestamp(t + off, timezone.utc).date().isoformat()] = float(c)
+    if not out:
+        raise ValueError("üres válasz")
+    return out
+
+
+def fetch_stooq(session, symbol: str, d1, d2, apikey: str = "") -> dict:
+    if not apikey:
+        raise ValueError("nincs kulcs")
+    r = session.get("https://stooq.com/q/d/l/", params={"s": symbol, "d1": f"{d1:%Y%m%d}", "d2": f"{d2:%Y%m%d}", "i": "d", "apikey": apikey})
     r.raise_for_status()
     txt = r.text.strip()
     if not txt.lower().startswith("date,"):
-        raise ValueError("nincs adat")
+        low = txt.lower()
+        raise ValueError("kulcs hibás" if "apikey" in low else "napi limit" if "limit" in low else "nincs adat")
     out = {}
     for row in csv.DictReader(io.StringIO(txt)):
         try:
@@ -97,7 +137,29 @@ def fetch_stooq(session, symbol: str, d1, d2) -> dict:
     return out
 
 
-def update(prev: dict | None, items: list[dict], cfg: dict, now=None, fetch=None) -> dict | None:
+def _short(exc: Exception) -> str:
+    m = str(exc)
+    if "429" in m:
+        return "429"
+    if "timed out" in m.lower() or "timeout" in m.lower():
+        return "időtúllépés"
+    return m.replace("HTTP ", "")[:14]
+
+
+def _default_fetch(rc: dict):
+    session = make_session(retries=1, backoff=1.0, timeout=12)
+    apikey = rc.get("stooq_apikey") or os.environ.get("STOOQ_APIKEY", "")
+
+    def f(provider, sym, d1, d2):
+        if provider == "yahoo":
+            return fetch_yahoo(session, sym, d1, d2)
+        if provider == "stooq":
+            return fetch_stooq(session, sym, d1, d2, apikey)
+        raise ValueError("ismeretlen forrás")
+    return f
+
+
+def update(prev: dict | None, items: list[dict], cfg: dict, now=None, fetch=None, pause: float = 0.8) -> dict | None:
     rc = cfg.get("research") or {}
     if not rc.get("enabled"):
         return prev
@@ -118,22 +180,40 @@ def update(prev: dict | None, items: list[dict], cfg: dict, now=None, fetch=None
                 res["news_daily"][day][cid] = rec
     st["match_now"] = now_hits
 
-    # 2) árfolyam: legfeljebb fetch_hours óránként
+    # 2) árfolyam: legfeljebb fetch_hours óránként (hiba esetén óránként), a beállítás változásakor azonnal
+    providers = rc.get("providers") or ["yahoo", "stooq"]
+    targets = {c["key"]: c["syms"] for c in comps}
+    for bname in sorted({c["bench"] for c in comps if c["bench"]}):
+        targets[f"bench_{bname}"] = _bench_syms(rc, bname)
+    has_key = bool(rc.get("stooq_apikey") or os.environ.get("STOOQ_APIKEY"))
+    sig = hashlib.sha1(json.dumps([providers, sorted((k, sorted(v.items())) for k, v in targets.items()), has_key], default=str).encode()).hexdigest()[:10]
     last = parse_iso(st["price_attempt"]) if st.get("price_attempt") else None
-    if last is None or now - last >= timedelta(hours=rc.get("fetch_hours", 6)):
-        fetch = fetch or (lambda sym, d1, d2: fetch_stooq(make_session(retries=2, backoff=1.0, timeout=12), sym, d1, d2))
+    wait = timedelta(hours=min(rc.get("fetch_hours", 6), 1)) if st.get("failed") else timedelta(hours=rc.get("fetch_hours", 6))
+    if last is None or st.get("fetch_sig") != sig or now - last >= wait:
+        fetch = fetch or _default_fetch(rc)
         d2 = now.date()
         d1 = d2 - timedelta(days=rc.get("lookback_days", 150))
-        symbols = sorted({c["symbol"] for c in comps} | {c["bench_symbol"] for c in comps if c["bench_symbol"]})
-        ok, failed = [], {}
-        for sym in symbols:
-            try:
-                res["prices"].setdefault(sym, {}).update(fetch(sym, d1, d2))
-                ok.append(sym)
-            except Exception as exc:  # egy cég hibája nem állítja meg a többit
-                failed[sym] = str(exc)[:40]
-        st["price_attempt"] = to_iso_utc(now)
-        st["ok"], st["failed"] = ok, failed
+        ok, failed, via = [], {}, {}
+        for key, syms in sorted(targets.items()):
+            errs = []
+            for prov in providers:
+                sym = syms.get(prov)
+                if not sym:
+                    errs.append(f"{prov[0]}:–")
+                    continue
+                try:
+                    res["prices"].setdefault(key, {}).update(fetch(prov, sym, d1, d2))
+                except Exception as exc:  # egy cég hibája nem állítja meg a többit
+                    errs.append(f"{prov[0]}:{_short(exc)}")
+                else:
+                    ok.append(key)
+                    via[prov] = via.get(prov, 0) + 1
+                    break
+            else:
+                failed[key] = "|".join(errs)[:40]
+            if pause:
+                time.sleep(pause)
+        st.update({"price_attempt": to_iso_utc(now), "fetch_sig": sig, "ok": ok, "failed": failed, "via": via})
 
     # 3) karbantartás + értékelés
     keep = (now.date() - timedelta(days=rc.get("retain_days", 400))).isoformat()

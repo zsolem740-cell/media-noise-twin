@@ -71,3 +71,6 @@ Források, geofence és trust-domainek: `config/sources.json`.
 
 ## v46
 - Passzív piaci napló (`src/research/`): cégenként naponta összegzi a híreket (darab, ATM, a cím által állított irány), a napi záróárakat a stooq.com-ról tölti le (kulcs nélkül, legfeljebb 6 óránként), és magától kiértékeli, hogy az árfolyam igazolja-e a határozott piaci állításokat (permutációs teszt, AUC). A felületet és a pontozást nem érinti; az eredmény az `atm_history.json` `research` kulcsában van, az állapot a „Diagnosztika másolása" gombbal olvasható. Kutatási eszköz, nem befektetési tanács. Cégek és szavak: `config/sources.json` → `research` (a `config/user.json`-ban: `"research": {"companies_add": [...]}`).
+
+### v46.1
+- Árfolyamforrás: a Stooq 2026 márciusától kulcs nélkül nem ad adatot, ezért az alap a Yahoo grafikon-végpont (kulcs nélkül, nem hivatalos); a Stooq tartalék, ha `research.stooq_apikey` (vagy `STOOQ_APIKEY` környezeti változó) meg van adva. Hibás ár esetén óránként újrapróbál; a beállítás változásakor azonnal.
