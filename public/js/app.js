@@ -12,6 +12,7 @@ import { parseShare, openShare, analyze } from './modules/share.js';
 import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
+import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
 
 const bus = new EventTarget();
 const on = (n, f) => bus.addEventListener(n, f);
@@ -30,7 +31,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', globe: null,
 };
 
 function setData(d) {
@@ -121,11 +122,29 @@ async function runAuditUi() {
   auditBusy = true;
   ui.setStatus('audit fut… (néhány másodperc)');
   try {
-    state.auditText = await runAudit(state.votes, (state.data && state.data.items) || [], () => new Promise(r => setTimeout(r, 0)));
+    state.auditText = await runAudit(state.votes, (state.data && state.data.items) || [], () => new Promise(r => setTimeout(r, 0)),
+      { th: state.model && state.model.thresholds, blind: blindStats(state.blind, state.lam) });
     ui.setStatus('audit kész');
   } catch (_) { state.auditText = 'Az audit hibára futott.'; ui.setStatus('audit hiba'); }
   auditBusy = false;
   renderPanels();
+}
+
+function blindView() {
+  const b = state.blind, it = nextItem(b);
+  return { open: state.blindOpen, total: b ? b.items.length : 0, answered: answeredCount(b), title: it ? it.title : '',
+    onStart: () => {
+      if (!state.blind) {
+        const items = pickSample(state.votes);
+        if (items.length < 20) { ui.setStatus('kevés (24 óránál régebbi) szavazat a vak újracímkézéshez'); return; }
+        state.blind = { created: Date.now(), items, answers: {} };
+        saveBlind(state.blind);
+      }
+      state.blindOpen = true; renderPanels();
+    },
+    onAnswer: k => { const cur = nextItem(state.blind); if (!cur) return; state.blind.answers[cur.id] = k; saveBlind(state.blind); renderPanels(); },
+    onClose: () => { state.blindOpen = false; renderPanels(); },
+  };
 }
 
 function copyAudit() {
@@ -183,7 +202,7 @@ function renderPanels() {
       votes: state.votes.length, steps: state.learner.steps, lambda: state.lam, boot: state.learner.boot, top,
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
-    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, onSuggest, onCopySuggestion });
+    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), onSuggest, onCopySuggestion });
   }
   if (ui.$('insBox').open) ui.renderInsights(ui.$('insBody'), state.data && state.data.insights, regionLabel, state.data && state.data.config);
 }
@@ -330,7 +349,7 @@ async function init() {
     store.getAll('votes'), store.getAll('dwell'), store.get('ai', 'state'), store.get('cache', 'atm'),
   ]);
   if (getPref() === '3d') enable3D();   // háttérben; hiba esetén marad a 2D
-  state.votes = votes; state.dwell = dwell;
+  state.votes = votes; state.dwell = dwell; state.blind = loadBlind();
   if (saved) state.learner = new Learner(saved);
   if (cached) { setData(cached); ui.setStatus('mentett adat'); }
   render();

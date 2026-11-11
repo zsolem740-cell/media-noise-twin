@@ -81,3 +81,6 @@ Források, geofence és trust-domainek: `config/sources.json`.
 
 ### v47.1
 - „Audit futtatása” gomb az Öntanuló AI panelben: időbeli teszt (az első 70% szavazaton választott λ, az utolsó 30%-on mért AUC, bootstrap-sávval), forrás-kihagyásos teszt (az AI újratanítva véletlen és forrás szerinti felosztással), és a szavazatok koncentrációja. Az eredmény a panelben jelenik meg, az „Audit másolása” gombbal másolható. A service worker fájllistája a diag.js és audit.js modulokkal bővült.
+
+### v47.2
+- Az Audit kiegészült a küszöb-elemzéssel (clickbait-arány ATM-sávonként, a sárga és piros küszöb pontossága, lefedése és F1-értéke, F1-optimális küszöb; a szavazáskor látott szín torzíthat), és a **vak újracímkézéssel**: ~100 régebbi szavazat címe számok és forrás nélkül; a válaszok külön (localStorage) tárolódnak, a tanulót és a szavazatokat nem módosítják. Az Audit a vak eredményből egyezést, kappát és a vak címkékkel mért AUC-t ad.

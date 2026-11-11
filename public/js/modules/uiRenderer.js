@@ -22,6 +22,20 @@ export function renderKpis(stats, data) {
   f.className = age > 180 ? 'bad' : age > 90 ? 'warn' : '';  // elavuló adat: borostyán 90 perc, piros 3 óra fölött (a GitHub ütemezése kb. óránkénti ritmust ad)
 }
 
+// Vak újracímkézés kártya: csak a cím látszik, a szám és a forrás szándékosan rejtve.
+function renderBlind(box, b) {
+  const mk = (txt, fn) => { const x = el('button', 'btn small', txt); x.type = 'button'; x.addEventListener('click', fn); return x; };
+  if (!b.open) { box.append(mk(b.total ? `Vak újracímkézés folytatása (${b.answered}/${b.total})` : 'Vak újracímkézés indítása (100 hír)', b.onStart)); return; }
+  const card = el('div', 'blindcard');
+  card.append(el('div', 'small', `Vak újracímkézés: ${b.answered}/${b.total} · a számok és a forrás szándékosan rejtve`));
+  if (b.title) {
+    card.append(el('div', 'blindtitle', b.title));
+    card.append(mk('Tény', () => b.onAnswer(0)), mk('Clickbait', () => b.onAnswer(1)), mk('Kihagy', () => b.onAnswer(-1)));
+  } else card.append(el('div', 'small', 'Kész. Az eredményt az „Audit futtatása” mutatja.'));
+  card.append(mk('Bezárás (mentve)', b.onClose));
+  box.append(card);
+}
+
 // Egészség-sáv: szerver oldali problémák (hard) és kliens oldali emlékeztetők (soft).
 export function renderHealth(list) {
   const box = $('healthBox');
@@ -119,6 +133,7 @@ export function renderAi(box, ai, handlers = {}) {
     d.addEventListener('click', handlers.onDiag);
     box.append(d);
   }
+  if (handlers.blind) renderBlind(box, handlers.blind);
   if (handlers.onAudit) {
     const a = el('button', 'btn small', handlers.auditText ? 'Audit újrafuttatása' : 'Audit futtatása');
     a.type = 'button';
