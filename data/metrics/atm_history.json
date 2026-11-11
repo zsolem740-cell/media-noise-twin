@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-11-11T16:52:56Z",
+ "generated_at": "2026-11-11T16:57:15Z",
  "model": {
   "formula": "ATM = round(sqrt(G% * S% * (100 - V%)))",
   "scoring": "sqrt_int",
@@ -210,8 +210,8 @@
  },
  "summary": {
   "n_items": 1656,
-  "atm_mean": 69.2579,
-  "atm_p90": 199.0,
+  "atm_mean": 69.5821,
+  "atm_p90": 201.0,
   "by_region": {
    "AT-1": {
     "n": 234,
@@ -221,9 +221,9 @@
    },
    "HU-NAT": {
     "n": 600,
-    "atm_mean": 58.8833,
+    "atm_mean": 59.565,
     "v_mean": 0.54,
-    "s_mean": 0.034
+    "s_mean": 0.035
    },
    "HU-VA": {
     "n": 140,
@@ -233,9 +233,9 @@
    },
    "INT": {
     "n": 600,
-    "atm_mean": 78.29,
-    "v_mean": 0.583,
-    "s_mean": 0.047
+    "atm_mean": 78.5033,
+    "v_mean": 0.584,
+    "s_mean": 0.048
    },
    "SI-1": {
     "n": 82,
@@ -256,18 +256,18 @@
    "0bf4c6e21a5c3e88",
    "34504152b69bf5b9"
   ],
-  "bytes": 1502892
+  "bytes": 1504582
  },
  "insights": {
   "trend": {
    "INT": {
-    "now": 78.29,
+    "now": 78.5033,
     "prev": null,
     "delta": null,
     "n": 600
    },
    "HU-NAT": {
-    "now": 58.8833,
+    "now": 59.565,
     "prev": null,
     "delta": null,
     "n": 600
@@ -330,7 +330,7 @@
     "source": "The New York Times",
     "region": "INT",
     "S": 0.351,
-    "z": 5.0
+    "z": 5.1
    },
    {
     "id": "fbdd261db02a0b83",
@@ -369,14 +369,19 @@
     "expected": 0.1
    },
    {
-    "term": "kormány",
-    "recent": 37,
-    "expected": 2.7
-   },
-   {
     "term": "magyarország",
     "recent": 20,
     "expected": 1.1
+   },
+   {
+    "term": "kormány",
+    "recent": 36,
+    "expected": 2.7
+   },
+   {
+    "term": "magyar",
+    "recent": 32,
+    "expected": 2.4
    },
    {
     "term": "rendkívüli",
@@ -384,19 +389,14 @@
     "expected": 0.3
    },
    {
-    "term": "költségvetés",
-    "recent": 9,
-    "expected": 0.1
-   },
-   {
     "term": "schools",
     "recent": 9,
     "expected": 0.1
    },
    {
-    "term": "magyar",
-    "recent": 31,
-    "expected": 2.4
+    "term": "orbán",
+    "recent": 17,
+    "expected": 1.0
    }
   ],
   "sources": [
@@ -410,7 +410,7 @@
     "domain": "wbasket.hu",
     "n": 7,
     "mean_S": 0.078,
-    "mean_ATM": 186.1429
+    "mean_ATM": 187.4286
    },
    {
     "domain": "atv.hu",
@@ -455,6 +455,12 @@
     "mean_ATM": 148.0
    },
    {
+    "domain": "espn.com",
+    "n": 7,
+    "mean_S": 0.077,
+    "mean_ATM": 144.1429
+   },
+   {
     "domain": "vaol.hu",
     "n": 34,
     "mean_S": 0.077,
@@ -465,15 +471,52 @@
     "n": 7,
     "mean_S": 0.072,
     "mean_ATM": 128.1429
-   },
-   {
-    "domain": "espn.com",
-    "n": 7,
-    "mean_S": 0.052,
-    "mean_ATM": 125.4286
    }
   ],
   "events": [
+   {
+    "label": "Latest College Footbal Playoff rankings sports new No. 1, some head-scratching decisions",
+    "n": 5,
+    "spread": 0.239,
+    "atm": 143.6,
+    "sources": [
+     {
+      "id": "89513a16b7f7a67f",
+      "domain": "espn.com",
+      "source": "ESPN",
+      "S": 0.239,
+      "title": "College Football Playoff Bubble Watch after second ranking"
+     },
+     {
+      "id": "db9f5d5c58e8d748",
+      "domain": "cbssports.com",
+      "source": "CBS Sports",
+      "S": 0.083,
+      "title": "College Football Playoff Rankings: Georgia moves to No. 1 as Alabama, UCLA join top four in second release"
+     },
+     {
+      "id": "dda8dd44555d6f03",
+      "domain": "dawgnation.com",
+      "source": "DawgNation",
+      "S": 0.06,
+      "title": "Georgia football claims top spot in updated College Football Playoff rankings"
+     },
+     {
+      "id": "19939ceeb2a1c4cd",
+      "domain": "on3.com",
+      "source": "On3",
+      "S": 0.048,
+      "title": "Takeaways from the latest College Football Playoff ranking: Tennessee jobbed, Indiana's fall and more"
+     },
+     {
+      "id": "94f76fa32da85c4b",
+      "domain": "nypost.com",
+      "source": "New York Post",
+      "S": 0.0,
+      "title": "Latest College Footbal Playoff rankings sports new No. 1, some head-scratching decisions"
+     }
+    ]
+   },
    {
     "label": "GOP House rejects Hegseth impeachment effort",
     "n": 5,
@@ -563,9 +606,9 @@
    },
    {
     "label": "3 dead after vehicle crashes into people in North Hollywood",
-    "n": 8,
+    "n": 6,
     "spread": 0.119,
-    "atm": 101.125,
+    "atm": 101.1667,
     "sources": [
      {
       "id": "4cce8a170c3c5e5a",
@@ -575,18 +618,11 @@
       "title": "3 Killed, 3 Others Critical After SUV Crashes Into People In North Hollywood la"
      },
      {
-      "id": "681afda71bf115ff",
-      "domain": "cnn.com",
-      "source": "CNN",
-      "S": 0.076,
-      "title": "Vehicle strikes pedestrians in North Hollywood"
-     },
-     {
       "id": "dd16af0fec14dbc1",
       "domain": "cbsnews.com",
       "source": "CBS News",
-      "S": 0.048,
-      "title": "At least 3 dead after car crashes into North Hollywood food stand"
+      "S": 0.06,
+      "title": "At least 3 killed when SUV crashes into North Hollywood food stand"
      },
      {
       "id": "65682eefb48f9acc",
@@ -637,49 +673,6 @@
       "source": "Hirnavigator",
       "S": 0.0,
       "title": "Nyilvános az az egészségügyi tanulmánysorozat, amit az Orbán-kormány el akart titkolni"
-     }
-    ]
-   },
-   {
-    "label": "Latest College Footbal Playoff rankings sports new No. 1, some head-scratching decisions",
-    "n": 5,
-    "spread": 0.083,
-    "atm": 117.4,
-    "sources": [
-     {
-      "id": "db9f5d5c58e8d748",
-      "domain": "cbssports.com",
-      "source": "CBS Sports",
-      "S": 0.083,
-      "title": "College Football Playoff Rankings: Georgia moves to No. 1 as Alabama, UCLA join top four in second release"
-     },
-     {
-      "id": "89513a16b7f7a67f",
-      "domain": "espn.com",
-      "source": "ESPN",
-      "S": 0.066,
-      "title": "College Football Playoff Bubble Watch after second ranking"
-     },
-     {
-      "id": "dda8dd44555d6f03",
-      "domain": "dawgnation.com",
-      "source": "DawgNation",
-      "S": 0.06,
-      "title": "Georgia football claims top spot in updated College Football Playoff rankings"
-     },
-     {
-      "id": "19939ceeb2a1c4cd",
-      "domain": "on3.com",
-      "source": "On3",
-      "S": 0.048,
-      "title": "Takeaways from the latest College Football Playoff ranking: Tennessee jobbed, Indiana's fall and more"
-     },
-     {
-      "id": "94f76fa32da85c4b",
-      "domain": "nypost.com",
-      "source": "New York Post",
-      "S": 0.0,
-      "title": "Latest College Footbal Playoff rankings sports new No. 1, some head-scratching decisions"
      }
     ]
    },
@@ -745,16 +738,16 @@
  },
  "profiles": {
   "nypost.com": {
-   "n": 1678,
-   "mS": 0.046212753277711564,
-   "M2S": 9.402953047079864,
-   "mA": 60.734803337306275
+   "n": 1679,
+   "mS": 0.04618522930315665,
+   "M2S": 9.405087393686726,
+   "mA": 60.69863013698626
   },
   "cnn.com": {
-   "n": 689,
-   "mS": 0.0730304789550073,
-   "M2S": 2.204930359941947,
-   "mA": 111.76632801161108
+   "n": 691,
+   "mS": 0.07300434153400874,
+   "M2S": 2.2050929869754,
+   "mA": 111.75253256150512
   },
   "hirnavigator.hu": {
    "n": 325,
@@ -775,10 +768,10 @@
    "mA": 46.41484716157208
   },
   "pagesix.com": {
-   "n": 227,
-   "mS": 0.05427312775330398,
-   "M2S": 1.9687590660792944,
-   "mA": 86.3920704845815
+   "n": 228,
+   "mS": 0.05410087719298247,
+   "M2S": 1.9702946798245606,
+   "mA": 86.37280701754386
   },
   "hvg.hu": {
    "n": 190,
@@ -799,10 +792,10 @@
    "mA": 140.91860465116272
   },
   "bbc.co.uk": {
-   "n": 154,
-   "mS": 0.02058441558441559,
-   "M2S": 0.46078340259740264,
-   "mA": 28.525974025974012
+   "n": 155,
+   "mS": 0.02045161290322581,
+   "M2S": 0.46120438709677425,
+   "mA": 28.341935483870955
   },
   "telex.hu": {
    "n": 151,
@@ -811,10 +804,10 @@
    "mA": 53.01986754966888
   },
   "vietnam.vn": {
-   "n": 143,
-   "mS": 0.006461538461538461,
-   "M2S": 0.10178553846153843,
-   "mA": 13.923076923076925
+   "n": 144,
+   "mS": 0.006416666666666666,
+   "M2S": 0.10182699999999996,
+   "mA": 13.826388888888891
   },
   "hirstart.hu": {
    "n": 135,
@@ -829,10 +822,10 @@
    "mA": 56.29133858267718
   },
   "nytimes.com": {
-   "n": 121,
-   "mS": 0.04339669421487603,
-   "M2S": 0.44591695867768605,
-   "mA": 70.91735537190084
+   "n": 122,
+   "mS": 0.04332786885245902,
+   "M2S": 0.44598688524590174,
+   "mA": 71.03278688524591
   },
   "globalhir.hu": {
    "n": 114,
@@ -2547,6 +2540,92 @@
  },
  "items": [
   {
+   "id": "5e35b9555661fa96",
+   "region": "INT",
+   "title": "Travis Kelce recruiting superstar wife Taylor Swift to help take his podcast to ‘new heights’",
+   "summary": "Swift made her first and, so far, only appearance on \"New Heights,\" co-hosted by Travis and his brother, Jason Kelce, in August 2025.",
+   "link": "https://pagesix.com/2026/11/11/entertainment/travis-kelce-recruits-taylor-swift-for-next-new-heights-podcast-event/",
+   "source": "New York Post",
+   "source_domain": "pagesix.com",
+   "published": "2026-11-11T16:55:32Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 1,
+    "ov": 0.818
+   },
+   "V0": 0.45,
+   "V": 0.441,
+   "S0": 0.0,
+   "S": 0.015,
+   "G": 0.6,
+   "ATM": 82
+  },
+  {
+   "id": "d1322a832194af0d",
+   "region": "INT",
+   "title": "Rex Ryan arrested for allegedly running over pedestrians’ feet in heated Nashville scene",
+   "summary": "Feet are getting Rex Ryan into trouble again. The former New York Jets head coach was arrested on Wednesday in Nashville, Tenn., authorities announced. The Metropolitan Nashville Police Department said in a statement that Ryan turned himself in “on six outstanding misdemeanor warrants” after he was accused of “striking two pedestrians with his pickup truck”...",
+   "link": "https://nypost.com/2026/11/11/sports/rex-ryan-arrested-for-allegedly-running-over-pedestrians-feet/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-11T16:55:24Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.8
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "6859e8fb32daa543",
+   "region": "INT",
+   "title": "White House to Dems: We ‘Will Not Be Extorted’",
+   "summary": "White House to Dems: We ‘Will Not Be Extorted’ CNN",
+   "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxOLXRudlY4ZHBfTDBRRWNJRXkyLTNoeHRfRzYzS2FKVVdqVlVnRTVZd3prVDJfVE1ob2dLN240Y1BNSERPTGhoNV82UGoyeDFvOTR5NWtFSncwb3RHUXNrMjlFRXVPaTlwRVZCVTFHTTlVdTNOaWpUdkl5R2R2TlEyS3NpN0s1NUFxWVFHOGgtRDdYNTJKV0NpTQ?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-11T16:54:41Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.676,
+   "S0": 0.064,
+   "S": 0.064,
+   "G": 0.6,
+   "ATM": 107,
+   "lat": 41.787,
+   "lng": -98.513
+  },
+  {
+   "id": "10aaaaf77c252997",
+   "region": "INT",
+   "title": "Meet the 2028 Potential Presidential Contenders – Ro Khanna",
+   "summary": "Meet the 2028 Potential Presidential Contenders – Ro Khanna CNN",
+   "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPV1FsSGlBU2VGYlhkZWxyaHhMU1JCaWRqQWFzNXRaMFFVdWZjWWY0ZXI3MkNlWWRTbVNwaktEVXhGanNsWVpVMlh2cFhBN0NYVzIwakFnR1ZOekF2ekl6ZUw1M3lURTBHSjVHNGN0a0NvQ1YzXzdTZ2NKX2llWG5uTllvVkdEVy1LdUtYckkyVVdpdw?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-11T16:53:20Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.676,
+   "S0": 0.064,
+   "S": 0.064,
+   "G": 0.6,
+   "ATM": 107
+  },
+  {
    "id": "0d7c1e860aafcf02",
    "region": "INT",
    "title": "Heroic bravery of female shopkeeper revealed after sheltering British troops from Nazis during WWII",
@@ -2586,7 +2665,7 @@
     "ov": 0.462
    },
    "V0": 0.45,
-   "V": 0.442,
+   "V": 0.441,
    "S0": 0.0,
    "S": 0.011,
    "G": 0.6,
@@ -2676,7 +2755,7 @@
     "ov": 0.909
    },
    "V0": 0.45,
-   "V": 0.442,
+   "V": 0.441,
    "S0": 0.189,
    "S": 0.294,
    "G": 0.6,
@@ -2725,6 +2804,31 @@
    "ATM": 0,
    "lat": 47.364,
    "lng": 19.568
+  },
+  {
+   "id": "f20ccf018a740af0",
+   "region": "INT",
+   "title": "Indonesia's vice president resigns amid signs ruling alliance is fraying",
+   "summary": "The news comes at a turbulent time for Prabowo, who faces a growing rift with his predecessor Joko Widodo.",
+   "link": "https://www.bbc.co.uk/news/articles/cmvgxgz87qqro?at_medium=RSS&at_campaign=rss",
+   "source": "BBC News",
+   "source_domain": "bbc.co.uk",
+   "published": "2026-11-11T16:38:07Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.667
+   },
+   "V0": 0.7,
+   "V": 0.714,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": -1.153,
+   "lng": 114.901
   },
   {
    "id": "cb36f55828f68be0",
@@ -2917,7 +3021,7 @@
     "ov": 0.636
    },
    "V0": 0.45,
-   "V": 0.431,
+   "V": 0.43,
    "S0": 0.125,
    "S": 0.125,
    "G": 0.6,
@@ -2948,7 +3052,7 @@
    "id": "b7805c33a38eafaa",
    "region": "INT",
    "title": "Iran War Updates: Iran vows not to part with \"single particle of enriched nuclear material\" as standoff continues",
-   "summary": "Iran War Updates: Iran vows not to part with \"single particle of enriched nuclear material\" as standoff continues CBS News Iran war live: Saudi-led coalition says multiple Houthi missiles destroyed Al Jazeera Oil up 1% after Iran says no nuclear material will leave the country CNBC Not A Particle of Enriched Nuclear Material Will Leave Iran: SNSC Chief تسنیم Iran rules out sending any enriched nuclear material out of the country Yahoo",
+   "summary": "Iran War Updates: Iran vows not to part with \"single particle of enriched nuclear material\" as standoff continues CBS News Iran war live: Iran’s Rezaei rejects moving nuclear material out of country Al Jazeera Oil up 1% after Iran says no nuclear material will leave the country CNBC Not A Particle of Enriched Nuclear Material Will Leave Iran: SNSC Chief تسنیم Iran rules out sending any enriched nuclear material out of the country Yahoo",
    "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE5JdnI2N05uOHdtZFhtb0U3MGN6bEhNN05QbE85RV81UGRMenBqY04tWXhLU1MxRzR6NWxZOUx5cnNzYmRwRFEwRWJnbi1Cc0JpMUt2aW53VEpWOFA0cEptN2xLLVB6S1RxNDlydWs5MGsySnprakktTlkwUmxqODQ?oc=5",
    "source": "CBS News",
    "source_domain": "cbsnews.com",
@@ -2999,7 +3103,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3069,6 +3173,24 @@
    "S": 0.056,
    "G": 0.6,
    "ATM": 107
+  },
+  {
+   "id": "dafcc27d6f541096",
+   "region": "INT",
+   "title": "Millions join Spain’s first general strike in 14 years in protest at rising housing costs",
+   "summary": "Millions join Spain’s first general strike in 14 years in protest at rising housing costs The Guardian",
+   "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxOcTRveVk4X29zbU5TQmVDVk5DeUFuWlVYN2xxUE94aFBxMmdTYmN4Tlk2dzRYNlVvcHhzSHc4X0c1MFBnNUpDQTVkRHNDQUYtcVp4VG1HeDYwX0VJUGFOQlNWTGNab1pRLUc0Nm1oQnpSSlNEVkdKUnR5eGlfeVZub2xjVXdHTTQ?oc=5",
+   "source": "The Guardian",
+   "source_domain": "theguardian.com",
+   "published": "2026-11-11T16:24:00Z",
+   "V0": 0.7,
+   "V": 0.712,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 38.743,
+   "lng": -4.682
   },
   {
    "id": "caef160194d1ffbd",
@@ -3284,7 +3406,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3427,7 +3549,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3460,7 +3582,7 @@
    "id": "d5a101a2e88ade4e",
    "region": "HU-NAT",
    "title": "Magyar Péter reagált Varga Judit kijelentéseire: Most is és a jövőben is igyekszem csak a szépre emlékezni",
-   "summary": "Magyar Péter reagált Varga Judit kijelentéseire: Most is és a jövőben is igyekszem csak a szépre emlékezni | hvg.hu Magyar Péter reagált Varga Juditra: Most is és a jövőben is igyekszem csak a szépre emlékezni Telex Varga Judit: Semmi közöm a Völner–Schadl-ügyhöz Portfolio.hu Varga Judit: Magyar Péter lenézett, amiért a hatalmat soha nem voltam hajlandó a saját céljaimra használni | hvg.hu „Ha valaki úgy éli meg az életét, hogy nincs igazság az életében, akkor mindenért én vagyok a felelős” 24.hu",
+   "summary": "Magyar Péter reagált Varga Judit kijelentéseire: Most is és a jövőben is igyekszem csak a szépre emlékezni | hvg.hu Magyar Péter reagált Varga Juditra: Most is és a jövőben is igyekszem csak a szépre emlékezni Telex Varga Judit: Magyar Péter lenézett, amiért a hatalmat soha nem voltam hajlandó a saját céljaimra használni | hvg.hu Magyar Péter visszaüzent a volt feleségének Infostart „Ha valaki úgy éli meg az életét, hogy nincs igazság az életében, akkor mindenért én vagyok a felelős” 24.hu",
    "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQWWxoMmNnNXdNeTduVlRwd05LOHhtZXNodFR1QzhremhXNE1fSFRnYXJGTndyT3Q5cm5CMFp1XzZoNXBjand6clZxaEZKREE2ZXZtRkxzVkNqWGwwbWE4bkpJLWQ1Z3NqX3c5dmxBNTRCT0JNN1d1ZzN3LXMzSUVWMA?oc=5",
    "source": "| hvg.hu",
    "source_domain": "hvg.hu",
@@ -3469,7 +3591,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3530,11 +3652,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.438,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.9,
-   "ATM": 352,
+   "ATM": 355,
    "lat": 49.207,
    "lng": 12.692
   },
@@ -3548,7 +3670,7 @@
    "source_domain": "hvg.hu",
    "published": "2026-11-11T15:48:44Z",
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4007,7 +4129,7 @@
    "source_domain": "centraloregondaily.com",
    "published": "2026-11-11T15:28:08Z",
    "V0": 0.45,
-   "V": 0.462,
+   "V": 0.463,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -4076,6 +4198,22 @@
    "lng": 29.753
   },
   {
+   "id": "dd16af0fec14dbc1",
+   "region": "INT",
+   "title": "At least 3 killed when SUV crashes into North Hollywood food stand",
+   "summary": "At least 3 killed when SUV crashes into North Hollywood food stand CBS News Car Crashes Into Crowd in Los Angeles, Killing at Least 3 Pedestrians The New York Times Arrest made in triple-fatal North Hollywood Metro station crash KTLA 3 dead, 3 critically injured after vehicle smashes into pedestrians in Los Angeles NBC News Driver in deadly North Hollywood Metro station crash held on $6 million bail Los Angeles Times",
+   "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQdmsyOFlFQ1BwM1V1X25KVmxpVUY1SGNOcmFTVGFSc0xLNUxrd0lDYXA4UkJ1cEtJTUJzR3BYRUhYYWx3eW5raVdtUUNlU1FJRVdEQkd4REN5OTBST0NTTjhlU3FoVFlfZ1VRMk5lWGpUYXF5VHVFZVJ6TGtNdFlyY21WX1FnbDBPdTRyMmdjeUhpZFhrdjB2R0JlazFoSEw0N0FCdk1zUUg2LXctWXBBb3FiNnY5dmdsVnc?oc=5",
+   "source": "CBS News",
+   "source_domain": "cbsnews.com",
+   "published": "2026-11-11T15:26:18Z",
+   "V0": 0.7,
+   "V": 0.694,
+   "S0": 0.06,
+   "S": 0.06,
+   "G": 0.6,
+   "ATM": 106
+  },
+  {
    "id": "f16aba9982820414",
    "region": "HU-NAT",
    "title": "A Wizz Air Budapest-Brüsszel járat közelebb áll meg a belvároshoz",
@@ -4139,18 +4277,18 @@
   {
    "id": "d77be4c8f01427a8",
    "region": "INT",
-   "title": "ICE Officer Involved in Maine Shooting Expressed Anti-Immigrant Hatred",
-   "summary": "ICE Officer Involved in Maine Shooting Expressed Anti-Immigrant Hatred The New York Times Family of ICE agent in Biddeford shooting accuses him of immigrant bias, New York Times reports Portland Press Herald - Maine Sunday Telegram Report reveals troubling history of ICE agent in deadly Biddeford shooting WGME Live with the NYT’s Katie Benner, 9:30 a.m ET Civil Discourse with Joyce Vance Red Flags The New York Times",
+   "title": "ICE Officer Involved in Maine Shooting Expressed Hatred of Immigrants",
+   "summary": "ICE Officer Involved in Maine Shooting Expressed Hatred of Immigrants The New York Times Family of ICE agent in Biddeford shooting accuses him of immigrant bias, New York Times reports Portland Press Herald - Maine Sunday Telegram Report reveals troubling history of ICE agent in deadly Biddeford shooting WGME Live with the NYT’s Katie Benner, 9:30 a.m ET Civil Discourse with Joyce Vance Red Flags The New York Times",
    "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxQOHg4SG1YVGVmd216dVkydUxNRERxZjZTOHdORS16MldQUzBrXzl0Z3RmZ0VJeVplWFBZdlZUbExVSHBlSGt3VUtmUll4TzZoaGhRY3p6RzJocXVZVU1iSzk2R2VaY3NoUzBPQTVsTGtjemRLUFcwbmQ1S1hlRWlVMHNhQmtSaDAwQXlETjZrNmFLWVJjUHJXN202cDU3ZE5ZS0ww?oc=5",
    "source": "The New York Times",
    "source_domain": "nytimes.com",
    "published": "2026-11-11T15:24:18Z",
    "V0": 0.7,
    "V": 0.699,
-   "S0": 0.074,
-   "S": 0.074,
+   "S0": 0.076,
+   "S": 0.076,
    "G": 0.6,
-   "ATM": 112
+   "ATM": 120
   },
   {
    "id": "302b968140b40891",
@@ -4297,7 +4435,7 @@
    "id": "f9c2a0c8332c3736",
    "region": "HU-NAT",
    "title": "Tisza-kormány: Dublinba utazik Magyar Péter, döntött a bíróság Orbán Áron letartóztatásáról",
-   "summary": "Tisza-kormány: Dublinba utazik Magyar Péter, döntött a bíróság Orbán Áron letartóztatásáról Portfolio.hu Hogyan érhetne el Orbán Viktorig a saját csapdájába sétáló öccsének ügye? | hvg.hu Magyar Péter így reagált Orbán Áron vezetőszáras bevonulására Klubrádió Belföld - Letartóztatták Orbán Viktor öccsét, egy hónapig biztosan rácsok mögött marad Index.hu Orbán Áron letartóztatását indítványozta az ügyészség 24.hu",
+   "summary": "Tisza-kormány: Dublinba utazik Magyar Péter, döntött a bíróság Orbán Áron letartóztatásáról Portfolio.hu Megszületett a döntés, letartóztatják Orbán Áront Portfolio.hu Hogyan érhetne el Orbán Viktorig a saját csapdájába sétáló öccsének ügye? | hvg.hu Belföld - Orbán Áron ügyvédje elárulta, felmerült-e Orbán Viktor neve a kihallgatáson Index.hu Két éve a pécsi egyetem képzésére íratott be ötven vietnámit Orbán Áron cége, de később is folytatódott a vízumbiznisz | eduline.hu",
    "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNTmd6amFRUXlZb2dhemIwV1UwRFZkNmhTS2hXLUFWYnQwSVJxaV9PUFZfX1BwVl96TGhfVUFwWjB5ckZjdkRfMGdkY0lpZFFBUUdqTDkzbmRtWklVVS15U3ZLQWc1UUlveHRQYXJCcjVCZkhzQ0NuWWl3TUZRbzZZN2VablFKSWE5UncydnlsVGRKNkE1RGlKYnluWWtWRVg2NUR6THEtUjBVZkNubk5BTEpJMnUydHFRNkRhWWViLWZVTzRJRGw0V3d3R01BTmYwWllncl9R0gHbAUFVX3lxTFBMWVA1V2ZUZ2pfcmp4dUZfR1dtTDFtT0pncXBtRlVVa2VFT3FvVjV6Y3ppZmdWN3FRbGVYaFZ4N3R6WjJPYmZldy1GSjNncTlleWRqNWNhUU1XS3ZtbUZ0X3RYdnBFZVh0ZS1xMGRvZ3A4dks0ZlYyWWNzdDBCNVU2dVo5ZUNhSDJJME94X1BCeUJoN2VxYjJSOHhBbjlOblBDRFhmaDVmNkd0Mm5ZUTZTcU5vRDFJbUlROGFLTmo4c3RBMUVmRG9zOVNxOW9QSElpaVVaa2M1VFd6NA?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -4419,17 +4557,17 @@
    "id": "58aaf185cd7c48cc",
    "region": "HU-NAT",
    "title": "Liberty City a GTA 6-ban? Az új előzetes tovább erősíti a második városhoz fűzött reményeket",
-   "summary": "Liberty City a GTA 6-ban? Az új előzetes tovább erősíti a második városhoz fűzött reményeket Notebookcheck Magyarország Igen, tényleg egyetlen videójáték miatt kezdtek el tömegesen konzolt keresni a magyarok Forbes Magyarország A GTA 6 csak 30 fps-sel fog futni konzolokon, és már most megdöntött egy eladási rekordot az egyik platformon IGN Hungary Érkezik a Grand Theft Auto 6: The Festival Gamekapocs Végre hivatalos: Kizárólag 30fps móddal jön konzolokra a Grand Theft Auto VI Prohardver",
+   "summary": "Liberty City a GTA 6-ban? Az új előzetes tovább erősíti a második városhoz fűzött reményeket Notebookcheck Magyarország Igen, tényleg egyetlen videójáték miatt kezdtek el tömegesen konzolt keresni a magyarok Forbes Magyarország A GTA 6 csak 30 fps-sel fog futni konzolokon, és már most megdöntött egy eladási rekordot az egyik platformon IGN Hungary Érkezik a Grand Theft Auto 6: The Festival Gamekapocs Küszöbön a GTA VI megjelenése, özönlenek az előrendelések Portfolio.hu",
    "link": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQV09sRVJ3Vzhjb0dZdHEySEw4ZWpoc1NOSmRHcmtYZi1ZNUk1UU9GWTZUeWdhWHNNN2NvcWpxZ1hpZU9xczhGRU1yWVRlSEZad0t4eFg4UFE1VFRmY25oM0hhTl81Y3RqSnRtTFJtTnlKbnZFcFFod1RCbFVZWmZBWVNKWk43NW8wQjVTdzItTEVCN2NOcmdYUmI1TkFnb3VsbUhja3diYXQ2cVNiYWNhendieFFNQk92N0MzSXVFN1VVSjV1QzZ5dUtPU3pXV2piaUZVLV8tVQ?oc=5",
    "source": "Notebookcheck Magyarország",
    "source_domain": "notebookcheck-hu.com",
    "published": "2026-11-11T15:16:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.047,
-   "S": 0.047,
+   "S0": 0.063,
+   "S": 0.063,
    "G": 0.9,
-   "ATM": 157,
+   "ATM": 172,
    "lat": 47.143,
    "lng": 19.096
   },
@@ -4635,7 +4773,7 @@
    "source_domain": "globalhir.hu",
    "published": "2026-11-11T15:11:41Z",
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4740,7 +4878,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4880,6 +5018,27 @@
    "ATM": 185,
    "lat": 34.402,
    "lng": 102.4
+  },
+  {
+   "id": "c2d5deedd0176743",
+   "region": "HU-NAT",
+   "title": "[Videó] Időjárás-előrejelzés ma estére és holnapra, 2026. november 12-re: Észak-Vietnamban hideg lesz zivatarokkal; Huếtól Quang Ngai-ig heves esőzések várhatók.",
+   "summary": "[Videó] Időjárás-előrejelzés ma estére és holnapra, 2026. november 12-re: Észak-Vietnamban hideg lesz zivatarokkal; Huếtól Quang Ngai-ig heves esőzések várhatók. Vietnam.vn",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOVWlMVG5aWjdlaEtQbm1kdEtjZzBEV2NRaUk3cVpfLXhrbWxKRWRZc2ZxM0pxQ0pucmFpYXc2OElJb1I0U1RlQV85Y3VtdXdwTUVTY1h0ek5pMVh1dmE4ZE0zWjhFT1JFd2Y2MkxzMUVTV3FhdFJKUm9Ka3Z5X19jdFJiX3NBTUljTDNrVl80TmFodHNOVWt6dzFhcTV6cTFpNERMNUF5a1FQOFMyeGJBUVpzSnJZcVZtOFpxRzVUdktBLUtvakN1Wkc4cDZ6QktK?oc=5",
+   "source": "Vietnam.vn",
+   "source_domain": "vietnam.vn",
+   "published": "2026-11-11T15:03:33Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.474,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 15.092,
+   "lng": 106.951
   },
   {
    "id": "dcd5ef90ff5aff11",
@@ -5041,17 +5200,17 @@
    "id": "b8cd06d9fb035185",
    "region": "INT",
    "title": "Capitol agenda: The left looks to Van Hollen for a shake-up",
-   "summary": "Capitol agenda: The left looks to Van Hollen for a shake-up Politico The new darling of the Democratic left is … Chris Van Hollen? Politico Bernie Sanders says he will not back Schumer for Senate Democratic leader The Guardian Democratic Senators Show Signs of Discontent With Schumer Bloomberg.com Bernie Sanders Opposes Schumer as Majority Leader The New York Times",
+   "summary": "Capitol agenda: The left looks to Van Hollen for a shake-up Politico The new darling of the Democratic left is … Chris Van Hollen? Politico Bernie Sanders says he won't back Schumer as push for new leadership gains steam Fox News Bernie Sanders says he will not back Schumer for Senate Democratic leader The Guardian Van Hollen calls colleagues as Schumer’s leadership faces questions MS NOW",
    "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxPdjZvQ2M3RUwtSXhnQVM4WUs2RXdtOXlnclBfbG56SV84MGc4bHFCejFpMzVSZ2twTkZYcTBkSkJOamwyNlM4OWhiRnZqeEZsYWhsZnB0OUk5ZmJnTUFPSVdfbC1Ob3dMTTNsSU5TTUxod255bEh3S3JNTzRCY05kaXozNXR5WGZEN09ubTdIV3RHcWRtcnBZZTdobG1SQQ?oc=5",
    "source": "Politico",
    "source_domain": "politico.com",
    "published": "2026-11-11T14:53:17Z",
    "V0": 0.7,
-   "V": 0.689,
-   "S0": 0.0,
-   "S": 0.0,
+   "V": 0.69,
+   "S0": 0.013,
+   "S": 0.013,
    "G": 0.6,
-   "ATM": 0
+   "ATM": 43
   },
   {
    "id": "7f00c6df95c40718",
@@ -5268,17 +5427,17 @@
    "id": "38fb4941738d013b",
    "region": "INT",
    "title": "Kirk Cousins isn’t officially back in No. 8, yet",
-   "summary": "Kirk Cousins isn’t officially back in No. 8, yet NBC Sports Raiders name Fernando Mendoza starting QB after trading Kirk Cousins ESPN Inbox: He would’ve been a much bigger story Green Bay Packers – packers.com Raiders ended up buying a third-round pick for $650,000 NBC Sports How Fernando Mendoza changes the Raiders offense ahead of his first NFL start NFL.com",
+   "summary": "Kirk Cousins isn’t officially back in No. 8, yet NBC Sports Raiders name Fernando Mendoza starting QB after trading Kirk Cousins ESPN Inbox: He would’ve been a much bigger story Green Bay Packers – packers.com Fernando Mendoza gets 3-word message from Kirk Cousins after Raiders trade USA Today Kirk Cousins traded to Vikings: Raiders gave QB option to stay or leave franchise, per report CBS Sports",
    "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNRExVZGlOMnNIa05kc21GZ29GbG42RTNQbFcxNlpqbk5LalVvLXNHMGcxM01Gakg0R1V5U083WDVpVnNEbjd4N0VBNmthLXlJNWJnN3VzdlJkaUVnMzlqRXZIVklwc0h5dGVXa3lRYVZidlM1cHZ0RkFpRTZyYkZ3a0hjUzlITXJqT3BvRTJvNTZVUTF0d0VoM0Rac3N1MHlGYnBOY1dka3JGMG8?oc=5",
    "source": "NBC Sports",
    "source_domain": "nbcsports.com",
    "published": "2026-11-11T14:47:42Z",
    "V0": 0.45,
-   "V": 0.444,
-   "S0": 0.072,
-   "S": 0.072,
+   "V": 0.443,
+   "S0": 0.054,
+   "S": 0.054,
    "G": 0.6,
-   "ATM": 153
+   "ATM": 130
   },
   {
    "id": "2deb4a2572c7d59f",
@@ -5302,17 +5461,17 @@
    "id": "040b5ee1e7bb7b21",
    "region": "INT",
    "title": "Nvidia Scandal Puts Lori Huang, Jensen Huang’s Wife, In the Spotlight",
-   "summary": "Nvidia Scandal Puts Lori Huang, Jensen Huang’s Wife, In the Spotlight The New York Times Nvidia shares rebound as Jensen Huang faces scrutiny ahead of earnings CNBC Tech Allies Rally Behind Jensen Huang, Calling Him Vital in A.I. Race The New York Times Spy scandal highlights contradictions at heart of Trump’s China policy The Washington Post Alice Huang, who reportedly had an affair with Nvidia CEO, is a Chinese banker turned tech exec AP News",
+   "summary": "Nvidia Scandal Puts Lori Huang, Jensen Huang’s Wife, In the Spotlight The New York Times Nvidia CEO Jensen Huang Affair Strains Taiwan’s Devotion to Its Hometown Hero WSJ Nvidia scandal spotlights growing espionage risks for AI firms Los Angeles Times Spy scandal highlights contradictions at heart of Trump’s China policy The Washington Post Senate Banking Republican calls on Nvidia CEO to resign Politico",
    "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOZnZUcjVXMkhSOTVUZXkySjZOZWI3OU9FdWhjSkEzX3VaRTJGOWVBQzQwLUN3Z2NxeU01SXdFcGU0WDlzTGM1bDNUWDJkTDgyanJ5U25fVTVDbXdjVVdBbnN5ajBDblg2TXJ2WVRDTkh3NFVDeTN0TmFNZjVjSllIMjFTUVdRUmZx?oc=5",
    "source": "The New York Times",
    "source_domain": "nytimes.com",
    "published": "2026-11-11T14:46:43Z",
    "V0": 0.7,
    "V": 0.699,
-   "S0": 0.189,
-   "S": 0.189,
+   "S0": 0.205,
+   "S": 0.205,
    "G": 0.6,
-   "ATM": 185
+   "ATM": 194
   },
   {
    "id": "ad81520b1082dc8a",
@@ -5477,7 +5636,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5498,7 +5657,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5561,7 +5720,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5654,15 +5813,15 @@
    "id": "098706d81260ab04",
    "region": "INT",
    "title": "As higher prices seep into broader economy, Fed officials consider faster hikes",
-   "summary": "As higher prices seep into broader economy, Fed officials consider faster hikes KSL News See more headlines & perspectives on Google News",
+   "summary": "As higher prices seep into broader economy, Fed officials consider faster hikes KSL News Fed’s Paulson Urges Gradual Approach to Rate Hikes WSJ Economic and monetary policy outlook Federal Reserve Bank of Dallas Fed’s Logan Says Two More Hikes Needed, Pace Could Quicken Bloomberg.com Fed should move policy 'with care' as it responds to inflation, Barkin says Reuters",
    "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQVFZvQ0s4TUsyOTdoQ3lKZkp6dm42XzdPQlU5eGlvYU1QajN4d0h4YkJ0Z1RpdEMxUTBHZkF5RFVaWHNBWDZ3SzlrT1RUT0xXRkVMc0c1OVlVMTVZTVJ1LVlPNFZud2MzUDNBUVhkLWpTanZjR0ZELUNwb2FKU0d1VkZ3bGJ1V01iTVIweFU3Y2ptQ3ptWmFCU194SU5YM1RrZzc3b1BUVmJSNmNLS0hOM1dYR2w3Zw?oc=5",
    "source": "KSL News",
    "source_domain": "ksl.com",
    "published": "2026-11-11T14:32:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.028,
-   "S": 0.028,
+   "S0": 0.026,
+   "S": 0.026,
    "G": 0.6,
    "ATM": 99
   },
@@ -5830,24 +5989,6 @@
    "ATM": 0
   },
   {
-   "id": "dafcc27d6f541096",
-   "region": "INT",
-   "title": "Millions join Spain’s first general strike in 14 years in protest at rising housing costs",
-   "summary": "Millions join Spain’s first general strike in 14 years in protest at rising housing costs The Guardian",
-   "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxOcTRveVk4X29zbU5TQmVDVk5DeUFuWlVYN2xxUE94aFBxMmdTYmN4Tlk2dzRYNlVvcHhzSHc4X0c1MFBnNUpDQTVkRHNDQUYtcVp4VG1HeDYwX0VJUGFOQlNWTGNab1pRLUc0Nm1oQnpSSlNEVkdKUnR5eGlfeVZub2xjVXdHTTQ?oc=5",
-   "source": "The Guardian",
-   "source_domain": "theguardian.com",
-   "published": "2026-11-11T14:29:00Z",
-   "V0": 0.7,
-   "V": 0.712,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0,
-   "lat": 38.743,
-   "lng": -4.682
-  },
-  {
    "id": "4f927b23d2ffee35",
    "region": "HU-NAT",
    "title": "Másfél éves mélyponton az euró, szerdán is gyengül a forint",
@@ -5869,17 +6010,17 @@
    "id": "1bbcaf1ae4cb49ab",
    "region": "INT",
    "title": "Missing 11-Month-Old Is Rescued After Being Buried Alive in Dog Crate",
-   "summary": "Missing 11-Month-Old Is Rescued After Being Buried Alive in Dog Crate The New York Times A missing baby was found buried alive a day after authorities say his father took him CNN Sheriff: Missing Lexington County baby found alive after being buried in dog crate WIS News 10 Update: Lexington County missing infant Lexington County Sheriff's Department Update: Missing Lexington County infant found buried alive in dog crate The State",
+   "summary": "Missing 11-Month-Old Is Rescued After Being Buried Alive in Dog Crate The New York Times A missing baby was found buried alive a day after authorities say his father took him CNN Sheriff: Missing Lexington County baby found alive after being buried in dog crate WIS News 10 Update: Lexington County missing infant Lexington County Sheriff's Department Baby rescued after buried alive in crate for 24 hours in South Carolina woods; father arrested WWLTV.com",
    "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOcWFLTDF5cU9QNlRYMjdaeTI3aVhUNE9xS2Z5c2M0ZGcwdjJscnZMZjN5ak9rLXlvRnBHSV93bFhsVUg4Znp5c1F6aW5RNklCRUdBWFV5OHpYMkM5OUQ3SXZkZS1zTDJIcFgzSjk4U0x3eGUtS2ZYSV9HVTVMb3Z5OQ?oc=5",
    "source": "The New York Times",
    "source_domain": "nytimes.com",
    "published": "2026-11-11T14:28:46Z",
    "V0": 0.7,
    "V": 0.699,
-   "S0": 0.023,
-   "S": 0.023,
+   "S0": 0.032,
+   "S": 0.032,
    "G": 0.6,
-   "ATM": 60
+   "ATM": 73
   },
   {
    "id": "b96159989d7e33be",
@@ -5967,7 +6108,7 @@
    "source_domain": "hvg.hu",
    "published": "2026-11-11T14:25:30Z",
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6006,11 +6147,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.438,
    "S0": 0.056,
    "S": 0.056,
    "G": 0.9,
-   "ATM": 172,
+   "ATM": 174,
    "lat": 47.004,
    "lng": 19.679
   },
@@ -6067,7 +6208,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6130,7 +6271,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6169,7 +6310,7 @@
    "source_domain": "hvg.hu",
    "published": "2026-11-11T14:22:38Z",
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6499,15 +6640,15 @@
    "id": "427458d0c8efeb33",
    "region": "INT",
    "title": "White House threatens criminal investigation into Democrats’ oversight efforts",
-   "summary": "White House threatens criminal investigation into Democrats’ oversight efforts Politico White House warns incoming House Oversight chair it ‘will not be extorted’ CNN White House Threatens Democrats Over Coming Investigations Bloomberg.com White House asserts Democratic investigations could ‘cross the line into blatant criminality’ The Hill Trump Administration Tries To Warn Democrats Against Investigating Trump Forbes",
+   "summary": "White House threatens criminal investigation into Democrats’ oversight efforts Politico White House readies aggressive fight against planned investigations by Congress The Washington Post White House warns incoming House Oversight chair it ‘will not be extorted’ CNN White House Threatens Congress, Saying Aggressive Investigations Could Be Crime The New York Times Live updates: White House confronts Democrats over planned probes, claiming they may be 'blatant criminality' AP News",
    "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxPeDNIeFZyS0ItTDhWSVk1bXdLNGVPSWtBVzMtbm1tc19rX0lsYTNNdUtSSk9FRXc1Yy1Rd1VGcjVvUEdXdDc1cGRXdjUtXzFWYmtaeE14TjJmcy12YTRTeHgyYnc5OXBCRnhvOE5wNXpsYVZQQWNrNGtPc2syTVFWckFqOHBiMmdvOFBZc21qNV9kZEFCenhvdDRiZHdHNHlTaEE?oc=5",
    "source": "Politico",
    "source_domain": "politico.com",
    "published": "2026-11-11T14:08:00Z",
    "V0": 0.7,
    "V": 0.69,
-   "S0": 0.013,
-   "S": 0.013,
+   "S0": 0.012,
+   "S": 0.012,
    "G": 0.6,
    "ATM": 43,
    "lat": 38.072,
@@ -6675,7 +6816,7 @@
    "id": "fbdd261db02a0b83",
    "region": "HU-NAT",
    "title": "Gálvölgyi János őszintén beszélt a pénzügyeiről: máig nem tudja pontosan, mennyi nyugdíjat kap",
-   "summary": "Gálvölgyi János őszintén beszélt a pénzügyeiről: máig nem tudja pontosan, mennyi nyugdíjat kap Index.hu „Döbbenten hallgatom” – Gálvölgyi János szerint túl magas gázsit kérnek színészkollégái RTL.hu Külföldi kollégája megdöbbent, milyen szerény körülmények között él Gálvölgyi János Story Nem titok többé: ennyit keresett Gálvölgyi János! ORIGO Gálvölgyi János hiába ünnepelt színészlegenda, ilyen szerény körülmények között él: kollégája is meglepődött rajta Femina",
+   "summary": "Gálvölgyi János őszintén beszélt a pénzügyeiről: máig nem tudja pontosan, mennyi nyugdíjat kap Index.hu „Döbbenten hallgatom” – Gálvölgyi János szerint túl magas gázsit kérnek színészkollégái RTL.hu Külföldi kollégája megdöbbent, milyen szerény körülmények között él Gálvölgyi János Story Anyagi helyzetéről vallott Gálvölgyi János: \"a mai napig nem tudom, mennyi a nyugdíjam\" Pénzcentrum Nem titok többé: ennyit keresett Gálvölgyi János! ORIGO",
    "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9VRktndG5OeFM2dFVqYmFWdm5PS2hGenRVYjBPV0w3SGFZSy1NTzJKSmxZWTN2T1RpSk1jQi1BeHJ2bmk5Zm1UQ2NoU1VGNllEY2lFbXdDRGpXN3R0Y3pBUjNlcE1DY2R1aG5uSEtsTEpxSUU3SEE?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -6729,7 +6870,7 @@
    "id": "4496ffa8153bc917",
    "region": "HU-NAT",
    "title": "Kimondta a republikánus képviselő: süllyedő hajó a Republikánus Párt, ahol mindenki a fedélzeten marad",
-   "summary": "Kimondta a republikánus képviselő: süllyedő hajó a Republikánus Párt, ahol mindenki a fedélzeten marad Portfolio.hu Világ: Egyelőre megúszta az impeachment eljárást Trump védelmi minisztere | hvg.hu Egy republikánus képviselő kezdeményezi Pete Hegseth amerikai védelmi miniszter felelősségrevonását Euronews.com Pete Hegseth marad: elbukott a vele szemben indított eljárás 24.hu A republikánus képviselőházi többség megakadályozta a Pete Hegseth elleni alkotmányos vádeljárást 444",
+   "summary": "Kimondta a republikánus képviselő: süllyedő hajó a Republikánus Párt, ahol mindenki a fedélzeten marad Portfolio.hu Pete Hegseth marad: elbukott a vele szemben indított eljárás 24.hu Világ: Egyelőre megúszta az impeachment eljárást Trump védelmi minisztere | hvg.hu Egy republikánus képviselő kezdeményezi Pete Hegseth amerikai védelmi miniszter felelősségrevonását Euronews.com Saját párttársa kezdeményezett impeachment eljárást Trump minisztere, Pete Hegseth ellen Telex",
    "link": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxORVRJT1RhRFpzX19wS1pkb1laQXB3U1VqMDhDb2hnRzd5OVloRXZ0SDE5VWlzU1NWT1hFN3FnTklvR1RMLXI0bTBvRW9tbzd2azRuWlI1Smx5YThLVzJYRDB5c3dWUk1SMEE1eWc5ZXBZY2JETFhJY1dpWEdFYS1LRVNvWURlWXBGdHJfV1FyXzFwTGlZVnRQajJLd3hqZDZ0QUxxNkRXT09jbkZBXzd0WTdJSWpDSlIyeHJNNld6bnFXSXI2RDlfVFk5aGN1ZUN0MEl3M0dNSWZpemplRzRhcElR0gHnAUFVX3lxTE5QT3AyT3NIWXJGeFNPSkFfRTZ6MUJSb1B5YklYNUJKOGZwTl9YRkNXUUk3VEdLOXZrWGlEcWRDRWFNS3VJZHZkMEVneUJCTHp3VHRNYXBkMWw2bGxRenBnbFFDRmV2ZnA5ajF0d1RQYm1LamRpY2xkXzltVml0U2oyd0U5ZEtXZ1ljWmtpaXFGN2ZndmRIc25JTGtaaVNpYV85SDgtY3liMHkxMzdwR2dnRkFXeXp4ZEsyV0pvUTVlWFlHLXM3S3FTY0JLNk5MS3pxTjJjV3pBTzR3TlV3QV9KVl9EZnZsWQ?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -6797,7 +6938,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7098,15 +7239,15 @@
    "id": "e5810eca93576c13",
    "region": "HU-NAT",
    "title": "A győri kézicsapat edzője is reagált arra, hogy krízisben van az ETO",
-   "summary": "A győri kézicsapat edzője is reagált arra, hogy krízisben van az ETO 24.hu Per Johansson: Nem áll szándékomban elhagyni a Győrt Nemzeti Sport „Ismereteink megegyeznek azokkal, amelyek a sajtóban megjelentek” – a győri városvezetés is reagált az ETO kéziseinek helyzetére 24.hu Sport - Megtörte a csendet a Győri ETO, elismerte: komoly pénzügyi gondokkal küzd Index.hu Nagy bajban a győri kézilabdacsapat: megfelezhetik a sztárjátékosok fizetését, az Audi támogatása is kérdéses Pénzcentrum",
+   "summary": "A győri kézicsapat edzője is reagált arra, hogy krízisben van az ETO 24.hu Per Johansson: Nem áll szándékomban elhagyni a Győrt Nemzeti Sport Sport - Megtörte a csendet a Győri ETO, elismerte: komoly pénzügyi gondokkal küzd Index.hu Nagy bajban a győri kézilabdacsapat: megfelezhetik a sztárjátékosok fizetését, az Audi támogatása is kérdéses Pénzcentrum „Nehéz döntések” előtt áll az anyagilag megszorult Győri ETO KC 444",
    "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxNRWtrRjJLdFVJbktLTkpxQXcxS0dwSGwxWExkWGdWdkM2U0lMSFViRFpWa3V1VzZfUXNLOEx4eTZuVmRiS0FFR1FPbEhweUhlcXpJVHA0NkRhUzFOQ1pUOUwyM2Fab3duSUdLYVBab24yTjVfbzlDNDBzUVNxYjcyMkFQZnc0MjQ?oc=5",
    "source": "24.hu",
    "source_domain": "24.hu",
    "published": "2026-11-11T13:35:00Z",
    "V0": 0.7,
    "V": 0.703,
-   "S0": 0.055,
-   "S": 0.055,
+   "S0": 0.058,
+   "S": 0.058,
    "G": 0.9,
    "ATM": 127,
    "lat": 47.84,
@@ -7669,7 +7810,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7715,7 +7856,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7733,7 +7874,7 @@
    "source_domain": "vg.hu",
    "published": "2026-11-11T13:11:10Z",
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7795,7 +7936,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.462,
+   "V": 0.463,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -8277,15 +8418,15 @@
    "id": "3f5b63e5364d43df",
    "region": "HU-NAT",
    "title": "Kushner és Witkoff Moszkvában Putyinnal találkozik, Oroszország és Ukrajna nagyszabású fogolycseréről állapodott meg",
-   "summary": "Kushner és Witkoff Moszkvában Putyinnal találkozik, Oroszország és Ukrajna nagyszabású fogolycseréről állapodott meg Telex Lezárult a béketárgyalás Kijev és Moszkva között, riadót fújtak a NATO keleti szárnyán - Háborús híreink szerdán Portfolio.hu „Nehéz volt enyhíteni a vita hangnemét” – véget ért az orosz–ukrán háború lezárását célzó háromoldalú tárgyalások első köre Abu-Dzabiban 24.hu Fordulat a béketárgyaláson: kiszivárgott a titkos terv, ezen múlhat az orosz–ukrán háború vége Világgazdaság Megtört a jég Abu-Dzabiban: óriási fogolycserére készül Oroszország és Ukrajna Forbes Magyarország",
+   "summary": "Kushner és Witkoff Moszkvában Putyinnal találkozik, Oroszország és Ukrajna nagyszabású fogolycseréről állapodott meg Telex Lezárult a béketárgyalás Kijev és Moszkva között, riadót fújtak a NATO keleti szárnyán - Háborús híreink szerdán Portfolio.hu Külföld - Fordulat az orosz–ukrán béketárgyaláson, már az év végére lezárulhat a háború Index.hu Zelenszkij: lényegi, konstruktív megbeszélés zajlott az oroszokkal és az amerikaiakkal Abu-Dzabiban 24.hu Megtört a jég Abu-Dzabiban: óriási fogolycserére készül Oroszország és Ukrajna Forbes Magyarország",
    "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxOVHZ1dlRlSDg5anpWWE1CSFJQV2NndXpNWkd3RDVqR0gxRHZFNzlIM2ZXN3dYTkhLaG5tTjlsZUdTRzhUaEJsZFRBTFJxdWFwUEZLN19xUE95a3ZRc205Y1NTUjFrZjdqU3VLczVOZFA5Z2RUU1N3cEc0NHFWdUVfZ3pacUxzMk5sYkxGZmswLVZZQURDcFJSNTdta05KaEZ4bEp2RF9Kbko3em9fdE0wYmFiczhqWXJMU1p2Tw?oc=5",
    "source": "Telex",
    "source_domain": "telex.hu",
    "published": "2026-11-11T12:59:53Z",
    "V0": 0.7,
    "V": 0.703,
-   "S0": 0.011,
-   "S": 0.011,
+   "S0": 0.012,
+   "S": 0.012,
    "G": 0.9,
    "ATM": 52,
    "lat": 61.977,
@@ -8897,7 +9038,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -9225,7 +9366,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -9490,7 +9631,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.451,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -10080,7 +10221,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -10141,7 +10282,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -10452,7 +10593,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -10572,7 +10713,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11117,6 +11258,27 @@
    "lng": 19.109
   },
   {
+   "id": "3d7d94521436c7de",
+   "region": "HU-NAT",
+   "title": "U17: Kétgólos előnyről, 95. percben kapott góllal bukta el az Eb-selejtezőt a magyar válogatott",
+   "summary": "U17: Kétgólos előnyről, 95. percben kapott góllal bukta el az Eb-selejtezőt a magyar válogatott Csakfoci További főcímek és nézőpontok itt: Google Hírek",
+   "link": "https://news.google.com/rss/articles/CBMixwFBVV95cUxQc1BlY1dhMnZZS05sMFdYVjNNUzkwRmh0ODVYZGJWYy1CdDdXWlRWZ1lRMndXWGdueV9XV0RCSWFqeVU4LTJWeVk4aW5RaGladFJuWWpNVzBYR2pCVXhDdy13Y1hFdWxORENzNEhSaUtBMWtoVDYzSDNZNEpPaUZiVktna3VKOFd6UGRmVnVZYlI1MDd5MmVTZ0xyTUJlS1c4V1BVek4yeTgzRGJaN0pnR3lGbEVhZU51VHBoVUxXOXk5c3UtRGNn?oc=5",
+   "source": "Csakfoci",
+   "source_domain": "csakfoci.hu",
+   "published": "2026-11-11T11:16:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 46.971,
+   "lng": 19.292
+  },
+  {
    "id": "f9a692bdf4f4e899",
    "region": "INT",
    "title": "Comedian Lucy Beaumont fears TV blacklist after blowing whistle on heinous David Walliams allegations",
@@ -11527,7 +11689,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -11611,7 +11773,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -11942,7 +12104,7 @@
    "id": "aca28e3f34afad58",
    "region": "HU-NAT",
    "title": "Belföld - Döntött a törvényszék, februárig letartóztatásban marad Hankó Balázs",
-   "summary": "Belföld - Döntött a törvényszék, februárig letartóztatásban marad Hankó Balázs Index.hu Itthon: Elutasították Hankó és Varga-Bajusz fellebbezését, februárig biztosan letartóztatásban maradnak | hvg.hu Végleges a döntés, hónapokig rács mögött marad Hankó Balázs Portfolio.hu Elutasították Hankó Balázs fellebbezését, februárig marad a rács mögött 24.hu Februárig rács mögött marad Hankó Balázs, elutasították a fellebbezését 444",
+   "summary": "Belföld - Döntött a törvényszék, februárig letartóztatásban marad Hankó Balázs Index.hu Itthon: Elutasították Hankó és Varga-Bajusz fellebbezését, februárig biztosan letartóztatásban maradnak | hvg.hu Végleges a döntés, hónapokig rács mögött marad Hankó Balázs Portfolio.hu Ilyen lesz Hankó Balázs karácsonya a börtönben: ünnepi menüt is kaphatnak a rabok Femcafe Februárig rács mögött marad Hankó Balázs, elutasították a fellebbezését 444",
    "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQaU9qNzVXWjdjcWtLd0R1TnhjY2FZUU5hMlE1dlpXOEFqUzFLR2RaMEpVdXZzaUdOdkhDQkFlLU5RWEpHanZpT2QyZmIwc0ZtUU5uZ2RsdXZSd01xR29sYWQ3eFAtY1JieFF6UUdub2lqajIxWjVWSkNiaDJOdlR6N1lXSHVJby1mV3FQNjNHRGtIcmE3bEhQQzQ4MzJ5TE5Kb0l1RHlrN1Q?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -11951,7 +12113,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.712,
+   "V": 0.711,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11972,7 +12134,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11984,7 +12146,7 @@
    "id": "c484198959483f03",
    "region": "INT",
    "title": "Coachella 2027: Dua Lipa set to be first female British headliner",
-   "summary": "Coachella 2027: Dua Lipa set to be first female British headliner BBC The 2027 Coachella lineup is here: Dua Lipa, Tame Impala and SZA to headline The Seattle Times Coachella 2027 is for the girls. See the woman-centered lineup The Desert Sun The Coachella 2027 Lineup Is Here, and the Headliners Might Surprise You Teen Vogue Coachella 2027 lineup revealed: Dua Lipa, Madonna and more stars set to perform at music festival Lehighvalleylive.com",
+   "summary": "Coachella 2027: Dua Lipa set to be first female British headliner BBC Dua Lipa, Tame Impala, SZA to headline Coachella 2027 Yahoo Coachella 2027 Lineup: Tame Impala, SZA, and Dua Lipa Pitchfork The 2027 Coachella lineup is here: Dua Lipa, Tame Impala and SZA to headline The Seattle Times Coachella 2027 lineup revealed: Dua Lipa, Madonna and more stars set to perform at music festival Lehighvalleylive.com",
    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9xdzBrQUIwZ3hFRUdEU0t3RGlXcVNxb1NjcDE3Z3dCRk5tT1VuM3pucjRPOVFPYjRFMV8taFUzbi1hOGgwSG5mT0ZnVmlGeE9haDRqWWtnMlVuaVk?oc=5",
    "source": "BBC",
    "source_domain": "bbc.com",
@@ -11994,10 +12156,10 @@
    },
    "V0": 0.7,
    "V": 0.685,
-   "S0": 0.024,
-   "S": 0.024,
+   "S0": 0.053,
+   "S": 0.053,
    "G": 0.6,
-   "ATM": 61
+   "ATM": 96
   },
   {
    "id": "d48c8158caae7ed0",
@@ -12236,7 +12398,7 @@
    "source_domain": "globalhir.hu",
    "published": "2026-11-11T10:47:03Z",
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.098,
    "S": 0.098,
    "G": 0.9,
@@ -12369,7 +12531,7 @@
    "id": "075bbe428503aaf5",
    "region": "HU-NAT",
    "title": "Havasi Bertalan: Magyar Péter kudarcot vallott Berlinben",
-   "summary": "Havasi Bertalan: Magyar Péter kudarcot vallott Berlinben 24.hu",
+   "summary": "Havasi Bertalan: Magyar Péter kudarcot vallott Berlinben 24.hu A fideszesek azon pörögnek, hogy Friedrich Merz egy kézmozdulattal leoltotta Magyar Pétert. Megkérdeztük a német kancellár hivatalát Telex Uniós pénz: Orbán Viktorék váratlanul találtak még 5,5 milliárd eurót, az EU-nak ezt is ki kellene fizetnie Magyarországnak – „A Tisza-kormány nem érheti be kevesebbel” Világgazdaság Magyar Péter nemet mondott az Európai Uniónak, Németország felajánlotta segítségét Forbes Magyarország Tisza-kormány: elérték az őrizetbe vételek Orbán Viktor családját, Magyar Péter a német kancellárral tárgyal Portfolio.hu",
    "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE4wZ0lwX2NCMW1HZ1NMRllDUmwydmNzaTVyWi1nOEFIbUhWSmJVWUNoNUU3bW4zdEV6dzE5WEYtN0NhQ29wdUVqX2ZYVGlhZnRDQUZSY2VfNnZzTWdCbEhIOWJRVzNEczVOYXVhSzBVSjZnaDlHX2h2dnoyb0dGMnc?oc=5",
    "source": "24.hu",
    "source_domain": "24.hu",
@@ -12541,7 +12703,7 @@
    "source_domain": "hvg.hu",
    "published": "2026-11-11T10:35:12Z",
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -12785,17 +12947,17 @@
    "id": "1e46c3a3c19d86dd",
    "region": "HU-NAT",
    "title": "Minden perc számított: itt vannak Kapu Tibor űrkísérleteinek eredményei",
-   "summary": "Minden perc számított: itt vannak Kapu Tibor űrkísérleteinek eredményei Portfolio.hu További főcímek és nézőpontok itt: Google Hírek",
+   "summary": "Minden perc számított: itt vannak Kapu Tibor űrkísérleteinek eredményei Portfolio.hu Így hozta ki Magyarország a maximumot Kapu Tibor űrutazásából, amire a NASA is felfigyelt Qubit Közel másfél évvel az űrrepülése után kiderült, milyen kutatásokat végzett Kapu Tibor a Nemzetközi Űrállomáson Forbes Magyarország Másfél évvel az űrrepülés után kiderült, mit kutatott Kapu Tibor az űrállomáson Hírstart Küldetés teljesítve! csillagaszat.hu",
    "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPRGMzTU1LeF9ta0l0dDNhMmJBMVEtbkM4cW1PRUhWaG1vUDA4TDBXM0pjMUpUeTNucjZ6SXZucG5aV25KTWFKMTRYcHB5YzRlSldkNG1PaEIzMGZ2MFdsY3FxOUdOZ2s0VnZET3ZZTk5DUTZFVHNmWE9MYUxhNnNnN2tWVjJHWC1uMXdDZVBWX056SElmSFY1MU9jLU16clRkWjRpbWowbFpBcU9OLTdWQ3dSc1llYkZuMk92a9IBwgFBVV95cUxNZDNYZlVtZmtvZjRWT3lUcHZoM0tZbzZqc2U3N2dLWG9LZGNiNjgtU3kxR0ZLVkZMVnpGejJhQmpKYkZaYUdCZGMySUVsR0RRbWd5cE1tS04xc1lDSk5WNGVjLVVndThpZ3BnTjBsZnRfLTQ2dHZiemptVGRRSUF6YTZQcFNBNnUtWVVWUHhsaHZuZ3pKc2FEek83NFg3SWprTnk5Y1J6enFTS1dENzBtVThGZi11RmNsTGhIOGREUmNOQQ?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
    "published": "2026-11-11T10:30:00Z",
    "V0": 0.7,
    "V": 0.704,
-   "S0": 0.0,
-   "S": 0.0,
+   "S0": 0.139,
+   "S": 0.139,
    "G": 0.9,
-   "ATM": 0,
+   "ATM": 194,
    "lat": 47.198,
    "lng": 19.514
   },
@@ -12959,7 +13121,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.079,
    "S": 0.079,
    "G": 0.9,
@@ -13251,7 +13413,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13366,7 +13528,7 @@
    "source_domain": "budappest.hu",
    "published": "2026-11-11T10:07:46Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.451,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13504,6 +13666,22 @@
    "ATM": 42
   },
   {
+   "id": "355f7f54d592086d",
+   "region": "INT",
+   "title": "Trump to Visit Arlington Cemetery as His Proposed Arch Faces Growing Opposition",
+   "summary": "Trump to Visit Arlington Cemetery as His Proposed Arch Faces Growing Opposition The New York Times Kennedy Family Joins Effort to Block Construction of Trump’s Arch WSJ Multiple Kennedy family members seek to join legal battle against Trump's triumphal arch Fox News Kennedys sue to block Trump's arch, arguing it would cast shadow on JFK's grave BBC How Trump maneuvered to the brink of building his 250-foot triumphal arch The Detroit News",
+   "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxPbW1pbGhFa1BtUVJRR3ZES2dXZzllanJ3enR0VDRnajYyX1NQREVPMjlPa0h5REFxTkV5bXdRVWMtLXRHQkE1Tzdlbm1PeTRTdDk5ZGVoR3Z6d1paRUFlS18zaVBLQTJQUXRVa3l5UUNQdmhKMC1KeHNVT0FtS0toekhHQ0NYMzZE?oc=5",
+   "source": "The New York Times",
+   "source_domain": "nytimes.com",
+   "published": "2026-11-11T10:03:55Z",
+   "V0": 0.7,
+   "V": 0.699,
+   "S0": 0.035,
+   "S": 0.035,
+   "G": 0.6,
+   "ATM": 85
+  },
+  {
    "id": "d5ec9ba5610a0b9e",
    "region": "HU-NAT",
    "title": "Vietnam csatlakozik a digitális és mesterséges intelligencia versenyképesség terén az 50 legnagyobb gazdaság közé.",
@@ -13516,7 +13694,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.473,
+   "V": 0.474,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -13550,8 +13728,8 @@
   {
    "id": "93d964f39e86d415",
    "region": "INT",
-   "title": "Honor and Anguish: A Veterans Day When the Losses Are New",
-   "summary": "Honor and Anguish: A Veterans Day When the Losses Are New The New York Times Opinion | What a child’s compliment tells me about Pete Hegseth The Washington Post Is Veterans Day a federal holiday? What to know about Nov. 11 USA Today Opinion | This Veterans Day, it's even more important to celebrate American values MS NOW A thank-you on Veterans Day won’t close the growing military-civilian gap The Conversation",
+   "title": "For Families of Those Who Died in the Iran War, a Veterans Day of Profound Loss",
+   "summary": "For Families of Those Who Died in the Iran War, a Veterans Day of Profound Loss The New York Times Opinion | What a child’s compliment tells me about Pete Hegseth The Washington Post Is Veterans Day a federal holiday? What to know about Nov. 11 USA Today Why Veterans Day Was Originally Called Armistice Day Mental Floss Opinion | This Veterans Day, it's even more important to celebrate American values MS NOW",
    "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQUFRadjFES3RzVThFMzZaM3czWmx3bkttQWtiRkc5SGJRbHJJSXU0aHh6WkRKdzh2cUZnZlBkd2xzbm5LdC16MU9KcmhwZmxHbnE1VGNVaTEtNUF1VWVFSllSSnR6R0hMYnNtRUZmQVF4SGkyZU1SWjRtZ05oZ2NHTzZMMVNVWmN4?oc=5",
    "source": "The New York Times",
    "source_domain": "nytimes.com",
@@ -13561,7 +13739,9 @@
    "S0": 0.024,
    "S": 0.024,
    "G": 0.6,
-   "ATM": 60
+   "ATM": 60,
+   "lat": 33.167,
+   "lng": 55.052
   },
   {
    "id": "3febfc5d2b6c2918",
@@ -13752,17 +13932,17 @@
    "id": "d6eeb7febd75accb",
    "region": "INT",
    "title": "Peruvian homecoming: Pope Leo returns to the country that shaped his path to the papacy",
-   "summary": "Peruvian homecoming: Pope Leo returns to the country that shaped his path to the papacy CNN",
+   "summary": "Peruvian homecoming: Pope Leo returns to the country that shaped his path to the papacy CNN Lots of Competition to Catholicism in Peru as Pope Returns for Visit The New York Times Pope Leo returns to Peru, his adopted homeland The Washington Post Larger-than-life Leo statue awaits the pope on Peru’s Pacific coast Reuters Peru puts Pope closer to heaven for monumental welcome home The Times",
    "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1YV3VUUkVzaERUZmhYZ183Y1V6MHRROE1IOUVzd3hQMHBfM2plSW45RGNYS0xQMWpvU0pTd3pMV0NtbDNUZ3dQR1hVSGJQZnY3WEx5bEtUZTUzaHVsaEVvMXlpWUtld09ZN01BWW53blZBZWcteEl0T1ZB?oc=5",
    "source": "CNN",
    "source_domain": "cnn.com",
    "published": "2026-11-11T10:00:15Z",
    "V0": 0.7,
    "V": 0.676,
-   "S0": 0.031,
-   "S": 0.031,
+   "S0": 0.012,
+   "S": 0.012,
    "G": 0.6,
-   "ATM": 76
+   "ATM": 44
   },
   {
    "id": "dcb98e8553531b4b",
@@ -13937,7 +14117,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.067,
    "S": 0.067,
    "G": 0.9,
@@ -14010,7 +14190,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -14453,7 +14633,7 @@
    "source_domain": "hvg.hu",
    "published": "2026-11-11T09:38:03Z",
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -14802,7 +14982,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -14853,7 +15033,7 @@
    "id": "d2da7909caec9013",
    "region": "HU-NAT",
    "title": "A Red Bull nem szól bele, Lawson maradhat a Racing Bullsnál",
-   "summary": "A Red Bull nem szól bele, Lawson maradhat a Racing Bullsnál Nemzeti Sport A Hungaroringen dőlhet el az egyik utolsó 2027-es F1-es ülés sorsa Totalcar Sajtó: Közel került a 2027-es szerződéshosszabbításhoz Lawson M4 Sport Lawson F1-világbajnok lehet? Steiner szerint igen, kár, hogy a Red Bullnál ez senkit nem érdekel Player.hu Mekies: A Racing Bulls dönt Lawson sorsáról f1világ.hu",
+   "summary": "A Red Bull nem szól bele, Lawson maradhat a Racing Bullsnál Nemzeti Sport A Hungaroringen dőlhet el az egyik utolsó 2027-es F1-es ülés sorsa Totalcar Itt a fordulat? – hamarosan eldőlhet az idei F1-es szezon láthatatlan hősének jövője Racingline.hu Sajtó: Közel került a 2027-es szerződéshosszabbításhoz Lawson M4 Sport Lawson F1-világbajnok lehet? Steiner szerint igen, kár, hogy a Red Bullnál ez senkit nem érdekel Player.hu",
    "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxOQWs4U3VsLTJ1WEZrMUhaOEQ1RWZzb2tjakhCLUFHbW1SeERGdjlVRzJCNzhHMmVQU2gwWk5qb09DN2RqbWdKMkNvZ01IVkVFSGlrLVFJa0Y3UGhUc0hOaDZWdHNDWDBJV0MwYS01MDE0N1E2TnY5X3RJMmV2SUlfcGxrNGNLVEZkbWpMdWl1OVJVWWNoLXJrcHlqc0VvQQ?oc=5",
    "source": "Nemzeti Sport",
    "source_domain": "nemzetisport.hu",
@@ -15075,7 +15255,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -15096,11 +15276,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.438,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.9,
-   "ATM": 141,
+   "ATM": 142,
    "lat": 50.596,
    "lng": 10.069
   },
@@ -15561,11 +15741,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.438,
    "S0": 0.076,
    "S": 0.076,
    "G": 0.9,
-   "ATM": 199,
+   "ATM": 201,
    "lat": 47.178,
    "lng": 19.108
   },
@@ -15867,27 +16047,6 @@
    "ATM": 73
   },
   {
-   "id": "77c91d1b691a7876",
-   "region": "HU-NAT",
-   "title": "Kiderült, mennyit fizetett volna az Orbán-kormány az egyik leggazdagabb magyarnak a FINA-székházért",
-   "summary": "Kiderült, mennyit fizetett volna az Orbán-kormány az egyik leggazdagabb magyarnak a FINA-székházért Hirnavigator",
-   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOdDV6WmRPRUg1VFVUa3RoWXZSUmk4TDNhSGNfd2tvSjRNMHlMRmI3Ni1HRzNnVjJmd2R2V3BwMm1IbER3dWtxRkU1U1hFTlFQaXc0akFBcXIxWnc4cVdKSmIxQUpsaEtYaUZfczZqUW9zVGEwOGh6ZTVXcTdRZjRVVHQ0d09OdllwbXdCQW1fR2t3cEVfc2s5ZVdwS2J3UThYM0V1Q24zd2VURENJTHVoS20wMUxfdXlPWUl5YnpZU2JDb0hPM1NWUmtNRV83NUVo?oc=5",
-   "source": "Hirnavigator",
-   "source_domain": "hirnavigator.hu",
-   "published": "2026-11-11T08:39:58Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.469,
-   "S0": 0.072,
-   "S": 0.072,
-   "G": 0.9,
-   "ATM": 183,
-   "lat": 47.244,
-   "lng": 19.632
-  },
-  {
    "id": "f29fc5b3e6ac7e28",
    "region": "INT",
    "title": "Iran designates Argentina's navy, air force as terrorist organizations",
@@ -15907,6 +16066,27 @@
    "ATM": 0,
    "lat": 32.207,
    "lng": 51.467
+  },
+  {
+   "id": "77c91d1b691a7876",
+   "region": "HU-NAT",
+   "title": "Kiderült, mennyit fizetett volna az Orbán-kormány az egyik leggazdagabb magyarnak a FINA-székházért",
+   "summary": "Kiderült, mennyit fizetett volna az Orbán-kormány az egyik leggazdagabb magyarnak a FINA-székházért Hirnavigator",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxOdDV6WmRPRUg1VFVUa3RoWXZSUmk4TDNhSGNfd2tvSjRNMHlMRmI3Ni1HRzNnVjJmd2R2V3BwMm1IbER3dWtxRkU1U1hFTlFQaXc0akFBcXIxWnc4cVdKSmIxQUpsaEtYaUZfczZqUW9zVGEwOGh6ZTVXcTdRZjRVVHQ0d09OdllwbXdCQW1fR2t3cEVfc2s5ZVdwS2J3UThYM0V1Q24zd2VURENJTHVoS20wMUxfdXlPWUl5YnpZU2JDb0hPM1NWUmtNRV83NUVo?oc=5",
+   "source": "Hirnavigator",
+   "source_domain": "hirnavigator.hu",
+   "published": "2026-11-11T08:39:14Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.469,
+   "S0": 0.072,
+   "S": 0.072,
+   "G": 0.9,
+   "ATM": 183,
+   "lat": 47.244,
+   "lng": 19.632
   },
   {
    "id": "8f8db9ffa6e1302f",
@@ -15960,11 +16140,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.438,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.9,
-   "ATM": 141,
+   "ATM": 142,
    "lat": 47.39,
    "lng": 19.412
   },
@@ -16285,7 +16465,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.079,
    "S": 0.079,
    "G": 0.9,
@@ -16297,17 +16477,17 @@
    "id": "1d9490e796e0b71b",
    "region": "HU-NAT",
    "title": "Véget ért a lakásárak száguldása Magyarországon",
-   "summary": "Véget ért a lakásárak száguldása Magyarországon Portfolio.hu Óriási fordulat a magyar ingatlanpiacon: mi lesz most a lakásárakkal? Portfolio.hu Látványos fordulat a magyar lakáspiacon: a Wekerle Plusz indíthatja be az építőipart? Pénzcentrum Már nem kapkodnak a lakásokért a vevők Piac&Profit Kétéves mélypontra zuhant a lakásárak drágulása Mfor.hu",
+   "summary": "Véget ért a lakásárak száguldása Magyarországon Portfolio.hu Óriási fordulat a magyar ingatlanpiacon: mi lesz most a lakásárakkal? Portfolio.hu Megjött a feketeleves Vitézy Dávidnak: ahogy kivégezte az Otthon Startot, azonnal földbe állt a lakáspiac – se híre, se hamva a Wekerle Plusznak Világgazdaság Látványos fordulat a magyar lakáspiacon: a Wekerle Plusz indíthatja be az építőipart? Pénzcentrum Már nem kapkodnak a lakásokért a vevők Piac&Profit",
    "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxQTmRDWUtEMGpsTEhqTTlxLWNYakNpcG1sNTdta25EQ1ZwZUp2bzRodTEzREMtdmtiTFZRYTdlSzEwYm9za09BM01mYUdRRGU1SXRCMnFDNHh0MmhSdVQtLXZzWGFHMkF5cHQ1Z0t3a2VpTGJzWG0wbldpb2tYWW9tbUREenZyTGl5WV9hNEZFZzNJUjZrVjJWeVVRMk85UdIBowFBVV95cUxObUNkX1psQ2RVeWtWd0RURUk5eUM4MG5UZjY5cXhhNnliaXlZU2FfS2RSQ25Od25tSEdLdHl5UUlGMG9MYnFZSHJDdFJJU0ttM1RVNjM4VWwxS3ktLVc4SHA0cm5MNkYtUG9SdVZaTXRmOFNKd1pQclI0el9FSG40VGpKUjNmcG1nQlhDM3NZV2p3S182T1JBOFI0eXBvNWpFNDd3?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
    "published": "2026-11-11T08:23:00Z",
    "V0": 0.7,
    "V": 0.704,
-   "S0": 0.0,
-   "S": 0.0,
+   "S0": 0.167,
+   "S": 0.167,
    "G": 0.9,
-   "ATM": 0,
+   "ATM": 214,
    "lat": 49.063,
    "lng": 21.144
   },
@@ -16469,7 +16649,7 @@
    "id": "ce4af0e2d4d074b1",
    "region": "HU-NAT",
    "title": "Várkonyi Andrea Mészáros Lőrinccel együtt kísérte el a lányát a Hogyan tudnék élni nélküled? 2. díszbemutatójára",
-   "summary": "Várkonyi Andrea Mészáros Lőrinccel együtt kísérte el a lányát a Hogyan tudnék élni nélküled? 2. díszbemutatójára Index.hu Élet+Stílus: Mészáros Lőrinc és Várkonyi Andrea a vörös szőnyegen fotózkodott egy filmbemutatón – videó | hvg.hu Demjén Ferenc az Indexnek: Kitettem az egész életen át felhalmozott kincseimet a garázs elé Index.hu Mészáros és felesége a vörös szőnyegen: egy több mint egymilliárdos állami támogatással készült film premierjén bukkantak fel Forbes.hu Várkonyi Andrea és Bochkor Gábor 19 éves lánya ellopta a show-t a premieren: Nóri csipkeruhában pózolt anyja mellett Femina",
+   "summary": "Várkonyi Andrea Mészáros Lőrinccel együtt kísérte el a lányát a Hogyan tudnék élni nélküled? 2. díszbemutatójára Index.hu Élet+Stílus: Mészáros Lőrinc és Várkonyi Andrea a vörös szőnyegen fotózkodott egy filmbemutatón – videó | hvg.hu Törőcsik Franciska a Hogyan tudnék élni nélküled premierjén marieclaire.hu Mészáros és felesége a vörös szőnyegen: egy több mint egymilliárdos állami támogatással készült film premierjén bukkantak fel Forbes Magyarország Demjén Ferenc az Indexnek: Kitettem az egész életen át felhalmozott kincseimet a garázs elé Index.hu",
    "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOZzFNSEpDTWpOWFUxYlRMTFYzOUZUX3ZMZ0VEaDZUeTZ3TG96ZUpRczV2M3ltSnVUOHphRndtWUNyU19Td2tVSmUyaUxlY2lBa19KUlU5LUZjZ0xWZEh4R29fd0I2RlM4SEdZSFlnem5MYWVFOXNKTTRJZEpuaVlFWVViQkRqRXAzNFBVS29KNVpNMnlNVmhmaFdkSlVnNWpEeDJscXAzVURUNDJTdXBPSkJXVXJxSXkxLUc3eDB1SQ?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -16671,7 +16851,7 @@
    "id": "c49f8d1e6e7543c7",
    "region": "HU-NAT",
    "title": "Eléri Magyarországot a Charles ciklon: hatalmas zuhé érkezik",
-   "summary": "Eléri Magyarországot a Charles ciklon: hatalmas zuhé érkezik Portfolio.hu Alig várjuk Károlyt: tele van a zsákja 20-40 mm esővel Agrárágazat Helyenként akár 40 milliméter eső is eshet – animáción mutatjuk 24.hu Animáción mutatjuk, hogyan érkezik Charles csapadékrendszere Időkép Hamarosan érkezik Charles, és hoz egy csomó esőt Telex",
+   "summary": "Eléri Magyarországot a Charles ciklon: hatalmas zuhé érkezik Portfolio.hu Alig várjuk Károlyt: tele van a zsákja 20-40 mm esővel Agrárágazat Bezárták az iskolákat, készültségben a polgári védelem: trópusi vihar éri el Portugáliát Dívány Helyenként akár 40 milliméter eső is eshet – animáción mutatjuk 24.hu Animáción mutatjuk, hogyan érkezik Charles csapadékrendszere Időkép",
    "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPY0QxV0syd1N5X0tJdFFPNTlORE9mWGJFY2xjYVdmdWJJcDRRTXZtRmhMaUJka3VURnAtVWpJWFhWRkJuRjllMzROT1lRX3EteTVWWUtXMDNLX3ItRVVCbnotZmwyYUoyaFlxWDBfYnJ5SVhhcmxzR1hzYWhHSURYd1hnMzR5X2lvYWRPa1RBNG1KclVha2RJc1I4NzJtSWd6YUllREtHU0ZsR0NaS3fSAbMBQVVfeXFMTlV0NUlJdzlDSUl1VF9KYldqWXRRQXlocC1Vd2FjcjFDVEJFYjBwVXB4NnBSaWcyMGJRdGRMX1Vtam5oRC1xLUQwdjVubkQtX0NIWUcxMHZQSmVLRjFrMVJmSHhjNThZaDE5cHR1alJydERvVk9Fd0ZIMC1UclEzM2Nsc0NCTkx4UVVlZlhMZ3R5NjNhUmVSSTBfcThNX0lUSkx0TVlqc0RrVXMwRHJGa0h6OEk?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -17019,17 +17199,17 @@
    "id": "293c8712bc0bd35f",
    "region": "HU-NAT",
    "title": "Stresszoldó minijátékokkal teszi különlegesebbé a Honor 700 hátlapi kijelzőjét a gyártó",
-   "summary": "Stresszoldó minijátékokkal teszi különlegesebbé a Honor 700 hátlapi kijelzőjét a gyártó Telefonguru Mini kijelző, nagy ötlet: érdekes trükköt kaphat az Honor 700 család Mobilarena A HONOR Magic 8 Pro mellett a powerbank mehet nyugdíjba RendeljKínait Kiszivárgott Honor 700 specifikációk: Snapdragon 8s Gen 4, a Pro verzió Snapdragon 8 Gen 5-öt és egy 200MP-es kamerát használ. Vietnam.vn Piros változatot és Photography Master Kitet kaphat a HONOR Magic9 széria Mobilissimo.hu",
+   "summary": "Stresszoldó minijátékokkal teszi különlegesebbé a Honor 700 hátlapi kijelzőjét a gyártó Telefonguru Mini kijelző, nagy ötlet: érdekes trükköt kaphat az Honor 700 család Mobilarena A pulzusunkat és a véroxigénszintünket is csekkolhatjuk a Honor 700 hátlapi kijelzőjén NapiDroid A HONOR Magic 8 Pro mellett a powerbank mehet nyugdíjba RendeljKínait Kiszivárgott Honor 700 specifikációk: Snapdragon 8s Gen 4, a Pro verzió Snapdragon 8 Gen 5-öt és egy 200MP-es kamerát használ. Vietnam.vn",
    "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPNHE1VXU2SlJ1RnI0VnJyeGZ6UXhfYWtVQ2xQYkhzLTF4MUl3SlRPcGY3R09lb29ja0d6RzB2OGVId19XMnozQTNnbjQ4WjBjYjJfMEVmZTNQR1c3WUVDMFdMLURWZzNmRm1nZHMtU3NoZXY4ajZXNUI0dk1FWlJWaHZUMXZlRS14Ty10WFZ4SmVwV255SnI4Ulc0LW02NGtub1NIeU91WkR1NmVCRkdDV2dDWS1uWWVFV0x4NkpURVY3b3lvVW1WWQ?oc=5",
    "source": "Telefonguru",
    "source_domain": "telefonguru.hu",
    "published": "2026-11-11T07:47:19Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.029,
-   "S": 0.029,
+   "S0": 0.015,
+   "S": 0.015,
    "G": 0.9,
-   "ATM": 122,
+   "ATM": 99,
    "lat": 47.276,
    "lng": 19.093
   },
@@ -18389,7 +18569,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.057,
    "S": 0.057,
    "G": 0.9,
@@ -18428,7 +18608,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.098,
    "S": 0.098,
    "G": 0.9,
@@ -19564,7 +19744,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.451,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.9,
@@ -19626,7 +19806,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19666,7 +19846,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -23014,17 +23194,17 @@
    "id": "89513a16b7f7a67f",
    "region": "INT",
    "title": "College Football Playoff Bubble Watch after second ranking",
-   "summary": "College Football Playoff Bubble Watch after second ranking ESPN College Football Playoff Rankings: Georgia moves to No. 1 as Alabama, UCLA join top four in second release CBS Sports CFP Selection Committee Releases Second Rankings of 2026 College Football Playoff Georgia nabs top spot in CFP rankings, while Notre Dame jumps ahead of Miami after beating ‘Canes TribLIVE.com Playoff Committee Chair weighs in on Georgia On3",
+   "summary": "College Football Playoff Bubble Watch after second ranking ESPN College Football Playoff Rankings: Georgia moves to No. 1 as Alabama, UCLA join top four in second release CBS Sports CFP Selection Committee Releases Second Rankings of 2026 College Football Playoff Georgia nabs top spot in CFP rankings, while Notre Dame jumps ahead of Miami after beating ‘Canes TribLIVE.com The 2026 CFP rankings broke major trend, might explain fan outrage AL.com",
    "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNT1c1MHBYa2ZYdUM5VExBYTQxb2hNWFNHczdvYW41M1V4ajY5RUlGbzZrQk42bno0QmJwVDRqUU5Pa1RqV0djOXlqOWgzaXNCaHBERGVNeUxWdzBxLThWVUJscnhvY0Zwc0VPV3pTOGlEVXpHTVhPZV9EbzVxZThhcXJVLVlXQ1VSaEVPbUVjUnhaNHNUM1VMTjNhMA?oc=5",
    "source": "ESPN",
    "source_domain": "espn.com",
    "published": "2026-11-11T02:45:00Z",
    "V0": 0.45,
    "V": 0.44,
-   "S0": 0.066,
-   "S": 0.066,
+   "S0": 0.239,
+   "S": 0.239,
    "G": 0.6,
-   "ATM": 153
+   "ATM": 284
   },
   {
    "id": "6839aaca5a9a63bb",
@@ -23453,22 +23633,6 @@
    "S": 0.012,
    "G": 0.6,
    "ATM": 42
-  },
-  {
-   "id": "dd16af0fec14dbc1",
-   "region": "INT",
-   "title": "At least 3 dead after car crashes into North Hollywood food stand",
-   "summary": "At least 3 dead after car crashes into North Hollywood food stand CBS News Car Crashes Near Los Angeles Metro Station, Killing at Least 3 The New York Times 3 dead, at least 3 critically injured in North Hollywood crash near Metro Station KTLA At least 3 people dead after vehicle strikes pedestrians in North Hollywood, officials say CNN 3 dead, at least 3 injured after vehicle strikes pedestrians in North Hollywood NBC Los Angeles",
-   "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQdmsyOFlFQ1BwM1V1X25KVmxpVUY1SGNOcmFTVGFSc0xLNUxrd0lDYXA4UkJ1cEtJTUJzR3BYRUhYYWx3eW5raVdtUUNlU1FJRVdEQkd4REN5OTBST0NTTjhlU3FoVFlfZ1VRMk5lWGpUYXF5VHVFZVJ6TGtNdFlyY21WX1FnbDBPdTRyMmdjeUhpZFhrdjB2R0JlazFoSEw0N0FCdk1zUUg2LXctWXBBb3FiNnY5dmdsVnc?oc=5",
-   "source": "CBS News",
-   "source_domain": "cbsnews.com",
-   "published": "2026-11-11T02:25:17Z",
-   "V0": 0.7,
-   "V": 0.692,
-   "S0": 0.048,
-   "S": 0.048,
-   "G": 0.6,
-   "ATM": 96
   },
   {
    "id": "94eb5f3f7ed96ab2",
@@ -24842,134 +25006,6 @@
    "lng": -98.723
   },
   {
-   "id": "0a26bf275243ef2e",
-   "region": "INT",
-   "title": "Connor Hellebuyck reveals how Olympic fallout factored into his Jets exit",
-   "summary": "Connor Hellebuyck revealed that it was ultimately “more than online death threats” that resulted in his decision to ask the Winnipeg Jets for a trade.",
-   "link": "https://nypost.com/2026/11/10/sports/connor-hellebuyck-reveals-how-olympic-fallout-factored-into-his-jets-exit/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-11T01:03:05Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 0,
-    "ex": 0,
-    "ov": 0.667
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "62ec5744113550b8",
-   "region": "INT",
-   "title": "MTG on Trump's 'pattern' of ousting women senior officials: He 'tears women down constantly'",
-   "summary": "MTG on Trump's 'pattern' of ousting women senior officials: He 'tears women down constantly' CNN",
-   "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxQblI1UmhBVEdUN0RKVThZc3AzRmRRU0NqQjlCbWlOUFFmY04tcTJQbjdSRzk4NEt3T0RjZTZUSkhQU0NGVHBqdkxETVZaQ2VDcFdqdk9jdU80WVNLVUIteEtvZlpFc1JPWFVqeTFGSnpEbUJBZG9HMFBxM0FCeEZZVERwcHprSjJoaTZxYjByVG92bTN6WWc4SWVSRjh5UQ?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-11T01:00:13Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.676,
-   "S0": 0.109,
-   "S": 0.109,
-   "G": 0.6,
-   "ATM": 145
-  },
-  {
-   "id": "e5d44c422869ca70",
-   "region": "INT",
-   "title": "Jenna Bush Hager details awkward conversation with son Hal, 7, about her ex-boyfriends",
-   "summary": "The reporter shares Hal, along with two daughters, Poppy, 11, and Mila, 13, with her husband, Henry Hager.",
-   "link": "https://pagesix.com/2026/11/10/parents/jenna-bush-hager-details-awkward-conversation-with-son-hal-7-about-her-ex-boyfriends/",
-   "source": "New York Post",
-   "source_domain": "pagesix.com",
-   "published": "2026-11-11T00:57:11Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 0,
-    "ex": 4,
-    "ov": 0.778
-   },
-   "V0": 0.45,
-   "V": 0.444,
-   "S0": 0.0,
-   "S": 0.045,
-   "G": 0.6,
-   "ATM": 130
-  },
-  {
-   "id": "3375702d3685aeed",
-   "region": "INT",
-   "title": "Kirk Cousins passes torch to Fernando Mendoza with one final message",
-   "summary": "The torch has officially been passed from Kirk Cousins to Fernando Mendoza. After Cousins was shipped from the Raiders to the Vikings in an NFL trade deadline blockbuster on Tuesday, Mendoza and Cousins said they’re both thankful for their time together. Kirk Cousins suited up in a Raiders uniform for the last time Sunday. Cousins...",
-   "link": "https://nypost.com/2026/11/10/sports/kirk-cousins-fernando-mendoza-message/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-11T00:56:32Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 0,
-    "ex": 1,
-    "ov": 0.667
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.015,
-   "S": 0.03,
-   "G": 0.6,
-   "ATM": 73
-  },
-  {
-   "id": "30626aa89100df5a",
-   "region": "INT",
-   "title": "Pat Murphy wins unprecedented third straight NL Manager of the Year award after Brewers' World Series title",
-   "summary": "Pat Murphy wins unprecedented third straight NL Manager of the Year award after Brewers' World Series title Yahoo Sports",
-   "link": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQZnBOLV9pVmNrY19OUjNOUF8zRE82SU1xN2ZjYmhDMnAyVmJmb2RFMnRMSmpNYndjS1lncDZWNlZaZ1hsbUY2aXlQcTVCNFl0RXZrS21oN3huV0hRWnkzNkZwX1M0ckZXcThRUUhJVUc4TlBBMzM2eDZMU1pOVlhWLUJ2VmF5YWFTWndLaHRxS1NjNy1STDh5TUZ4Y01yUmhIRmUyQTNXVkM4dHVHZk80V2EtbmVxWjFnNndKMmJQaEgwb01ncHdvNVllUDh1M181VDBScEdibnIzYkFQd1JBQVpocEhZaUU1dkFRR0NVdw?oc=5",
-   "source": "Yahoo Sports",
-   "source_domain": "sports.yahoo.com",
-   "published": "2026-11-11T00:56:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.446,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "b285434bb5a8e0e3",
-   "region": "INT",
-   "title": "How did DC-area nursing homes rank in U.S. News and World Report’s list of top facilities?",
-   "summary": "How did DC-area nursing homes rank in U.S. News and World Report’s list of top facilities? WTOP News",
-   "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOWWxDOTFVU1N3NTJfZDBtTEJEYTJrNFZTSExzN0dScHBxM1JkUFhWc0M2OEYxNk9iWHJtVEVvUFdtMkhCVHdncmEybGJyZGpRYzBvOFFwLVM5LXkwSDlZd3BIVWZ4SUk1RkJQZXREX1JNZHF1RjdzaXZZdGJidFh3Vk0yYTJ5NHdxZXZBOVdWbWc5aDRjZXFGQy1lMUM4akY2NEJTLWwxTUlPR0tHWnlDdGdJMXJselk?oc=5",
-   "source": "WTOP News",
-   "source_domain": "wtop.com",
-   "published": "2026-11-11T00:55:59Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.03,
-   "S": 0.03,
-   "G": 0.6,
-   "ATM": 99,
-   "lat": 37.913,
-   "lng": -96.248
-  },
-  {
    "id": "09e028badda5a861",
    "region": "HU-NAT",
    "title": "Minimálbér 2027: megtört a jég",
@@ -25174,7 +25210,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.458,
+   "V": 0.459,
    "S0": 0.111,
    "S": 0.111,
    "G": 0.9,
@@ -25822,7 +25858,7 @@
    "source_domain": "telex.hu",
    "published": "2026-11-10T20:44:01Z",
    "V0": 0.7,
-   "V": 0.702,
+   "V": 0.703,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -25885,7 +25921,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -26428,7 +26464,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -26503,7 +26539,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.079,
    "S": 0.079,
    "G": 0.9,
@@ -26782,7 +26818,7 @@
    "source_domain": "vg.hu",
    "published": "2026-11-10T18:56:08Z",
    "V0": 0.45,
-   "V": 0.455,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -27055,7 +27091,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -27361,27 +27397,6 @@
    "lng": 16.421
   },
   {
-   "id": "cb60a2bb75f36eb5",
-   "region": "HU-NAT",
-   "title": "Málta megtelt vendégmunkásokkal és turistákkal, ezért a kormány jövőre durván megdrágítja az életüket",
-   "summary": "Málta megtelt vendégmunkásokkal és turistákkal, ezért a kormány jövőre durván megdrágítja az életüket Hirnavigator",
-   "link": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOZW5vakhxTTQyeXhDU1ZKNkRRUGowenprek1uanlOQXJKOEozSHlnLWtaMWUtNW5jRnFQQ21tMnJKNEk3S1ZjTTl1ZjdDWmdOXzNEM3VKZDE1LTQ3alVEejZjOTU2REloTlRqdEdJRDJTamxJVC14T2RicnNLNnRfbVRHeVdpUEJBSTlGR1REa2s3ejltc2E0ZmlUWHdKcjNadUN2azRzRTZBbmdiY295WVZSbG16V2R6b0lyWW55bUxud21zM1Y0M004VTUwZGhPOWM0?oc=5",
-   "source": "Hirnavigator",
-   "source_domain": "hirnavigator.hu",
-   "published": "2026-11-10T18:08:05Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.47,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.241,
-   "lng": 19.264
-  },
-  {
    "id": "2e958ff826d32abd",
    "region": "AT-1",
    "title": "Täter nach Raubüberfall im Burgenland weiter flüchtig",
@@ -27401,27 +27416,6 @@
    "ATM": 167,
    "lat": 47.364,
    "lng": 16.394
-  },
-  {
-   "id": "0989ba210eae1a23",
-   "region": "HU-NAT",
-   "title": "Az ügyészség indítványozta volt miniszterelnök öccsének a letartóztatását",
-   "summary": "Az ügyészség indítványozta volt miniszterelnök öccsének a letartóztatását Vajdaság MA",
-   "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNcFZPajc1VXNtZEdnaU8tbVFKWGQwUUwyRjFkdmV6aU1lR0l0V1NMTnlPazBLSmNtZHRCRUtObzU2THhXaGhXWEd2bDFlRW41ZlVGdDR3NUZtVy02ZkJDeEdlN2hFSnhNLWVnSlFEd0tNT1d0NGlTSHYwc1RuWHNuNUxBdWF6SEhscVA2c29vNHJVOUdYaldYYnNHWVNlQWZtN1hXNTJoeFUxdkoyNFNGd24wemsxZjNIcTZpLU13UVpDeFE?oc=5",
-   "source": "Vajdaság MA",
-   "source_domain": "vajma.info",
-   "published": "2026-11-10T18:07:50Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.462,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.416,
-   "lng": 19.406
   },
   {
    "id": "4923c4783829b0a4",
@@ -29428,7 +29422,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.705,
+   "V": 0.706,
    "S0": 0.0,
    "S": 0.0,
    "G": 1.0,
