@@ -214,6 +214,10 @@ def update(prev: dict | None, items: list[dict], cfg: dict, now=None, fetch=None
             if pause:
                 time.sleep(pause)
         st.update({"price_attempt": to_iso_utc(now), "fetch_sig": sig, "ok": ok, "failed": failed, "via": via})
+        if failed:
+            st.setdefault("failed_since", to_iso_utc(now))
+        else:
+            st.pop("failed_since", None)
 
     # 3) karbantartás + értékelés
     keep = (now.date() - timedelta(days=rc.get("retain_days", 400))).isoformat()

@@ -30,6 +30,14 @@ def build_messages(history: dict, cfg: dict, now=None) -> list[dict]:
     fresh = now - timedelta(hours=n.get("fresh_hours", 3))
     items = {i["id"]: i for i in history.get("items", [])}
     msgs: list[dict] = []
+    health_msgs: list[dict] = []
+    hs = state.get("health", {})
+    repeat = timedelta(hours=n.get("health_repeat_hours", 12))
+    for p in history.get("health", []):
+        last = hs.get(p["id"])
+        if not last or now - parse_iso(last) >= repeat:
+            health_msgs.append({"key": ("health", p["id"]), "title": "Rendszer-figyelmeztetés", "message": p["text"][:300],
+                                "click": "", "priority": 4, "tags": ["rotating_light"]})
 
     for i in items.values():
         if i.get("alert") and i["id"] not in sent_ids and parse_iso(i["published"]) >= now - timedelta(hours=12):
@@ -49,19 +57,20 @@ def build_messages(history: dict, cfg: dict, now=None) -> list[dict]:
             msgs.append({"key": ("term", b["term"]), "title": "Felszálló téma",
                          "message": f"„{b['term']}” – {b['recent']} hír az elmúlt 6 órában", "click": "", "priority": 3,
                          "tags": ["chart_with_upwards_trend"]})
-    return msgs[: n.get("max_per_run", 3)]
+    return health_msgs[:2] + msgs[: n.get("max_per_run", 3)]
 
 
 def mark_sent(history: dict, msgs: list[dict], now=None) -> None:
     now = now or now_utc()
     stamp = to_iso_utc(now)
     state = history.setdefault("notified", {})
-    ids, terms = state.setdefault("ids", {}), state.setdefault("terms", {})
+    ids, terms, hl = state.setdefault("ids", {}), state.setdefault("terms", {}), state.setdefault("health", {})
     for m in msgs:
-        (ids if m["key"][0] == "id" else terms)[m["key"][1]] = stamp
+        (ids if m["key"][0] == "id" else hl if m["key"][0] == "health" else terms)[m["key"][1]] = stamp
     cutoff = to_iso_utc(now - timedelta(days=3))
     state["ids"] = {k: v for k, v in ids.items() if v >= cutoff}
     state["terms"] = {k: v for k, v in terms.items() if v >= cutoff}
+    state["health"] = {k: v for k, v in hl.items() if v >= cutoff}
 
 
 def send(topic: str, msg: dict, post=requests.post) -> bool:

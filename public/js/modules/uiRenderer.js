@@ -16,7 +16,19 @@ export function renderKpis(stats, data) {
   $('kpi-atm').textContent = stats.n ? fmtAtm(stats.avgAtm) : '–';
   $('kpi-p90').textContent = stats.n ? fmtAtm(stats.p90) : '–';
   $('kpi-n').textContent = String(stats.n);
-  $('kpi-fresh').textContent = data && data.generated_at ? relTime(data.generated_at) : '–';
+  const f = $('kpi-fresh');
+  f.textContent = data && data.generated_at ? relTime(data.generated_at) : '–';
+  const age = data && data.generated_at ? (Date.now() - Date.parse(data.generated_at)) / 60000 : 0;
+  f.className = age > 180 ? 'bad' : age > 90 ? 'warn' : '';  // elavuló adat: borostyán 90 perc, piros 3 óra fölött (a GitHub ütemezése kb. óránkénti ritmust ad)
+}
+
+// Egészség-sáv: szerver oldali problémák (hard) és kliens oldali emlékeztetők (soft).
+export function renderHealth(list) {
+  const box = $('healthBox');
+  if (!box) return;  // régi, gyorsítótárazott index.html mellett sem állhat meg az app
+  box.replaceChildren();
+  (list || []).forEach(h => box.append(el('div', h.soft ? 'soft' : '', (h.soft ? 'ℹ ' : '⚠ ') + h.text)));
+  box.hidden = !(list && list.length);
 }
 
 export function renderChips(box, regions, active, onPick) {

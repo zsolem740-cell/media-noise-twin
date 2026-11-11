@@ -273,7 +273,14 @@ def main() -> int:
         research = prev.get("research") if prev else None
     if research is not None:
         out["research"] = research
-    if prev and prev.get("items") == out["items"] and prev.get("model") == out["model"] and prev.get("config") == cfg_status and prev.get("research") == out.get("research"):
+    out["summary"]["bytes"] = len(json.dumps(out, ensure_ascii=False, indent=1).encode("utf-8"))
+    try:  # rendszer-egészség (az app megmutatja, a notify telefonra küldi)
+        from src.core import health
+        out["health"] = health.check(out, raw.get("count", len(raw.get("items", []))), cfg)
+    except Exception as exc:
+        print(f"[FIGYELEM] egészség-ellenőrzés kihagyva: {exc}", file=sys.stderr)
+        out["health"] = []
+    if prev and prev.get("items") == out["items"] and prev.get("model") == out["model"] and prev.get("config") == cfg_status and prev.get("research") == out.get("research") and prev.get("health") == out.get("health"):
         print("Nincs változás, a fájl érintetlen marad.")
         return 0
     HISTORY.parent.mkdir(parents=True, exist_ok=True)

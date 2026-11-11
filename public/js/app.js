@@ -19,6 +19,9 @@ const emit = n => bus.dispatchEvent(new Event(n));
 const cap = () => (state.model && state.model.atm_cap !== undefined ? state.model.atm_cap : 0.6); // a csúszka teteje = nincs korlát
 
 const GLOBE_PREF = 'mnt-globe';
+const BACKUP_KEY = 'mnt-backup';
+const getBackup = () => { try { return Number(localStorage.getItem(BACKUP_KEY)) || 0; } catch (_) { return 0; } };
+const setBackup = () => { try { localStorage.setItem(BACKUP_KEY, String(Date.now())); } catch (_) {} };
 const getPref = () => { try { return localStorage.getItem(GLOBE_PREF) || '3d'; } catch (_) { return '3d'; } };
 const setPref = v => { try { localStorage.setItem(GLOBE_PREF, v); } catch (_) {} };
 
@@ -95,12 +98,23 @@ function exportVotes() {
     id: v.id, domain: v.domain, vote: v.vote, title: v.title, sRule: v.sRule, sAi: v.sAi,
     S0: v.S0, S: v.S, V: v.V, region: v.region, atm: v.atm,
   })), null, 1);
-  const done = ok => ui.setStatus(ok ? `${state.votes.length} szavazat a vágólapon` : 'a másolás nem sikerült');
+  const done = ok => { if (ok) { setBackup(); renderHealthBar(); } ui.setStatus(ok ? `${state.votes.length} szavazat a vágólapon (mentés rögzítve)` : 'a másolás nem sikerült'); };
   try { navigator.clipboard.writeText(data).then(() => done(true), () => done(false)); } catch (_) { done(false); }
 }
 
+// Egészség-sáv: a szerver problémái + a szavazatmentés emlékeztetője (a szavazatok csak a telefonon vannak).
+function renderHealthBar() {
+  const list = ((state.data && state.data.health) || []).map(h => ({ text: h.text }));
+  const nv = state.votes.length, last = getBackup();
+  const days = last ? (Date.now() - last) / 86400000 : null;
+  if (nv >= 100 && (days === null || days > 14)) {
+    list.push({ soft: true, text: `Szavazatmentés: ${days === null ? 'még nem mentetted' : Math.floor(days) + ' napja mentetted'} (${nv} szavazat csak ezen a telefonon van). Az Öntanuló AI panelben másold ki a szavazatokat.` });
+  }
+  ui.renderHealth(list);
+}
+
 function exportDiag() {
-  const txt = buildDiag({ data: state.data, model: state.model, rows: state.rows, votes: state.votes, cal: state.cal, lam: state.lam, aiBase: state.aiBase, regionLabel, now: Date.now() });
+  const txt = buildDiag({ data: state.data, model: state.model, rows: state.rows, votes: state.votes, cal: state.cal, lam: state.lam, aiBase: state.aiBase, regionLabel, lastBackup: getBackup(), now: Date.now() });
   const done = ok => ui.setStatus(ok ? 'diagnosztika a vágólapon' : 'a másolás nem sikerült');
   try { navigator.clipboard.writeText(txt).then(() => done(true), () => done(false)); } catch (_) { done(false); }
 }
@@ -114,6 +128,7 @@ function render() {
   const rows = fe.getFiltered({ region: state.region, maxAtm: state.maxAtm >= cap() ? Infinity : state.maxAtm, type: state.type, votes });
 
   ui.renderKpis(fe.getStats(rows), state.data);
+  renderHealthBar();
   ui.renderChips(ui.$('filters'), regions, state.region, r => {
     state.region = r.code;
     if (r.center) state.globe.focus(r.center[0], r.center[1]);

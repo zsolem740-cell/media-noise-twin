@@ -74,3 +74,7 @@ Források, geofence és trust-domainek: `config/sources.json`.
 
 ### v46.1
 - Árfolyamforrás: a Stooq 2026 márciusától kulcs nélkül nem ad adatot, ezért az alap a Yahoo grafikon-végpont (kulcs nélkül, nem hivatalos); a Stooq tartalék, ha `research.stooq_apikey` (vagy `STOOQ_APIKEY` környezeti változó) meg van adva. Hibás ár esetén óránként újrapróbál; a beállítás változásakor azonnal.
+
+## v47
+- Rendszer-egészség (`src/core/health.py`): az adatból számolt ellenőrzések (nincs friss hír, kevés gyűjtött hír, tartósan hibás árfolyam-letöltés, hibás config/user.json, elutasított inbox-csomag, túl nagy adatfájl). Az app piros sávban mutatja, a notify.py pedig – ha van `NTFY_TOPIC` – telefonra küldi (12 óránként ismételve). A „Frissítve" mutató 90 perc fölött borostyán, 3 óra fölött piros (a GitHub ütemezett futásai a gyakorlatban kb. óránként jönnek). Szavazatmentés-emlékeztető (14 nap), a Diagnosztika másolása az egészséget és az adatfájl méretét is mutatja.
+- Ami innen nem látszik: ha maga a workflow nem indul el; erre a GitHub e-mailes hibajelzése és az app mutatója szolgál.
