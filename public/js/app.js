@@ -11,6 +11,7 @@ import * as ui from './modules/uiRenderer.js';
 import { parseShare, openShare, analyze } from './modules/share.js';
 import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag } from './modules/diag.js';
+import { runAudit } from './modules/audit.js';
 
 const bus = new EventTarget();
 const on = (n, f) => bus.addEventListener(n, f);
@@ -113,6 +114,25 @@ function renderHealthBar() {
   ui.renderHealth(list);
 }
 
+// Audit: futás közben nem másol (a vágólap felhasználói érintést kér), az eredmény a panelben jelenik meg, a „Audit másolása” gombbal másolható.
+let auditBusy = false;
+async function runAuditUi() {
+  if (auditBusy) return;
+  auditBusy = true;
+  ui.setStatus('audit fut… (néhány másodperc)');
+  try {
+    state.auditText = await runAudit(state.votes, (state.data && state.data.items) || [], () => new Promise(r => setTimeout(r, 0)));
+    ui.setStatus('audit kész');
+  } catch (_) { state.auditText = 'Az audit hibára futott.'; ui.setStatus('audit hiba'); }
+  auditBusy = false;
+  renderPanels();
+}
+
+function copyAudit() {
+  const done = ok => ui.setStatus(ok ? 'audit a vágólapon' : 'a másolás nem sikerült');
+  try { navigator.clipboard.writeText(state.auditText || '').then(() => done(true), () => done(false)); } catch (_) { done(false); }
+}
+
 function exportDiag() {
   const txt = buildDiag({ data: state.data, model: state.model, rows: state.rows, votes: state.votes, cal: state.cal, lam: state.lam, aiBase: state.aiBase, regionLabel, lastBackup: getBackup(), now: Date.now() });
   const done = ok => ui.setStatus(ok ? 'diagnosztika a vágólapon' : 'a másolás nem sikerült');
@@ -163,7 +183,7 @@ function renderPanels() {
       votes: state.votes.length, steps: state.learner.steps, lambda: state.lam, boot: state.learner.boot, top,
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
-    }, { onExport: exportVotes, onDiag: exportDiag, onSuggest, onCopySuggestion });
+    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, onSuggest, onCopySuggestion });
   }
   if (ui.$('insBox').open) ui.renderInsights(ui.$('insBody'), state.data && state.data.insights, regionLabel, state.data && state.data.config);
 }

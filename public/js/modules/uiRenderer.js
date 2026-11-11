@@ -119,6 +119,19 @@ export function renderAi(box, ai, handlers = {}) {
     d.addEventListener('click', handlers.onDiag);
     box.append(d);
   }
+  if (handlers.onAudit) {
+    const a = el('button', 'btn small', handlers.auditText ? 'Audit újrafuttatása' : 'Audit futtatása');
+    a.type = 'button';
+    a.addEventListener('click', handlers.onAudit);
+    box.append(a);
+    if (handlers.auditText) {
+      box.append(el('pre', 'auditpre', handlers.auditText));
+      const c = el('button', 'btn small', 'Audit másolása');
+      c.type = 'button';
+      c.addEventListener('click', handlers.onAuditCopy);
+      box.append(c);
+    }
+  }
   if (ai.top) {
     sec(box, 'Zajosnak tanult szavak');
     row(box, ai.top.pos.length ? ai.top.pos.map(x => x.word).join(', ') : 'még nincs elég adat');

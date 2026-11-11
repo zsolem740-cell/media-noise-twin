@@ -78,3 +78,6 @@ Források, geofence és trust-domainek: `config/sources.json`.
 ## v47
 - Rendszer-egészség (`src/core/health.py`): az adatból számolt ellenőrzések (nincs friss hír, kevés gyűjtött hír, tartósan hibás árfolyam-letöltés, hibás config/user.json, elutasított inbox-csomag, túl nagy adatfájl). Az app piros sávban mutatja, a notify.py pedig – ha van `NTFY_TOPIC` – telefonra küldi (12 óránként ismételve). A „Frissítve" mutató 90 perc fölött borostyán, 3 óra fölött piros (a GitHub ütemezett futásai a gyakorlatban kb. óránként jönnek). Szavazatmentés-emlékeztető (14 nap), a Diagnosztika másolása az egészséget és az adatfájl méretét is mutatja.
 - Ami innen nem látszik: ha maga a workflow nem indul el; erre a GitHub e-mailes hibajelzése és az app mutatója szolgál.
+
+### v47.1
+- „Audit futtatása” gomb az Öntanuló AI panelben: időbeli teszt (az első 70% szavazaton választott λ, az utolsó 30%-on mért AUC, bootstrap-sávval), forrás-kihagyásos teszt (az AI újratanítva véletlen és forrás szerinti felosztással), és a szavazatok koncentrációja. Az eredmény a panelben jelenik meg, az „Audit másolása” gombbal másolható. A service worker fájllistája a diag.js és audit.js modulokkal bővült.
