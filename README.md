@@ -89,3 +89,7 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - **Vak szavazás alapértelmezetten:** a kártyán a szavazásig nem látszik az ATM, az S, az AI-érték, a szín és a forrás neve; a szavazás vagy a „Miért?” után feltárul (a „Miért?” után leadott szavazat már nem számít vaknak). A szavazat elmenti, hogy vak volt-e (`blind`). A kapcsolók az Öntanuló AI panelben vannak.
 - **Kétlépéses címkézés:** a cikk megnyitása után a kártyán megjelenik az „Elolvasás után” sor; a második ítélet külön tárolódik (`vote2`), a tanulót nem módosítja.
 - Az Audit külön mutatja az új vak szavazatok pontosságát (cél: 300), és a kétlépéses egyezést (kappa).
+
+### v47.4
+- **Service worker:** az alkalmazás héja (html, js, css) mostantól hálózat előbb, `no-cache` ellenőrzéssel töltődik (az új verzió azonnal látszik, nincs „egy betöltéssel később" és nincs 10 perces gyorsítótár-késés); a telepítés friss fájlokat tölt (`reload`). Offline a gyorsítótár szolgál tartalékként.
+- A szavazatok elmentik az alkalmazás verzióját (`ver`), az Audit pedig kiírja az utolsó 150 szavazat jelzőit (vak, feltárt, jelző nélküli, forrás látszott, kódverzió), hogy látszódjon, miért nem számolódik vaknak egy szavazat.

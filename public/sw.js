@@ -1,4 +1,4 @@
-const V = 'mnt-v15';
+const V = 'mnt-v16';
 const LIB = 'mnt-lib-three-160';
 const SHELL = [
   './', 'index.html', 'css/main.css', 'manifest.json',
@@ -8,7 +8,8 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // 'reload': a telepítés ne a böngésző 10 perces gyorsítótárából vegye a fájlokat
+  e.waitUntil(caches.open(V).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -36,15 +37,14 @@ self.addEventListener('fetch', e => {
   const key = url.origin + url.pathname;
   if (url.pathname.endsWith('/atm_history.json')) {
     e.respondWith(
-      fetch(req).then(r => { if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(key, cp)); } return r; })
+      fetch(req, { cache: 'no-cache' }).then(r => { if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(key, cp)); } return r; })
         .catch(() => caches.match(key))
     );
     return;
   }
+  // A héj (html, js, css): hálózat előbb, 'no-cache' = mindig ellenőrzi a szervert (változatlan fájlnál olcsó 304), így az új verzió azonnal látszik; offline a gyorsítótár szolgál.
   e.respondWith(
-    caches.match(key).then(hit => {
-      const net = fetch(req).then(r => { if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(key, cp)); } return r; });
-      return hit || net.catch(() => caches.match(new URL('./', location.href).href));
-    })
+    fetch(req, { cache: 'no-cache' }).then(r => { if (r.ok) { const cp = r.clone(); caches.open(V).then(c => c.put(key, cp)); } return r; })
+      .catch(() => caches.match(key).then(hit => hit || caches.match(new URL('./', location.href).href)))
   );
 });

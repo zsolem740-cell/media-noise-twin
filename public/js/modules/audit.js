@@ -4,7 +4,7 @@
 // 3) koncentráció: mennyire néhány forrásból jönnek a szavazatok.
 import { Learner } from './learner.js';
 
-export const AUDIT_VERSION = 'v47.3';
+export const AUDIT_VERSION = 'v47.4';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -92,6 +92,18 @@ export async function sourceHoldout(votes, items, K = 5, yieldFn = async () => {
   return { ok: true, n: v.length, random: out.random, grouped: out.grouped };
 }
 
+// 7) Az utolsó szavazatok jelzői: vak / feltárt / jelző nélküli (régi kóddal leadott), és hogy melyik kódverzióval születtek.
+export function voteFlags(votes, last = 150) {
+  const r = votes.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0)).slice(-last);
+  const o = { n: r.length, blind: 0, revealed: 0, none: 0, srcShown: 0, ver: {} };
+  r.forEach(x => {
+    if (x.blind === true) o.blind++; else if (x.blind === false) o.revealed++; else o.none++;
+    if (x.srcShown === true) o.srcShown++;
+    const k = x.ver || 'ismeretlen'; o.ver[k] = (o.ver[k] || 0) + 1;
+  });
+  return o;
+}
+
 // 5) Új, vak szavazatok (szám és szín nélkül született szavazatok): a valódi, torzítatlan pontosság.
 export function blindVotes(votes, lam = 0.3) {
   const v = votes.filter(x => x.blind === true && Number.isFinite(x.sRule) && Number.isFinite(x.sAi));
@@ -132,7 +144,7 @@ export function thresholdsReport(votes, th) {
 const f2 = x => (Number.isFinite(x) ? x.toFixed(2) : '–');
 const rg = r => `[${f2(r[0])}–${f2(r[1])}]`;
 
-export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }) {
+export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }, vf = null) {
   const n1 = votes.filter(v => v.vote === 'bait').length;
   const L = [`AUDIT ${AUDIT_VERSION} · ${new Date(now).toISOString().slice(0, 16)}Z`];
   L.push(`szavazat: ${votes.length} (${n1} clickbait / ${votes.length - n1} tény) · ${conc.domains} forrás · az 5 legtöbbet szavazott forrás a szavazatok ${Math.round(conc.top5Share * 100)}%-a (${conc.top.map(t => `${t.d} ${t.n}, clickbait ${Math.round(t.rate * 100)}%`).join('; ')})`);
@@ -156,6 +168,7 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
   L.push(bv.ok
     ? `új vak szavazatok (szám és szín nélkül, ${bv.n} db, ${bv.bait} clickbait; cél: 300): szabály ${f2(bv.rule)} · AI ${f2(bv.ai)} · keverék ${f2(bv.blend)} ${rg(bv.ci.auc)} · keverék mínusz szabály ${rg(bv.ci.diff)}`
     : `új vak szavazatok: még kevés (${nBlind} db${bv.bait !== undefined ? `, ${bv.bait} clickbait` : ''}; legalább 30 db és 5 clickbait kell, a cél 300)`);
+  if (vf && vf.n) L.push(`az utolsó ${vf.n} szavazat: vak ${vf.blind} · feltárt (a „Miért?” vagy a kapcsoló miatt nem vak) ${vf.revealed} · jelző nélküli (régi kóddal leadva) ${vf.none} · forrás látszott ${vf.srcShown} · kódverzió: ${Object.entries(vf.ver).sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
   if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
   const flags = [];
   if (sh.ok && sh.random - sh.grouped > 0.05) flags.push('az AI részben a forrást tanulta (ismeretlen forrásnál gyengébb)');
@@ -172,5 +185,5 @@ export async function runAudit(votes, items, yieldFn, opts = {}) {
   const ts = timeSplit(votes);
   const conc = concentration(votes);
   const sh = await sourceHoldout(votes, items, 5, yieldFn);
-  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3));
+  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3), voteFlags(votes));
 }

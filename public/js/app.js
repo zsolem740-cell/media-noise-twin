@@ -10,7 +10,7 @@ import { fetchJson } from './modules/dataLoader.js';
 import * as ui from './modules/uiRenderer.js';
 import { parseShare, openShare, analyze } from './modules/share.js';
 import { suggest, githubLinks } from './modules/suggest.js';
-import { buildDiag } from './modules/diag.js';
+import { buildDiag, APP_VERSION } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
 
@@ -245,7 +245,7 @@ async function vote(it, kind) {
     // sRule és sAi: a tanulás ELŐTTI értékek, ezekből mér a kalibráció
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi,
       S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
-      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource };  // blind: a szavazat a számok és a szín ismerete nélkül született
+      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION };  // blind: a szavazat a számok és a szín ismerete nélkül született
     await store.put('votes', null, rec);
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI

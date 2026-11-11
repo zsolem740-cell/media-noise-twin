@@ -1,7 +1,7 @@
 // Diagnosztika: tömör, pontos szöveg a vágólapra (beszélgetésbe illesztéshez, kevés tokenért).
 import { quantile, fmtAtm, scoringMode } from './model.js';
 
-export const APP_VERSION = 'v47.3';
+export const APP_VERSION = 'v47.4';
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
 export function buildDiag(s) {
