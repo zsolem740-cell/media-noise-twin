@@ -4,7 +4,7 @@
 // 3) koncentráció: mennyire néhány forrásból jönnek a szavazatok.
 import { Learner } from './learner.js';
 
-export const AUDIT_VERSION = 'v47.2';
+export const AUDIT_VERSION = 'v47.3';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -92,6 +92,27 @@ export async function sourceHoldout(votes, items, K = 5, yieldFn = async () => {
   return { ok: true, n: v.length, random: out.random, grouped: out.grouped };
 }
 
+// 5) Új, vak szavazatok (szám és szín nélkül született szavazatok): a valódi, torzítatlan pontosság.
+export function blindVotes(votes, lam = 0.3) {
+  const v = votes.filter(x => x.blind === true && Number.isFinite(x.sRule) && Number.isFinite(x.sAi));
+  const bait = v.filter(x => y(x) === 1).length;
+  if (v.length < 30 || bait < 5) return { ok: false, n: v.length, bait };
+  const yl = v.map(y), rule = v.map(x => x.sRule), ai = v.map(x => x.sAi), blend = v.map(x => (1 - lam) * x.sRule + lam * x.sAi);
+  return { ok: true, n: v.length, bait, rule: aucRank(rule, yl), ai: aucRank(ai, yl), blend: aucRank(blend, yl), ci: bootCI(blend, rule, yl, 200, 17) };
+}
+
+// 6) Kétlépéses címkézés: a cím szerinti és az elolvasás utáni ítélet egyezése.
+export function twoStep(votes, lam = 0.3) {
+  const p = votes.filter(x => (x.vote2 === 'fact' || x.vote2 === 'bait') && Number.isFinite(x.sRule) && Number.isFinite(x.sAi));
+  if (p.length < 20) return { ok: false, n: p.length };
+  const a = p.map(y), b = p.map(x => (x.vote2 === 'bait' ? 1 : 0)), n = p.length;
+  const agree = a.filter((x, i) => x === b[i]).length / n;
+  const pa = a.reduce((s, x) => s + x, 0) / n, pb = b.reduce((s, x) => s + x, 0) / n, pe = pa * pb + (1 - pa) * (1 - pb);
+  const blend = p.map(x => (1 - lam) * x.sRule + lam * x.sAi);
+  return { ok: true, n, agree, kappa: pe < 1 ? (agree - pe) / (1 - pe) : NaN, aucRead: aucRank(blend, b), aucTitle: aucRank(blend, a),
+    titleBait: a.reduce((s, x) => s + x, 0), readBait: b.reduce((s, x) => s + x, 0) };
+}
+
 // 4) Küszöb-elemzés: a szavazáskor látott ATM szerint (megjegyzés: a szín szavazás közben látszott, ezért torzíthat).
 export function thresholdsReport(votes, th) {
   const v = votes.filter(x => Number.isFinite(x.atm));
@@ -111,7 +132,7 @@ export function thresholdsReport(votes, th) {
 const f2 = x => (Number.isFinite(x) ? x.toFixed(2) : '–');
 const rg = r => `[${f2(r[0])}–${f2(r[1])}]`;
 
-export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }) {
+export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }) {
   const n1 = votes.filter(v => v.vote === 'bait').length;
   const L = [`AUDIT ${AUDIT_VERSION} · ${new Date(now).toISOString().slice(0, 16)}Z`];
   L.push(`szavazat: ${votes.length} (${n1} clickbait / ${votes.length - n1} tény) · ${conc.domains} forrás · az 5 legtöbbet szavazott forrás a szavazatok ${Math.round(conc.top5Share * 100)}%-a (${conc.top.map(t => `${t.d} ${t.n}, clickbait ${Math.round(t.rate * 100)}%`).join('; ')})`);
@@ -131,9 +152,15 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
     L.push(`vak újracímkézés (${blind.n} hír, a szám és a forrás rejtve): egyezés a régi címkével ${pc(blind.agree)} · kappa ${f2(blind.kappa)} · a régi clickbaitből ${pc(blind.bait2bait)} maradt az, a régi tényből ${pc(blind.fact2fact)}`);
     L.push(`  AUC a vak címkékkel: szabály ${f2(blind.aucBlind.rule)} · AI ${f2(blind.aucBlind.ai)} · keverék ${f2(blind.aucBlind.blend)} (ugyanezen a mintán a régi címkékkel: ${f2(blind.aucOrig.blend)})`);
   }
+  const nBlind = bv.n || 0;
+  L.push(bv.ok
+    ? `új vak szavazatok (szám és szín nélkül, ${bv.n} db, ${bv.bait} clickbait; cél: 300): szabály ${f2(bv.rule)} · AI ${f2(bv.ai)} · keverék ${f2(bv.blend)} ${rg(bv.ci.auc)} · keverék mínusz szabály ${rg(bv.ci.diff)}`
+    : `új vak szavazatok: még kevés (${nBlind} db${bv.bait !== undefined ? `, ${bv.bait} clickbait` : ''}; legalább 30 db és 5 clickbait kell, a cél 300)`);
+  if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
   const flags = [];
   if (sh.ok && sh.random - sh.grouped > 0.05) flags.push('az AI részben a forrást tanulta (ismeretlen forrásnál gyengébb)');
   if (ts.ok && ts.ci.diff[0] <= 0) flags.push('az AI hozzáadott értéke a szabályhoz képest nem bizonyított (a sáv tartalmazza a 0-t)');
+  if (bv.ok && bv.n < 300) flags.push(`a vak szavazatok száma még kevés a döntéshez (${bv.n}/300)`);
   if (conc.top5Share > 0.6) flags.push('a szavazatok nagy része kevés forrásból jön');
   if (blind.ok && blind.aucOrig.blend - blind.aucBlind.blend > 0.05) flags.push('a vak címkékkel gyengébb az AUC: a korábbi szavazatokat valószínűleg befolyásolta a látott szám');
   if (blind.ok && blind.kappa < 0.6) flags.push('az ismételt címkézés egyezése mérsékelt (kappa < 0,6): a címke maga is bizonytalan');
@@ -145,5 +172,5 @@ export async function runAudit(votes, items, yieldFn, opts = {}) {
   const ts = timeSplit(votes);
   const conc = concentration(votes);
   const sh = await sourceHoldout(votes, items, 5, yieldFn);
-  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false });
+  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3));
 }

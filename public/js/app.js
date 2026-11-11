@@ -21,6 +21,8 @@ const emit = n => bus.dispatchEvent(new Event(n));
 const cap = () => (state.model && state.model.atm_cap !== undefined ? state.model.atm_cap : 0.6); // a csúszka teteje = nincs korlát
 
 const GLOBE_PREF = 'mnt-globe';
+const lsFlag = (k, d) => { try { const v = localStorage.getItem(k); return v === '1' ? true : v === '0' ? false : d; } catch (_) { return d; } };
+const lsSetFlag = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (_) {} };
 const BACKUP_KEY = 'mnt-backup';
 const getBackup = () => { try { return Number(localStorage.getItem(BACKUP_KEY)) || 0; } catch (_) { return 0; } };
 const setBackup = () => { try { localStorage.setItem(BACKUP_KEY, String(Date.now())); } catch (_) {} };
@@ -31,7 +33,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -123,7 +125,7 @@ async function runAuditUi() {
   ui.setStatus('audit fut… (néhány másodperc)');
   try {
     state.auditText = await runAudit(state.votes, (state.data && state.data.items) || [], () => new Promise(r => setTimeout(r, 0)),
-      { th: state.model && state.model.thresholds, blind: blindStats(state.blind, state.lam) });
+      { th: state.model && state.model.thresholds, blind: blindStats(state.blind, state.lam), lam: state.lam });
     ui.setStatus('audit kész');
   } catch (_) { state.auditText = 'Az audit hibára futott.'; ui.setStatus('audit hiba'); }
   auditBusy = false;
@@ -177,7 +179,10 @@ function render() {
   rows.sort(state.sort === 'noise'
     ? (a, b) => b.atm - a.atm
     : (a, b) => (b.published || '').localeCompare(a.published || ''));
-  ui.renderList(ui.$('list'), rows, { th, votes, regionLabel, onVote: vote, onOpen: markOpen, explain });
+  const votes2 = new Map(state.votes.filter(v => v.vote2).map(v => [v.id, v.vote2]));
+  ui.renderList(ui.$('list'), rows, { th, votes, votes2, regionLabel, onVote: vote, onVote2: vote2, onOpen: markOpen, explain,
+    blindVote: state.blindVote, showSource: state.showSource, revealed: state.revealed, opened: state.opened,
+    onReveal: id => { state.revealed.add(id); render(); } });
   ui.$('empty').hidden = rows.length > 0;
   ui.$('sortBtn').textContent = 'Rendezés: ' + (state.sort === 'time' ? 'idő' : 'zaj');
   ui.$('atmVal').textContent = state.maxAtm >= cap() ? 'nincs korlát' : '≤ ' + fmtAtm(state.maxAtm, 2);
@@ -202,7 +207,10 @@ function renderPanels() {
       votes: state.votes.length, steps: state.learner.steps, lambda: state.lam, boot: state.learner.boot, top,
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
-    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), onSuggest, onCopySuggestion });
+    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(),
+    blindVote: state.blindVote, showSource: state.showSource,
+    onToggleBlindVote: () => { state.blindVote = !state.blindVote; lsSetFlag('mnt-blindvote', state.blindVote); render(); },
+    onToggleSource: () => { state.showSource = !state.showSource; lsSetFlag('mnt-showsrc', state.showSource); render(); }, onSuggest, onCopySuggestion });
   }
   if (ui.$('insBox').open) ui.renderInsights(ui.$('insBody'), state.data && state.data.insights, regionLabel, state.data && state.data.config);
 }
@@ -236,7 +244,8 @@ async function vote(it, kind) {
   } else {
     // sRule és sAi: a tanulás ELŐTTI értékek, ezekből mér a kalibráció
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi,
-      S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now() };
+      S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
+      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource };  // blind: a szavazat a számok és a szín ismerete nélkül született
     await store.put('votes', null, rec);
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI
@@ -245,7 +254,19 @@ async function vote(it, kind) {
   render();
 }
 
+// Második (elolvasás utáni) ítélet: csak eltárolódik, a tanulót nem módosítja.
+async function vote2(it, kind) {
+  const rec = state.votes.find(v => v.id === it.id);
+  if (!rec) return;
+  const next = rec.vote2 === kind ? undefined : kind;
+  const upd = Object.assign({}, rec, { vote2: next, ts2: next ? Date.now() : undefined });
+  await store.put('votes', null, upd);
+  state.votes = state.votes.filter(v => v.id !== it.id).concat(upd);
+  render();
+}
+
 function markOpen(it) {
+  state.opened.add(it.id);
   try { sessionStorage.setItem('mnt-open', JSON.stringify({ id: it.id, domain: it.source_domain, title: it.title, t: Date.now() })); } catch (_) {}
 }
 

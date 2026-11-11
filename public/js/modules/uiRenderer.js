@@ -62,20 +62,25 @@ export function renderList(box, rows, ctx) {
 }
 
 function card(it, ctx) {
-  const c = el('article', 'card lvl-' + level(it.atm, ctx.th) + (it.alert ? ' alert' : ''));
+  // Vak szavazás: a szavazásig nem látszik az ATM, az S, az AI-érték, a szín (és alapból a forrás neve); a szavazás vagy a „Miért?” után feltárul.
+  const hidden = !!ctx.blindVote && !ctx.votes.has(it.id) && !(ctx.revealed && ctx.revealed.has(it.id));
+  const c = el('article', 'card ' + (hidden ? 'blind' : 'lvl-' + level(it.atm, ctx.th)) + (it.alert ? ' alert' : ''));
   if (it.alert) c.append(el('span', 'badge', 'HIVATALOS FIGYELMEZTETÉS'));
   const t = el('a', 'title', it.title);
   t.href = safeHref(it.link); t.target = '_blank'; t.rel = 'noopener noreferrer';
   t.addEventListener('click', () => ctx.onOpen(it));
-  c.append(t, el('div', 'meta', `${it.source || it.source_domain || '?'} · ${ctx.regionLabel(it.region)} · ${relTime(it.published)}`));
+  const srcTxt = hidden && !ctx.showSource ? '' : `${it.source || it.source_domain || '?'} · `;
+  c.append(t, el('div', 'meta', `${srcTxt}${ctx.regionLabel(it.region)} · ${relTime(it.published)}`));
 
-  const bar = el('div', 'bar'); const fill = document.createElement('i');
-  fill.style.width = Math.min(100, (it.atm / atmRef()) * 100) + '%'; bar.append(fill); c.append(bar);
+  if (!hidden) {
+    const bar = el('div', 'bar'); const fill = document.createElement('i');
+    fill.style.width = Math.min(100, (it.atm / atmRef()) * 100) + '%'; bar.append(fill); c.append(bar);
 
-  const nums = el('div', 'nums');
-  [`ATM ${fmtAtm(it.atm, 2)}`, `V ${it.v.toFixed(2)}`, `S ${it.Seff.toFixed(2)}`, `AI ${it.sAi.toFixed(2)}`, `G ${it.G.toFixed(2)}`]
-    .forEach(x => nums.append(el('span', '', x)));
-  c.append(nums);
+    const nums = el('div', 'nums');
+    [`ATM ${fmtAtm(it.atm, 2)}`, `V ${it.v.toFixed(2)}`, `S ${it.Seff.toFixed(2)}`, `AI ${it.sAi.toFixed(2)}`, `G ${it.G.toFixed(2)}`]
+      .forEach(x => nums.append(el('span', '', x)));
+    c.append(nums);
+  }
 
   const mine = ctx.votes.get(it.id);
   const acts = el('div', 'acts');
@@ -88,11 +93,25 @@ function card(it, ctx) {
   const why = el('button', 'vote why', 'Miért?'); why.type = 'button';
   const box = el('div', 'explain'); box.hidden = true;
   why.addEventListener('click', () => {
+    if (hidden) { if (ctx.onReveal) ctx.onReveal(it.id); return; }  // a „Miért?” feltárja a számokat (a későbbi szavazat nem számít vaknak)
     box.hidden = !box.hidden;
     if (!box.hidden && !box.childNodes.length) ctx.explain(it).forEach(l => box.append(el('div', '', l)));
   });
   acts.append(why);
   c.append(acts, box);
+  // Kétlépéses címkézés: a cikk megnyitása után második, elolvasás utáni ítélet (a tanulót nem módosítja).
+  if (mine && ctx.opened && ctx.opened.has(it.id) && ctx.onVote2) {
+    const mine2 = ctx.votes2 && ctx.votes2.get(it.id);
+    const r2 = el('div', 'acts acts2');
+    r2.append(el('span', 'small', 'Elolvasás után:'));
+    [['fact', 'Tény'], ['bait', 'Clickbait']].forEach(([k, label]) => {
+      const b = el('button', 'vote ' + k, label);
+      b.type = 'button'; b.setAttribute('aria-pressed', String(mine2 === k));
+      b.addEventListener('click', () => ctx.onVote2(it, k));
+      r2.append(b);
+    });
+    c.append(r2);
+  }
   return c;
 }
 
@@ -132,6 +151,14 @@ export function renderAi(box, ai, handlers = {}) {
     d.type = 'button';
     d.addEventListener('click', handlers.onDiag);
     box.append(d);
+  }
+  if (handlers.onToggleBlindVote) {
+    const t1 = el('button', 'btn small', `Vak szavazás: ${handlers.blindVote ? 'BE' : 'KI'} (koppints a váltáshoz)`);
+    t1.type = 'button'; t1.addEventListener('click', handlers.onToggleBlindVote);
+    const t2 = el('button', 'btn small', `Forrás neve szavazás előtt: ${handlers.showSource ? 'látszik' : 'rejtve'}`);
+    t2.type = 'button'; t2.addEventListener('click', handlers.onToggleSource);
+    box.append(t1, t2);
+    box.append(el('div', 'small', 'Címkézési szabály: Clickbait = a cím olyat ígér vagy érzelmet kelt, amit a cikk nem teljesít (vagy felkiáltójellel, NAGYBETŰVEL hajt). Tény = a cím a lényeget közli. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
   }
   if (handlers.blind) renderBlind(box, handlers.blind);
   if (handlers.onAudit) {

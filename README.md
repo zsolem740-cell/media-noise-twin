@@ -84,3 +84,8 @@ Források, geofence és trust-domainek: `config/sources.json`.
 
 ### v47.2
 - Az Audit kiegészült a küszöb-elemzéssel (clickbait-arány ATM-sávonként, a sárga és piros küszöb pontossága, lefedése és F1-értéke, F1-optimális küszöb; a szavazáskor látott szín torzíthat), és a **vak újracímkézéssel**: ~100 régebbi szavazat címe számok és forrás nélkül; a válaszok külön (localStorage) tárolódnak, a tanulót és a szavazatokat nem módosítják. Az Audit a vak eredményből egyezést, kappát és a vak címkékkel mért AUC-t ad.
+
+### v47.3
+- **Vak szavazás alapértelmezetten:** a kártyán a szavazásig nem látszik az ATM, az S, az AI-érték, a szín és a forrás neve; a szavazás vagy a „Miért?” után feltárul (a „Miért?” után leadott szavazat már nem számít vaknak). A szavazat elmenti, hogy vak volt-e (`blind`). A kapcsolók az Öntanuló AI panelben vannak.
+- **Kétlépéses címkézés:** a cikk megnyitása után a kártyán megjelenik az „Elolvasás után” sor; a második ítélet külön tárolódik (`vote2`), a tanulót nem módosítja.
+- Az Audit külön mutatja az új vak szavazatok pontosságát (cél: 300), és a kétlépéses egyezést (kappa).
