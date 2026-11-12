@@ -58,8 +58,17 @@ export function renderQuick(root, q) {
   root.hidden = !q.open;
   if (!q.open) return;
   const mk = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  if (q.ask) {   // indításkor: ki szavaz? (közös eszközön így nem kerül a szavazat a másik szavazó neve alá)
+    const t = el('div', 'qtop');
+    t.append(el('span', 'small', 'Gyorsszavazás'), mk('btn small', 'Kilépés', q.onClose));
+    root.append(t, el('div', 'qtitle', 'Ki szavaz most?'));
+    const g = el('div', 'qvoters');
+    q.voters.forEach(v => g.append(mk('qbtn qvoter' + (v === q.voter ? ' cur' : ''), v, () => q.onPick(v))));
+    root.append(g, el('div', 'small qrule', `Legutóbb: ${q.voter}. Minden szavazó a saját betűjét válassza: a szavazatok, az ismétlések és a tanuló szavazónként külön tárolódnak, a másik szavazó szavazatai nem látszanak.`));
+    return;
+  }
   const top = el('div', 'qtop');
-  top.append(el('span', 'small', `Értékelő sor: ${q.p.eval}/${q.target.eval} · clickbait ${q.p.bait}/${q.target.bait} · tanító sor: ${q.p.train} · közepes: ${q.mids}`));
+  top.append(el('span', 'small', `Szavazó: ${q.voter} · Értékelő sor: ${q.p.eval}/${q.target.eval} · clickbait ${q.p.bait}/${q.target.bait} · tanító sor: ${q.p.train} · közepes: ${q.mids}`));
   top.append(mk('btn small', 'Kilépés', q.onClose));
   root.append(top);
   if (q.title) {
@@ -221,7 +230,7 @@ export function renderAi(box, ai, handlers = {}) {
     t2.type = 'button'; t2.addEventListener('click', handlers.onToggleSource);
     box.append(t1, t2);
     if (handlers.onSetVoter) {
-      box.append(el('div', 'small', `Szavazó-azonosító (anonim betű; minden szavazó más betűt válasszon, különben az egyeztetés nem működik)${handlers.voterChosen ? '' : ' – még nem választottad ki!'}:`));
+      box.append(el('div', 'small', `Szavazó (anonim betű; minden szavazó más betűt válasszon). Váltáskor az alkalmazás a kiválasztott szavazó saját szavazatait, sorait és tanulóját tölti be; a többieké nem látszik${handlers.voterChosen ? '' : ' – még nem választottad ki!'}:`));
       const sel = el('select'); sel.setAttribute('aria-label', 'Szavazó-azonosító');
       'ABCDEFGHIJ'.split('').forEach(c => { const o = el('option', '', c); o.value = c; sel.append(o); });
       sel.value = handlers.voter;

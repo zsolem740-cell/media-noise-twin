@@ -125,6 +125,15 @@ Források, geofence és trust-domainek: `config/sources.json`.
 
 - **Tetszőleges számú szavazó:** a szavazó-azonosító egy anonim betű (A–J, az Öntanuló AI panelben egy választóval), minden szavazó más betűt használ. Az **Egyeztetés** több szavazó mentését is fogadja (soronként egy): páronkénti egyezés és kappa, nyelvenkénti átlag, konszenzus-címkék (a legalább két szavazó által értékelt hírek többségi címkéje), a szabály AUC-ja a konszenzussal, a többiektől kiugróan eltérő szavazó jelzése, és az eltérések listája. Azonos azonosítót használó szavazókat jelzi.
 
+### v47.10
+- **Szavazónkénti tárolás (közös eszközön is):** minden szavazat kulcsa a szavazó betűje és a hír azonosítója együtt, egy új adatbázisban (`mnt-voters`). Ugyanarra a hírre több szavazó szavazata külön megmarad; a memóriában mindig csak az aktuális szavazó adatai vannak, így a másik szavazó szavazata sem a kártyákon, sem a sorokban nem látszik.
+- **Szavazónként külön:** szavazatok, „közepes” jelölések, kihagyott hírek, rejtett ismétlések, vak újracímkézési minta, szavazható nyelvek, a tanuló AI, és a felhő-mentés beállítása és fájlja (`szavazatok-<betű>.json`; a régi `szavazatok.json` az A szavazóé, onnan még visszaállítható).
+- **Áttöltés:** az első induláskor a régi, közös tároló szavazatai átmásolódnak (`mig` jelöléssel); a szavazó-jelölés nélküli, v47.9 előtti szavazatok az akkori egyetlen szavazóhoz (A) kerülnek. A régi adatbázisból és a régi kulcsokból semmi nem törlődik, az áttöltés újrafuttatva sem ír felül semmit.
+- **Szavazóváltás:** az Öntanuló AI panel választója a kiválasztott szavazó teljes állapotát tölti be; a gyorsszavazó minden indításkor megkérdezi, ki szavaz.
+- **Vak jelzés javítva:** a szavazat csak akkor vak, ha a kártya a szavazás pillanatában tényleg rejtve volt (a saját szavazat utáni módosítás nem az).
+- **Helyreállítás:** a mentésből csak az aktuális szavazó rekordjai állnak vissza (közös eszközről származó, kevert mentésből is); más szavazóé soha.
+- **Egyeztetés beillesztés nélkül:** az Egyeztetés gomb az eszközön lévő többi szavazóval magától összevet; más eszköz mentése továbbra is beilleszthető.
+
 ## Adattárolás és tesztek
 - Az időről időre frissülő fájlok (`data/metrics/atm_history.json`, `gemini_labels.json`, `gemini_budget.json`) a **`data` ágon** élnek, egyetlen, mindig felülírt commitban (`scripts/data_branch.sh pull | push | untrack`). A `main` ág csak a kódot tartalmazza, így a története nem hízik. Helyi futtatáshoz: `git fetch origin data && git checkout origin/data -- data/metrics`.
 - A Gemini-címkéző (`scripts/gemini_labels.py`) az élő hírlistát (`atm_history.json` → `items`) címkézi.

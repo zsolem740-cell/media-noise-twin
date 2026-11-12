@@ -5,7 +5,7 @@ import { calibrate, lambdaFinal } from './modules/calibration.js';
 import { FilterEngine } from './modules/filterEngine.js';
 import { Globe } from './modules/globe.js';
 import { createGlobe3D } from './modules/globe3d.js';
-import { store } from './modules/store.js';
+import { store, vstore } from './modules/store.js';
 import { fetchJson } from './modules/dataLoader.js';
 import * as ui from './modules/uiRenderer.js';
 import { parseShare, openShare, analyze } from './modules/share.js';
@@ -17,6 +17,7 @@ import { reconcileMany, formatReconMany, splitBackupTexts } from './modules/reco
 import { buildBackup, serialize, parseBackup, planRestore, ghRepoPrivate, ghPut, ghGet, validRepoRef, maskToken, shouldAutoBackup } from './modules/backup.js';
 import { buildPools, takeNext, pickRepeat, progress as quickProgress, loadRepeats, saveRepeats, loadSkipped, saveSkipped, TARGET } from './modules/quick.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
+import { VOTERS, validVoter, LEGACY_VOTER, vkey, cloudPath, LEGACY_CLOUD_PATH, planMigration, planLocalCopy, localSets, restoreScope, blindAtVote } from './modules/voters.js';
 
 const bus = new EventTarget();
 const on = (n, f) => bus.addEventListener(n, f);
@@ -30,13 +31,14 @@ const lsSetFlag = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } ca
 const LANGS = [['hu', 'Magyar'], ['en', 'Angol'], ['de', 'Német'], ['sl', 'Szlovén']];
 const loadVoter = () => { try { const v = localStorage.getItem('mnt-voter'); return /^[A-J]$/.test(v || '') ? v : 'A'; } catch (_) { return 'A'; } };
 const voterChosen = () => { try { return /^[A-J]$/.test(localStorage.getItem('mnt-voter') || ''); } catch (_) { return false; } };
-const loadLangs = () => { try { const j = JSON.parse(localStorage.getItem('mnt-langs') || 'null'); if (Array.isArray(j) && j.length) return new Set(j.filter(x => typeof x === 'string')); } catch (_) {} return new Set(['hu']); };
+const loadLangs = voter => { try { const j = JSON.parse(localStorage.getItem(vkey('mnt-langs', voter)) || 'null'); if (Array.isArray(j) && j.length) return new Set(j.filter(x => typeof x === 'string')); } catch (_) {} return new Set(['hu']); };
 const CLOUD_KEY = 'mnt-cloud';
-const loadCloud = () => { try { return JSON.parse(localStorage.getItem(CLOUD_KEY) || 'null') || {}; } catch (_) { return {}; } };
-const saveCloud = c => { try { localStorage.setItem(CLOUD_KEY, JSON.stringify(c)); } catch (_) {} };
+// A felhő-mentés beállítása, az utolsó mentés ideje, a nyelvek, az ismétlések, a kihagyottak és a vak minta szavazónként külön kulcs alatt vannak.
+const loadCloud = voter => { try { return JSON.parse(localStorage.getItem(vkey(CLOUD_KEY, voter)) || 'null') || {}; } catch (_) { return {}; } };
+const saveCloud = c => { try { localStorage.setItem(vkey(CLOUD_KEY, state.voter), JSON.stringify(c)); } catch (_) {} };
 const BACKUP_KEY = 'mnt-backup';
-const getBackup = () => { try { return Number(localStorage.getItem(BACKUP_KEY)) || 0; } catch (_) { return 0; } };
-const setBackup = () => { try { localStorage.setItem(BACKUP_KEY, String(Date.now())); } catch (_) {} };
+const getBackup = () => { try { return Number(localStorage.getItem(vkey(BACKUP_KEY, state.voter))) || 0; } catch (_) { return 0; } };
+const setBackup = () => { try { localStorage.setItem(vkey(BACKUP_KEY, state.voter), String(Date.now())); } catch (_) {} };
 const getPref = () => { try { return localStorage.getItem(GLOBE_PREF) || '3d'; } catch (_) { return '3d'; } };
 const setPref = v => { try { localStorage.setItem(GLOBE_PREF, v); } catch (_) {} };
 
@@ -44,7 +46,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), voter: loadVoter(), langs: loadLangs(), reconText: '', langCache: new Map(), midVotes: [], cloud: loadCloud(), pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), voter: loadVoter(), langs: new Set(['hu']), reconText: '', langCache: new Map(), midVotes: [], cloud: {}, pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: [], skipped: new Set(), migErr: false, revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -113,7 +115,7 @@ function exportVotes() {
   const data = JSON.stringify(state.votes.concat(state.midVotes).map(v => ({
     id: v.id, domain: v.domain, vote: v.vote, title: v.title, sRule: v.sRule, sAi: v.sAi,
     S0: v.S0, S: v.S, V: v.V, region: v.region, atm: v.atm,
-    ts: v.ts, blind: v.blind, srcShown: v.srcShown, lang: v.lang, queue: v.queue, quick: v.quick, ver: v.ver, vote2: v.vote2, ts2: v.ts2,
+    ts: v.ts, blind: v.blind, srcShown: v.srcShown, lang: v.lang, queue: v.queue, quick: v.quick, shared: v.shared, voter: v.voter, mig: v.mig, ver: v.ver, vote2: v.vote2, ts2: v.ts2,
   })), null, 1);
   const done = ok => { if (ok) { setBackup(); renderHealthBar(); } ui.setStatus(ok ? `${state.votes.length} szavazat a vágólapon (mentés rögzítve)` : 'a másolás nem sikerült'); };
   try { navigator.clipboard.writeText(data).then(() => done(true), () => done(false)); } catch (_) { done(false); }
@@ -122,6 +124,7 @@ function exportVotes() {
 // Egészség-sáv: a szerver problémái + a szavazatmentés emlékeztetője (a szavazatok csak a telefonon vannak).
 function renderHealthBar() {
   const list = ((state.data && state.data.health) || []).map(h => ({ text: h.text }));
+  if (state.migErr) list.push({ soft: true, text: 'A korábbi szavazatok áttöltése a szavazónkénti tárolóba most nem sikerült (a régi adatok érintetlenek). Zárd be az alkalmazás többi lapját, és töltsd újra az oldalt.' });
   const nv = state.votes.length, last = getBackup();
   const days = last ? (Date.now() - last) / 86400000 : null;
   const c = state.cloud || {}, cloudOn = !!(c.repo && c.token), cloudDays = c.last ? (Date.now() - c.last) / 86400000 : null;
@@ -157,7 +160,7 @@ function blindView() {
         const items = pickSample(state.votes, 100, Date.now(), 24, 5, null, state.langs);
         if (items.length < 20) { ui.setStatus('kevés (24 óránál régebbi) szavazat a vak újracímkézéshez'); return; }
         state.blind = { created: Date.now(), items, answers: {} };
-        saveBlind(state.blind);
+        saveBlind(state.blind, state.voter);
       }
       state.blindOpen = true; renderPanels();
     },
@@ -165,11 +168,11 @@ function blindView() {
       const prev = state.blind;
       const items = pickSample(state.votes, 100, Date.now(), 24, (Date.now() % 9973) + 1, new Set(prev ? prev.items.map(i => i.id) : []), state.langs);
       if (items.length < 20) { ui.setStatus('kevés új, 24 óránál régebbi magyar szavazat az új mintához'); return; }
-      try { if (prev) localStorage.setItem('mnt-blind-prev', JSON.stringify(prev)); } catch (_) {}
+      try { if (prev) localStorage.setItem(vkey('mnt-blind-prev', state.voter), JSON.stringify(prev)); } catch (_) {}
       state.blind = { created: Date.now(), items, answers: {} };
-      saveBlind(state.blind); state.blindOpen = true; renderPanels();
+      saveBlind(state.blind, state.voter); state.blindOpen = true; renderPanels();
     },
-    onAnswer: k => { const cur = nextItem(state.blind); if (!cur) return; state.blind.answers[cur.id] = k; saveBlind(state.blind); renderPanels(); },
+    onAnswer: k => { const cur = nextItem(state.blind); if (!cur) return; state.blind.answers[cur.id] = k; saveBlind(state.blind, state.voter); renderPanels(); },
     onClose: () => { state.blindOpen = false; renderPanels(); },
   };
 }
@@ -236,8 +239,8 @@ function renderPanels() {
     quickInfo: (() => { const p = quickProgress(state.votes); return `Gyorsszavazás: értékelő sor ${p.eval}/${TARGET.eval} (clickbait ${p.bait}/${TARGET.bait}), tanító sor ${p.train}, közepes ${state.midVotes.length}`; })(),
     blindVote: state.blindVote, showSource: state.showSource, voter: state.voter, voterChosen: voterChosen(),
     langs: LANGS.map(([code, label]) => ({ code, label, on: state.langs.has(code) })),
-    onSetVoter: v => { if (!/^[A-J]$/.test(v || '')) return; state.voter = v; try { localStorage.setItem('mnt-voter', v); } catch (_) {} ui.setStatus(`szavazó-azonosító: ${v}`); renderPanels(); },
-    onToggleLang: code => { if (state.langs.has(code)) state.langs.delete(code); else state.langs.add(code); try { localStorage.setItem('mnt-langs', JSON.stringify([...state.langs])); } catch (_) {} render(); },
+    onSetVoter: switchVoter,
+    onToggleLang: code => { if (state.langs.has(code)) state.langs.delete(code); else state.langs.add(code); try { localStorage.setItem(vkey('mnt-langs', state.voter), JSON.stringify([...state.langs])); } catch (_) {} render(); },
     onToggleBlindVote: () => { state.blindVote = !state.blindVote; lsSetFlag('mnt-blindvote', state.blindVote); render(); },
     onToggleSource: () => { state.showSource = !state.showSource; lsSetFlag('mnt-showsrc', state.showSource); render(); }, onSuggest, onCopySuggestion });
   }
@@ -256,7 +259,55 @@ function onCopySuggestion() {
   try { navigator.clipboard.writeText(text).then(() => done(true), () => done(false)); } catch (_) { done(false); }
 }
 
-const persistAi = () => store.put('ai', 'state', state.learner.exportState());
+const persistAi = () => vstore.putAi(state.voter, state.learner.exportState());
+
+// ---- Szavazónkénti tárolás ----
+// Áttöltés a régi, közös tárolóból: csak másol (a régi adatbázisból és a régi kulcsokból semmi nem törlődik), és újrafuttatva sem ír felül semmit.
+async function migrateLegacy() {
+  try {
+    const meta = await vstore.getMetaStrict('migrated');
+    const [old, keys] = await Promise.all([store.getAllStrict('votes'), vstore.keysStrict()]);
+    const plan = planMigration(old, new Set(keys), loadVoter(), meta ? meta.ts : 0);
+    if (plan.entries.length) await vstore.putEntriesStrict(plan.entries);
+    if (!meta) {
+      const ai = await store.getStrict('ai', 'state');
+      if (ai && !(await vstore.getAiStrict(plan.owner))) await vstore.putAiStrict(plan.owner, ai);
+      try { planLocalCopy(k => localStorage.getItem(k), plan.owner).forEach(([k, v]) => localStorage.setItem(k, v)); } catch (_) {}
+    }
+    await vstore.putMetaStrict('migrated', { ts: Date.now(), first: meta ? meta.first : Date.now(), owner: meta ? meta.owner : plan.owner, copied: (meta ? meta.copied : 0) + plan.entries.length });
+    state.migErr = false;
+    return plan.entries.length;
+  } catch (_) { state.migErr = true; return 0; }
+}
+
+// Az aktuális szavazó adatainak betöltése: a memóriában mindig csak az ő szavazatai, ismétlései, kihagyottjai, vak mintája és tanulója van.
+async function loadVoterState() {
+  const v = state.voter;
+  const [all, saved] = await Promise.all([vstore.allVotes(), vstore.getAi(v)]);
+  if (v !== state.voter) return;                      // közben megint szavazót váltottak
+  const mine = all.filter(r => r.voter === v);
+  state.votes = mine.filter(r => r.vote !== 'mid'); state.midVotes = mine.filter(r => r.vote === 'mid');
+  state.repeats = loadRepeats(v); state.skipped = loadSkipped(v); state.blind = loadBlind(v);
+  state.cloud = loadCloud(v); state.langs = loadLangs(v);
+  state.learner = saved ? new Learner(saved) : new Learner();
+  state.revealed = new Set(); state.opened = new Set();
+  state.pendingRestore = null; state.auditText = ''; state.reconText = ''; state.suggestion = null; state.blindOpen = false;
+}
+
+async function switchVoter(v) {
+  if (!validVoter(v)) return;
+  const changed = v !== state.voter;
+  try { localStorage.setItem('mnt-voter', v); } catch (_) {}
+  if (changed) {
+    await commitPending();
+    if (state.quick && !state.quick.ask) { state.quick = null; paintQuick(); }
+    state.voter = v;
+    await loadVoterState();
+    await ensureLearner();
+  }
+  ui.setStatus(`szavazó: ${v} · ${nAll()} szavazat ezen az eszközön`);
+  render(); renderPanels();
+}
 
 async function ensureLearner() {
   if (!state.data || !state.data.items || state.learner.boot) return;
@@ -268,14 +319,14 @@ async function ensureLearner() {
 async function vote(it, kind) {
   const mine = state.votes.find(v => v.id === it.id);
   if (mine && mine.vote === kind) {
-    await store.del('votes', it.id);
+    await vstore.delVote(state.voter, it.id);
     state.votes = state.votes.filter(v => v.id !== it.id);
   } else {
     // sRule és sAi: a tanulás ELŐTTI értékek, ezekből mér a kalibráció
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi,
       S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
-      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it), voter: state.voter };  // blind: a szavazat a számok és a szín ismerete nélkül született
-    await store.put('votes', null, rec);
+      blind: blindAtVote(state.blindVote, state.revealed.has(it.id), !!mine), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it), voter: state.voter };  // blind: a szavazat a számok és a szín ismerete nélkül született
+    await vstore.putVote(rec);
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI
     await persistAi();
@@ -293,7 +344,7 @@ const langOk = it => state.langs.has(langOf(it));
 
 // ---- Mentés és helyreállítás ----
 function makeBackupText() {
-  let prev = null; try { prev = JSON.parse(localStorage.getItem('mnt-blind-prev') || 'null'); } catch (_) {}
+  let prev = null; try { prev = JSON.parse(localStorage.getItem(vkey('mnt-blind-prev', state.voter)) || 'null'); } catch (_) {}
   return serialize(buildBackup({ app: APP_VERSION, votes: state.votes, mids: state.midVotes, repeats: state.repeats, skipped: state.skipped,
     voter: state.voter, prefs: { blindVote: state.blindVote, showSource: state.showSource, langs: [...state.langs], voter: state.voter }, blind: state.blind, blindPrev: prev }));
 }
@@ -321,7 +372,7 @@ async function shareBackup() {
   copyBackup();
 }
 
-const cloudCfg = () => ({ repo: state.cloud.repo, token: state.cloud.token, path: 'szavazatok.json' });
+const cloudCfg = path => ({ repo: state.cloud.repo, token: state.cloud.token, path: path || cloudPath(state.voter) });   // szavazónként külön fájl: nem írják felül egymás mentését
 function cloudFail(msg) { state.cloud = Object.assign({}, state.cloud, { err: msg }); saveCloud(state.cloud); ui.setStatus('felhő-mentés: ' + msg); renderHealthBar(); renderPanels(); }
 
 async function cloudSave(repo, token) {
@@ -354,7 +405,8 @@ function maybeAutoBackup() { if (shouldAutoBackup(state.cloud, nAll())) cloudBac
 async function cloudRestore() {
   const c = state.cloud; if (!c || !c.repo || !c.token) return;
   ui.setStatus('letöltés a GitHubról…');
-  const r = await ghGet(cloudCfg());
+  let r = await ghGet(cloudCfg());
+  if (!r.ok && r.status === 404 && state.voter === LEGACY_VOTER) r = await ghGet(cloudCfg(LEGACY_CLOUD_PATH));   // a régi, közös nevű mentés az akkori egyetlen szavazóé
   if (!r.ok) { ui.setStatus('felhő: ' + r.error); return; }
   previewRestore(r.text);
 }
@@ -362,36 +414,40 @@ async function cloudRestore() {
 function previewRestore(text) {
   const p = parseBackup(text);
   if (!p.ok) { ui.setStatus('helyreállítás: ' + p.error); return; }
-  if (p.data.voter && p.data.voter !== state.voter) { ui.setStatus(`ez a(z) ${p.data.voter} szavazó mentése, ide (${state.voter}) nem állítható vissza: használd az Egyeztetés gombot`); return; }
+  const sc = restoreScope(p.data, state.voter);   // csak az aktuális szavazó rekordjai; más szavazóé soha nem kerül ide
+  if (!sc.ok) { ui.setStatus(sc.error); return; }
+  p.data = sc.data;
   const plan = planRestore(state.votes, state.midVotes, p.data);
   const total = p.data.votes.length + p.data.mids.length;
   state.pendingRestore = { parsed: p.data, plan,
-    summary: `A mentésben ${total} szavazat van${p.data.created ? ' (' + p.data.created.slice(0, 16).replace('T', ' ') + ')' : ''}${p.stats.invalid ? `, ${p.stats.invalid} sérült kihagyva` : ''}. Új: ${plan.stats.added} · frissülne: ${plan.stats.updated} · változatlan: ${plan.stats.same}. Az eszközön most ${nAll()} szavazat van.` };
+    summary: `A mentésben ${total} szavazat van${p.data.created ? ' (' + p.data.created.slice(0, 16).replace('T', ' ') + ')' : ''}${p.stats.invalid ? `, ${p.stats.invalid} sérült kihagyva` : ''}${sc.others ? `, ${sc.others} más szavazóé kihagyva` : ''}. Új: ${plan.stats.added} · frissülne: ${plan.stats.updated} · változatlan: ${plan.stats.same}. Az eszközön most ${nAll()} szavazat van.` };
   state.bkOpen = true; renderPanels();
 }
 
 async function confirmRestore() {
   const R = state.pendingRestore; if (!R) return;
   ui.setStatus('helyreállítás folyamatban…');
-  for (const rec of R.plan.write) await store.put('votes', null, rec);
+  await vstore.putVotes(R.plan.write);
   state.votes = R.plan.votes; state.midVotes = R.plan.mids;
   const d = R.parsed;
-  const rk = new Set(state.repeats.map(r => r.id + '|' + r.ts)); d.repeats.forEach(r => { if (!rk.has(r.id + '|' + r.ts)) state.repeats.push(r); }); saveRepeats(state.repeats);
-  d.skipped.forEach(x => state.skipped.add(x)); saveSkipped(state.skipped);
-  if (!state.blind && d.blind) { state.blind = d.blind; saveBlind(state.blind); }
+  const rk = new Set(state.repeats.map(r => r.id + '|' + r.ts)); d.repeats.forEach(r => { if (!rk.has(r.id + '|' + r.ts)) state.repeats.push(r); }); saveRepeats(state.repeats, state.voter);
+  d.skipped.forEach(x => state.skipped.add(x)); saveSkipped(state.skipped, state.voter);
+  if (!state.blind && d.blind) { state.blind = d.blind; saveBlind(state.blind, state.voter); }
   const setIf = (key, prop, val) => { try { if (typeof val === 'boolean' && localStorage.getItem(key) === null) { state[prop] = val; lsSetFlag(key, val); } } catch (_) {} };
   setIf('mnt-blindvote', 'blindVote', d.prefs.blindVote); setIf('mnt-showsrc', 'showSource', d.prefs.showSource);
-  try { if (localStorage.getItem('mnt-langs') === null && Array.isArray(d.prefs.langs) && d.prefs.langs.length) { state.langs = new Set(d.prefs.langs); localStorage.setItem('mnt-langs', JSON.stringify(d.prefs.langs)); } } catch (_) {}
+  try { if (localStorage.getItem(vkey('mnt-langs', state.voter)) === null && Array.isArray(d.prefs.langs) && d.prefs.langs.length) { state.langs = new Set(d.prefs.langs); localStorage.setItem(vkey('mnt-langs', state.voter), JSON.stringify(d.prefs.langs)); } } catch (_) {}
   state.learner = new Learner(); await ensureLearner();    // a tanuló a visszaállított szavazatokból újraépül
   state.pendingRestore = null; setBackup(); render(); renderPanels();
   ui.setStatus(`helyreállítva: ${R.plan.stats.added} új, ${R.plan.stats.updated} frissített szavazat`);
 }
 
 // Egyeztetés a másik szavazóval: csak olvas és kiír, a tárolóba nem ír.
-function runRecon(text) {
+async function runRecon(text) {
   const parts = splitBackupTexts(text);
-  if (!parts.length) { ui.setStatus('egyeztetés: illeszd be legalább egy másik szavazó mentését'); return; }
-  const sets = [{ voter: state.voter, votes: state.votes }];
+  // az eszközön lévő összes szavazó (beillesztés nélkül), az aktuális szavazó az első
+  const local = localSets(await vstore.allVotes()).filter(s => s.voter !== state.voter);
+  const sets = [{ voter: state.voter, votes: state.votes.concat(state.midVotes) }].concat(local);
+  if (!parts.length && sets.length < 2) { ui.setStatus('egyeztetés: illeszd be legalább egy másik szavazó mentését (ezen az eszközön nincs másik szavazó)'); return; }
   let bad = 0;
   parts.forEach((t, i) => { const p = parseBackup(t); if (!p.ok) { bad++; return; } sets.push({ voter: p.data.voter || ('X' + (i + 1)), votes: p.data.votes.concat(p.data.mids) }); });
   if (sets.length < 2) { ui.setStatus('egyeztetés: a beillesztett mentés(ek) nem olvashatók'); return; }
@@ -423,14 +479,23 @@ function backupInfo() {
 // ---- Gyorsszavazó mód ----
 function quickView() {
   const Q = state.quick;
-  return { open: !!Q, title: Q && Q.cur ? Q.cur.it.title : '', p: quickProgress(state.votes), target: TARGET,
+  if (Q && Q.ask) return { open: true, ask: true, voter: state.voter, voters: VOTERS, onPick: startQuick, onClose: closeQuick };
+  return { open: !!Q, voter: state.voter, title: Q && Q.cur ? Q.cur.it.title : '', p: quickProgress(state.votes), target: TARGET,
     mids: state.midVotes.filter(v => v.blind === true).length, canUndo: !!(Q && Q.last),
     onAnswer: quickAnswer, onUndo: quickUndo, onClose: closeQuick };
 }
 const paintQuick = () => { const r = ui.$('quick'); if (r) ui.renderQuick(r, quickView()); };
 const nextQuick = () => pickRepeat(state.votes, state.repeats, Date.now()) || takeNext(state.quick.q);
 
+// Indításkor mindig megkérdezi, ki szavaz (egy koppintás): közös eszközön így nem kerül a szavazat a másik szavazó neve alá.
 function openQuick() {
+  state.quick = { ask: true };
+  paintQuick();
+}
+
+async function startQuick(v) {
+  if (!validVoter(v) || !state.quick || !state.quick.ask) return;
+  await switchVoter(v);
   const voted = new Set(state.votes.map(v => v.id).concat(state.midVotes.map(v => v.id)));
   const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOk });
   state.quick = { q: { eval: pools.eval, train: pools.train, shared: pools.shared, step: 0, used: new Set() }, cur: null, last: null, pending: null };
@@ -453,14 +518,14 @@ async function quickAnswer(kind) {
   await commitPending();
   const cur = Q.cur, entry = { cur, kind };
   if (cur.rep) {
-    if (kind === 'fact' || kind === 'bait') { state.repeats.push({ id: cur.it.id, first: cur.first, second: kind, ts: Date.now() }); saveRepeats(state.repeats); entry.repeat = true; }
+    if (kind === 'fact' || kind === 'bait') { state.repeats.push({ id: cur.it.id, first: cur.first, second: kind, ts: Date.now() }); saveRepeats(state.repeats, state.voter); entry.repeat = true; }
   } else if (kind === 'skip') {
-    state.skipped.add(cur.it.id); saveSkipped(state.skipped); entry.skipped = true;
+    state.skipped.add(cur.it.id); saveSkipped(state.skipped, state.voter); entry.skipped = true;
   } else {
     const it = cur.it;
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi, S0: it.S0, S: it.Seff, V: it.v,
       region: it.region, atm: it.atm, ts: Date.now(), blind: true, srcShown: false, ver: APP_VERSION, lang: langOf(it), queue: cur.queue, quick: true, voter: state.voter, shared: cur.shared ? true : undefined };
-    await store.put('votes', null, rec);
+    await vstore.putVote(rec);
     if (kind === 'mid') state.midVotes = state.midVotes.filter(v => v.id !== it.id).concat(rec);
     else state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     if (cur.queue === 'train' && kind !== 'mid') Q.pending = { title: it.title, bait: kind === 'bait' };
@@ -476,13 +541,13 @@ async function quickUndo() {
   if (!Q || !Q.last) return;
   const e = Q.last;
   if (e.rec) {
-    await store.del('votes', e.rec.id);
+    await vstore.delVote(state.voter, e.rec.id);
     state.votes = state.votes.filter(v => v.id !== e.rec.id);
     state.midVotes = state.midVotes.filter(v => v.id !== e.rec.id);
     Q.pending = null;           // a még nem tanított szavazat nem tanít
   }
-  if (e.skipped) { state.skipped.delete(e.cur.it.id); saveSkipped(state.skipped); }
-  if (e.repeat) { state.repeats = state.repeats.slice(0, -1); saveRepeats(state.repeats); }
+  if (e.skipped) { state.skipped.delete(e.cur.it.id); saveSkipped(state.skipped, state.voter); }
+  if (e.repeat) { state.repeats = state.repeats.slice(0, -1); saveRepeats(state.repeats, state.voter); }
   // a már kihúzott következő hír visszakerül a sora elejére, így nem vész el, és a váltakozás ritmusa sem tolódik el
   if (Q.cur && !Q.cur.rep) { Q.q[Q.cur.queue].unshift(Q.cur.it); Q.q.used.delete(Q.cur.it.id); Q.q.step--; }
   Q.cur = e.cur; Q.last = null;
@@ -512,7 +577,7 @@ async function vote2(it, kind) {
   if (!rec) return;
   const next = rec.vote2 === kind ? undefined : kind;
   const upd = Object.assign({}, rec, { vote2: next, ts2: next ? Date.now() : undefined });
-  await store.put('votes', null, upd);
+  await vstore.putVote(upd);
   state.votes = state.votes.filter(v => v.id !== it.id).concat(upd);
   render();
 }
@@ -619,12 +684,10 @@ async function init() {
 
   // A hálózati letöltés azonnal indul; a tárolók (időkorláttal) párhuzamosan töltődnek, így egy zárolt adatbázis sem állítja meg a felületet.
   const fresh = fetchJson().then(d => d, () => null);
-  const [votes, dwell, saved, cached] = await Promise.all([
-    store.getAll('votes'), store.getAll('dwell'), store.get('ai', 'state'), store.get('cache', 'atm'),
-  ]);
+  const [dwell, cached] = await Promise.all([store.getAll('dwell'), store.get('cache', 'atm'), migrateLegacy()]);
+  await loadVoterState();
   if (getPref() === '3d') enable3D();   // háttérben; hiba esetén marad a 2D
-  state.votes = votes.filter(v => v.vote !== 'mid'); state.midVotes = votes.filter(v => v.vote === 'mid'); state.dwell = dwell; state.blind = loadBlind();
-  if (saved) state.learner = new Learner(saved);
+  state.dwell = dwell;
   if (cached) { setData(cached); ui.setStatus('mentett adat'); }
   render();
 
