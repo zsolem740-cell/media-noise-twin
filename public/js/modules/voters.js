@@ -80,6 +80,17 @@ export function restoreScope(data, voter) {
     blind: own ? data.blind || null : null, blindPrev: own ? data.blindPrev || null : null }) };
 }
 
+// Több mentést tartalmazó szövegből (soronként egy: „minden helyi szavazó mentése”) az adott szavazóhoz tartozó kiválasztása.
+// `parsed`: a sikeresen beolvasott mentések (parseBackup eredményei). Előny: amelyikben van neki szóló rekord, azon belül amelyiknek a fejlécében ez a szavazó áll; több ilyen közül a legfrissebb.
+export function pickBackupFor(parsed, voter) {
+  const cands = (parsed || []).map(p => ({ p, sc: restoreScope(p.data, voter), own: (validVoter(p.data.voter) ? p.data.voter : LEGACY_VOTER) === voter }));
+  const ok = cands.filter(c => c.sc.ok);
+  if (!ok.length) return { ok: false, error: cands.length > 1 ? `a fájl ${cands.length} mentése közül egyik sem a(z) ${voter} szavazóé: használd az Egyeztetés gombot` : cands.length ? cands[0].sc.error : 'nincs beolvasható mentés' };
+  const n = c => c.sc.data.votes.length + c.sc.data.mids.length;
+  ok.sort((a, b) => ((n(b) > 0) - (n(a) > 0)) || (b.own - a.own) || String(b.p.data.created || '').localeCompare(String(a.p.data.created || '')));
+  return { ok: true, p: ok[0].p, sc: ok[0].sc, total: cands.length };
+}
+
 // Vak-e a szavazat: csak akkor, ha a kártya a szavazás pillanatában tényleg rejtve volt
 // (a vak mód be van kapcsolva, a „Miért?” nem tárta fel, és a szavazónak még nem volt szavazata a hírre: a saját szavazat után a kártya feltárul).
 export const blindAtVote = (blindMode, revealed, hadOwnVote) => !!blindMode && !revealed && !hadOwnVote;

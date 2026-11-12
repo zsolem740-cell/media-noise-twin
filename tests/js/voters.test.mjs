@@ -2,9 +2,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { VOTERS, validVoter, LEGACY_VOTER, vkey, recKey, cloudPath, LEGACY_CLOUD_PATH, legacyOwner, planMigration, planLocalCopy, LOCAL_KEYS,
-  localSets, restoreScope, blindAtVote } from '../../public/js/modules/voters.js';
+  localSets, restoreScope, pickBackupFor, blindAtVote } from '../../public/js/modules/voters.js';
 import { parseBackup, buildBackup, serialize, planRestore } from '../../public/js/modules/backup.js';
-import { reconcileMany } from '../../public/js/modules/reconcile.js';
+import { reconcileMany, splitBackupTexts } from '../../public/js/modules/reconcile.js';
 import { vote, A10, B10, KAPPA10, near, T0 } from './helpers.mjs';
 
 const mid = (id, extra = {}) => ({ ...vote(id, 0), vote: 'mid', ...extra });
@@ -156,4 +156,64 @@ test('vak jelzés: csak ha a kártya a szavazáskor tényleg rejtve volt', () =>
 test('a mentés megőrzi az áttöltés jelölését', () => {
   const p = parseBackup(serialize(buildBackup({ voter: 'A', votes: [vote(1, 1, { voter: 'A', mig: true })] }, T0)));
   assert.equal(p.data.votes[0].mig, true);
+});
+
+// ---- minden helyi szavazó mentése egy szövegben (szavazónként egy önálló mentés, soronként egy) ----
+
+const backupOf = (voter, labels, extra = {}, now = T0) => serialize(buildBackup({ voter, votes: labels.map((b, i) => vote(i, b, { voter })), ...extra }, now));
+const parseAll = text => splitBackupTexts(text).map(parseBackup).filter(p => p.ok);
+
+test('minden szavazó mentése: soronként egy önálló mentés, az egyeztetés közvetlenül beolvassa', () => {
+  const all = [backupOf('A', A10), backupOf('B', B10), backupOf('C', A10)].join('\n');
+  const parsed = parseAll(all);
+  assert.deepEqual(parsed.map(p => p.data.voter), ['A', 'B', 'C']);
+  const r = reconcileMany(parsed.map(p => ({ voter: p.data.voter, votes: p.data.votes.concat(p.data.mids) })));
+  assert.equal(r.voters.some(v => v.dupe), false);
+  assert.ok(near(r.pairs[0].all.kappa, KAPPA10));                      // A–B: ugyanarra a 10 hírre mindkét szavazat megvan
+});
+
+test('minden szavazó mentése: a helyreállítás csak az aktuális szavazó sorát veszi ki', () => {
+  const all = [backupOf('A', A10, { skipped: ['a-kihagyott'] }), backupOf('B', B10, { skipped: ['b-kihagyott'], repeats: [{ id: '1', first: 'bait', second: 'bait', ts: 1 }] })].join('\n');
+  const b = pickBackupFor(parseAll(all), 'B');
+  assert.ok(b.ok);
+  assert.equal(b.total, 2);
+  assert.deepEqual(b.sc.data.votes.map(v => v.vote === 'bait' ? 1 : 0), B10);
+  assert.ok(b.sc.data.votes.every(v => v.voter === 'B'));
+  assert.deepEqual([b.sc.data.skipped, b.sc.data.repeats.length, b.sc.others], [['b-kihagyott'], 1, 0]);   // a kiegészítő adat is a sajátja
+  const a = pickBackupFor(parseAll(all), 'A');
+  assert.deepEqual(a.sc.data.votes.map(v => v.vote === 'bait' ? 1 : 0), A10);
+  assert.deepEqual(a.sc.data.skipped, ['a-kihagyott']);
+});
+
+test('minden szavazó mentése: akinek nincs benne mentése, annak nem állít vissza semmit', () => {
+  const all = [backupOf('A', A10), backupOf('B', B10)].join('\n');
+  const c = pickBackupFor(parseAll(all), 'C');
+  assert.equal(c.ok, false);
+  assert.match(c.error, /2 mentése közül egyik sem a\(z\) C szavazóé/);
+  assert.equal(pickBackupFor([], 'A').ok, false);
+  const one = pickBackupFor(parseAll(backupOf('A', A10)), 'B');        // egyetlen mentésnél a régi, pontos hibaüzenet marad
+  assert.match(one.error, /A szavazó mentése, ide \(B\) nem állítható vissza/);
+});
+
+test('minden szavazó mentése: ugyanattól a szavazótól több mentés közül a legfrissebb', () => {
+  const old = backupOf('B', [1, 1, 1], {}, T0), fresh = backupOf('B', [0, 0, 0, 0], {}, T0 + 86400000);
+  for (const text of [`${old}\n${fresh}`, `${fresh}\n${old}`]) {
+    const b = pickBackupFor(parseAll(text), 'B');
+    assert.equal(b.sc.data.votes.length, 4);
+  }
+});
+
+test('minden szavazó mentése: a saját fejlécű mentés előnyt élvez a kevert régi mentéssel szemben', () => {
+  const mixed = serialize(buildBackup({ voter: 'A', votes: [vote(1, 1, { voter: 'A' }), vote(2, 0, { voter: 'B' })] }, T0 + 86400000));
+  const own = backupOf('B', B10, {}, T0);
+  const b = pickBackupFor(parseAll(`${mixed}\n${own}`), 'B');
+  assert.equal(b.sc.data.votes.length, 10);
+  const onlyMixed = pickBackupFor(parseAll(mixed), 'B');               // ha csak a kevert van, abból a saját rekordok jönnek
+  assert.deepEqual(onlyMixed.sc.data.votes.map(v => v.id), ['2']);
+});
+
+test('minden szavazó mentése: üres saját mentés helyett a rekordot tartalmazó kerül elő', () => {
+  const empty = serialize(buildBackup({ voter: 'B' }, T0 + 86400000));
+  const b = pickBackupFor(parseAll(`${empty}\n${backupOf('B', B10)}`), 'B');
+  assert.equal(b.sc.data.votes.length, 10);
 });

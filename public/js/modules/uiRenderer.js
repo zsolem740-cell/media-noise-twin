@@ -31,6 +31,10 @@ function renderBackup(box, h) {
   const mk = (txt, fn) => { const b = el('button', 'btn small', txt); b.type = 'button'; b.addEventListener('click', fn); return b; };
   (h.lines || []).forEach(t => d.append(el('div', 'small', t)));
   d.append(mk('Mentés felhőbe (megosztás: Drive, Keep…)', h.onShare), mk('Teljes mentés másolása', h.onCopy));
+  if (h.voters && h.voters.length > 1 && h.onShareAll) {   // közös eszköz: egy lépésben minden szavazó mentése (szavazónként egy sor)
+    d.append(el('div', 'small', `Minden szavazó egyszerre (${h.voters.join(', ')}): szavazónként egy önálló mentés, soronként egy. Az Egyeztetés közvetlenül beolvassa; a Helyreállítás mindig csak az éppen kiválasztott szavazó sorát veszi ki belőle.`));
+    d.append(mk('Minden szavazó mentése (megosztás)', h.onShareAll), mk('Minden szavazó mentésének másolása', h.onCopyAll));
+  }
   d.append(el('div', 'small bkhead', 'Helyreállítás (új eszközön vagy törlés után): illeszd be a mentés szövegét, vagy válaszd ki a mentés fájlját. Az egyesítés nem töröl semmit.'));
   const ta = el('textarea'); ta.rows = 3; ta.placeholder = 'a mentés szövege'; d.append(ta);
   d.append(mk('Előnézet (még nem ír át semmit)', () => h.onRestorePreview(ta.value)));

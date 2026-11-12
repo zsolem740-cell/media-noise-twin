@@ -132,6 +132,7 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - **Szavazóváltás:** az Öntanuló AI panel választója a kiválasztott szavazó teljes állapotát tölti be; a gyorsszavazó minden indításkor megkérdezi, ki szavaz.
 - **Vak jelzés javítva:** a szavazat csak akkor vak, ha a kártya a szavazás pillanatában tényleg rejtve volt (a saját szavazat utáni módosítás nem az).
 - **Helyreállítás:** a mentésből csak az aktuális szavazó rekordjai állnak vissza (közös eszközről származó, kevert mentésből is); más szavazóé soha.
+- **Minden helyi szavazó mentése egyszerre** (Mentés és helyreállítás, ha az eszközön több szavazó van): megosztással vagy vágólapra, szavazónként egy önálló mentés, soronként egy. Az Egyeztetés közvetlenül beolvassa; a Helyreállítás mindig csak az éppen kiválasztott szavazó sorát veszi ki belőle. A sima mentés fájlneve a szavazó betűjét is tartalmazza.
 - **Egyeztetés beillesztés nélkül:** az Egyeztetés gomb az eszközön lévő többi szavazóval magától összevet; más eszköz mentése továbbra is beilleszthető.
 
 ## Adattárolás és tesztek

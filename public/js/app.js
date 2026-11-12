@@ -17,7 +17,7 @@ import { reconcileMany, formatReconMany, splitBackupTexts } from './modules/reco
 import { buildBackup, serialize, parseBackup, planRestore, ghRepoPrivate, ghPut, ghGet, validRepoRef, maskToken, shouldAutoBackup } from './modules/backup.js';
 import { buildPools, takeNext, pickRepeat, progress as quickProgress, loadRepeats, saveRepeats, loadSkipped, saveSkipped, TARGET } from './modules/quick.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
-import { VOTERS, validVoter, LEGACY_VOTER, vkey, cloudPath, LEGACY_CLOUD_PATH, planMigration, planLocalCopy, localSets, restoreScope, blindAtVote } from './modules/voters.js';
+import { VOTERS, validVoter, LEGACY_VOTER, vkey, cloudPath, LEGACY_CLOUD_PATH, planMigration, planLocalCopy, localSets, restoreScope, pickBackupFor, blindAtVote } from './modules/voters.js';
 
 const bus = new EventTarget();
 const on = (n, f) => bus.addEventListener(n, f);
@@ -38,7 +38,7 @@ const loadCloud = voter => { try { return JSON.parse(localStorage.getItem(vkey(C
 const saveCloud = c => { try { localStorage.setItem(vkey(CLOUD_KEY, state.voter), JSON.stringify(c)); } catch (_) {} };
 const BACKUP_KEY = 'mnt-backup';
 const getBackup = () => { try { return Number(localStorage.getItem(vkey(BACKUP_KEY, state.voter))) || 0; } catch (_) { return 0; } };
-const setBackup = () => { try { localStorage.setItem(vkey(BACKUP_KEY, state.voter), String(Date.now())); } catch (_) {} };
+const setBackup = (voter = state.voter) => { try { localStorage.setItem(vkey(BACKUP_KEY, voter), String(Date.now())); } catch (_) {} };
 const getPref = () => { try { return localStorage.getItem(GLOBE_PREF) || '3d'; } catch (_) { return '3d'; } };
 const setPref = v => { try { localStorage.setItem(GLOBE_PREF, v); } catch (_) {} };
 
@@ -46,7 +46,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), voter: loadVoter(), langs: new Set(['hu']), reconText: '', langCache: new Map(), midVotes: [], cloud: {}, pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: [], skipped: new Set(), migErr: false, revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), voter: loadVoter(), langs: new Set(['hu']), reconText: '', langCache: new Map(), midVotes: [], cloud: {}, pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: [], skipped: new Set(), migErr: false, localVoters: [], revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -286,6 +286,7 @@ async function loadVoterState() {
   const [all, saved] = await Promise.all([vstore.allVotes(), vstore.getAi(v)]);
   if (v !== state.voter) return;                      // közben megint szavazót váltottak
   const mine = all.filter(r => r.voter === v);
+  state.localVoters = localSets(all).map(s => s.voter);
   state.votes = mine.filter(r => r.vote !== 'mid'); state.midVotes = mine.filter(r => r.vote === 'mid');
   state.repeats = loadRepeats(v); state.skipped = loadSkipped(v); state.blind = loadBlind(v);
   state.cloud = loadCloud(v); state.langs = loadLangs(v);
@@ -327,6 +328,7 @@ async function vote(it, kind) {
       S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
       blind: blindAtVote(state.blindVote, state.revealed.has(it.id), !!mine), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it), voter: state.voter };  // blind: a szavazat a számok és a szín ismerete nélkül született
     await vstore.putVote(rec);
+    if (!state.localVoters.includes(state.voter)) state.localVoters = state.localVoters.concat(state.voter).sort();
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI
     await persistAi();
@@ -350,26 +352,52 @@ function makeBackupText() {
 }
 const nAll = () => state.votes.length + state.midVotes.length;
 
-function copyBackup() {
-  const done = ok => { if (ok) { setBackup(); renderHealthBar(); } ui.setStatus(ok ? `teljes mentés a vágólapon (${nAll()} szavazat)` : 'a másolás nem sikerült'); };
-  try { navigator.clipboard.writeText(makeBackupText()).then(() => done(true), () => done(false)); } catch (_) { done(false); }
+// Egy másik helyi szavazó mentése a tárolóból (az aktuális szavazóé a memóriából készül: makeBackupText).
+function backupTextFor(voter, recs) {
+  let prev = null; try { prev = JSON.parse(localStorage.getItem(vkey('mnt-blind-prev', voter)) || 'null'); } catch (_) {}
+  return serialize(buildBackup({ app: APP_VERSION, votes: recs.filter(r => r.vote !== 'mid'), mids: recs.filter(r => r.vote === 'mid'), repeats: loadRepeats(voter), skipped: loadSkipped(voter),
+    voter, prefs: { blindVote: state.blindVote, showSource: state.showSource, langs: [...loadLangs(voter)], voter }, blind: loadBlind(voter), blindPrev: prev }));
 }
 
-async function shareBackup() {
-  const text = makeBackupText();
-  const name = `media-noise-szavazatok-${new Date().toISOString().slice(0, 10)}.txt`;   // a böngésző a .json-t nem engedi megosztani, a .txt-t igen
+// Minden helyi szavazó mentése egy szövegben: szavazónként egy önálló mentés, soronként egy.
+// Így az Egyeztetés közvetlenül beolvassa, a Helyreállítás pedig mindig csak az aktuális szavazó sorát veszi ki belőle.
+async function allBackupText() {
+  const sets = localSets(await vstore.allVotes());
+  const texts = sets.map(s => (s.voter === state.voter ? makeBackupText() : backupTextFor(s.voter, s.votes)));
+  return { text: texts.join('\n'), voters: sets.map(s => s.voter), n: sets.reduce((a, s) => a + s.votes.length, 0) };
+}
+
+function copyText(text, mark, okMsg) {
+  const done = ok => { if (ok) { mark(); renderHealthBar(); renderPanels(); } ui.setStatus(ok ? okMsg : 'a másolás nem sikerült'); };
+  try { navigator.clipboard.writeText(text).then(() => done(true), () => done(false)); } catch (_) { done(false); }
+}
+
+async function shareText(text, name, mark, copyMsg) {
+  const sent = msg => { mark(); renderHealthBar(); renderPanels(); ui.setStatus(msg); };
   try {
-    const file = new File([text], name, { type: 'text/plain' });
+    const file = new File([text], name, { type: 'text/plain' });   // a böngésző a .json-t nem engedi megosztani, a .txt-t igen
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({ files: [file], title: name });
-      setBackup(); renderHealthBar(); ui.setStatus('mentés elküldve a megosztón át'); return;
+      sent('mentés elküldve a megosztón át'); return;
     }
   } catch (e) { if (e && e.name === 'AbortError') { ui.setStatus('mentés megszakítva'); return; } }
   try {   // tartalék: letöltés
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = name; a.click();
-    setBackup(); renderHealthBar(); ui.setStatus('mentés letöltve'); return;
+    sent('mentés letöltve'); return;
   } catch (_) {}
-  copyBackup();
+  copyText(text, mark, copyMsg);
+}
+
+const today = () => new Date().toISOString().slice(0, 10);
+const copyBackup = () => copyText(makeBackupText(), setBackup, `teljes mentés a vágólapon (${state.voter} szavazó, ${nAll()} szavazat)`);
+const shareBackup = () => shareText(makeBackupText(), `media-noise-szavazatok-${state.voter}-${today()}.txt`, setBackup, `teljes mentés a vágólapon (${state.voter} szavazó, ${nAll()} szavazat)`);
+
+async function exportAll(share) {
+  const a = await allBackupText();
+  if (!a.n) { ui.setStatus('ezen az eszközön még nincs szavazat'); return; }
+  const mark = () => a.voters.forEach(v => setBackup(v)), msg = `minden szavazó mentése a vágólapon (${a.voters.join(', ')}; ${a.n} szavazat)`;
+  if (share) await shareText(a.text, `media-noise-szavazatok-mind-${today()}.txt`, mark, msg);
+  else copyText(a.text, mark, msg);
 }
 
 const cloudCfg = path => ({ repo: state.cloud.repo, token: state.cloud.token, path: path || cloudPath(state.voter) });   // szavazónként külön fájl: nem írják felül egymás mentését
@@ -412,15 +440,19 @@ async function cloudRestore() {
 }
 
 function previewRestore(text) {
-  const p = parseBackup(text);
-  if (!p.ok) { ui.setStatus('helyreállítás: ' + p.error); return; }
-  const sc = restoreScope(p.data, state.voter);   // csak az aktuális szavazó rekordjai; más szavazóé soha nem kerül ide
-  if (!sc.ok) { ui.setStatus(sc.error); return; }
+  // a szövegben több mentés is lehet (soronként egy: „minden szavazó mentése”); csak az aktuális szavazóé kerül ide, más szavazóé soha
+  const parts = splitBackupTexts(text);
+  const parsed = (parts.length ? parts : [text]).map(parseBackup);
+  const good = parsed.filter(x => x.ok);
+  if (!good.length) { ui.setStatus('helyreállítás: ' + parsed[0].error); return; }
+  const pk = pickBackupFor(good, state.voter);
+  if (!pk.ok) { ui.setStatus(pk.error); return; }
+  const p = pk.p, sc = pk.sc;
   p.data = sc.data;
   const plan = planRestore(state.votes, state.midVotes, p.data);
   const total = p.data.votes.length + p.data.mids.length;
   state.pendingRestore = { parsed: p.data, plan,
-    summary: `A mentésben ${total} szavazat van${p.data.created ? ' (' + p.data.created.slice(0, 16).replace('T', ' ') + ')' : ''}${p.stats.invalid ? `, ${p.stats.invalid} sérült kihagyva` : ''}${sc.others ? `, ${sc.others} más szavazóé kihagyva` : ''}. Új: ${plan.stats.added} · frissülne: ${plan.stats.updated} · változatlan: ${plan.stats.same}. Az eszközön most ${nAll()} szavazat van.` };
+    summary: `A mentésben ${total} szavazat van${p.data.created ? ' (' + p.data.created.slice(0, 16).replace('T', ' ') + ')' : ''}${p.stats.invalid ? `, ${p.stats.invalid} sérült kihagyva` : ''}${sc.others ? `, ${sc.others} más szavazóé kihagyva` : ''}${pk.total > 1 ? `; a fájl ${pk.total} mentéséből a(z) ${state.voter} szavazóé` : ''}. Új: ${plan.stats.added} · frissülne: ${plan.stats.updated} · változatlan: ${plan.stats.same}. Az eszközön most ${nAll()} szavazat van.` };
   state.bkOpen = true; renderPanels();
 }
 
@@ -428,6 +460,7 @@ async function confirmRestore() {
   const R = state.pendingRestore; if (!R) return;
   ui.setStatus('helyreállítás folyamatban…');
   await vstore.putVotes(R.plan.write);
+  if (R.plan.write.length && !state.localVoters.includes(state.voter)) state.localVoters = state.localVoters.concat(state.voter).sort();
   state.votes = R.plan.votes; state.midVotes = R.plan.mids;
   const d = R.parsed;
   const rk = new Set(state.repeats.map(r => r.id + '|' + r.ts)); d.repeats.forEach(r => { if (!rk.has(r.id + '|' + r.ts)) state.repeats.push(r); }); saveRepeats(state.repeats, state.voter);
@@ -465,7 +498,8 @@ function backupInfo() {
   const ago = ms => (ms ? (Date.now() - ms < 36e5 ? 'az elmúlt órában' : Date.now() - ms < 864e5 ? Math.floor((Date.now() - ms) / 36e5) + ' órája' : Math.floor((Date.now() - ms) / 864e5) + ' napja') : 'még nem');
   return {
     open: state.bkOpen, onToggle: o => { state.bkOpen = o; },
-    lines: [`Az eszközön: ${state.votes.length} szavazat + ${state.midVotes.length} közepes. Utolsó mentés (bármely módon): ${ago(last)}.`, on ? `Felhő-mentés: ${c.err ? 'HIBA – ' + c.err : 'utoljára ' + ago(c.last) + ' (' + (c.count || 0) + ' szavazat)'}.` : 'Felhő-mentés: nincs beállítva.'],
+    voters: state.localVoters, onShareAll: () => exportAll(true), onCopyAll: () => exportAll(false),
+    lines: [`${state.voter} szavazó az eszközön: ${state.votes.length} szavazat + ${state.midVotes.length} közepes.${state.localVoters.length > 1 ? ` Szavazók ezen az eszközön: ${state.localVoters.join(', ')}.` : ''} Utolsó mentés (bármely módon): ${ago(last)}.`, on ? `Felhő-mentés: ${c.err ? 'HIBA – ' + c.err : 'utoljára ' + ago(c.last) + ' (' + (c.count || 0) + ' szavazat)'}.` : 'Felhő-mentés: nincs beállítva.'],
     cloud: { configured: on, repo: c.repo || '', masked: maskToken(c.token) },
     pending: state.pendingRestore ? { summary: state.pendingRestore.summary } : null,
     onShare: shareBackup, onCopy: copyBackup, onRestorePreview: previewRestore, onRestoreConfirm: confirmRestore,
@@ -526,6 +560,7 @@ async function quickAnswer(kind) {
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi, S0: it.S0, S: it.Seff, V: it.v,
       region: it.region, atm: it.atm, ts: Date.now(), blind: true, srcShown: false, ver: APP_VERSION, lang: langOf(it), queue: cur.queue, quick: true, voter: state.voter, shared: cur.shared ? true : undefined };
     await vstore.putVote(rec);
+    if (!state.localVoters.includes(state.voter)) state.localVoters = state.localVoters.concat(state.voter).sort();
     if (kind === 'mid') state.midVotes = state.midVotes.filter(v => v.id !== it.id).concat(rec);
     else state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     if (cur.queue === 'train' && kind !== 'mid') Q.pending = { title: it.title, bait: kind === 'bait' };
