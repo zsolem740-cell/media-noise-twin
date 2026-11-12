@@ -130,3 +130,7 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - A Gemini-címkéző (`scripts/gemini_labels.py`) az élő hírlistát (`atm_history.json` → `items`) címkézi.
 - `tests/`: a pontozás invariánsai (tartományok, monotonitás, egész pontszám, megőrzés, duplikátumszűrés, kizárt források) és a data ág kezelője. Szándékosan nem rögzítenek súlyokat vagy kulcsszavakat. A workflow minden futáskor lefuttatja őket; a postaláda a csomagot csak akkor alkalmazza, ha a tesztek átmennek. A csomagok a `tests/` mappát is frissíthetik.
 - A korábbi v40-es M2-rendszer (`scripts/mnt_server.py`, a gyökérben lévő régi felület, az `ovl__*` másolatok és a november 6. óta befagyott adatfájljai) törölve; a git-történetből bármikor visszahozható.
+
+## Fejlesztői eszközök
+- **Ellenőrzés pull requestre** (`.github/workflows/ci.yml`): Python-tesztek, JS szintaxis és JS-tesztek. Csak olvas: nem telepít, nem használ titkot, nem nyúl az adatokhoz.
+- **JS-tesztek** (`tests/js/`, a Node beépített futtatójával, függőség nélkül; Node 22.7+): `node --test "tests/js/*.test.mjs"`. Az alkalmazás tényleges moduljait ellenőrzik: a kappa és az AUC kézzel számolt mintákon, a mentés beolvasása és egyesítése, a több szavazós egyeztetés, a közös sor, a „közepes” címke és a hiányzó adat esetei. Csak szintetikus adattal dolgoznak; valódi mentés soha nem kerülhet a repóba (a `mentesek/` mappát a git figyelmen kívül hagyja).
