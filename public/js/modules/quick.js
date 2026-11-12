@@ -51,7 +51,9 @@ export function progress(votes) {
 
 const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v === null ? d : v; } catch (_) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
-export const loadRepeats = () => load(REP_KEY, []);
-export const saveRepeats = r => save(REP_KEY, r.slice(-500));
-export const loadSkipped = () => new Set(load(SKIP_KEY, []));
-export const saveSkipped = s => save(SKIP_KEY, [...s].slice(-2000));
+// A kulcs szavazónkénti (voter megadásával): az ismétlések és a kihagyottak nem keverednek a szavazók között.
+const vk = (k, voter) => (voter ? `${k}:${voter}` : k);
+export const loadRepeats = voter => load(vk(REP_KEY, voter), []);
+export const saveRepeats = (r, voter) => save(vk(REP_KEY, voter), r.slice(-500));
+export const loadSkipped = voter => new Set(load(vk(SKIP_KEY, voter), []));
+export const saveSkipped = (s, voter) => save(vk(SKIP_KEY, voter), [...s].slice(-2000));
