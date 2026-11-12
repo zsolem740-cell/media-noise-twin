@@ -22,6 +22,32 @@ export function renderKpis(stats, data) {
   f.className = age > 180 ? 'bad' : age > 90 ? 'warn' : '';  // elavuló adat: borostyán 90 perc, piros 3 óra fölött (a GitHub ütemezése kb. óránkénti ritmust ad)
 }
 
+// Mentés és helyreállítás (a kulcs csak maszkolva látszik).
+function renderBackup(box, h) {
+  const d = el('details', 'bk');
+  d.open = !!h.open;
+  d.addEventListener('toggle', () => { if (h.onToggle) h.onToggle(d.open); });
+  d.append(el('summary', '', 'Mentés és helyreállítás'));
+  const mk = (txt, fn) => { const b = el('button', 'btn small', txt); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  (h.lines || []).forEach(t => d.append(el('div', 'small', t)));
+  d.append(mk('Mentés felhőbe (megosztás: Drive, Keep…)', h.onShare), mk('Teljes mentés másolása', h.onCopy));
+  d.append(el('div', 'small bkhead', 'Helyreállítás (új eszközön vagy törlés után): illeszd be a mentés szövegét, vagy válaszd ki a mentés fájlját. Az egyesítés nem töröl semmit.'));
+  const ta = el('textarea'); ta.rows = 3; ta.placeholder = 'a mentés szövege'; d.append(ta);
+  d.append(mk('Előnézet (még nem ír át semmit)', () => h.onRestorePreview(ta.value)));
+  const fi = el('input'); fi.type = 'file'; fi.accept = '.txt,.json,text/plain';
+  fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; if (f && f.text) f.text().then(t => h.onRestorePreview(t)); });
+  d.append(fi);
+  if (h.pending) { d.append(el('div', 'small bkpend', h.pending.summary)); d.append(mk('Visszaállítás megerősítése', h.onRestoreConfirm), mk('Mégse', h.onRestoreCancel)); }
+  const c = h.cloud || {};
+  d.append(el('div', 'small bkhead', c.configured ? `Automatikus felhő-mentés (privát GitHub-tároló): ${c.repo} · kulcs: ${c.masked}` : 'Automatikus felhő-mentés (opcionális): privát GitHub-tároló és csak arra az egy tárolóra szóló kulcs kell hozzá (lásd a Helyreállítási útmutatót).'));
+  if (!c.configured) {
+    const r = el('input'); r.type = 'text'; r.placeholder = 'felhasználó/tároló'; r.autocomplete = 'off';
+    const t = el('input'); t.type = 'password'; t.placeholder = 'kulcs (github_pat_…)'; t.autocomplete = 'off';
+    d.append(r, t, mk('Felhő-mentés beállítása', () => h.onCloudSave(r.value, t.value)));
+  } else d.append(mk('Mentés most (GitHub)', h.onCloudNow), mk('Visszaállítás a GitHubról', h.onCloudRestore), mk('Kulcs törlése erről az eszközről', h.onCloudForget));
+  box.append(d);
+}
+
 // Gyorsszavazó: egy cím, három nagy gomb, a számok és a forrás rejtve.
 export function renderQuick(root, q) {
   root.replaceChildren();
@@ -35,13 +61,14 @@ export function renderQuick(root, q) {
   if (q.title) {
     root.append(el('div', 'qtitle', q.title));
     const g = el('div', 'qbtns');
-    g.append(mk('qbtn fact', 'Tény', () => q.onAnswer('fact')), mk('qbtn mid', 'Közepes', () => q.onAnswer('mid')), mk('qbtn bait', 'Clickbait', () => q.onAnswer('bait')));
+    g.append(mk('qbtn fact', 'Nyugodt', () => q.onAnswer('fact')), mk('qbtn mid', 'Közepes', () => q.onAnswer('mid')), mk('qbtn bait', 'Hangos', () => q.onAnswer('bait')));
     root.append(g);
     const g2 = el('div', 'qbtns2');
     g2.append(mk('btn small', 'Kihagy', () => q.onAnswer('skip')));
     if (q.canUndo) g2.append(mk('btn small', 'Vissza', q.onUndo));
     root.append(g2);
-    root.append(el('div', 'small', 'Billentyűk: F tény · M közepes · C clickbait · szóköz kihagy · Z vissza. A számok és a forrás szándékosan rejtve.'));
+    root.append(el('div', 'small', 'Billentyűk: N nyugodt · M közepes · H hangos · szóköz kihagy · Z vissza. A számok és a forrás szándékosan rejtve.'));
+    root.append(el('div', 'small qrule', 'Hangos = a cím felkiáltójellel, NAGYBETŰVEL, érzelmi vagy túlzó szavakkal, titokzatos ígérettel hajt, akkor is, ha a cikk igaz. Nyugodt = a cím higgadtan közli a lényeget. Közepes = a kettő között, vagy nem tudod eldönteni.'));
   } else root.append(el('div', 'qtitle', 'Elfogyott a magyar hír, ami még nem kapott szavazatot. Később új hírek jönnek.'));
 }
 
@@ -57,7 +84,7 @@ function renderBlind(box, b) {
   card.append(el('div', 'small', `Vak újracímkézés: ${b.answered}/${b.total} · a számok és a forrás szándékosan rejtve`));
   if (b.title) {
     card.append(el('div', 'blindtitle', b.title));
-    card.append(mk('Tény', () => b.onAnswer(0)), mk('Clickbait', () => b.onAnswer(1)), mk('Kihagy', () => b.onAnswer(-1)));
+    card.append(mk('Nyugodt', () => b.onAnswer(0)), mk('Hangos', () => b.onAnswer(1)), mk('Kihagy', () => b.onAnswer(-1)));
   } else card.append(el('div', 'small', 'Kész. Az eredményt az „Audit futtatása” mutatja.'));
   card.append(mk('Bezárás (mentve)', b.onClose));
   if (b.onNew) card.append(mk('Új minta (csak magyar hírek)', b.onNew));
@@ -115,7 +142,7 @@ function card(it, ctx) {
   // Csak magyar nyelvű címre lehet szavazni (alapból): a fordított vagy ismeretlen nyelvű cím ítélete nem a cím stílusát mérné.
   const blockedLang = !!ctx.huOnly && !mine && ctx.langOf && ctx.langOf(it) !== 'hu';
   if (blockedLang) acts.append(el('span', 'small langnote', 'Nem magyar vagy bizonytalan nyelvű cím: a szavazás ki van kapcsolva.'));
-  else [['fact', 'Tény'], ['bait', 'Clickbait']].forEach(([k, label]) => {
+  else [['fact', 'Nyugodt'], ['bait', 'Hangos']].forEach(([k, label]) => {
     const b = el('button', 'vote ' + k, label);
     b.type = 'button'; b.setAttribute('aria-pressed', String(mine === k));
     b.addEventListener('click', () => ctx.onVote(it, k));
@@ -134,8 +161,8 @@ function card(it, ctx) {
   if (mine && ctx.opened && ctx.opened.has(it.id) && ctx.onVote2) {
     const mine2 = ctx.votes2 && ctx.votes2.get(it.id);
     const r2 = el('div', 'acts acts2');
-    r2.append(el('span', 'small', 'Elolvasás után:'));
-    [['fact', 'Tény'], ['bait', 'Clickbait']].forEach(([k, label]) => {
+    r2.append(el('span', 'small', 'Elolvasás után a cikk teljesítette a címet?'));
+    [['fact', 'Teljesíti'], ['bait', 'Nem teljesíti']].forEach(([k, label]) => {
       const b = el('button', 'vote ' + k, label);
       b.type = 'button'; b.setAttribute('aria-pressed', String(mine2 === k));
       b.addEventListener('click', () => ctx.onVote2(it, k));
@@ -194,7 +221,7 @@ export function renderAi(box, ai, handlers = {}) {
       t3.type = 'button'; t3.addEventListener('click', handlers.onToggleHuOnly);
       box.append(t3);
     }
-    box.append(el('div', 'small', 'Címkézési szabály: Clickbait = a cím olyat ígér vagy érzelmet kelt, amit a cikk nem teljesít (vagy felkiáltójellel, NAGYBETŰVEL hajt). Tény = a cím a lényeget közli. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
+    box.append(el('div', 'small', 'Címkézési szabály (a cím stílusa, nem a cikk igazsága): Hangos = a cím felkiáltójellel, NAGYBETŰVEL, érzelmi vagy túlzó szavakkal, titokzatos ígérettel hajt, akkor is, ha a cikk igaz. Nyugodt = a cím higgadtan közli a lényeget. Közepes = a kettő között, vagy nem tudod eldönteni. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
   }
   if (handlers.onQuick) {
     const qb = el('button', 'btn small', 'Gyorsszavazás indítása (csak magyar hírek)');
@@ -203,6 +230,7 @@ export function renderAi(box, ai, handlers = {}) {
     if (handlers.quickInfo) box.append(el('div', 'small', handlers.quickInfo));
   }
   if (handlers.blind) renderBlind(box, handlers.blind);
+  if (handlers.backup) renderBackup(box, handlers.backup);
   if (handlers.onAudit) {
     const a = el('button', 'btn small', handlers.auditText ? 'Audit újrafuttatása' : 'Audit futtatása');
     a.type = 'button';

@@ -104,3 +104,13 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - **Két sor:** az *értékelő sor* véletlen hírekből áll, soha nem tanít (ez adja a torzítatlan AUC-t); a *tanító sor* azokat a híreket hozza, ahol a szabály és az AI eltér, és ebből tanul az AI (a tanulás a következő válasznál történik, így az utolsó válasz visszavonható). Egy hír csak egyszer jön elő.
 - **Rejtett ismétlések:** a hírek ~10%-ánál egy legalább 48 órája szavazott hírt kérdez újra; az önegyezés (kappa) folyamatosan mérődik, az ismétlések külön tárolódnak (localStorage).
 - Az Audit külön mutatja az értékelő és a tanító sort, a rejtett ismétlések egyezését, és a „Közepes” jelölések átlagos AI-értékét (tény < közepes < clickbait kell legyen). A szavazatmentés (JSON) most a teljes rekordokat (vak jelző, sor, nyelv) és a „közepes” jelöléseket is menti.
+
+### v47.7
+- **A címke a cím stílusát méri, nem a cikk igazságát:** a szavazógombok **Nyugodt / Közepes / Hangos** (tárolásuk változatlan: fact / mid / bait, a régi szavazatokkal kompatibilis), a szabály a gyorsszavazón és az AI panelben látható: *Hangos = a cím felkiáltójellel, NAGYBETŰVEL, érzelmi vagy túlzó szavakkal, titokzatos ígérettel hajt, akkor is, ha a cikk igaz; Nyugodt = a cím higgadtan közli a lényeget; Közepes = a kettő között.* Billentyűk: N, M, H (az F és a C is működik).
+- **A cikk-alapú kérdés külön marad:** a megnyitott cikknél az „Elolvasás után” sor kérdése: „teljesítette a cikk a címet?” (Teljesíti / Nem teljesíti).
+- Az Audit új összehasonlítása: az AI csak a vak szavazatokból, illetve az összes szavazatból tanulva (keresztellenőrzés a vak szavazatokon; legalább 150 vak szavazat és 20 hangos kell hozzá).
+
+### v47.8
+- **Mentés és helyreállítás** (Öntanuló AI panel): teljes mentés (szavazatok, „közepes” jelölések, rejtett ismétlések, kihagyottak, beállítások, vak minta) megosztással (Drive, Keep; a böngésző csak .txt fájlt oszt meg), vágólapra, és **automatikus feltöltéssel egy PRIVÁT GitHub-tárolóba** (naponta egyszer vagy +100 szavazatnál; a tároló privát voltát minden feltöltés előtt ellenőrzi, nyilvános tárolóba nem ír; a kulcs csak ezen az eszközön van, a mentésbe nem kerül).
+- **Helyreállítás bármely eszközön:** a mentés szövegéből, fájlból vagy a GitHubról; előnézet és megerősítés után egyesít azonosító szerint (nem töröl, az újabb időbélyeg marad), és a tanuló a szavazatokból újraépül. Régi, sima szavazat-listát is elfogad.
+- A szavazatmentés emlékeztetője 14 helyett 3 nap; a diagnosztika és az egészség-sáv a felhő-mentés korát és hibáját is mutatja.

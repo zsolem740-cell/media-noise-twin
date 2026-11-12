@@ -1,7 +1,7 @@
 // Diagnosztika: tömör, pontos szöveg a vágólapra (beszélgetésbe illesztéshez, kevés tokenért).
 import { quantile, fmtAtm, scoringMode } from './model.js';
 
-export const APP_VERSION = 'v47.6';
+export const APP_VERSION = 'v47.8';
 const cut = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
 
 export function buildDiag(s) {
@@ -61,7 +61,8 @@ export function buildDiag(s) {
   const hl = (data.health || []).map(h => h.id).join(', ');
   const mb = data.summary && data.summary.bytes ? (data.summary.bytes / 1e6).toFixed(2) : '?';
   const bk = s.lastBackup ? Math.floor((now - s.lastBackup) / 86400000) + ' napja' : 'még nem';
-  L.push(`egészség: ${hl || 'rendben'} · adatfájl ${mb} MB · szavazatmentés: ${bk}`);
+  const cl = s.cloudOn ? (s.cloudErr ? 'hiba: ' + s.cloudErr : (s.cloudLast ? Math.floor((now - s.cloudLast) / 86400000) + ' napja' : 'még nem')) : 'nincs beállítva';
+  L.push(`egészség: ${hl || 'rendben'} · adatfájl ${mb} MB · szavazatmentés: ${bk} · felhő-mentés: ${cl}`);
 
   const top = [...rows].sort((a, b) => b.atm - a.atm).slice(0, 3);
   if (top.length) L.push('legzajosabb hírek: ' + top.map(r => `${fmtAtm(r.atm)} · ${cut(r.title || '', 55)} (${r.source_domain || '?'})`).join(' | '));

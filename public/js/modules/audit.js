@@ -5,7 +5,7 @@
 import { Learner } from './learner.js';
 import { detectLang } from './lang.js';
 
-export const AUDIT_VERSION = 'v47.6';
+export const AUDIT_VERSION = 'v47.8';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -145,6 +145,29 @@ export function blindVotes(votes, lam = 0.3, pred = x => x.blind === true) {
   return { ok: true, n: v.length, bait, rule: aucRank(rule, yl), ai: aucRank(ai, yl), blend: aucRank(blend, yl), ci: bootCI(blend, rule, yl, 200, 17) };
 }
 
+// 10) Vak újratanítás: az AI csak a vak szavazatokból, vagy az összes szavazatból tanulva jobb-e a vak szavazatokon (keresztellenőrzés).
+export async function blindExperiment(votes, items, K = 5, yieldFn = async () => {}) {
+  const v = votes.filter(x => x.title).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  const isB = v.map(x => x.blind === true);
+  const nB = isB.filter(Boolean).length, baitB = v.filter((x, i) => isB[i] && y(x) === 1).length;
+  if (nB < 150 || baitB < 20 || !items || !items.length) return { ok: false, nB, baitB };
+  const samples = items.map(i => ({ text: i.title, target: i.S0 !== undefined ? i.S0 : i.S }));
+  const fold = v.map(x => hash(String(x.id)) % K), labels = v.map(y);
+  const sA = new Array(v.length).fill(0.5), sB = new Array(v.length).fill(0.5);
+  for (let k = 0; k < K; k++) {
+    const A = new Learner(), B = new Learner(); A.bootstrap(samples); B.bootstrap(samples);
+    for (let i = 0; i < v.length; i++) {
+      if (isB[i] && fold[i] === k) continue;
+      if (v[i].queue !== 'eval') A.learnVote(v[i].title, labels[i] === 1);   // A: minden többi szavazatból
+      if (isB[i] && v[i].queue !== 'eval') B.learnVote(v[i].title, labels[i] === 1);   // B: csak a vak szavazatokból
+    }
+    for (let i = 0; i < v.length; i++) if (isB[i] && fold[i] === k) { sA[i] = A.predict(v[i].title); sB[i] = B.predict(v[i].title); }
+    await yieldFn();
+  }
+  const idx = v.map((_, i) => i).filter(i => isB[i]), l = idx.map(i => labels[i]);
+  return { ok: true, nB, baitB, all: aucRank(idx.map(i => sA[i]), l), blindOnly: aucRank(idx.map(i => sB[i]), l) };
+}
+
 // 9) Gyorsszavazó sorok, rejtett ismétlések, „közepes” jelölések.
 export function repeatStats(reps) {
   const p = reps.filter(r => (r.first === 'fact' || r.first === 'bait') && (r.second === 'fact' || r.second === 'bait'));
@@ -227,6 +250,11 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
     else if (qv.rep.n || qv.eval.n) L.push(`rejtett ismétlés: még kevés (${qv.rep.n} pár, legalább 10 kell)`);
     if (qv.mid.ok) L.push(`közepes jelölések: ${qv.mid.n} db (a gyorsszavazások ${pc(qv.mid.share)}-a) · átlagos AI-érték: tény ${f2(qv.mid.fact)} · közepes ${f2(qv.mid.mid)} · clickbait ${f2(qv.mid.bait)}`);
   }
+  if (qv && qv.bexp) {
+    const b = qv.bexp;
+    if (b.ok) L.push(`AI újratanítva, vak szavazatokon mérve (${b.nB} vak szavazat, ${b.baitB} hangos): csak a vak szavazatokból ${f2(b.blindOnly)} · az összes szavazatból ${f2(b.all)} · különbség ${(b.blindOnly - b.all >= 0 ? '+' : '') + f2(b.blindOnly - b.all)}`);
+    else L.push(`vak újratanítás: még kevés (${b.nB} vak szavazat, ${b.baitB} hangos; legalább 150 és 20 kell)`);
+  }
   if (vf && vf.n) L.push(`az utolsó ${vf.n} szavazat: vak ${vf.blind} · feltárt (a „Miért?” vagy a kapcsoló miatt nem vak) ${vf.revealed} · jelző nélküli (régi kóddal leadva) ${vf.none} · forrás látszott ${vf.srcShown} · kódverzió: ${Object.entries(vf.ver).sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
   if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
   if (lg && lg.split) {
@@ -241,6 +269,7 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
   if (lg && lg.exp && lg.exp.ok && lg.exp.all - lg.exp.huOnly > 0.02) flags.push('a nem magyar szavazatok segítenek a magyar híreknél');
   if (sh.ok && sh.random - sh.grouped > 0.05) flags.push('az AI részben a forrást tanulta (ismeretlen forrásnál gyengébb)');
   if (ts.ok && ts.ci.diff[0] <= 0) flags.push('az AI hozzáadott értéke a szabályhoz képest nem bizonyított (a sáv tartalmazza a 0-t)');
+  if (qv && qv.bexp && qv.bexp.ok && qv.bexp.blindOnly - qv.bexp.all > 0.02) flags.push('a régi (nem vak) szavazatok ártanak a tanulásnak: érdemes csak a vak szavazatokból tanítani');
   if (qv && qv.eval.ok && qv.eval.n < 300) flags.push(`az értékelő sor még kevés a döntéshez (${qv.eval.n}/300)`);
   if (qv && qv.rep.ok && qv.rep.kappa < 0.6) flags.push('a rejtett ismétlések egyezése mérsékelt (kappa < 0,6): a címke maga is bizonytalan');
   if (bv.ok && bv.n < 300) flags.push(`a vak szavazatok száma még kevés a döntéshez (${bv.n}/300)`);
@@ -259,5 +288,5 @@ export async function runAudit(votes, items, yieldFn, opts = {}) {
   return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3), voteFlags(votes),
     { split: langSplit(votes), huTime: timeSplit(huVotes), exp: await languageExperiment(votes, items, 5, yieldFn) },
     { eval: blindVotes(votes, opts.lam || 0.3, x => x.blind === true && x.queue === 'eval'), trainN: votes.filter(x => x.blind === true && x.queue === 'train').length,
-      rep: repeatStats(opts.repeats || []), mid: midStats(votes, opts.mids || []) });
+      rep: repeatStats(opts.repeats || []), mid: midStats(votes, opts.mids || []), bexp: await blindExperiment(votes, items, 5, yieldFn) });
 }

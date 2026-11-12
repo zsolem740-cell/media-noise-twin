@@ -13,6 +13,7 @@ import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag, APP_VERSION } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
 import { detectLang } from './modules/lang.js';
+import { buildBackup, serialize, parseBackup, planRestore, ghRepoPrivate, ghPut, ghGet, validRepoRef, maskToken, shouldAutoBackup } from './modules/backup.js';
 import { buildPools, takeNext, pickRepeat, progress as quickProgress, loadRepeats, saveRepeats, loadSkipped, saveSkipped, TARGET } from './modules/quick.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
 
@@ -25,6 +26,9 @@ const cap = () => (state.model && state.model.atm_cap !== undefined ? state.mode
 const GLOBE_PREF = 'mnt-globe';
 const lsFlag = (k, d) => { try { const v = localStorage.getItem(k); return v === '1' ? true : v === '0' ? false : d; } catch (_) { return d; } };
 const lsSetFlag = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (_) {} };
+const CLOUD_KEY = 'mnt-cloud';
+const loadCloud = () => { try { return JSON.parse(localStorage.getItem(CLOUD_KEY) || 'null') || {}; } catch (_) { return {}; } };
+const saveCloud = c => { try { localStorage.setItem(CLOUD_KEY, JSON.stringify(c)); } catch (_) {} };
 const BACKUP_KEY = 'mnt-backup';
 const getBackup = () => { try { return Number(localStorage.getItem(BACKUP_KEY)) || 0; } catch (_) { return 0; } };
 const setBackup = () => { try { localStorage.setItem(BACKUP_KEY, String(Date.now())); } catch (_) {} };
@@ -35,7 +39,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), midVotes: [], quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), midVotes: [], cloud: loadCloud(), pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -115,8 +119,12 @@ function renderHealthBar() {
   const list = ((state.data && state.data.health) || []).map(h => ({ text: h.text }));
   const nv = state.votes.length, last = getBackup();
   const days = last ? (Date.now() - last) / 86400000 : null;
-  if (nv >= 100 && (days === null || days > 14)) {
-    list.push({ soft: true, text: `Szavazatmentés: ${days === null ? 'még nem mentetted' : Math.floor(days) + ' napja mentetted'} (${nv} szavazat csak ezen a telefonon van). Az Öntanuló AI panelben másold ki a szavazatokat.` });
+  const c = state.cloud || {}, cloudOn = !!(c.repo && c.token), cloudDays = c.last ? (Date.now() - c.last) / 86400000 : null;
+  if (cloudOn) {
+    if (c.err) list.push({ soft: true, text: `Felhő-mentés hiba: ${c.err}` });
+    else if (nv >= 100 && (cloudDays === null || cloudDays > 3)) list.push({ soft: true, text: `Felhő-mentés: ${cloudDays === null ? 'még nem futott le' : Math.floor(cloudDays) + ' napja mentett'}. Az Öntanuló AI panel „Mentés és helyreállítás” részében kézzel is indítható.` });
+  } else if (nv >= 100 && (days === null || days > 3)) {
+    list.push({ soft: true, text: `Szavazatmentés: ${days === null ? 'még nem mentetted' : Math.floor(days) + ' napja mentetted'} (${nv} szavazat csak ezen az eszközön van). Az Öntanuló AI panelben: Mentés és helyreállítás → Mentés felhőbe.` });
   }
   ui.renderHealth(list);
 }
@@ -167,7 +175,7 @@ function copyAudit() {
 }
 
 function exportDiag() {
-  const txt = buildDiag({ data: state.data, model: state.model, rows: state.rows, votes: state.votes, cal: state.cal, lam: state.lam, aiBase: state.aiBase, regionLabel, lastBackup: getBackup(), now: Date.now() });
+  const txt = buildDiag({ data: state.data, model: state.model, rows: state.rows, votes: state.votes, cal: state.cal, lam: state.lam, aiBase: state.aiBase, regionLabel, lastBackup: getBackup(), cloudOn: !!(state.cloud.repo && state.cloud.token), cloudLast: state.cloud.last || 0, cloudErr: state.cloud.err || '', now: Date.now() });
   const done = ok => ui.setStatus(ok ? 'diagnosztika a vágólapon' : 'a másolás nem sikerült');
   try { navigator.clipboard.writeText(txt).then(() => done(true), () => done(false)); } catch (_) { done(false); }
 }
@@ -219,7 +227,7 @@ function renderPanels() {
       votes: state.votes.length, steps: state.learner.steps, lambda: state.lam, boot: state.learner.boot, top,
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
-    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), onQuick: openQuick,
+    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), backup: backupInfo(), onQuick: openQuick,
     quickInfo: (() => { const p = quickProgress(state.votes); return `Gyorsszavazás: értékelő sor ${p.eval}/${TARGET.eval} (clickbait ${p.bait}/${TARGET.bait}), tanító sor ${p.train}, közepes ${state.midVotes.length}`; })(),
     blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly,
     onToggleHuOnly: () => { state.huOnly = !state.huOnly; lsSetFlag('mnt-huonly', state.huOnly); render(); },
@@ -273,6 +281,115 @@ function langOf(it) {
   let l = state.langCache.get(it.id);
   if (!l) { l = detectLang(it.title, it.source_domain); state.langCache.set(it.id, l); }
   return l;
+}
+
+// ---- Mentés és helyreállítás ----
+function makeBackupText() {
+  let prev = null; try { prev = JSON.parse(localStorage.getItem('mnt-blind-prev') || 'null'); } catch (_) {}
+  return serialize(buildBackup({ app: APP_VERSION, votes: state.votes, mids: state.midVotes, repeats: state.repeats, skipped: state.skipped,
+    prefs: { blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly }, blind: state.blind, blindPrev: prev }));
+}
+const nAll = () => state.votes.length + state.midVotes.length;
+
+function copyBackup() {
+  const done = ok => { if (ok) { setBackup(); renderHealthBar(); } ui.setStatus(ok ? `teljes mentés a vágólapon (${nAll()} szavazat)` : 'a másolás nem sikerült'); };
+  try { navigator.clipboard.writeText(makeBackupText()).then(() => done(true), () => done(false)); } catch (_) { done(false); }
+}
+
+async function shareBackup() {
+  const text = makeBackupText();
+  const name = `media-noise-szavazatok-${new Date().toISOString().slice(0, 10)}.txt`;   // a böngésző a .json-t nem engedi megosztani, a .txt-t igen
+  try {
+    const file = new File([text], name, { type: 'text/plain' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ files: [file], title: name });
+      setBackup(); renderHealthBar(); ui.setStatus('mentés elküldve a megosztón át'); return;
+    }
+  } catch (e) { if (e && e.name === 'AbortError') { ui.setStatus('mentés megszakítva'); return; } }
+  try {   // tartalék: letöltés
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = name; a.click();
+    setBackup(); renderHealthBar(); ui.setStatus('mentés letöltve'); return;
+  } catch (_) {}
+  copyBackup();
+}
+
+const cloudCfg = () => ({ repo: state.cloud.repo, token: state.cloud.token, path: 'szavazatok.json' });
+function cloudFail(msg) { state.cloud = Object.assign({}, state.cloud, { err: msg }); saveCloud(state.cloud); ui.setStatus('felhő-mentés: ' + msg); renderHealthBar(); renderPanels(); }
+
+async function cloudSave(repo, token) {
+  repo = String(repo || '').trim(); token = String(token || '').trim();
+  if (!validRepoRef(repo)) { ui.setStatus('a tároló neve „felhasználó/tároló” alakú legyen'); return; }
+  if (token.length < 20) { ui.setStatus('a kulcs túl rövid'); return; }
+  const chk = await ghRepoPrivate({ repo, token });
+  if (!chk.ok) { ui.setStatus('felhő-mentés: ' + chk.error); return; }
+  state.cloud = { repo, token, last: 0, count: 0, err: '' }; saveCloud(state.cloud);
+  ui.setStatus('felhő-mentés beállítva, az első mentés indul…');
+  await cloudBackup(true);
+}
+
+async function cloudBackup(manual) {
+  const c = state.cloud;
+  if (!c || !c.repo || !c.token || state.cloudBusy) return;
+  state.cloudBusy = true;
+  try {
+    const priv = await ghRepoPrivate(cloudCfg());
+    if (!priv.ok) { cloudFail(priv.error); return; }
+    const r = await ghPut(cloudCfg(), makeBackupText(), `Mentés ${new Date().toISOString().slice(0, 16)}Z · ${nAll()} szavazat`);
+    if (!r.ok) { cloudFail(r.error); return; }
+    state.cloud = Object.assign({}, c, { last: Date.now(), count: nAll(), err: '' }); saveCloud(state.cloud);
+    setBackup(); renderHealthBar(); renderPanels();
+    ui.setStatus(`felhő-mentés kész (${nAll()} szavazat)`);
+  } finally { state.cloudBusy = false; }
+}
+function maybeAutoBackup() { if (shouldAutoBackup(state.cloud, nAll())) cloudBackup(false); }
+
+async function cloudRestore() {
+  const c = state.cloud; if (!c || !c.repo || !c.token) return;
+  ui.setStatus('letöltés a GitHubról…');
+  const r = await ghGet(cloudCfg());
+  if (!r.ok) { ui.setStatus('felhő: ' + r.error); return; }
+  previewRestore(r.text);
+}
+
+function previewRestore(text) {
+  const p = parseBackup(text);
+  if (!p.ok) { ui.setStatus('helyreállítás: ' + p.error); return; }
+  const plan = planRestore(state.votes, state.midVotes, p.data);
+  const total = p.data.votes.length + p.data.mids.length;
+  state.pendingRestore = { parsed: p.data, plan,
+    summary: `A mentésben ${total} szavazat van${p.data.created ? ' (' + p.data.created.slice(0, 16).replace('T', ' ') + ')' : ''}${p.stats.invalid ? `, ${p.stats.invalid} sérült kihagyva` : ''}. Új: ${plan.stats.added} · frissülne: ${plan.stats.updated} · változatlan: ${plan.stats.same}. Az eszközön most ${nAll()} szavazat van.` };
+  state.bkOpen = true; renderPanels();
+}
+
+async function confirmRestore() {
+  const R = state.pendingRestore; if (!R) return;
+  ui.setStatus('helyreállítás folyamatban…');
+  for (const rec of R.plan.write) await store.put('votes', null, rec);
+  state.votes = R.plan.votes; state.midVotes = R.plan.mids;
+  const d = R.parsed;
+  const rk = new Set(state.repeats.map(r => r.id + '|' + r.ts)); d.repeats.forEach(r => { if (!rk.has(r.id + '|' + r.ts)) state.repeats.push(r); }); saveRepeats(state.repeats);
+  d.skipped.forEach(x => state.skipped.add(x)); saveSkipped(state.skipped);
+  if (!state.blind && d.blind) { state.blind = d.blind; saveBlind(state.blind); }
+  const setIf = (key, prop, val) => { try { if (typeof val === 'boolean' && localStorage.getItem(key) === null) { state[prop] = val; lsSetFlag(key, val); } } catch (_) {} };
+  setIf('mnt-blindvote', 'blindVote', d.prefs.blindVote); setIf('mnt-showsrc', 'showSource', d.prefs.showSource); setIf('mnt-huonly', 'huOnly', d.prefs.huOnly);
+  state.learner = new Learner(); await ensureLearner();    // a tanuló a visszaállított szavazatokból újraépül
+  state.pendingRestore = null; setBackup(); render(); renderPanels();
+  ui.setStatus(`helyreállítva: ${R.plan.stats.added} új, ${R.plan.stats.updated} frissített szavazat`);
+}
+
+function backupInfo() {
+  const c = state.cloud || {}, on = !!(c.repo && c.token), last = getBackup();
+  const ago = ms => (ms ? (Date.now() - ms < 36e5 ? 'az elmúlt órában' : Date.now() - ms < 864e5 ? Math.floor((Date.now() - ms) / 36e5) + ' órája' : Math.floor((Date.now() - ms) / 864e5) + ' napja') : 'még nem');
+  return {
+    open: state.bkOpen, onToggle: o => { state.bkOpen = o; },
+    lines: [`Az eszközön: ${state.votes.length} szavazat + ${state.midVotes.length} közepes. Utolsó mentés (bármely módon): ${ago(last)}.`, on ? `Felhő-mentés: ${c.err ? 'HIBA – ' + c.err : 'utoljára ' + ago(c.last) + ' (' + (c.count || 0) + ' szavazat)'}.` : 'Felhő-mentés: nincs beállítva.'],
+    cloud: { configured: on, repo: c.repo || '', masked: maskToken(c.token) },
+    pending: state.pendingRestore ? { summary: state.pendingRestore.summary } : null,
+    onShare: shareBackup, onCopy: copyBackup, onRestorePreview: previewRestore, onRestoreConfirm: confirmRestore,
+    onRestoreCancel: () => { state.pendingRestore = null; renderPanels(); },
+    onCloudSave: cloudSave, onCloudNow: () => cloudBackup(true), onCloudRestore: cloudRestore,
+    onCloudForget: () => { state.cloud = {}; saveCloud({}); ui.setStatus('a kulcs törölve erről az eszközről'); renderHealthBar(); renderPanels(); },
+  };
 }
 
 // ---- Gyorsszavazó mód ----
@@ -349,12 +466,13 @@ async function closeQuick() {
   state.quick = null;
   paintQuick();
   render();
+  maybeAutoBackup();
 }
 
 function onQuickKey(e) {
   if (!state.quick) return;
   const k = String(e.key || '').toLowerCase();
-  const map = { f: 'fact', m: 'mid', c: 'bait', ' ': 'skip' };
+  const map = { n: 'fact', f: 'fact', m: 'mid', h: 'bait', c: 'bait', ' ': 'skip' };
   if (map[k]) { if (e.preventDefault) e.preventDefault(); quickAnswer(map[k]); }
   else if (k === 'z') quickUndo();
   else if (k === 'escape') closeQuick();
@@ -495,6 +613,7 @@ async function init() {
   }
   await ensureLearner();
   render();
+  maybeAutoBackup();
   if (share && ui.$('shareModal').open && !ui.$('shareResult').childNodes.length) analyze(shareCtx);
 }
 
