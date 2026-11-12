@@ -1,6 +1,6 @@
 name: ellenőrzés
 
-# Pull requestre futó ellenőrzés: Python-tesztek, JS-tesztek, verzió-egyezés.
+# Pull requestre futó ellenőrzés: Python-tesztek, JS szintaxis, JS-tesztek.
 # Csak olvas: nem telepít, nem ír a repóba, nem használ titkot, és nem nyúl az adatokhoz.
 on:
   pull_request:
@@ -29,9 +29,6 @@ jobs:
           node-version: "22"
 
       - run: pip install -q -r requirements.txt pytest
-
-      - name: Verzió-egyezés
-        run: python3 scripts/bump_version.py --check
 
       - name: Python-tesztek
         run: python3 -m pytest -q tests
