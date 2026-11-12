@@ -114,3 +114,12 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - **Mentés és helyreállítás** (Öntanuló AI panel): teljes mentés (szavazatok, „közepes” jelölések, rejtett ismétlések, kihagyottak, beállítások, vak minta) megosztással (Drive, Keep; a böngésző csak .txt fájlt oszt meg), vágólapra, és **automatikus feltöltéssel egy PRIVÁT GitHub-tárolóba** (naponta egyszer vagy +100 szavazatnál; a tároló privát voltát minden feltöltés előtt ellenőrzi, nyilvános tárolóba nem ír; a kulcs csak ezen az eszközön van, a mentésbe nem kerül).
 - **Helyreállítás bármely eszközön:** a mentés szövegéből, fájlból vagy a GitHubról; előnézet és megerősítés után egyesít azonosító szerint (nem töröl, az újabb időbélyeg marad), és a tanuló a szavazatokból újraépül. Régi, sima szavazat-listát is elfogad.
 - A szavazatmentés emlékeztetője 14 helyett 3 nap; a diagnosztika és az egészség-sáv a felhő-mentés korát és hibáját is mutatja.
+
+### v47.9
+- **Két szavazó:** minden szavazat elmenti az anonim szavazó-jelölést (A vagy B, az Öntanuló AI panelben állítható), és a mentés is tartalmazza. Más szavazó mentését ide nem lehet visszaállítani (a két szavazó adatai nem keverednek).
+- **Szavazható nyelvek szavazónként:** magyar, angol, német, szlovén (a felületen kapcsolók; a nyelvfelismerő már a nyelveket is megkülönbözteti: hu, en, de, sl, hr, sk). A gyorsszavazó és a vak minta csak az olvasott nyelvű híreket hozza.
+- **Közös sor:** a hírek ~10%-a (azonosító szerint kijelölve) mindkét szavazó gyorsszavazójában azonos sorrendben jön elő, minden ötödik hírként, értékelő típusú (soha nem tanít), és `shared` jelölést kap.
+- **Egyeztetés gomb** (Mentés és helyreállítás): a másik szavazó mentését beillesztve kiírja a közös hírekre az egyezést és a kappát (összesen és nyelvenként), a szabály és a keverék AUC-ját a másik szavazó vak címkéivel nyelvenként, és az eltéréseket. Nem ír át semmit.
+- Az Audit nyelvi bontása kódonként (magyar, angol, német, szlovén, horvát, szlovák).
+
+- **Tetszőleges számú szavazó:** a szavazó-azonosító egy anonim betű (A–J, az Öntanuló AI panelben egy választóval), minden szavazó más betűt használ. Az **Egyeztetés** több szavazó mentését is fogadja (soronként egy): páronkénti egyezés és kappa, nyelvenkénti átlag, konszenzus-címkék (a legalább két szavazó által értékelt hírek többségi címkéje), a szabály AUC-ja a konszenzussal, a többiektől kiugróan eltérő szavazó jelzése, és az eltérések listája. Azonos azonosítót használó szavazókat jelzi.

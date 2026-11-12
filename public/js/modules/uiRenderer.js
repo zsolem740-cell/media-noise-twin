@@ -38,6 +38,10 @@ function renderBackup(box, h) {
   fi.addEventListener('change', () => { const f = fi.files && fi.files[0]; if (f && f.text) f.text().then(t => h.onRestorePreview(t)); });
   d.append(fi);
   if (h.pending) { d.append(el('div', 'small bkpend', h.pending.summary)); d.append(mk('Visszaállítás megerősítése', h.onRestoreConfirm), mk('Mégse', h.onRestoreCancel)); }
+  d.append(el('div', 'small bkhead', 'Egyeztetés a többi szavazóval: illeszd be a többiek mentésének szövegét (több mentés = több sor). Nem ír át semmit, csak kiírja az egyezést.'));
+  const rt = el('textarea'); rt.rows = 3; rt.placeholder = 'a többi szavazó mentése (soronként egy)'; d.append(rt);
+  d.append(mk('Egyeztetés (nem ír át semmit)', () => h.onRecon(rt.value)));
+  if (h.reconText) { d.append(el('pre', 'auditpre', h.reconText)); d.append(mk('Egyeztetés eredményének másolása', h.onReconCopy)); }
   const c = h.cloud || {};
   d.append(el('div', 'small bkhead', c.configured ? `Automatikus felhő-mentés (privát GitHub-tároló): ${c.repo} · kulcs: ${c.masked}` : 'Automatikus felhő-mentés (opcionális): privát GitHub-tároló és csak arra az egy tárolóra szóló kulcs kell hozzá (lásd a Helyreállítási útmutatót).'));
   if (!c.configured) {
@@ -140,8 +144,8 @@ function card(it, ctx) {
   const mine = ctx.votes.get(it.id);
   const acts = el('div', 'acts');
   // Csak magyar nyelvű címre lehet szavazni (alapból): a fordított vagy ismeretlen nyelvű cím ítélete nem a cím stílusát mérné.
-  const blockedLang = !!ctx.huOnly && !mine && ctx.langOf && ctx.langOf(it) !== 'hu';
-  if (blockedLang) acts.append(el('span', 'small langnote', 'Nem magyar vagy bizonytalan nyelvű cím: a szavazás ki van kapcsolva.'));
+  const blockedLang = !mine && !!ctx.langOk && !ctx.langOk(it);
+  if (blockedLang) acts.append(el('span', 'small langnote', 'Ezen a nyelven nem szavazol (a nyelvek az Öntanuló AI panelben állíthatók), vagy bizonytalan a nyelv.'));
   else [['fact', 'Nyugodt'], ['bait', 'Hangos']].forEach(([k, label]) => {
     const b = el('button', 'vote ' + k, label);
     b.type = 'button'; b.setAttribute('aria-pressed', String(mine === k));
@@ -216,10 +220,19 @@ export function renderAi(box, ai, handlers = {}) {
     const t2 = el('button', 'btn small', `Forrás neve szavazás előtt: ${handlers.showSource ? 'látszik' : 'rejtve'}`);
     t2.type = 'button'; t2.addEventListener('click', handlers.onToggleSource);
     box.append(t1, t2);
-    if (handlers.onToggleHuOnly) {
-      const t3 = el('button', 'btn small', `Szavazás csak magyar nyelvű híreken: ${handlers.huOnly ? 'BE' : 'KI'}`);
-      t3.type = 'button'; t3.addEventListener('click', handlers.onToggleHuOnly);
-      box.append(t3);
+    if (handlers.onSetVoter) {
+      box.append(el('div', 'small', `Szavazó-azonosító (anonim betű; minden szavazó más betűt válasszon, különben az egyeztetés nem működik)${handlers.voterChosen ? '' : ' – még nem választottad ki!'}:`));
+      const sel = el('select'); sel.setAttribute('aria-label', 'Szavazó-azonosító');
+      'ABCDEFGHIJ'.split('').forEach(c => { const o = el('option', '', c); o.value = c; sel.append(o); });
+      sel.value = handlers.voter;
+      sel.addEventListener('change', () => handlers.onSetVoter(sel.value));
+      box.append(sel);
+      box.append(el('div', 'small', 'Szavazható nyelvek (csak azokat a híreket kapod szavazásra, amiket olvasol):'));
+      (handlers.langs || []).forEach(l => {
+        const b = el('button', 'btn small', `${l.label}: ${l.on ? 'BE' : 'KI'}`);
+        b.type = 'button'; b.addEventListener('click', () => handlers.onToggleLang(l.code));
+        box.append(b);
+      });
     }
     box.append(el('div', 'small', 'Címkézési szabály (a cím stílusa, nem a cikk igazsága): Hangos = a cím felkiáltójellel, NAGYBETŰVEL, érzelmi vagy túlzó szavakkal, titokzatos ígérettel hajt, akkor is, ha a cikk igaz. Nyugodt = a cím higgadtan közli a lényeget. Közepes = a kettő között, vagy nem tudod eldönteni. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
   }

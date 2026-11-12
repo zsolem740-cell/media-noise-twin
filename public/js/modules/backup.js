@@ -4,13 +4,13 @@
 export const BACKUP_FORMAT = 'mnt-backup';
 export const BACKUP_VERSION = 1;
 const VOTES = ['fact', 'bait', 'mid'];
-const FIELDS = ['id', 'domain', 'vote', 'title', 'sRule', 'sAi', 'S0', 'S', 'V', 'region', 'atm', 'ts', 'blind', 'srcShown', 'lang', 'queue', 'quick', 'ver', 'vote2', 'ts2'];
+const FIELDS = ['id', 'domain', 'vote', 'title', 'sRule', 'sAi', 'S0', 'S', 'V', 'region', 'atm', 'ts', 'blind', 'srcShown', 'lang', 'queue', 'quick', 'shared', 'voter', 'ver', 'vote2', 'ts2'];
 
 const compact = v => { const o = {}; FIELDS.forEach(k => { if (v[k] !== undefined && v[k] !== null) o[k] = v[k]; }); return o; };
 
 export function buildBackup(s, now = Date.now()) {
   return {
-    format: BACKUP_FORMAT, version: BACKUP_VERSION, created: new Date(now).toISOString(), app: s.app || '',
+    format: BACKUP_FORMAT, version: BACKUP_VERSION, created: new Date(now).toISOString(), app: s.app || '', voter: s.voter || '',
     counts: { votes: (s.votes || []).length, mids: (s.mids || []).length, repeats: (s.repeats || []).length },
     votes: (s.votes || []).map(compact), mids: (s.mids || []).map(compact),
     repeats: s.repeats || [], skipped: [...(s.skipped || [])], prefs: s.prefs || {},
@@ -44,6 +44,7 @@ export function parseBackup(text) {
   if (invalid > (rawV.length + rawM.length) * 0.5) return { ok: false, error: 'a mentés nagy része sérült' };
   return { ok: true, data: { votes, mids, repeats: Array.isArray(obj.repeats) ? obj.repeats.filter(r => r && typeof r.id === 'string') : [],
     skipped: Array.isArray(obj.skipped) ? obj.skipped.filter(x => typeof x === 'string') : [], prefs: obj.prefs && typeof obj.prefs === 'object' ? obj.prefs : {},
+    voter: typeof obj.voter === 'string' ? obj.voter : '',
     blind: obj.blind && Array.isArray(obj.blind.items) ? obj.blind : null, blindPrev: obj.blindPrev && Array.isArray(obj.blindPrev.items) ? obj.blindPrev : null,
     created: obj.created || '', legacy: !!obj.legacy }, stats: { valid: votes.length + mids.length, invalid } };
 }

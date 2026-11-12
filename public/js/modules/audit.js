@@ -5,7 +5,7 @@
 import { Learner } from './learner.js';
 import { detectLang } from './lang.js';
 
-export const AUDIT_VERSION = 'v47.8';
+export const AUDIT_VERSION = 'v47.9';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -96,7 +96,7 @@ export async function sourceHoldout(votes, items, K = 5, yieldFn = async () => {
 // 8) Nyelvi bontás és kísérlet: számít-e a nem magyar szavazat a magyar hírek pontosságához?
 const langOf = x => x.lang || detectLang(x.title, x.domain);
 export function langSplit(votes) {
-  const o = { hu: { n: 0, bait: 0 }, other: { n: 0, bait: 0 }, '?': { n: 0, bait: 0 } };
+  const o = { hu: { n: 0, bait: 0 }, en: { n: 0, bait: 0 }, de: { n: 0, bait: 0 }, sl: { n: 0, bait: 0 }, hr: { n: 0, bait: 0 }, sk: { n: 0, bait: 0 }, other: { n: 0, bait: 0 }, '?': { n: 0, bait: 0 } };
   votes.forEach(x => { const l = langOf(x); const c = o[l] || o['?']; c.n++; c.bait += y(x); });
   return o;
 }
@@ -259,7 +259,8 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
   if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
   if (lg && lg.split) {
     const s = lg.split, p = c => `${c.n} (${c.bait} clickbait)`;
-    L.push(`nyelvi bontás (a szavazat nyelve a címből becsült): magyar ${p(s.hu)} · egyéb nyelvű ${p(s.other)} · bizonytalan ${p(s['?'])}`);
+    const nm = { en: 'angol', de: 'német', sl: 'szlovén', hr: 'horvát', sk: 'szlovák', other: 'egyéb nyelvű', '?': 'bizonytalan' };
+    L.push(`nyelvi bontás (a szavazat nyelve a címből becsült): magyar ${p(s.hu)}` + Object.entries(nm).filter(([k]) => s[k] && s[k].n > 0).map(([k, t]) => ` · ${t} ${p(s[k])}`).join(''));
     if (lg.huTime && lg.huTime.ok) L.push(`  csak a magyar szavazatokon, időbeli teszt (${lg.huTime.nTest} teszt-szavazat): szabály ${f2(lg.huTime.rule)} · AI ${f2(lg.huTime.ai)} · keverék ${f2(lg.huTime.blend)} ${rg(lg.huTime.ci.auc)}`);
     if (lg.exp && lg.exp.ok) L.push(`  AI újratanítva, magyar tesztadaton (${lg.exp.nHu} magyar szavazat): csak magyar szavazatokból ${f2(lg.exp.huOnly)} · az összes szavazatból ${f2(lg.exp.all)} · különbség ${(lg.exp.huOnly - lg.exp.all >= 0 ? '+' : '') + f2(lg.exp.huOnly - lg.exp.all)} (a régi címkék torzítottak, csak az összehasonlítás számít)`);
     else if (lg.exp) L.push(`  nyelvi kísérlet: kevés magyar szavazat (${lg.exp.nHu} db, ${lg.exp.baitHu} clickbait; legalább 300 db és 30 clickbait kell)`);

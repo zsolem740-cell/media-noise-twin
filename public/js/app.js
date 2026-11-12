@@ -12,7 +12,8 @@ import { parseShare, openShare, analyze } from './modules/share.js';
 import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag, APP_VERSION } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
-import { detectLang } from './modules/lang.js';
+import { detectLangCode } from './modules/lang.js';
+import { reconcileMany, formatReconMany, splitBackupTexts } from './modules/reconcile.js';
 import { buildBackup, serialize, parseBackup, planRestore, ghRepoPrivate, ghPut, ghGet, validRepoRef, maskToken, shouldAutoBackup } from './modules/backup.js';
 import { buildPools, takeNext, pickRepeat, progress as quickProgress, loadRepeats, saveRepeats, loadSkipped, saveSkipped, TARGET } from './modules/quick.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
@@ -26,6 +27,10 @@ const cap = () => (state.model && state.model.atm_cap !== undefined ? state.mode
 const GLOBE_PREF = 'mnt-globe';
 const lsFlag = (k, d) => { try { const v = localStorage.getItem(k); return v === '1' ? true : v === '0' ? false : d; } catch (_) { return d; } };
 const lsSetFlag = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0'); } catch (_) {} };
+const LANGS = [['hu', 'Magyar'], ['en', 'Angol'], ['de', 'Német'], ['sl', 'Szlovén']];
+const loadVoter = () => { try { const v = localStorage.getItem('mnt-voter'); return /^[A-J]$/.test(v || '') ? v : 'A'; } catch (_) { return 'A'; } };
+const voterChosen = () => { try { return /^[A-J]$/.test(localStorage.getItem('mnt-voter') || ''); } catch (_) { return false; } };
+const loadLangs = () => { try { const j = JSON.parse(localStorage.getItem('mnt-langs') || 'null'); if (Array.isArray(j) && j.length) return new Set(j.filter(x => typeof x === 'string')); } catch (_) {} return new Set(['hu']); };
 const CLOUD_KEY = 'mnt-cloud';
 const loadCloud = () => { try { return JSON.parse(localStorage.getItem(CLOUD_KEY) || 'null') || {}; } catch (_) { return {}; } };
 const saveCloud = c => { try { localStorage.setItem(CLOUD_KEY, JSON.stringify(c)); } catch (_) {} };
@@ -39,7 +44,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), midVotes: [], cloud: loadCloud(), pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), voter: loadVoter(), langs: loadLangs(), reconText: '', langCache: new Map(), midVotes: [], cloud: loadCloud(), pendingRestore: null, bkOpen: false, cloudBusy: false, quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -149,7 +154,7 @@ function blindView() {
   return { open: state.blindOpen, total: b ? b.items.length : 0, answered: answeredCount(b), title: it ? it.title : '',
     onStart: () => {
       if (!state.blind) {
-        const items = pickSample(state.votes);
+        const items = pickSample(state.votes, 100, Date.now(), 24, 5, null, state.langs);
         if (items.length < 20) { ui.setStatus('kevés (24 óránál régebbi) szavazat a vak újracímkézéshez'); return; }
         state.blind = { created: Date.now(), items, answers: {} };
         saveBlind(state.blind);
@@ -158,7 +163,7 @@ function blindView() {
     },
     onNew: () => {
       const prev = state.blind;
-      const items = pickSample(state.votes, 100, Date.now(), 24, (Date.now() % 9973) + 1, new Set(prev ? prev.items.map(i => i.id) : []));
+      const items = pickSample(state.votes, 100, Date.now(), 24, (Date.now() % 9973) + 1, new Set(prev ? prev.items.map(i => i.id) : []), state.langs);
       if (items.length < 20) { ui.setStatus('kevés új, 24 óránál régebbi magyar szavazat az új mintához'); return; }
       try { if (prev) localStorage.setItem('mnt-blind-prev', JSON.stringify(prev)); } catch (_) {}
       state.blind = { created: Date.now(), items, answers: {} };
@@ -201,7 +206,7 @@ function render() {
     : (a, b) => (b.published || '').localeCompare(a.published || ''));
   const votes2 = new Map(state.votes.filter(v => v.vote2).map(v => [v.id, v.vote2]));
   ui.renderList(ui.$('list'), rows, { th, votes, votes2, regionLabel, onVote: vote, onVote2: vote2, onOpen: markOpen, explain,
-    blindVote: state.blindVote, showSource: state.showSource, revealed: state.revealed, opened: state.opened, huOnly: state.huOnly, langOf,
+    blindVote: state.blindVote, showSource: state.showSource, revealed: state.revealed, opened: state.opened, langOk, langOf,
     onReveal: id => { state.revealed.add(id); render(); } });
   ui.$('empty').hidden = rows.length > 0;
   ui.$('sortBtn').textContent = 'Rendezés: ' + (state.sort === 'time' ? 'idő' : 'zaj');
@@ -229,8 +234,10 @@ function renderPanels() {
       suggestion: state.suggestion, links: githubLinks(location),
     }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), backup: backupInfo(), onQuick: openQuick,
     quickInfo: (() => { const p = quickProgress(state.votes); return `Gyorsszavazás: értékelő sor ${p.eval}/${TARGET.eval} (clickbait ${p.bait}/${TARGET.bait}), tanító sor ${p.train}, közepes ${state.midVotes.length}`; })(),
-    blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly,
-    onToggleHuOnly: () => { state.huOnly = !state.huOnly; lsSetFlag('mnt-huonly', state.huOnly); render(); },
+    blindVote: state.blindVote, showSource: state.showSource, voter: state.voter, voterChosen: voterChosen(),
+    langs: LANGS.map(([code, label]) => ({ code, label, on: state.langs.has(code) })),
+    onSetVoter: v => { if (!/^[A-J]$/.test(v || '')) return; state.voter = v; try { localStorage.setItem('mnt-voter', v); } catch (_) {} ui.setStatus(`szavazó-azonosító: ${v}`); renderPanels(); },
+    onToggleLang: code => { if (state.langs.has(code)) state.langs.delete(code); else state.langs.add(code); try { localStorage.setItem('mnt-langs', JSON.stringify([...state.langs])); } catch (_) {} render(); },
     onToggleBlindVote: () => { state.blindVote = !state.blindVote; lsSetFlag('mnt-blindvote', state.blindVote); render(); },
     onToggleSource: () => { state.showSource = !state.showSource; lsSetFlag('mnt-showsrc', state.showSource); render(); }, onSuggest, onCopySuggestion });
   }
@@ -267,7 +274,7 @@ async function vote(it, kind) {
     // sRule és sAi: a tanulás ELŐTTI értékek, ezekből mér a kalibráció
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi,
       S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
-      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it) };  // blind: a szavazat a számok és a szín ismerete nélkül született
+      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it), voter: state.voter };  // blind: a szavazat a számok és a szín ismerete nélkül született
     await store.put('votes', null, rec);
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI
@@ -279,15 +286,16 @@ async function vote(it, kind) {
 // A cím nyelve (magyar = 'hu'): a szavazó csak ezt tudja megítélni.
 function langOf(it) {
   let l = state.langCache.get(it.id);
-  if (!l) { l = detectLang(it.title, it.source_domain); state.langCache.set(it.id, l); }
+  if (!l) { l = detectLangCode(it.title, it.source_domain); state.langCache.set(it.id, l); }
   return l;
 }
+const langOk = it => state.langs.has(langOf(it));
 
 // ---- Mentés és helyreállítás ----
 function makeBackupText() {
   let prev = null; try { prev = JSON.parse(localStorage.getItem('mnt-blind-prev') || 'null'); } catch (_) {}
   return serialize(buildBackup({ app: APP_VERSION, votes: state.votes, mids: state.midVotes, repeats: state.repeats, skipped: state.skipped,
-    prefs: { blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly }, blind: state.blind, blindPrev: prev }));
+    voter: state.voter, prefs: { blindVote: state.blindVote, showSource: state.showSource, langs: [...state.langs], voter: state.voter }, blind: state.blind, blindPrev: prev }));
 }
 const nAll = () => state.votes.length + state.midVotes.length;
 
@@ -354,6 +362,7 @@ async function cloudRestore() {
 function previewRestore(text) {
   const p = parseBackup(text);
   if (!p.ok) { ui.setStatus('helyreállítás: ' + p.error); return; }
+  if (p.data.voter && p.data.voter !== state.voter) { ui.setStatus(`ez a(z) ${p.data.voter} szavazó mentése, ide (${state.voter}) nem állítható vissza: használd az Egyeztetés gombot`); return; }
   const plan = planRestore(state.votes, state.midVotes, p.data);
   const total = p.data.votes.length + p.data.mids.length;
   state.pendingRestore = { parsed: p.data, plan,
@@ -371,10 +380,28 @@ async function confirmRestore() {
   d.skipped.forEach(x => state.skipped.add(x)); saveSkipped(state.skipped);
   if (!state.blind && d.blind) { state.blind = d.blind; saveBlind(state.blind); }
   const setIf = (key, prop, val) => { try { if (typeof val === 'boolean' && localStorage.getItem(key) === null) { state[prop] = val; lsSetFlag(key, val); } } catch (_) {} };
-  setIf('mnt-blindvote', 'blindVote', d.prefs.blindVote); setIf('mnt-showsrc', 'showSource', d.prefs.showSource); setIf('mnt-huonly', 'huOnly', d.prefs.huOnly);
+  setIf('mnt-blindvote', 'blindVote', d.prefs.blindVote); setIf('mnt-showsrc', 'showSource', d.prefs.showSource);
+  try { if (localStorage.getItem('mnt-langs') === null && Array.isArray(d.prefs.langs) && d.prefs.langs.length) { state.langs = new Set(d.prefs.langs); localStorage.setItem('mnt-langs', JSON.stringify(d.prefs.langs)); } } catch (_) {}
   state.learner = new Learner(); await ensureLearner();    // a tanuló a visszaállított szavazatokból újraépül
   state.pendingRestore = null; setBackup(); render(); renderPanels();
   ui.setStatus(`helyreállítva: ${R.plan.stats.added} új, ${R.plan.stats.updated} frissített szavazat`);
+}
+
+// Egyeztetés a másik szavazóval: csak olvas és kiír, a tárolóba nem ír.
+function runRecon(text) {
+  const parts = splitBackupTexts(text);
+  if (!parts.length) { ui.setStatus('egyeztetés: illeszd be legalább egy másik szavazó mentését'); return; }
+  const sets = [{ voter: state.voter, votes: state.votes }];
+  let bad = 0;
+  parts.forEach((t, i) => { const p = parseBackup(t); if (!p.ok) { bad++; return; } sets.push({ voter: p.data.voter || ('X' + (i + 1)), votes: p.data.votes.concat(p.data.mids) }); });
+  if (sets.length < 2) { ui.setStatus('egyeztetés: a beillesztett mentés(ek) nem olvashatók'); return; }
+  state.reconText = formatReconMany(reconcileMany(sets, state.lam));
+  state.bkOpen = true; renderPanels();
+  if (bad) ui.setStatus(`egyeztetés kész, de ${bad} mentés nem volt olvasható`);
+}
+function copyRecon() {
+  const done = ok => ui.setStatus(ok ? 'az egyeztetés eredménye a vágólapon' : 'a másolás nem sikerült');
+  try { navigator.clipboard.writeText(state.reconText || '').then(() => done(true), () => done(false)); } catch (_) { done(false); }
 }
 
 function backupInfo() {
@@ -387,6 +414,7 @@ function backupInfo() {
     pending: state.pendingRestore ? { summary: state.pendingRestore.summary } : null,
     onShare: shareBackup, onCopy: copyBackup, onRestorePreview: previewRestore, onRestoreConfirm: confirmRestore,
     onRestoreCancel: () => { state.pendingRestore = null; renderPanels(); },
+    reconText: state.reconText, onRecon: runRecon, onReconCopy: copyRecon,
     onCloudSave: cloudSave, onCloudNow: () => cloudBackup(true), onCloudRestore: cloudRestore,
     onCloudForget: () => { state.cloud = {}; saveCloud({}); ui.setStatus('a kulcs törölve erről az eszközről'); renderHealthBar(); renderPanels(); },
   };
@@ -404,8 +432,8 @@ const nextQuick = () => pickRepeat(state.votes, state.repeats, Date.now()) || ta
 
 function openQuick() {
   const voted = new Set(state.votes.map(v => v.id).concat(state.midVotes.map(v => v.id)));
-  const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOf });
-  state.quick = { q: { eval: pools.eval, train: pools.train, step: 0, used: new Set() }, cur: null, last: null, pending: null };
+  const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOk });
+  state.quick = { q: { eval: pools.eval, train: pools.train, shared: pools.shared, step: 0, used: new Set() }, cur: null, last: null, pending: null };
   state.quick.cur = nextQuick();
   paintQuick();
 }
@@ -431,7 +459,7 @@ async function quickAnswer(kind) {
   } else {
     const it = cur.it;
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi, S0: it.S0, S: it.Seff, V: it.v,
-      region: it.region, atm: it.atm, ts: Date.now(), blind: true, srcShown: false, ver: APP_VERSION, lang: 'hu', queue: cur.queue, quick: true };
+      region: it.region, atm: it.atm, ts: Date.now(), blind: true, srcShown: false, ver: APP_VERSION, lang: langOf(it), queue: cur.queue, quick: true, voter: state.voter, shared: cur.shared ? true : undefined };
     await store.put('votes', null, rec);
     if (kind === 'mid') state.midVotes = state.midVotes.filter(v => v.id !== it.id).concat(rec);
     else state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
