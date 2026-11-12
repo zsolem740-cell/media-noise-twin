@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-11-12T08:24:10Z",
+ "generated_at": "2026-11-12T08:25:22Z",
  "model": {
   "formula": "ATM = round(sqrt(G% * S% * (100 - V%)))",
   "scoring": "sqrt_int",
@@ -210,8 +210,8 @@
  },
  "summary": {
   "n_items": 1670,
-  "atm_mean": 69.9347,
-  "atm_p90": 205.2,
+  "atm_mean": 69.8623,
+  "atm_p90": 207.0,
   "by_region": {
    "AT-1": {
     "n": 242,
@@ -221,7 +221,7 @@
    },
    "HU-NAT": {
     "n": 600,
-    "atm_mean": 55.4583,
+    "atm_mean": 55.15,
     "v_mean": 0.543,
     "s_mean": 0.033
    },
@@ -233,7 +233,7 @@
    },
    "INT": {
     "n": 600,
-    "atm_mean": 83.5267,
+    "atm_mean": 83.6333,
     "v_mean": 0.602,
     "s_mean": 0.054
    },
@@ -254,20 +254,20 @@
    "44b108814cd09247",
    "0bf4c6e21a5c3e88",
    "bca72c82c3dc2b50",
-   "07301aa40f764e83"
+   "cb59d5c5c2a427dc"
   ],
-  "bytes": 1504246
+  "bytes": 1504592
  },
  "insights": {
   "trend": {
-   "HU-NAT": {
-    "now": 55.4583,
+   "INT": {
+    "now": 83.6333,
     "prev": null,
     "delta": null,
     "n": 600
    },
-   "INT": {
-    "now": 83.5267,
+   "HU-NAT": {
+    "now": 55.15,
     "prev": null,
     "delta": null,
     "n": 600
@@ -359,6 +359,11 @@
   ],
   "bursts": [
    {
+    "term": "historic",
+    "recent": 8,
+    "expected": 0.1
+   },
+   {
     "term": "world",
     "recent": 16,
     "expected": 1.1
@@ -374,14 +379,14 @@
     "expected": 3.0
    },
    {
-    "term": "historic",
+    "term": "hospital",
     "recent": 7,
     "expected": 0.1
    },
    {
-    "term": "hospital",
-    "recent": 7,
-    "expected": 0.1
+    "term": "colom",
+    "recent": 9,
+    "expected": 0.4
    },
    {
     "term": "gyorsforgalmi",
@@ -392,11 +397,6 @@
     "term": "huang",
     "recent": 10,
     "expected": 0.7
-   },
-   {
-    "term": "florida",
-    "recent": 6,
-    "expected": 0.1
    }
   ],
   "sources": [
@@ -440,7 +440,7 @@
     "domain": "ndtv.com",
     "n": 27,
     "mean_S": 0.069,
-    "mean_ATM": 145.8519
+    "mean_ATM": 146.3704
    },
    {
     "domain": "lendava.si",
@@ -737,7 +737,7 @@
     "label": "Hegseth group reprimanded at Tomb of the Unknown Soldier",
     "n": 10,
     "spread": 0.14,
-    "atm": 73.5,
+    "atm": 73.6,
     "sources": [
      {
       "id": "dd9170dacf7102bc",
@@ -787,10 +787,10 @@
  },
  "profiles": {
   "nypost.com": {
-   "n": 1900,
-   "mS": 0.04723947368421054,
-   "M2S": 10.950786039473694,
-   "mA": 61.72421052631576
+   "n": 1901,
+   "mS": 0.047214623882167295,
+   "M2S": 10.953016433456085,
+   "mA": 61.69174118884794
   },
   "cnn.com": {
    "n": 781,
@@ -2028,6 +2028,12 @@
    "M2S": 0.023098,
    "mA": 203.6
   },
+  "bleacherreport.com": {
+   "n": 5,
+   "mS": 0.15560000000000002,
+   "M2S": 0.1291492,
+   "mA": 188.8
+  },
   "racingnews.co": {
    "n": 4,
    "mS": 0.0,
@@ -2045,12 +2051,6 @@
    "mS": 0.04175,
    "M2S": 0.02091675,
    "mA": 72.5
-  },
-  "bleacherreport.com": {
-   "n": 4,
-   "mS": 0.08950000000000001,
-   "M2S": 0.041765000000000004,
-   "mA": 143.0
   },
   "sciencealert.com": {
    "n": 4,
@@ -2589,6 +2589,31 @@
  },
  "items": [
   {
+   "id": "c3bc8a003036c396",
+   "region": "INT",
+   "title": "Texas cruise passenger Susan Watford’s adoptive mom told her not to board ill-fated ship where she was allegedly killed by her abusive husband",
+   "summary": "The Texas wife allegedly killed by her abusive husband inside a cruise ship cabin was warned by her adoptive mom not to go on the ill-fated trip – but she viewed it as a chance to save her marriage.",
+   "link": "https://nypost.com/2026/11/12/us-news/susan-watfords-adoptive-mom-dorothy-mast-told-her-not-to-go-on-the-cruise-where-she-was-murdered/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-12T08:24:15Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 1.0
+   },
+   "V0": 0.7,
+   "V": 0.696,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 32.394,
+   "lng": -98.745
+  },
+  {
    "id": "d8d964064ee5e56f",
    "region": "HU-NAT",
    "title": "A földtörvény módosítására készül a kormány",
@@ -2830,11 +2855,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.1,
    "S": 0.1,
    "G": 0.6,
-   "ATM": 183,
+   "ATM": 185,
    "lat": 36.27,
    "lng": 104.411
   },
@@ -2993,7 +3018,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.449,
    "S0": 0.088,
    "S": 0.088,
    "G": 0.9,
@@ -3186,7 +3211,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3230,7 +3255,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.449,
    "S0": 0.062,
    "S": 0.062,
    "G": 0.9,
@@ -3381,11 +3406,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.206,
    "S": 0.206,
    "G": 0.6,
-   "ATM": 266
+   "ATM": 268
   },
   {
    "id": "6fdf87ba87fef7cc",
@@ -3469,6 +3494,27 @@
    "lng": 19.065
   },
   {
+   "id": "d70787c7bd6ba3da",
+   "region": "HU-NAT",
+   "title": "Zenei időutazás és örömzene: Budapest Bár- koncert Dunakeszin",
+   "summary": "Zenei időutazás és örömzene: Budapest Bár- koncert Dunakeszin Dunakeszipost",
+   "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxNRzFITGtkWGxtMEtURnFGa0dScHBqXzZVakFXMlJBSHhiUWg4UkItNENRMk1JalFUVXNKbEEyZU9ROTBKTWJxR0FXSlA0UXdhTTdVUnAyVWVzX2FOdzZqNnlyNk4tTWtRNDljOVVuQ19TRy1tUHNyTzJmTjgyLS1LVVdCcw?oc=5",
+   "source": "Dunakeszipost",
+   "source_domain": "dunakeszipost.hu",
+   "published": "2026-11-12T07:21:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.583,
+   "lng": 18.946
+  },
+  {
    "id": "e48ad015f6c3b7e2",
    "region": "HU-NAT",
    "title": "Elképesztő, ami Szerbiában történik: meg se alakult az új kormány, máris letartóztattak 90 embert, köztük egy volt minisztert",
@@ -3481,7 +3527,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -3525,7 +3571,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.064,
    "S": 0.064,
    "G": 1.0,
@@ -3605,7 +3651,7 @@
    "source_domain": "mfor.hu",
    "published": "2026-11-12T07:14:00Z",
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3644,11 +3690,11 @@
    "source_domain": "ndtv.com",
    "published": "2026-11-12T07:10:37Z",
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.6,
-   "ATM": 116,
+   "ATM": 117,
    "lat": 47.125,
    "lng": 33.406
   },
@@ -3739,13 +3785,13 @@
    "id": "1b27d7f60afcb4e2",
    "region": "HU-NAT",
    "title": "„A megalapozott gyanú sem áll fenn” – megszólalt Orbán Áron ügyvédje a letartóztatásról",
-   "summary": "„A megalapozott gyanú sem áll fenn” – megszólalt Orbán Áron ügyvédje a letartóztatásról Index.hu „Teljességgel megalapozatlannak tartjuk a letartóztatást és az elmúlt napok intézkedéssorozatát” – megszólalt Orbán Áron ügyvédje | hvg.hu Letartóztatták Orbán Áront és az élettársát Telex Hát megtörtént: embercsempészet gyanújával letartóztatták az Orbán család egyik tagját Forbes.hu Tisza-kormány: Dublinba utazik Magyar Péter, döntött a bíróság Orbán Áron letartóztatásáról Portfolio.hu",
+   "summary": "„A megalapozott gyanú sem áll fenn” – megszólalt Orbán Áron ügyvédje a letartóztatásról Index.hu „Teljességgel megalapozatlannak tartjuk a letartóztatást és az elmúlt napok intézkedéssorozatát” – megszólalt Orbán Áron ügyvédje | hvg.hu Hát megtörtént: embercsempészet gyanújával letartóztatták az Orbán család egyik tagját Forbes.hu Tisza-kormány: Dublinba utazik Magyar Péter, döntött a bíróság Orbán Áron letartóztatásáról Portfolio.hu Két éve a pécsi egyetem képzésére íratott be ötven vietnámit Orbán Áron cége, de később is folytatódott a vízumbiznisz | eduline.hu",
    "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQSTA0MnBpYXR3b0RmSjFfLUVFb1U1elhpODdjSzZvenlCcWk1NHVfWjVSVTlLVFJtTGZNX3FUQjg0QkdKcFpGVXhmdHZkcWdfcGIzRVpaZFhNYmg3UE0wbnpzT1ZGOHJHSDljbDFjeWxxSTVKMFlDVFN3UzlSQWdCbmJqOFdXd01vSWhDV0RZdFhaVVA0V3ZtbGJaNzhLNnJUcHppRVRfdVB6M29HNjRrcw?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
    "published": "2026-11-12T07:08:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -3842,7 +3888,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4028,7 +4074,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-12T06:53:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4395,7 +4441,7 @@
    "id": "1c1ce0eb64f66736",
    "region": "HU-NAT",
    "title": "Gazdaság: Vitézy bejelentette a ferihegyi gyorsforgalmi út bővítését, amit két éve még hevesen támadott",
-   "summary": "Gazdaság: Vitézy bejelentette a ferihegyi gyorsforgalmi út bővítését, amit két éve még hevesen támadott | hvg.hu 2×2 sávos lesz a reptérre vezető út, 2029-ben indul a nagyobb építkezés Telex 2x2 sávos lesz a Ferihegyre vezető út, 300 ingatlant sajátítanak ki Infostart Milliárdokat ad a kormány Vitézy Dávidnak, hogy végre történjen valami a budapesti repülőtéri gyorsforgalmi út átépítésével Piac&Profit Végre lesz egy rendes reptéri gyorsforgalmi? – Mutatjuk, mikorra készülhet el Totalcar",
+   "summary": "Gazdaság: Vitézy bejelentette a ferihegyi gyorsforgalmi út bővítését, amit két éve még hevesen támadott | hvg.hu 2x2 sávos lesz a Ferihegyre vezető út, 300 ingatlant sajátítanak ki Infostart Milliárdokat ad a kormány Vitézy Dávidnak, hogy végre történjen valami a budapesti repülőtéri gyorsforgalmi út átépítésével Piac&Profit Végre lesz egy rendes reptéri gyorsforgalmi? – Mutatjuk, mikorra készülhet el Totalcar Vitézy Dávid: Elkezdjük a repülőtéri gyorsforgalmi út kibővítését 444",
    "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNRnZ2VGFzSUNxWWFVSlBPbzVGeXp2Ykt6TERwWXRSR3U3N1VPcy1MaHc1Rm45XzlmcFBvVXotaG44LXlVNS03TDJveTRqQzFVOFJjV2hPOVpUeDdRNlk5aXV1cEhJTzFEX2lyQWRLUFBHdVNzOUtnTHA0Ums2LWo0X2xBRVdhSUplYk0zaTVyOWpGdmNiVVlWMzhYSkN5YnhIdWxJ?oc=5",
    "source": "| hvg.hu",
    "source_domain": "hvg.hu",
@@ -4416,7 +4462,7 @@
    "id": "0c7289e0c8a420a8",
    "region": "INT",
    "title": "Dangerous search for survivors continues after deadly building collapse in Brooklyn",
-   "summary": "Dangerous search for survivors continues after deadly building collapse in Brooklyn CNN Live Updates: At Least 2 Dead in Brooklyn Building Collapse The New York Times Pregnant woman rescued from Brooklyn building collapse rubble ABC7 New York People trapped in collapsed Brooklyn building, FDNY says Spectrum News NY1 What was the work being done at construction site next to Brooklyn building collapse? NBC New York",
+   "summary": "Dangerous search for survivors continues after deadly building collapse in Brooklyn CNN Brooklyn Building Collapses, Killing 1 and Injuring Others in Flatbush, NY The New York Times Pregnant woman rescued from Brooklyn building collapse rubble ABC7 New York What was the work being done at construction site next to Brooklyn building collapse? NBC New York At least 2 dead, 17 injured after NYC building collapse Fox News",
    "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9RZkdYZk4zZ1NacXpLb25ncXd1WXJTX3c5aFlhM2lGYzRoSjFiZTlVeTItS0ZPSUwwOTJkdk1XaUxCYU5QbGpVTXN1YUpVUjIwT1FJNWhMdEJIUV8xTERyYmFzTFZLVDVBaUZRc2sydHpxWVNobG9qS2tGcGhxWHc?oc=5",
    "source": "CNN",
    "source_domain": "cnn.com",
@@ -4426,8 +4472,8 @@
    },
    "V0": 0.7,
    "V": 0.677,
-   "S0": 0.05,
-   "S": 0.05,
+   "S0": 0.049,
+   "S": 0.049,
    "G": 0.6,
    "ATM": 98
   },
@@ -4462,7 +4508,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-12T06:28:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.041,
    "S": 0.041,
    "G": 0.9,
@@ -4615,7 +4661,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.449,
    "S0": 0.079,
    "S": 0.079,
    "G": 0.9,
@@ -4633,7 +4679,7 @@
    "source_domain": "privatbankar.hu",
    "published": "2026-11-12T06:19:00Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.454,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4654,11 +4700,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.6,
-   "ATM": 201,
+   "ATM": 203,
    "lat": 25.164,
    "lng": 118.813
   },
@@ -4797,7 +4843,7 @@
    "source_domain": "bbc.com",
    "published": "2026-11-12T06:12:05Z",
    "V0": 0.7,
-   "V": 0.685,
+   "V": 0.686,
    "S0": 0.012,
    "S": 0.012,
    "G": 0.6,
@@ -4837,11 +4883,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.029,
    "S": 0.029,
    "G": 0.6,
-   "ATM": 100
+   "ATM": 101
   },
   {
    "id": "b0f1cfbb14caf861",
@@ -4856,7 +4902,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -4884,7 +4930,7 @@
    "id": "c04a2548c3756ff1",
    "region": "HU-NAT",
    "title": "A hírek szerint hamarosan megjelenhet az Oppo új, kedvező árú telefonja 12 000 mAh-s akkumulátorral",
-   "summary": "A hírek szerint hamarosan megjelenhet az Oppo új, kedvező árú telefonja 12 000 mAh-s akkumulátorral Notebookcheck Magyarország",
+   "summary": "A hírek szerint hamarosan megjelenhet az Oppo új, kedvező árú telefonja 12 000 mAh-s akkumulátorral Notebookcheck Magyarország További főcímek és nézőpontok itt: Google Hírek",
    "link": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxObk9RVkgzZWZSX25wSUtJWXBFSjBKVVdXc0VBU3gzTmtQaVFNbEswYWxEcmpBRmVYNzYzb25SSUJpYW9yaHltYU5hdlRwdG9vODlOeTB4OVN5bWJGRzFNWlAxaHBmeS1WNU84aU41cEdnYkFQdE96cHdfRUJ4SUFUTHZDdC15Tl9IYTRBZzg2SEVtQVo2d0pMdXhlSmxyemtDM2JRMVAyVTNRQkk2TnhBdVN0Rlc1YnpZdVdXelEtczdSbEhiX0JZZnJmVTVDMFlteGIzb19qSDhMMEkwWEZn?oc=5",
    "source": "Notebookcheck Magyarország",
    "source_domain": "notebookcheck-hu.com",
@@ -4976,17 +5022,17 @@
    "id": "e5507c7261c8267d",
    "region": "HU-NAT",
    "title": "Külföld - Összeomlott egy épület New Yorkban, túlélőkért küzdenek Brooklyn központjában",
-   "summary": "Külföld - Összeomlott egy épület New Yorkban, túlélőkért küzdenek Brooklyn központjában Index.hu Súlyos tragédia a világ pénzügyi központjában: épület omlott össze, többen a romok alatt rekedtek Portfolio.hu Összeomlott egy háromemeletes lakóház New Yorkban, legalább ketten meghaltak 444 USA: Mentőalakulatokat küldtek New Yorkba egy épületomlás után. Vietnam.vn Összeomlott egy épület Brooklynban: legalább két halott, többen a romok alatt Euronews.com",
+   "summary": "Külföld - Összeomlott egy épület New Yorkban, túlélőkért küzdenek Brooklyn központjában Index.hu Súlyos tragédia a világ pénzügyi központjában: épület omlott össze, többen a romok alatt rekedtek Portfolio.hu Összeomlott egy háromemeletes lakóház New Yorkban, legalább ketten meghaltak 444 Összeomlott egy épület Brooklynban: legalább két halott, többen a romok alatt Euronews.com Két halott és 17 sérült egy brooklyni épület összeomlása után / A tűzoltók túlélőket keresnek a romok között Informat.ro",
    "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNbWZPb3haelR0MmJ4WXpwaHFLdW52QjA4cUlDYzEtUUpqcmV0RXF5WldKMjhHZlpSaDdOSVpiSUFWMGRKOEZfaVFlbURlc1pXY3Y5QXdpMGFqNkJWdTJ6TXBsYzRQcjNWa29TN2swOUdJQVFrUzFZQ2R0ZzdnbmlZU1VrbF96NlZFYVMyOEtiZ3M5WE5ON2c?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
    "published": "2026-11-12T06:03:00Z",
    "V0": 0.7,
-   "V": 0.71,
-   "S0": 0.18,
-   "S": 0.18,
+   "V": 0.709,
+   "S0": 0.167,
+   "S": 0.167,
    "G": 0.9,
-   "ATM": 217,
+   "ATM": 211,
    "lat": 47.123,
    "lng": 19.619
   },
@@ -5132,11 +5178,11 @@
    "source_domain": "ndtv.com",
    "published": "2026-11-12T05:50:52Z",
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.029,
    "S": 0.029,
    "G": 0.6,
-   "ATM": 100
+   "ATM": 101
   },
   {
    "id": "6e290ba0d9ad5cfb",
@@ -5250,7 +5296,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.044,
    "S": 0.044,
    "G": 1.0,
@@ -5307,7 +5353,7 @@
    "source_domain": "mfor.hu",
    "published": "2026-11-12T05:37:00Z",
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5433,7 +5479,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5511,7 +5557,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5672,7 +5718,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -5867,11 +5913,11 @@
    "source_domain": "ndtv.com",
    "published": "2026-11-12T05:09:42Z",
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.049,
    "S": 0.049,
    "G": 0.6,
-   "ATM": 130
+   "ATM": 131
   },
   {
    "id": "8d621de7d9fae192",
@@ -5923,11 +5969,11 @@
    "source_domain": "ndtv.com",
    "published": "2026-11-12T05:08:53Z",
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.036,
    "S": 0.036,
    "G": 0.6,
-   "ATM": 116
+   "ATM": 117
   },
   {
    "id": "bdaa52a303fade4f",
@@ -6042,7 +6088,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6243,15 +6289,15 @@
    "id": "559d1ed5e02f80d7",
    "region": "HU-NAT",
    "title": "Tömegek esnek el a 3%-os hiteltől, de olyan változás készül, amivel mindenki nagyot nyerhet",
-   "summary": "Tömegek esnek el a 3%-os hiteltől, de olyan változás készül, amivel mindenki nagyot nyerhet Portfolio.hu Megtorpant a lakáspiac az Otthon Start után: drasztikusan visszaesett a vevők aktivitása Pénzcentrum Már nem kapkodnak a lakásokért a vevők Piac&Profit Bezuhantak a keresések Magyarországon, ezt hozta az Otthon Start Program vége Hírstart Már túl vannak a csúcson a támogatott lakáshitelek, de a java csak ezután jön IOT magazin",
+   "summary": "Tömegek esnek el a 3%-os hiteltől, de olyan változás készül, amivel mindenki nagyot nyerhet Portfolio.hu Megtorpant a lakáspiac az Otthon Start után: drasztikusan visszaesett a vevők aktivitása Pénzcentrum Bezuhantak a keresések Magyarországon, ezt hozta az Otthon Start Program vége Hírstart Már túl vannak a csúcson a támogatott lakáshitelek, de a java csak ezután jön IOT magazin Jelentős visszaesés jöhet a használtlakás-piacon az Otthon Start kivezetése miatt Kecskemét Online",
    "link": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQRWNYaHR0OTY3UlJVZXF0MzAzeV9IbHFGT2J4cDJQWC1aQlcyZGpiMlktc2FuMzRLaTk0Y0R1SGx5YWNwS0U4RnNOUEVVbk5Da0FjWDJIYjFzRFY2TXZ0bmxpUlVwZWNVemt4TlVES0dsMTJaNTVwTmFvcWY1Q193eEVpZDRueTNzRHVGR1ZJWWFCa3U2N1FrQllMcnExeE45SlpqWk1zTkx2ZGI5b01MR3d1YVhndkk2Vi1ZeEQzLVBwVmVmRXBWUlJvdFYzeWvSAdQBQVVfeXFMUFpqV2ZkdnJ4UXpuSHk5YzBhcGhJTDgzYk5DcC1nSVpYTFR6OTN2blVGaTF6bkZKaE1CN3lCM21KMTltMVE5TU5zSmV6ZXN6ekc5VGZoT1hUYTVTQTVaRExjMnhGVm8xMGRKVlIwUFFyaE96OGpvZi1JSU5jNlFyTi1hNlJQVVNYVmFVMTRSZ1NpbTEteGJ5amtJcTNUS2dnWVdRTVpoeGcwd3FfRjZqc1lVUXpGR0lPSXFyNlRSUHVtWWt2NG9zZGRHZzBiejQ5bmVfYVU?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
    "published": "2026-11-12T05:00:00Z",
    "V0": 0.7,
    "V": 0.706,
-   "S0": 0.014,
-   "S": 0.014,
+   "S0": 0.013,
+   "S": 0.013,
    "G": 0.9,
    "ATM": 51,
    "lat": 47.259,
@@ -6314,6 +6360,22 @@
    "ATM": 0,
    "lat": 47.028,
    "lng": 19.251
+  },
+  {
+   "id": "c1b220746dbf22ae",
+   "region": "INT",
+   "title": "Scott Colom ousts Cindy Hyde-Smith in historic Mississippi Senate flip",
+   "summary": "Scott Colom ousts Cindy Hyde-Smith in historic Mississippi Senate flip Axios Democrat Scott Colom seals historic win in Mississippi Senate race BBC The Man at the Center of Scott Colom’s Protein Ad The New York Times Scott Colom on Why Democrats Need to Rethink the South Politico Promises and pride: Scott Colom rejoices with young and old on historic night in Mississippi The Guardian",
+   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxONnpZcWdZSUthNFlaSjgwRUxTQ0VZdEZsd0FXeVZ1Zm9VXzFiYlFYbHBJeDRmX1FaTmNLRWMyMU84bGZxMHdfVVRUMTB1RHNSbkJxdWNSbkNDdjZWWFJEeUVkd1pTT0FqRTJLTGFpUDg5aWhPRHVtV25wY0pDUW1vbXVsYWpIeXRLSnA0?oc=5",
+   "source": "Axios",
+   "source_domain": "axios.com",
+   "published": "2026-11-12T04:57:50Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.013,
+   "S": 0.013,
+   "G": 0.6,
+   "ATM": 57
   },
   {
    "id": "1b9309c429725b26",
@@ -6388,7 +6450,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6406,7 +6468,7 @@
    "source_domain": "privatbankar.hu",
    "published": "2026-11-12T04:53:00Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.454,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6654,7 +6716,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -6822,17 +6884,17 @@
    "id": "421b94f47028f4cf",
    "region": "INT",
    "title": "State dinners to scrutiny: Nvidia’s Huang falls out of favour in Trump’s Washington",
-   "summary": "State dinners to scrutiny: Nvidia’s Huang falls out of favour in Trump’s Washington Financial Times Jensen Huang Said to Have Had Relationship With Nvidia Executive Who Reports to Him The New York Times Democratic senators demand NVIDIA records from Trump administration over alleged Chinese spy ties Fox Business Elon Musk says it would be an 'honor' to hire Nvidia's Jensen Huang CNBC Exclusive | Nvidia Is Preparing to Oust CEO Jensen Huang WSJ",
+   "summary": "State dinners to scrutiny: Nvidia’s Huang falls out of favour in Trump’s Washington Financial Times Jensen Huang Said to Have Had Relationship With Nvidia Executive Who Reports to Him The New York Times Elon Musk says it would be an 'honor' to hire Nvidia's Jensen Huang CNBC Exclusive | Nvidia Is Preparing to Oust CEO Jensen Huang WSJ The Nvidia Board Members Who Will Decide Jensen Huang’s Fate Bloomberg.com",
    "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNRjFjR3pXT0FsVU5mM1BUNG1DZVBNWGR5SjVGTm9sVWdLVFdFYVl4eC1tTTZxSTFXRllkMnN0ekoteGdDLXpfcF91by03ajJpSnNsMkVjZnY4NmlkWE9keEs2cjhNSEozWVBVeHRnTFZ0WnVNclFWVkdZOTBDSFZpMVk1YnI?oc=5",
    "source": "Financial Times",
    "source_domain": "ft.com",
    "published": "2026-11-12T04:21:44Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.047,
-   "S": 0.047,
+   "S0": 0.037,
+   "S": 0.037,
    "G": 0.6,
-   "ATM": 128,
+   "ATM": 115,
    "lat": 38.619,
    "lng": -77.259
   },
@@ -7058,7 +7120,7 @@
    "source_domain": "telex.hu",
    "published": "2026-11-12T04:07:10Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.705,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -7346,7 +7408,7 @@
    "source_domain": "privatbankar.hu",
    "published": "2026-11-12T03:42:00Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.454,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -8730,22 +8792,6 @@
    "ATM": 0
   },
   {
-   "id": "c1b220746dbf22ae",
-   "region": "INT",
-   "title": "Scott Colom ousts Cindy Hyde-Smith in historic Mississippi Senate flip",
-   "summary": "Scott Colom ousts Cindy Hyde-Smith in historic Mississippi Senate flip Axios Streets Erupt in Celebration After Colom’s Historic Win in Mississippi The New York Times Democrat Colom wins Mississippi Senate seat, becomes state's first Black senator since 1874 Yahoo How Scott Colom won deep-red Mississippi with little help from Democrats The Guardian How Scott Colom defied more than a century of history to win Democrats a Mississippi Senate seat CNN",
-   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxONnpZcWdZSUthNFlaSjgwRUxTQ0VZdEZsd0FXeVZ1Zm9VXzFiYlFYbHBJeDRmX1FaTmNLRWMyMU84bGZxMHdfVVRUMTB1RHNSbkJxdWNSbkNDdjZWWFJEeUVkd1pTT0FqRTJLTGFpUDg5aWhPRHVtV25wY0pDUW1vbXVsYWpIeXRLSnA0?oc=5",
-   "source": "Axios",
-   "source_domain": "axios.com",
-   "published": "2026-11-12T01:59:40Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.011,
-   "S": 0.011,
-   "G": 0.6,
-   "ATM": 57
-  },
-  {
    "id": "52d820a8159b7c8d",
    "region": "INT",
    "title": "Nvidia preparing to oust Jensen Huang after multiple extramarital affairs",
@@ -8842,11 +8888,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.04,
    "S": 0.04,
    "G": 0.6,
-   "ATM": 116,
+   "ATM": 117,
    "lat": 40.338,
    "lng": -76.582
   },
@@ -9148,11 +9194,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.435,
+   "V": 0.434,
    "S0": 0.109,
    "S": 0.109,
    "G": 0.6,
-   "ATM": 192
+   "ATM": 194
   },
   {
    "id": "0faa421690f68371",
@@ -9550,7 +9596,7 @@
    "source_domain": "bbc.com",
    "published": "2026-11-12T00:49:05Z",
    "V0": 0.7,
-   "V": 0.685,
+   "V": 0.686,
    "S0": 0.013,
    "S": 0.013,
    "G": 0.6,
@@ -9887,7 +9933,7 @@
    "source_domain": "variety.com",
    "published": "2026-11-12T00:23:00Z",
    "V0": 0.45,
-   "V": 0.452,
+   "V": 0.453,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -11582,7 +11628,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.705,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -11632,17 +11678,17 @@
    "id": "dd3a60cfb45508d0",
    "region": "INT",
    "title": "Kirk Cousins says call with Kevin O'Connell convinced him to OK Vikings trade",
-   "summary": "Kirk Cousins says call with Kevin O'Connell convinced him to OK Vikings trade ESPN Raiders rally around Fernando Mendoza as Kirk Cousins reportedly believed rookie was ready KSNV Inbox: He would’ve been a much bigger story Green Bay Packers – packers.com Vikings are in the four-quarterback club, for now NBC Sports Vikings won't commit to Kirk Cousins starting vs. Packers, but QB eager to play for Minnesota again NFL.com",
+   "summary": "Kirk Cousins says call with Kevin O'Connell convinced him to OK Vikings trade ESPN Fernando Mendoza relishes 'once-in-a-lifetime' opportunity as Raiders' QB1 ESPN Packers’ Matt LaFleur isn’t buying that Kirk Cousins wouldn’t start in Week 10 Yahoo Sports Inbox: He would’ve been a much bigger story Packers.com Vikings won't commit to Kirk Cousins starting vs. Packers, but QB eager to play for Minnesota again NFL.com",
    "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQZ1pBTnNSTERPTXBsdVgzeEVJT0x3MjBRY3FhT0VyMzZ2WnhXTWJFWlRCNVlTVnZGRXBCVVpfdE9ZSzZfOHBaNnVlUWVOdkFFVlBRVmZEMGhnTWFJTGxlV3hrMlA3QU5rV3I1UXIzdV9rVnRZcnprVjhZTmd4ekYzSGN3SEcyVXUxRU9SaEhyamkxV1Fk?oc=5",
    "source": "ESPN",
    "source_domain": "espn.com",
    "published": "2026-11-11T22:47:00Z",
    "V0": 0.45,
-   "V": 0.44,
-   "S0": 0.046,
-   "S": 0.046,
+   "V": 0.439,
+   "S0": 0.037,
+   "S": 0.037,
    "G": 0.6,
-   "ATM": 130
+   "ATM": 116
   },
   {
    "id": "89b2abf8c3112a4f",
@@ -12193,11 +12239,11 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.705,
    "S0": 0.019,
    "S": 0.019,
    "G": 0.9,
-   "ATM": 73,
+   "ATM": 72,
    "lat": 47.356,
    "lng": 19.454
   },
@@ -12323,7 +12369,7 @@
    "source_domain": "apnews.com",
    "published": "2026-11-11T22:12:00Z",
    "V0": 0.7,
-   "V": 0.707,
+   "V": 0.708,
    "S0": 0.068,
    "S": 0.068,
    "G": 0.6,
@@ -13623,15 +13669,15 @@
    "id": "83fd10a8409d7fc2",
    "region": "INT",
    "title": "Manchester United makes formal contact with U.S. Soccer over Mauricio Pochettino move",
-   "summary": "Manchester United makes formal contact with U.S. Soccer over Mauricio Pochettino move Yahoo Sports Sources: Man United contact U.S. Soccer over Poch; Carrick meeting Thursday ESPN Mauricio Pochettino reportedly leaving USMNT for Manchester United Yahoo Sports Manchester United finalising deal for Mauricio Pochettino if Michael Carrick departs - The Athletic The New York Times Mauricio Pochettino on course for USMNT exit after discussing personal terms with Manchester United CBS Sports",
+   "summary": "Manchester United makes formal contact with U.S. Soccer over Mauricio Pochettino move Yahoo Sports Sources: Man United contact U.S. Soccer over Poch; Carrick meeting Thursday ESPN The Daily Hilario: Thursday Yahoo Sports Manchester United finalising deal for Mauricio Pochettino if Michael Carrick departs - The Athletic The New York Times 5 options for USMNT to replace Mauricio Pochettino amid Man United rumors NBC 6 South Florida",
    "link": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxNMHdIWm1PT0RfSjZaTFk1SkxDVXQ0T3B1VklCMHVQU3lrcEJZbXpYc3ZkWUJ6SGl2NTZGeEdmSEhWQnRuMEpmZThOTll6c1JiODBuZkN5LWhlSl9qbU1VWjVOSmt5LWpEWkxBNWI4SXItVFlqcHpEUV8tTV9KR19JU3ZzT0tCQk1IemY1SThSaEY4N3BtRzBrMFJBb2FwY203SWFNYXR5cXdNaXV5WldvYWNQZ1RTdjZMQ1lBT2UwVmdzN3ZLM3pBS0VvRkJRbnUyZEstSzB2dFozM2ZhWGZBT3ZlRFp3RTA?oc=5",
    "source": "Yahoo Sports",
    "source_domain": "sports.yahoo.com",
    "published": "2026-11-11T21:23:31Z",
    "V0": 0.45,
    "V": 0.447,
-   "S0": 0.044,
-   "S": 0.044,
+   "S0": 0.036,
+   "S": 0.036,
    "G": 0.6,
    "ATM": 115,
    "lat": 40.952,
@@ -14368,7 +14414,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.707,
+   "V": 0.708,
    "S0": 0.058,
    "S": 0.058,
    "G": 0.6,
@@ -14473,7 +14519,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -15035,7 +15081,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-11T20:14:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -15081,7 +15127,7 @@
    "id": "4cb9357819cf0089",
    "region": "HU-NAT",
    "title": "Gazdaság: Tízezrek vonultak utcára megfizethető lakhatásért és magasabb bérekért Spanyolországban",
-   "summary": "Gazdaság: Tízezrek vonultak utcára megfizethető lakhatásért és magasabb bérekért Spanyolországban | hvg.hu Sztrájk Spanyolországban: Barcelonában is tízezrek vonultak utcára, a rendőrség több tucat embert vett őrizetbe Telex Dolgoznak, mégsem tudnak megélni: országos sztrájk rázta meg Spanyolországot HR Portál Erőszak és vandalizmus Barcelonában: üzletek kirakatait törték be, kukákat gyújtottak fel a tüntetés végén Növekedés.hu Milliók sztrájkoltak Spanyolországban a lakhatási válság miatt 444",
+   "summary": "Gazdaság: Tízezrek vonultak utcára megfizethető lakhatásért és magasabb bérekért Spanyolországban | hvg.hu Dolgoznak, mégsem tudnak megélni: országos sztrájk rázta meg Spanyolországot HR Portál Erőszak és vandalizmus Barcelonában: üzletek kirakatait törték be, kukákat gyújtottak fel a tüntetés végén Növekedés.hu Milliók sztrájkoltak Spanyolországban a lakhatási válság miatt 444 Káosz Spanyolországban: 14 éve nem látott sztrájk bénította meg az életet a lakhatási válság miatt Pénzcentrum",
    "link": "https://news.google.com/rss/articles/CBMifkFVX3lxTE03UFAxVVBMUXFNVkQwYlB1d29yLVVBT0JzYWtkMjZzcTRXUDg1YTh5LXRIck4wVnN4MVR4LS1NX0pRbVM2VVphWU40YXlSa0lJWl9DLVJQa1hWaGxFNVY2ZGpuZFZ1Yl9GYnljYm8xYXAxZURlMVhBcVI0Wm1qdw?oc=5",
    "source": "| hvg.hu",
    "source_domain": "hvg.hu",
@@ -15328,7 +15374,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -16230,6 +16276,22 @@
    "ATM": 99
   },
   {
+   "id": "cb59d5c5c2a427dc",
+   "region": "INT",
+   "title": "Merab Dvalishvili, Usman Nurmagomedov Involved in Massive Brawl on Video Ahead of RAF Abu Dhabi",
+   "summary": "Merab Dvalishvili, Usman Nurmagomedov Involved in Massive Brawl on Video Ahead of RAF Abu Dhabi Bleacher Report MMA stars Merab Dvalishvili, Usman Nurmagomedov brawl at hotel in Abu Dhabi ESPN UFC: Usman Nurmagomedov slaps Merab Dvalishvili to spark mass brawl in Abu Dhabi BBC Islam Makhachev defends Usman Nurmagomedov's brutal attack on Merab Dvalishvili in Abu Dhabi Yahoo Sports Video shows Merab Dvalishvili attacked by Usman Nurmagomedov and others at RAF event in Abu Dhabi CBS Sports",
+   "link": "https://news.google.com/rss/articles/CBMiygFBVV95cUxPUVZmTktxcUh1N0lJNmtMRS16R2FXbjVyQnB0cjMzUnZZVjJaTE4zcUZWbEdmZXZzVXZjaWR3TXQ2a0VNdHlxQml1ZlRtakpuYXYzdUFrMjZIMVMzWXNhR2FueFZtb1A3VTZVQnQzV011RzZ2VmhFVkZtWU9FcDFFZkF3UmxLRkZINkd4Z25SSmRyTkZWUFZjcWNjTHo0VGNIaEstdkVuTlN6ekVyb0dOWG84MVhDdEsyZEFrX05QWFFTR0s0cEdoR2VR?oc=5",
+   "source": "Bleacher Report",
+   "source_domain": "bleacherreport.com",
+   "published": "2026-11-11T19:22:19Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.42,
+   "S": 0.42,
+   "G": 0.6,
+   "ATM": 372
+  },
+  {
    "id": "9213228c6ae4848b",
    "region": "INT",
    "title": "SS United States to be sunk to become the world’s largest artificial reef - watch live",
@@ -16712,7 +16774,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.064,
    "S": 0.064,
    "G": 1.0,
@@ -16803,7 +16865,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-11T18:59:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -17260,7 +17322,7 @@
    "source_domain": "informat.ro",
    "published": "2026-11-11T18:40:27Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.449,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -17312,7 +17374,7 @@
    "source_domain": "vaol.hu",
    "published": "2026-11-11T18:39:57Z",
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.044,
    "S": 0.044,
    "G": 1.0,
@@ -18231,7 +18293,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -19596,38 +19658,6 @@
    "lng": -121.003
   },
   {
-   "id": "b1894e22dd948c7b",
-   "region": "INT",
-   "title": "Ole Miss students speak out after alleged racial harassment in viral video: \"It's still hurtful\"",
-   "summary": "Ole Miss students speak out after alleged racial harassment in viral video: \"It's still hurtful\" CBS News Ole Miss student seen making offensive gestures on video doorbell footage issues statement, withdraws from school localmemphis.com Black University of Mississippi students wrestle with forgiveness in wake of racist gestures AP News Ole Miss students ‘devastated’ by racist monkey gestures and noises captured on door camera NBC News University of Mississippi student apologizes, withdraws after alleged racist taunts in viral doorbell video ABC News - Breaking News, Latest News and Videos",
-   "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOdEQ0d2I3OS1Hem9wVmxuU2d1VkFFY0NrVmtMTnpHd0xvQmJXWVdoWlVmWlFTVzQzVm1RUzRQODVmS2xYTzQ2SGxwVG5Ka3NmMU1HQzNIbFgtTzdYcE8yYnRfbXJVQnRONkpLVDE2ajUyZU9abWJPclM4MTVHSWhBRA?oc=5",
-   "source": "CBS News",
-   "source_domain": "cbsnews.com",
-   "published": "2026-11-11T17:10:00Z",
-   "V0": 0.7,
-   "V": 0.694,
-   "S0": 0.194,
-   "S": 0.194,
-   "G": 0.6,
-   "ATM": 188
-  },
-  {
-   "id": "3b3db459dafdf97a",
-   "region": "INT",
-   "title": "Meet the 2028 Potential Presidential Contenders – Josh Shapiro",
-   "summary": "Meet the 2028 Potential Presidential Contenders – Josh Shapiro CNN",
-   "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQTHh5Mk5LbTZOZjJiY3VDY3pKenRoRkhkd2c2T1JTa0VrWnhjV0RnMnFaSlgzTms1Y01pZXN0U2tYUmxTdFh1SVFkS1V5a0dfSmVkMXpFeV8tX3lRbkg4Nmh5YWhNWTlzQ1NROTBoRlpSeUhmR1paN1lUdThwRmhNT0dBeGRRallZQTNIMEhZQng?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-11T17:08:20Z",
-   "V0": 0.7,
-   "V": 0.677,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.6,
-   "ATM": 107
-  },
-  {
    "id": "7003932ea750c7fe",
    "region": "HU-NAT",
    "title": "Gazdaság: Újabb gyanús részletek derültek ki az Nvidia-vezért behálózó kémnőről és a fedőcégéről",
@@ -19889,7 +19919,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -20228,7 +20258,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -20708,7 +20738,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -20762,7 +20792,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-11T15:23:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -20957,7 +20987,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.449,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -20978,7 +21008,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.036,
    "S": 0.036,
    "G": 1.0,
@@ -21131,7 +21161,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -21194,7 +21224,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.056,
    "S": 0.056,
    "G": 1.0,
@@ -21287,7 +21317,7 @@
    "source_domain": "privatbankar.hu",
    "published": "2026-11-11T14:59:00Z",
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.454,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -21464,7 +21494,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -22412,7 +22442,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.072,
    "S": 0.072,
    "G": 0.9,
@@ -22484,7 +22514,7 @@
    "source_domain": "mfor.hu",
    "published": "2026-11-11T13:44:00Z",
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -22868,7 +22898,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -23108,7 +23138,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -23345,7 +23375,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.45,
+   "V": 0.454,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -23963,7 +23993,7 @@
    "source_domain": "mfor.hu",
    "published": "2026-11-11T12:05:00Z",
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -24350,7 +24380,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -25556,7 +25586,7 @@
    "source_domain": "index.hu",
    "published": "2026-11-11T10:50:00Z",
    "V0": 0.7,
-   "V": 0.71,
+   "V": 0.709,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
@@ -25784,11 +25814,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
-   "ATM": 290,
+   "ATM": 287,
    "lat": 46.992,
    "lng": 19.434
   },
@@ -26000,11 +26030,11 @@
    "source_domain": "telex.hu",
    "published": "2026-11-11T10:32:30Z",
    "V0": 0.7,
-   "V": 0.704,
+   "V": 0.705,
    "S0": 0.167,
    "S": 0.167,
    "G": 0.9,
-   "ATM": 214,
+   "ATM": 211,
    "lat": 47.234,
    "lng": 19.098
   },
@@ -26072,7 +26102,7 @@
    "source_domain": "mfor.hu",
    "published": "2026-11-11T10:28:00Z",
    "V0": 0.45,
-   "V": 0.454,
+   "V": 0.455,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -26150,7 +26180,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.457,
+   "V": 0.456,
    "S0": 0.079,
    "S": 0.079,
    "G": 0.9,
@@ -27185,7 +27215,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.076,
    "S": 0.076,
    "G": 1.0,
@@ -27479,27 +27509,6 @@
    "lng": 19.616
   },
   {
-   "id": "3d8abf40ba09830a",
-   "region": "HU-NAT",
-   "title": "Legendás párosunk is jelen volt a legutóbbi bajnokin (videó)",
-   "summary": "Legendás párosunk is jelen volt a legutóbbi bajnokin (videó) MTK",
-   "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNMlBGRF92cnFBZDk2cHBTemF5MlR3Vi1jUW5ZYjRhRzZEcXc1NkVSTVdVQlN4VWZMRXdwMnpydVlrdFJ5T1RiUW9WMWI2Tkt4eEFyLXpQRnlzRmllcFJ1TDdCeW5oQ0U2elJScFFGc04wQnBNbUlOT3owM253bUZ6WEtfelNkVFAtUTlCSlBqSkJxa3NXZFdPbkRB?oc=5",
-   "source": "MTK",
-   "source_domain": "mtkbudapest.hu",
-   "published": "2026-11-11T09:12:35Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.9,
-   "ATM": 172,
-   "lat": 47.037,
-   "lng": 19.313
-  },
-  {
    "id": "117d44583881bfff",
    "region": "SI-1",
    "title": "FOTO in VIDEO: Po skoraj 20 letih čakanja se je začelo, Murska Sobota dobiva novo obvoznico",
@@ -27533,7 +27542,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.049,
    "S": 0.049,
    "G": 1.0,
@@ -27614,7 +27623,7 @@
    "source_domain": "vaol.hu",
    "published": "2026-11-11T08:31:14Z",
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.132,
    "S": 0.132,
    "G": 1.0,
@@ -27902,7 +27911,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.044,
    "S": 0.044,
    "G": 1.0,
@@ -28202,7 +28211,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.056,
    "S": 0.056,
    "G": 1.0,
@@ -28499,7 +28508,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.04,
    "S": 0.04,
    "G": 1.0,
@@ -28553,7 +28562,7 @@
    "source_domain": "vaol.hu",
    "published": "2026-11-10T14:09:16Z",
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.29,
    "S": 0.29,
    "G": 1.0,
@@ -28766,7 +28775,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.044,
    "S": 0.044,
    "G": 1.0,
@@ -29699,7 +29708,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.056,
    "S": 0.056,
    "G": 1.0,
@@ -29834,7 +29843,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.036,
    "S": 0.036,
    "G": 1.0,
@@ -29876,7 +29885,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.044,
    "S": 0.044,
    "G": 1.0,
@@ -30344,7 +30353,7 @@
    "source_domain": "vaol.hu",
    "published": "2026-11-09T12:28:39Z",
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.119,
    "S": 0.119,
    "G": 1.0,
@@ -31265,7 +31274,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.056,
    "S": 0.056,
    "G": 1.0,
@@ -32540,7 +32549,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.686,
+   "V": 0.685,
    "S0": 0.056,
    "S": 0.056,
    "G": 1.0,
