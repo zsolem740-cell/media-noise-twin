@@ -1,0 +1,30 @@
+name: heartbeat
+
+# Életjel a Healthchecks.io-nak minden media-noise futás végén.
+# Új, különálló fájl: a fő workflow-hoz nem nyúl. Ha a HEARTBEAT_URL titok nincs megadva, csendben kihagyja magát.
+on:
+  workflow_run:
+    workflows: ["media-noise"]
+    types: [completed]
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Életjel
+        continue-on-error: true
+        timeout-minutes: 1
+        env:
+          HEARTBEAT_URL: ${{ secrets.HEARTBEAT_URL }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          if [ -z "$HEARTBEAT_URL" ]; then echo "életjel: nincs HEARTBEAT_URL, kihagyva"; exit 0; fi
+          if [ "$CONCLUSION" = "success" ]; then code=0; else code=1; fi
+          if curl -fsS -m 10 --retry 3 -o /dev/null "${HEARTBEAT_URL%/}/$code"; then
+            echo "életjel: $code elküldve (futás: $CONCLUSION)"
+          else
+            echo "életjel: nem sikerült elküldeni"
+          fi
