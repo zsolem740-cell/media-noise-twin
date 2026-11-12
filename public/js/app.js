@@ -12,6 +12,7 @@ import { parseShare, openShare, analyze } from './modules/share.js';
 import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag, APP_VERSION } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
+import { detectLang } from './modules/lang.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
 
 const bus = new EventTarget();
@@ -33,7 +34,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -144,6 +145,14 @@ function blindView() {
       }
       state.blindOpen = true; renderPanels();
     },
+    onNew: () => {
+      const prev = state.blind;
+      const items = pickSample(state.votes, 100, Date.now(), 24, (Date.now() % 9973) + 1, new Set(prev ? prev.items.map(i => i.id) : []));
+      if (items.length < 20) { ui.setStatus('kevés új, 24 óránál régebbi magyar szavazat az új mintához'); return; }
+      try { if (prev) localStorage.setItem('mnt-blind-prev', JSON.stringify(prev)); } catch (_) {}
+      state.blind = { created: Date.now(), items, answers: {} };
+      saveBlind(state.blind); state.blindOpen = true; renderPanels();
+    },
     onAnswer: k => { const cur = nextItem(state.blind); if (!cur) return; state.blind.answers[cur.id] = k; saveBlind(state.blind); renderPanels(); },
     onClose: () => { state.blindOpen = false; renderPanels(); },
   };
@@ -181,7 +190,7 @@ function render() {
     : (a, b) => (b.published || '').localeCompare(a.published || ''));
   const votes2 = new Map(state.votes.filter(v => v.vote2).map(v => [v.id, v.vote2]));
   ui.renderList(ui.$('list'), rows, { th, votes, votes2, regionLabel, onVote: vote, onVote2: vote2, onOpen: markOpen, explain,
-    blindVote: state.blindVote, showSource: state.showSource, revealed: state.revealed, opened: state.opened,
+    blindVote: state.blindVote, showSource: state.showSource, revealed: state.revealed, opened: state.opened, huOnly: state.huOnly, langOf,
     onReveal: id => { state.revealed.add(id); render(); } });
   ui.$('empty').hidden = rows.length > 0;
   ui.$('sortBtn').textContent = 'Rendezés: ' + (state.sort === 'time' ? 'idő' : 'zaj');
@@ -208,7 +217,8 @@ function renderPanels() {
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
     }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(),
-    blindVote: state.blindVote, showSource: state.showSource,
+    blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly,
+    onToggleHuOnly: () => { state.huOnly = !state.huOnly; lsSetFlag('mnt-huonly', state.huOnly); render(); },
     onToggleBlindVote: () => { state.blindVote = !state.blindVote; lsSetFlag('mnt-blindvote', state.blindVote); render(); },
     onToggleSource: () => { state.showSource = !state.showSource; lsSetFlag('mnt-showsrc', state.showSource); render(); }, onSuggest, onCopySuggestion });
   }
@@ -245,13 +255,20 @@ async function vote(it, kind) {
     // sRule és sAi: a tanulás ELŐTTI értékek, ezekből mér a kalibráció
     const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi,
       S0: it.S0, S: it.Seff, V: it.v, region: it.region, atm: it.atm, ts: Date.now(),
-      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION };  // blind: a szavazat a számok és a szín ismerete nélkül született
+      blind: !!state.blindVote && !state.revealed.has(it.id), srcShown: !!state.showSource, ver: APP_VERSION, lang: langOf(it) };  // blind: a szavazat a számok és a szín ismerete nélkül született
     await store.put('votes', null, rec);
     state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
     state.learner.learnVote(it.title, kind === 'bait'); // itt tanul az AI
     await persistAi();
   }
   render();
+}
+
+// A cím nyelve (magyar = 'hu'): a szavazó csak ezt tudja megítélni.
+function langOf(it) {
+  let l = state.langCache.get(it.id);
+  if (!l) { l = detectLang(it.title, it.source_domain); state.langCache.set(it.id, l); }
+  return l;
 }
 
 // Második (elolvasás utáni) ítélet: csak eltárolódik, a tanulót nem módosítja.

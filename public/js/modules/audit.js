@@ -3,8 +3,9 @@
 // 2) forrás-kihagyásos teszt: az AI újratanítva, véletlen és forrás szerinti (ismeretlen forrás) felosztással;
 // 3) koncentráció: mennyire néhány forrásból jönnek a szavazatok.
 import { Learner } from './learner.js';
+import { detectLang } from './lang.js';
 
-export const AUDIT_VERSION = 'v47.4';
+export const AUDIT_VERSION = 'v47.5';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -92,6 +93,37 @@ export async function sourceHoldout(votes, items, K = 5, yieldFn = async () => {
   return { ok: true, n: v.length, random: out.random, grouped: out.grouped };
 }
 
+// 8) Nyelvi bontás és kísérlet: számít-e a nem magyar szavazat a magyar hírek pontosságához?
+const langOf = x => x.lang || detectLang(x.title, x.domain);
+export function langSplit(votes) {
+  const o = { hu: { n: 0, bait: 0 }, other: { n: 0, bait: 0 }, '?': { n: 0, bait: 0 } };
+  votes.forEach(x => { const l = langOf(x); const c = o[l] || o['?']; c.n++; c.bait += y(x); });
+  return o;
+}
+export async function languageExperiment(votes, items, K = 5, yieldFn = async () => {}) {
+  const v = votes.filter(x => x.title).sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  const isHu = v.map(x => langOf(x) === 'hu');
+  const nHu = isHu.filter(Boolean).length, baitHu = v.filter((x, i) => isHu[i] && y(x) === 1).length;
+  if (nHu < 300 || baitHu < 30 || !items || !items.length) return { ok: false, nHu, baitHu };
+  const samples = items.map(i => ({ text: i.title, target: i.S0 !== undefined ? i.S0 : i.S }));
+  const fold = v.map(x => hash(String(x.id)) % K), labels = v.map(y);
+  const sA = new Array(v.length).fill(0.5), sB = new Array(v.length).fill(0.5);
+  for (let k = 0; k < K; k++) {
+    const A = new Learner(), B = new Learner(); A.bootstrap(samples); B.bootstrap(samples);
+    for (let i = 0; i < v.length; i++) {
+      const test = isHu[i] && fold[i] === k;
+      if (test) continue;
+      A.learnVote(v[i].title, labels[i] === 1);               // A: az összes többi szavazatból
+      if (isHu[i]) B.learnVote(v[i].title, labels[i] === 1);  // B: csak a magyar szavazatokból
+    }
+    for (let i = 0; i < v.length; i++) if (isHu[i] && fold[i] === k) { sA[i] = A.predict(v[i].title); sB[i] = B.predict(v[i].title); }
+    await yieldFn();
+  }
+  const idx = v.map((_, i) => i).filter(i => isHu[i]), l = idx.map(i => labels[i]);
+  const a = aucRank(idx.map(i => sA[i]), l), b = aucRank(idx.map(i => sB[i]), l);
+  return { ok: true, nHu, baitHu, all: a, huOnly: b };
+}
+
 // 7) Az utolsó szavazatok jelzői: vak / feltárt / jelző nélküli (régi kóddal leadott), és hogy melyik kódverzióval születtek.
 export function voteFlags(votes, last = 150) {
   const r = votes.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0)).slice(-last);
@@ -144,7 +176,7 @@ export function thresholdsReport(votes, th) {
 const f2 = x => (Number.isFinite(x) ? x.toFixed(2) : '–');
 const rg = r => `[${f2(r[0])}–${f2(r[1])}]`;
 
-export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }, vf = null) {
+export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }, vf = null, lg = null) {
   const n1 = votes.filter(v => v.vote === 'bait').length;
   const L = [`AUDIT ${AUDIT_VERSION} · ${new Date(now).toISOString().slice(0, 16)}Z`];
   L.push(`szavazat: ${votes.length} (${n1} clickbait / ${votes.length - n1} tény) · ${conc.domains} forrás · az 5 legtöbbet szavazott forrás a szavazatok ${Math.round(conc.top5Share * 100)}%-a (${conc.top.map(t => `${t.d} ${t.n}, clickbait ${Math.round(t.rate * 100)}%`).join('; ')})`);
@@ -170,7 +202,16 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
     : `új vak szavazatok: még kevés (${nBlind} db${bv.bait !== undefined ? `, ${bv.bait} clickbait` : ''}; legalább 30 db és 5 clickbait kell, a cél 300)`);
   if (vf && vf.n) L.push(`az utolsó ${vf.n} szavazat: vak ${vf.blind} · feltárt (a „Miért?” vagy a kapcsoló miatt nem vak) ${vf.revealed} · jelző nélküli (régi kóddal leadva) ${vf.none} · forrás látszott ${vf.srcShown} · kódverzió: ${Object.entries(vf.ver).sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
   if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
+  if (lg && lg.split) {
+    const s = lg.split, p = c => `${c.n} (${c.bait} clickbait)`;
+    L.push(`nyelvi bontás (a szavazat nyelve a címből becsült): magyar ${p(s.hu)} · egyéb nyelvű ${p(s.other)} · bizonytalan ${p(s['?'])}`);
+    if (lg.huTime && lg.huTime.ok) L.push(`  csak a magyar szavazatokon, időbeli teszt (${lg.huTime.nTest} teszt-szavazat): szabály ${f2(lg.huTime.rule)} · AI ${f2(lg.huTime.ai)} · keverék ${f2(lg.huTime.blend)} ${rg(lg.huTime.ci.auc)}`);
+    if (lg.exp && lg.exp.ok) L.push(`  AI újratanítva, magyar tesztadaton (${lg.exp.nHu} magyar szavazat): csak magyar szavazatokból ${f2(lg.exp.huOnly)} · az összes szavazatból ${f2(lg.exp.all)} · különbség ${(lg.exp.huOnly - lg.exp.all >= 0 ? '+' : '') + f2(lg.exp.huOnly - lg.exp.all)} (a régi címkék torzítottak, csak az összehasonlítás számít)`);
+    else if (lg.exp) L.push(`  nyelvi kísérlet: kevés magyar szavazat (${lg.exp.nHu} db, ${lg.exp.baitHu} clickbait; legalább 300 db és 30 clickbait kell)`);
+  }
   const flags = [];
+  if (lg && lg.exp && lg.exp.ok && lg.exp.huOnly - lg.exp.all > 0.02) flags.push('a nem magyar szavazatok ártanak a magyar híreknél: érdemes kihagyni a tanításból');
+  if (lg && lg.exp && lg.exp.ok && lg.exp.all - lg.exp.huOnly > 0.02) flags.push('a nem magyar szavazatok segítenek a magyar híreknél');
   if (sh.ok && sh.random - sh.grouped > 0.05) flags.push('az AI részben a forrást tanulta (ismeretlen forrásnál gyengébb)');
   if (ts.ok && ts.ci.diff[0] <= 0) flags.push('az AI hozzáadott értéke a szabályhoz képest nem bizonyított (a sáv tartalmazza a 0-t)');
   if (bv.ok && bv.n < 300) flags.push(`a vak szavazatok száma még kevés a döntéshez (${bv.n}/300)`);
@@ -183,7 +224,9 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
 
 export async function runAudit(votes, items, yieldFn, opts = {}) {
   const ts = timeSplit(votes);
+  const huVotes = votes.filter(x => langOf(x) === 'hu');
   const conc = concentration(votes);
   const sh = await sourceHoldout(votes, items, 5, yieldFn);
-  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3), voteFlags(votes));
+  return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3), voteFlags(votes),
+    { split: langSplit(votes), huTime: timeSplit(huVotes), exp: await languageExperiment(votes, items, 5, yieldFn) });
 }

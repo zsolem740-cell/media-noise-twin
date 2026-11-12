@@ -93,3 +93,8 @@ Források, geofence és trust-domainek: `config/sources.json`.
 ### v47.4
 - **Service worker:** az alkalmazás héja (html, js, css) mostantól hálózat előbb, `no-cache` ellenőrzéssel töltődik (az új verzió azonnal látszik, nincs „egy betöltéssel később" és nincs 10 perces gyorsítótár-késés); a telepítés friss fájlokat tölt (`reload`). Offline a gyorsítótár szolgál tartalékként.
 - A szavazatok elmentik az alkalmazás verzióját (`ver`), az Audit pedig kiírja az utolsó 150 szavazat jelzőit (vak, feltárt, jelző nélküli, forrás látszott, kódverzió), hogy látszódjon, miért nem számolódik vaknak egy szavazat.
+
+### v47.5
+- **Szavazás csak magyar nyelvű címekre** (alapból BE, kapcsoló az Öntanuló AI panelben): a nem magyar vagy bizonytalan nyelvű kártyán nincs szavazógomb. A nyelvfelismerés könyvtár nélküli (magyar betűk és töltelékszavak), konzervatív: csak a biztosan magyar cím szavazható. A szavazat elmenti a cím nyelvét (`lang`).
+- **Új vak minta (csak magyar hírek):** a vak újracímkézés mostantól csak magyar nyelvű címekből mintáz, újrakezdhető, a korábbi minta külön kulcs alá archiválódik.
+- **Az Audit nyelvi bontása:** a szavazatok nyelvi megoszlása, a csak magyar szavazatokon mért időbeli teszt, és a kísérlet: az AI csak a magyar szavazatokból vagy az összesből tanulva jobb-e a magyar hírekre.

@@ -25,7 +25,11 @@ export function renderKpis(stats, data) {
 // Vak újracímkézés kártya: csak a cím látszik, a szám és a forrás szándékosan rejtve.
 function renderBlind(box, b) {
   const mk = (txt, fn) => { const x = el('button', 'btn small', txt); x.type = 'button'; x.addEventListener('click', fn); return x; };
-  if (!b.open) { box.append(mk(b.total ? `Vak újracímkézés folytatása (${b.answered}/${b.total})` : 'Vak újracímkézés indítása (100 hír)', b.onStart)); return; }
+  if (!b.open) {
+    box.append(mk(b.total ? `Vak újracímkézés folytatása (${b.answered}/${b.total})` : 'Vak újracímkézés indítása (100 magyar hír)', b.onStart));
+    if (b.total && b.onNew) box.append(mk('Új vak minta (csak magyar hírek)', b.onNew));
+    return;
+  }
   const card = el('div', 'blindcard');
   card.append(el('div', 'small', `Vak újracímkézés: ${b.answered}/${b.total} · a számok és a forrás szándékosan rejtve`));
   if (b.title) {
@@ -33,6 +37,7 @@ function renderBlind(box, b) {
     card.append(mk('Tény', () => b.onAnswer(0)), mk('Clickbait', () => b.onAnswer(1)), mk('Kihagy', () => b.onAnswer(-1)));
   } else card.append(el('div', 'small', 'Kész. Az eredményt az „Audit futtatása” mutatja.'));
   card.append(mk('Bezárás (mentve)', b.onClose));
+  if (b.onNew) card.append(mk('Új minta (csak magyar hírek)', b.onNew));
   box.append(card);
 }
 
@@ -84,7 +89,10 @@ function card(it, ctx) {
 
   const mine = ctx.votes.get(it.id);
   const acts = el('div', 'acts');
-  [['fact', 'Tény'], ['bait', 'Clickbait']].forEach(([k, label]) => {
+  // Csak magyar nyelvű címre lehet szavazni (alapból): a fordított vagy ismeretlen nyelvű cím ítélete nem a cím stílusát mérné.
+  const blockedLang = !!ctx.huOnly && !mine && ctx.langOf && ctx.langOf(it) !== 'hu';
+  if (blockedLang) acts.append(el('span', 'small langnote', 'Nem magyar vagy bizonytalan nyelvű cím: a szavazás ki van kapcsolva.'));
+  else [['fact', 'Tény'], ['bait', 'Clickbait']].forEach(([k, label]) => {
     const b = el('button', 'vote ' + k, label);
     b.type = 'button'; b.setAttribute('aria-pressed', String(mine === k));
     b.addEventListener('click', () => ctx.onVote(it, k));
@@ -158,6 +166,11 @@ export function renderAi(box, ai, handlers = {}) {
     const t2 = el('button', 'btn small', `Forrás neve szavazás előtt: ${handlers.showSource ? 'látszik' : 'rejtve'}`);
     t2.type = 'button'; t2.addEventListener('click', handlers.onToggleSource);
     box.append(t1, t2);
+    if (handlers.onToggleHuOnly) {
+      const t3 = el('button', 'btn small', `Szavazás csak magyar nyelvű híreken: ${handlers.huOnly ? 'BE' : 'KI'}`);
+      t3.type = 'button'; t3.addEventListener('click', handlers.onToggleHuOnly);
+      box.append(t3);
+    }
     box.append(el('div', 'small', 'Címkézési szabály: Clickbait = a cím olyat ígér vagy érzelmet kelt, amit a cikk nem teljesít (vagy felkiáltójellel, NAGYBETŰVEL hajt). Tény = a cím a lényeget közli. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
   }
   if (handlers.blind) renderBlind(box, handlers.blind);
