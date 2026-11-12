@@ -1,0 +1,106 @@
+<title>Média-Zaj mobil előnézet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="preview.css">
+<div class="pvbanner" role="note">ELŐNÉZET · szintetikus adatok · nem az éles alkalmazás</div>
+<header class="top">
+  <div class="brandrow">
+    <h1>MÉDIA-ZAJ <span>TWIN</span></h1>
+    <div id="status" class="status" role="status">betöltés…</div>
+  </div>
+  <div class="strip" aria-label="Állapot">
+    <div class="st"><span class="l">Szavazó</span><b id="sv">A</b></div>
+    <div class="st" id="stBlind"><span class="l">Vak mód</span><b id="sb">be</b></div>
+    <div class="st" id="stSave"><span class="l">Mentés</span><b id="sm">–</b></div>
+  </div>
+</header>
+<main>
+  <section id="tab-hirek" class="tab" aria-label="Hírek">
+    <div id="healthBox" class="health" hidden></div>
+    <nav id="filters" class="chips" aria-label="Régió"></nav>
+    <section class="controls">
+      <button id="sortBtn" class="btn small" type="button">Rendezés: idő</button>
+      <select id="typeSel" aria-label="Szavazat szerinti szűrés">
+        <option value="all">Minden hír</option>
+        <option value="unvoted">Még nem szavazott</option>
+        <option value="fact">Általam tényként jelölt</option>
+        <option value="bait">Általam clickbait-nek jelölt</option>
+      </select>
+      <label class="range">ATM korlát: <b id="atmVal">nincs korlát</b>
+        <input id="atmRange" type="range" min="0.05" max="0.6" step="0.01" value="0.6">
+      </label>
+      <span id="thInfo" class="muted"></span>
+      <span id="personal" class="muted"></span>
+    </section>
+    <section id="list" class="list"></section>
+    <p id="empty" class="muted center" hidden>Nincs a szűrőnek megfelelő hír.</p>
+  </section>
+
+  <section id="tab-cimkezes" class="tab" aria-label="Címkézés" hidden>
+    <div class="card startcard">
+      <h2>Gyorsszavazás</h2>
+      <p>Egy cím egyszerre, a számok, a szín és a forrás rejtve. A szavazatokat az éppen választott szavazó nevén tároljuk.</p>
+      <div class="qchips"><span class="pill" id="cvoter">Szavazó: A</span><span class="pill pill-blind">Vak mód</span></div>
+      <button id="startQuick" class="btn big" type="button">Gyorsszavazás indítása</button>
+      <p id="quickInfo" class="muted"></p>
+    </div>
+    <div class="card">
+      <h2>Címkézési szabály</h2>
+      <p>Hangos = a cím felkiáltójellel, NAGYBETŰVEL, érzelmi vagy túlzó szavakkal, titokzatos ígérettel hajt, akkor is, ha a cikk igaz. Nyugodt = a cím higgadtan közli a lényeget. Közepes = a kettő között, vagy nem tudod eldönteni.</p>
+      <p class="muted">A vak újracímkézés és a nyelvek a Beállítások fülön vannak.</p>
+    </div>
+  </section>
+
+  <section id="tab-terkep" class="tab" aria-label="Térkép" hidden>
+    <section class="kpis">
+      <div class="kpi glass score"><span class="k">ATM átlag</span><b id="kpi-atm">–</b></div>
+      <div class="kpi glass score"><span class="k">Top 10% (p90)</span><b id="kpi-p90">–</b></div>
+      <div class="kpi glass"><span class="k">Hírek</span><b id="kpi-n">–</b></div>
+      <div class="kpi glass"><span class="k">Frissítve</span><b id="kpi-fresh">–</b></div>
+    </section>
+    <section id="globeWrap" class="globe-wrap glass">
+      <canvas id="globe" class="globecv" aria-label="Hírek glóbusza"></canvas>
+      <div class="gctl">
+        <button id="gZoomIn" type="button" aria-label="Nagyítás">+</button>
+        <button id="gZoomOut" type="button" aria-label="Kicsinyítés">−</button>
+        <button id="gFull" type="button" aria-label="Teljes képernyő">⤢</button>
+        <button id="gMode" type="button" aria-label="Glóbusz: 3D vagy 2D nézet">2D</button>
+      </div>
+      <div id="pick" class="pick" hidden></div>
+    </section>
+    <p class="muted blindnote">Vak módban minden pont egyszínű és egyforma méretű. A zajszint szerinti színezés a vak mód kikapcsolása után látszik.</p>
+  </section>
+
+  <section id="tab-beallitasok" class="tab" aria-label="Beállítások" hidden>
+    <details id="aiBox" class="panel"><summary>Öntanuló AI</summary><div id="aiBody" class="body"></div></details>
+    <details id="insBox" class="panel"><summary>Szerver-elemzés</summary><div id="insBody" class="body"></div></details>
+  </section>
+</main>
+
+<nav class="tabbar" aria-label="Fő navigáció">
+  <a href="#hirek" data-tab="hirek"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Hírek</span></a>
+  <a href="#cimkezes" data-tab="cimkezes"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 7"/></svg><span>Címkézés</span></a>
+  <a href="#terkep" data-tab="terkep"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg><span>Térkép</span></a>
+  <a href="#beallitasok" data-tab="beallitasok"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span>Beállítások</span></a>
+</nav>
+
+<div id="quick" class="quick" hidden></div>
+
+<dialog id="shareModal">
+  <h2>Megosztott tartalom elemzése</h2>
+  <label>Cím / szöveg
+    <textarea id="shareText" rows="4" placeholder="Illeszd be a hír címét vagy szövegét"></textarea>
+  </label>
+  <label>URL
+    <input id="shareUrl" type="url" inputmode="url" placeholder="https://…">
+  </label>
+  <label>Régió
+    <select id="shareRegion"></select>
+  </label>
+  <div id="shareResult" class="result"></div>
+  <div class="row">
+    <button id="analyzeBtn" class="btn" type="button">Elemzés</button>
+    <button id="closeBtn" class="btn ghost" type="button">Bezár</button>
+  </div>
+</dialog>
+<script type="module" src="guard.js"></script>

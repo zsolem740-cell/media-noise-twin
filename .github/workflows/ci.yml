@@ -35,7 +35,7 @@ jobs:
 
       - name: JS szintaxis
         run: |
-          for f in $(find public -name '*.js'); do
+          for f in $(find public preview -name '*.js'); do
             cp "$f" "$RUNNER_TEMP/t.mjs"
             node --check "$RUNNER_TEMP/t.mjs" || { echo "::error file=$f::szintaxishiba"; exit 1; }
           done
