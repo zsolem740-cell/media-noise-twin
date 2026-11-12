@@ -13,6 +13,7 @@ import { suggest, githubLinks } from './modules/suggest.js';
 import { buildDiag, APP_VERSION } from './modules/diag.js';
 import { runAudit } from './modules/audit.js';
 import { detectLang } from './modules/lang.js';
+import { buildPools, takeNext, pickRepeat, progress as quickProgress, loadRepeats, saveRepeats, loadSkipped, saveSkipped, TARGET } from './modules/quick.js';
 import { loadBlind, saveBlind, pickSample, nextItem, answeredCount, blindStats } from './modules/blind.js';
 
 const bus = new EventTarget();
@@ -34,7 +35,7 @@ const state = {
   g2d: null, g3d: null, suggestion: null,
   data: null, model: null, votes: [], dwell: [], learner: new Learner(), cal: null,
   region: 'ALL', sort: 'time', maxAtm: 0.6, sliderCap: null, type: 'all',
-  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), revealed: new Set(), opened: new Set(), globe: null,
+  rows: [], net: new Map(), lam: 0.2, aiBase: 0, blind: null, blindOpen: false, auditText: '', blindVote: lsFlag('mnt-blindvote', true), showSource: lsFlag('mnt-showsrc', false), huOnly: lsFlag('mnt-huonly', true), langCache: new Map(), midVotes: [], quick: null, repeats: loadRepeats(), skipped: loadSkipped(), revealed: new Set(), opened: new Set(), globe: null,
 };
 
 function setData(d) {
@@ -99,9 +100,11 @@ function explain(it) {
 }
 
 function exportVotes() {
-  const data = JSON.stringify(state.votes.map(v => ({
+  // teljes rekordok (a vak jelző, a sor, a nyelv, a második ítélet is mentődik), a „közepes” jelölésekkel együtt
+  const data = JSON.stringify(state.votes.concat(state.midVotes).map(v => ({
     id: v.id, domain: v.domain, vote: v.vote, title: v.title, sRule: v.sRule, sAi: v.sAi,
     S0: v.S0, S: v.S, V: v.V, region: v.region, atm: v.atm,
+    ts: v.ts, blind: v.blind, srcShown: v.srcShown, lang: v.lang, queue: v.queue, quick: v.quick, ver: v.ver, vote2: v.vote2, ts2: v.ts2,
   })), null, 1);
   const done = ok => { if (ok) { setBackup(); renderHealthBar(); } ui.setStatus(ok ? `${state.votes.length} szavazat a vágólapon (mentés rögzítve)` : 'a másolás nem sikerült'); };
   try { navigator.clipboard.writeText(data).then(() => done(true), () => done(false)); } catch (_) { done(false); }
@@ -126,7 +129,7 @@ async function runAuditUi() {
   ui.setStatus('audit fut… (néhány másodperc)');
   try {
     state.auditText = await runAudit(state.votes, (state.data && state.data.items) || [], () => new Promise(r => setTimeout(r, 0)),
-      { th: state.model && state.model.thresholds, blind: blindStats(state.blind, state.lam), lam: state.lam });
+      { th: state.model && state.model.thresholds, blind: blindStats(state.blind, state.lam), lam: state.lam, mids: state.midVotes, repeats: state.repeats });
     ui.setStatus('audit kész');
   } catch (_) { state.auditText = 'Az audit hibára futott.'; ui.setStatus('audit hiba'); }
   auditBusy = false;
@@ -216,7 +219,8 @@ function renderPanels() {
       votes: state.votes.length, steps: state.learner.steps, lambda: state.lam, boot: state.learner.boot, top,
       cal: state.cal, calibrated: !!(state.cal && state.cal.usable),
       suggestion: state.suggestion, links: githubLinks(location),
-    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(),
+    }, { onExport: exportVotes, onDiag: exportDiag, onAudit: runAuditUi, onAuditCopy: copyAudit, auditText: state.auditText, blind: blindView(), onQuick: openQuick,
+    quickInfo: (() => { const p = quickProgress(state.votes); return `Gyorsszavazás: értékelő sor ${p.eval}/${TARGET.eval} (clickbait ${p.bait}/${TARGET.bait}), tanító sor ${p.train}, közepes ${state.midVotes.length}`; })(),
     blindVote: state.blindVote, showSource: state.showSource, huOnly: state.huOnly,
     onToggleHuOnly: () => { state.huOnly = !state.huOnly; lsSetFlag('mnt-huonly', state.huOnly); render(); },
     onToggleBlindVote: () => { state.blindVote = !state.blindVote; lsSetFlag('mnt-blindvote', state.blindVote); render(); },
@@ -242,7 +246,7 @@ const persistAi = () => store.put('ai', 'state', state.learner.exportState());
 async function ensureLearner() {
   if (!state.data || !state.data.items || state.learner.boot) return;
   state.learner.bootstrap(state.data.items.map(i => ({ text: i.title, target: i.S0 !== undefined ? i.S0 : i.S })));
-  state.votes.forEach(v => { if (v.title) state.learner.learnVote(v.title, v.vote === 'bait'); }); // elveszett állapot pótlása
+  state.votes.forEach(v => { if (v.title && v.queue !== 'eval') state.learner.learnVote(v.title, v.vote === 'bait'); }); // elveszett állapot pótlása
   await persistAi();
 }
 
@@ -269,6 +273,91 @@ function langOf(it) {
   let l = state.langCache.get(it.id);
   if (!l) { l = detectLang(it.title, it.source_domain); state.langCache.set(it.id, l); }
   return l;
+}
+
+// ---- Gyorsszavazó mód ----
+function quickView() {
+  const Q = state.quick;
+  return { open: !!Q, title: Q && Q.cur ? Q.cur.it.title : '', p: quickProgress(state.votes), target: TARGET,
+    mids: state.midVotes.filter(v => v.blind === true).length, canUndo: !!(Q && Q.last),
+    onAnswer: quickAnswer, onUndo: quickUndo, onClose: closeQuick };
+}
+const paintQuick = () => { const r = ui.$('quick'); if (r) ui.renderQuick(r, quickView()); };
+const nextQuick = () => pickRepeat(state.votes, state.repeats, Date.now()) || takeNext(state.quick.q);
+
+function openQuick() {
+  const voted = new Set(state.votes.map(v => v.id).concat(state.midVotes.map(v => v.id)));
+  const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOf });
+  state.quick = { q: { eval: pools.eval, train: pools.train, step: 0, used: new Set() }, cur: null, last: null, pending: null };
+  state.quick.cur = nextQuick();
+  paintQuick();
+}
+
+// A tanító sor szavazatából a tanuló a KÖVETKEZŐ válasznál (vagy kilépéskor) tanul, így az utolsó válasz még visszavonható.
+async function commitPending() {
+  const Q = state.quick;
+  if (!Q || !Q.pending) return;
+  state.learner.learnVote(Q.pending.title, Q.pending.bait);
+  Q.pending = null;
+  await persistAi();
+}
+
+async function quickAnswer(kind) {
+  const Q = state.quick;
+  if (!Q || !Q.cur) return;
+  await commitPending();
+  const cur = Q.cur, entry = { cur, kind };
+  if (cur.rep) {
+    if (kind === 'fact' || kind === 'bait') { state.repeats.push({ id: cur.it.id, first: cur.first, second: kind, ts: Date.now() }); saveRepeats(state.repeats); entry.repeat = true; }
+  } else if (kind === 'skip') {
+    state.skipped.add(cur.it.id); saveSkipped(state.skipped); entry.skipped = true;
+  } else {
+    const it = cur.it;
+    const rec = { id: it.id, domain: it.source_domain, vote: kind, title: it.title, sRule: it.S, sAi: it.sAi, S0: it.S0, S: it.Seff, V: it.v,
+      region: it.region, atm: it.atm, ts: Date.now(), blind: true, srcShown: false, ver: APP_VERSION, lang: 'hu', queue: cur.queue, quick: true };
+    await store.put('votes', null, rec);
+    if (kind === 'mid') state.midVotes = state.midVotes.filter(v => v.id !== it.id).concat(rec);
+    else state.votes = state.votes.filter(v => v.id !== it.id).concat(rec);
+    if (cur.queue === 'train' && kind !== 'mid') Q.pending = { title: it.title, bait: kind === 'bait' };
+    entry.rec = rec;
+  }
+  Q.last = entry;
+  Q.cur = nextQuick();
+  paintQuick();
+}
+
+async function quickUndo() {
+  const Q = state.quick;
+  if (!Q || !Q.last) return;
+  const e = Q.last;
+  if (e.rec) {
+    await store.del('votes', e.rec.id);
+    state.votes = state.votes.filter(v => v.id !== e.rec.id);
+    state.midVotes = state.midVotes.filter(v => v.id !== e.rec.id);
+    Q.pending = null;           // a még nem tanított szavazat nem tanít
+  }
+  if (e.skipped) { state.skipped.delete(e.cur.it.id); saveSkipped(state.skipped); }
+  if (e.repeat) { state.repeats = state.repeats.slice(0, -1); saveRepeats(state.repeats); }
+  // a már kihúzott következő hír visszakerül a sora elejére, így nem vész el, és a váltakozás ritmusa sem tolódik el
+  if (Q.cur && !Q.cur.rep) { Q.q[Q.cur.queue].unshift(Q.cur.it); Q.q.used.delete(Q.cur.it.id); Q.q.step--; }
+  Q.cur = e.cur; Q.last = null;
+  paintQuick();
+}
+
+async function closeQuick() {
+  await commitPending();
+  state.quick = null;
+  paintQuick();
+  render();
+}
+
+function onQuickKey(e) {
+  if (!state.quick) return;
+  const k = String(e.key || '').toLowerCase();
+  const map = { f: 'fact', m: 'mid', c: 'bait', ' ': 'skip' };
+  if (map[k]) { if (e.preventDefault) e.preventDefault(); quickAnswer(map[k]); }
+  else if (k === 'z') quickUndo();
+  else if (k === 'escape') closeQuick();
 }
 
 // Második (elolvasás utáni) ítélet: csak eltárolódik, a tanulót nem módosítja.
@@ -379,6 +468,7 @@ async function init() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') collectDwell(); });
   on('filter', render);
 
+  document.addEventListener('keydown', onQuickKey);
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 
   // A hálózati letöltés azonnal indul; a tárolók (időkorláttal) párhuzamosan töltődnek, így egy zárolt adatbázis sem állítja meg a felületet.
@@ -387,7 +477,7 @@ async function init() {
     store.getAll('votes'), store.getAll('dwell'), store.get('ai', 'state'), store.get('cache', 'atm'),
   ]);
   if (getPref() === '3d') enable3D();   // háttérben; hiba esetén marad a 2D
-  state.votes = votes; state.dwell = dwell; state.blind = loadBlind();
+  state.votes = votes.filter(v => v.vote !== 'mid'); state.midVotes = votes.filter(v => v.vote === 'mid'); state.dwell = dwell; state.blind = loadBlind();
   if (saved) state.learner = new Learner(saved);
   if (cached) { setData(cached); ui.setStatus('mentett adat'); }
   render();

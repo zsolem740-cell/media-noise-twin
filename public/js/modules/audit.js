@@ -5,7 +5,7 @@
 import { Learner } from './learner.js';
 import { detectLang } from './lang.js';
 
-export const AUDIT_VERSION = 'v47.5';
+export const AUDIT_VERSION = 'v47.6';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
@@ -137,12 +137,29 @@ export function voteFlags(votes, last = 150) {
 }
 
 // 5) Új, vak szavazatok (szám és szín nélkül született szavazatok): a valódi, torzítatlan pontosság.
-export function blindVotes(votes, lam = 0.3) {
-  const v = votes.filter(x => x.blind === true && Number.isFinite(x.sRule) && Number.isFinite(x.sAi));
+export function blindVotes(votes, lam = 0.3, pred = x => x.blind === true) {
+  const v = votes.filter(x => pred(x) && Number.isFinite(x.sRule) && Number.isFinite(x.sAi));
   const bait = v.filter(x => y(x) === 1).length;
   if (v.length < 30 || bait < 5) return { ok: false, n: v.length, bait };
   const yl = v.map(y), rule = v.map(x => x.sRule), ai = v.map(x => x.sAi), blend = v.map(x => (1 - lam) * x.sRule + lam * x.sAi);
   return { ok: true, n: v.length, bait, rule: aucRank(rule, yl), ai: aucRank(ai, yl), blend: aucRank(blend, yl), ci: bootCI(blend, rule, yl, 200, 17) };
+}
+
+// 9) Gyorsszavazó sorok, rejtett ismétlések, „közepes” jelölések.
+export function repeatStats(reps) {
+  const p = reps.filter(r => (r.first === 'fact' || r.first === 'bait') && (r.second === 'fact' || r.second === 'bait'));
+  if (p.length < 10) return { ok: false, n: p.length };
+  const a = p.map(r => (r.first === 'bait' ? 1 : 0)), b = p.map(r => (r.second === 'bait' ? 1 : 0)), n = p.length;
+  const agree = a.filter((x, i) => x === b[i]).length / n;
+  const pa = a.reduce((s, x) => s + x, 0) / n, pb = b.reduce((s, x) => s + x, 0) / n, pe = pa * pb + (1 - pa) * (1 - pb);
+  return { ok: true, n, agree, kappa: pe < 1 ? (agree - pe) / (1 - pe) : NaN };
+}
+export function midStats(votes, mids) {
+  const bm = mids.filter(x => x.blind === true);
+  if (!bm.length) return { ok: false, n: 0 };
+  const q = votes.filter(x => x.blind === true && x.quick === true);
+  const mean = a => { const b = a.filter(x => Number.isFinite(x.sAi)); return b.length ? b.reduce((s, x) => s + x.sAi, 0) / b.length : NaN; };
+  return { ok: true, n: bm.length, share: bm.length / (bm.length + q.length), fact: mean(q.filter(x => x.vote === 'fact')), mid: mean(bm), bait: mean(q.filter(x => x.vote === 'bait')) };
 }
 
 // 6) Kétlépéses címkézés: a cím szerinti és az elolvasás utáni ítélet egyezése.
@@ -176,7 +193,7 @@ export function thresholdsReport(votes, th) {
 const f2 = x => (Number.isFinite(x) ? x.toFixed(2) : '–');
 const rg = r => `[${f2(r[0])}–${f2(r[1])}]`;
 
-export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }, vf = null, lg = null) {
+export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: false }, blind = { ok: false }, bv = { ok: false, n: 0 }, two = { ok: false, n: 0 }, vf = null, lg = null, qv = null) {
   const n1 = votes.filter(v => v.vote === 'bait').length;
   const L = [`AUDIT ${AUDIT_VERSION} · ${new Date(now).toISOString().slice(0, 16)}Z`];
   L.push(`szavazat: ${votes.length} (${n1} clickbait / ${votes.length - n1} tény) · ${conc.domains} forrás · az 5 legtöbbet szavazott forrás a szavazatok ${Math.round(conc.top5Share * 100)}%-a (${conc.top.map(t => `${t.d} ${t.n}, clickbait ${Math.round(t.rate * 100)}%`).join('; ')})`);
@@ -200,6 +217,16 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
   L.push(bv.ok
     ? `új vak szavazatok (szám és szín nélkül, ${bv.n} db, ${bv.bait} clickbait; cél: 300): szabály ${f2(bv.rule)} · AI ${f2(bv.ai)} · keverék ${f2(bv.blend)} ${rg(bv.ci.auc)} · keverék mínusz szabály ${rg(bv.ci.diff)}`
     : `új vak szavazatok: még kevés (${nBlind} db${bv.bait !== undefined ? `, ${bv.bait} clickbait` : ''}; legalább 30 db és 5 clickbait kell, a cél 300)`);
+  if (qv) {
+    const e = qv.eval;
+    L.push(e.ok
+      ? `értékelő sor (véletlen, vak; cél 300 és 40 clickbait): ${e.n} db (${e.bait} clickbait) · szabály ${f2(e.rule)} · AI ${f2(e.ai)} · keverék ${f2(e.blend)} ${rg(e.ci.auc)} · keverék mínusz szabály ${rg(e.ci.diff)}`
+      : `értékelő sor (véletlen, vak): még kevés (${e.n} db, ${e.bait !== undefined ? e.bait : 0} clickbait; legalább 30 és 5 kell, a cél 300 és 40)`);
+    if (qv.trainN || e.n) L.push(`tanító sor (vak, nem véletlen, a tanuló ezekből tanul): ${qv.trainN} db`);
+    if (qv.rep.ok) L.push(`rejtett ismétlés (${qv.rep.n} pár): egyezés ${pc(qv.rep.agree)} · kappa ${f2(qv.rep.kappa)} (a saját következetességed)`);
+    else if (qv.rep.n || qv.eval.n) L.push(`rejtett ismétlés: még kevés (${qv.rep.n} pár, legalább 10 kell)`);
+    if (qv.mid.ok) L.push(`közepes jelölések: ${qv.mid.n} db (a gyorsszavazások ${pc(qv.mid.share)}-a) · átlagos AI-érték: tény ${f2(qv.mid.fact)} · közepes ${f2(qv.mid.mid)} · clickbait ${f2(qv.mid.bait)}`);
+  }
   if (vf && vf.n) L.push(`az utolsó ${vf.n} szavazat: vak ${vf.blind} · feltárt (a „Miért?” vagy a kapcsoló miatt nem vak) ${vf.revealed} · jelző nélküli (régi kóddal leadva) ${vf.none} · forrás látszott ${vf.srcShown} · kódverzió: ${Object.entries(vf.ver).sort().map(([k, n]) => `${k} ${n}`).join(', ')}`);
   if (two.ok) L.push(`kétlépéses (cím → elolvasás után, ${two.n} pár): egyezés ${pc(two.agree)} · kappa ${f2(two.kappa)} · AUC az elolvasás utáni címkével ${f2(two.aucRead)} (a cím szerintivel: ${f2(two.aucTitle)})`);
   if (lg && lg.split) {
@@ -214,6 +241,8 @@ export function formatAudit(votes, ts, sh, conc, now = Date.now(), thr = { ok: f
   if (lg && lg.exp && lg.exp.ok && lg.exp.all - lg.exp.huOnly > 0.02) flags.push('a nem magyar szavazatok segítenek a magyar híreknél');
   if (sh.ok && sh.random - sh.grouped > 0.05) flags.push('az AI részben a forrást tanulta (ismeretlen forrásnál gyengébb)');
   if (ts.ok && ts.ci.diff[0] <= 0) flags.push('az AI hozzáadott értéke a szabályhoz képest nem bizonyított (a sáv tartalmazza a 0-t)');
+  if (qv && qv.eval.ok && qv.eval.n < 300) flags.push(`az értékelő sor még kevés a döntéshez (${qv.eval.n}/300)`);
+  if (qv && qv.rep.ok && qv.rep.kappa < 0.6) flags.push('a rejtett ismétlések egyezése mérsékelt (kappa < 0,6): a címke maga is bizonytalan');
   if (bv.ok && bv.n < 300) flags.push(`a vak szavazatok száma még kevés a döntéshez (${bv.n}/300)`);
   if (conc.top5Share > 0.6) flags.push('a szavazatok nagy része kevés forrásból jön');
   if (blind.ok && blind.aucOrig.blend - blind.aucBlind.blend > 0.05) flags.push('a vak címkékkel gyengébb az AUC: a korábbi szavazatokat valószínűleg befolyásolta a látott szám');
@@ -228,5 +257,7 @@ export async function runAudit(votes, items, yieldFn, opts = {}) {
   const conc = concentration(votes);
   const sh = await sourceHoldout(votes, items, 5, yieldFn);
   return formatAudit(votes, ts, sh, conc, Date.now(), thresholdsReport(votes, opts.th), opts.blind || { ok: false }, blindVotes(votes, opts.lam || 0.3), twoStep(votes, opts.lam || 0.3), voteFlags(votes),
-    { split: langSplit(votes), huTime: timeSplit(huVotes), exp: await languageExperiment(votes, items, 5, yieldFn) });
+    { split: langSplit(votes), huTime: timeSplit(huVotes), exp: await languageExperiment(votes, items, 5, yieldFn) },
+    { eval: blindVotes(votes, opts.lam || 0.3, x => x.blind === true && x.queue === 'eval'), trainN: votes.filter(x => x.blind === true && x.queue === 'train').length,
+      rep: repeatStats(opts.repeats || []), mid: midStats(votes, opts.mids || []) });
 }

@@ -98,3 +98,9 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - **Szavazás csak magyar nyelvű címekre** (alapból BE, kapcsoló az Öntanuló AI panelben): a nem magyar vagy bizonytalan nyelvű kártyán nincs szavazógomb. A nyelvfelismerés könyvtár nélküli (magyar betűk és töltelékszavak), konzervatív: csak a biztosan magyar cím szavazható. A szavazat elmenti a cím nyelvét (`lang`).
 - **Új vak minta (csak magyar hírek):** a vak újracímkézés mostantól csak magyar nyelvű címekből mintáz, újrakezdhető, a korábbi minta külön kulcs alá archiválódik.
 - **Az Audit nyelvi bontása:** a szavazatok nyelvi megoszlása, a csak magyar szavazatokon mért időbeli teszt, és a kísérlet: az AI csak a magyar szavazatokból vagy az összesből tanulva jobb-e a magyar hírekre.
+
+### v47.6
+- **Gyorsszavazó mód** (Öntanuló AI panel → „Gyorsszavazás indítása”): teljes képernyős, egy magyar cím egyszerre, három nagy gomb (Tény / Közepes / Clickbait) + Kihagy és Vissza; billentyűk számítógépen (F, M, C, szóköz, Z). A számok, a szín és a forrás rejtve. A „Közepes” jelölés külön tárolódik (nem tanít, nem számít az AUC-ba).
+- **Két sor:** az *értékelő sor* véletlen hírekből áll, soha nem tanít (ez adja a torzítatlan AUC-t); a *tanító sor* azokat a híreket hozza, ahol a szabály és az AI eltér, és ebből tanul az AI (a tanulás a következő válasznál történik, így az utolsó válasz visszavonható). Egy hír csak egyszer jön elő.
+- **Rejtett ismétlések:** a hírek ~10%-ánál egy legalább 48 órája szavazott hírt kérdez újra; az önegyezés (kappa) folyamatosan mérődik, az ismétlések külön tárolódnak (localStorage).
+- Az Audit külön mutatja az értékelő és a tanító sort, a rejtett ismétlések egyezését, és a „Közepes” jelölések átlagos AI-értékét (tény < közepes < clickbait kell legyen). A szavazatmentés (JSON) most a teljes rekordokat (vak jelző, sor, nyelv) és a „közepes” jelöléseket is menti.

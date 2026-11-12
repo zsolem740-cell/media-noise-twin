@@ -22,6 +22,29 @@ export function renderKpis(stats, data) {
   f.className = age > 180 ? 'bad' : age > 90 ? 'warn' : '';  // elavuló adat: borostyán 90 perc, piros 3 óra fölött (a GitHub ütemezése kb. óránkénti ritmust ad)
 }
 
+// Gyorsszavazó: egy cím, három nagy gomb, a számok és a forrás rejtve.
+export function renderQuick(root, q) {
+  root.replaceChildren();
+  root.hidden = !q.open;
+  if (!q.open) return;
+  const mk = (cls, txt, fn) => { const b = el('button', cls, txt); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  const top = el('div', 'qtop');
+  top.append(el('span', 'small', `Értékelő sor: ${q.p.eval}/${q.target.eval} · clickbait ${q.p.bait}/${q.target.bait} · tanító sor: ${q.p.train} · közepes: ${q.mids}`));
+  top.append(mk('btn small', 'Kilépés', q.onClose));
+  root.append(top);
+  if (q.title) {
+    root.append(el('div', 'qtitle', q.title));
+    const g = el('div', 'qbtns');
+    g.append(mk('qbtn fact', 'Tény', () => q.onAnswer('fact')), mk('qbtn mid', 'Közepes', () => q.onAnswer('mid')), mk('qbtn bait', 'Clickbait', () => q.onAnswer('bait')));
+    root.append(g);
+    const g2 = el('div', 'qbtns2');
+    g2.append(mk('btn small', 'Kihagy', () => q.onAnswer('skip')));
+    if (q.canUndo) g2.append(mk('btn small', 'Vissza', q.onUndo));
+    root.append(g2);
+    root.append(el('div', 'small', 'Billentyűk: F tény · M közepes · C clickbait · szóköz kihagy · Z vissza. A számok és a forrás szándékosan rejtve.'));
+  } else root.append(el('div', 'qtitle', 'Elfogyott a magyar hír, ami még nem kapott szavazatot. Később új hírek jönnek.'));
+}
+
 // Vak újracímkézés kártya: csak a cím látszik, a szám és a forrás szándékosan rejtve.
 function renderBlind(box, b) {
   const mk = (txt, fn) => { const x = el('button', 'btn small', txt); x.type = 'button'; x.addEventListener('click', fn); return x; };
@@ -172,6 +195,12 @@ export function renderAi(box, ai, handlers = {}) {
       box.append(t3);
     }
     box.append(el('div', 'small', 'Címkézési szabály: Clickbait = a cím olyat ígér vagy érzelmet kelt, amit a cikk nem teljesít (vagy felkiáltójellel, NAGYBETŰVEL hajt). Tény = a cím a lényeget közli. Vak módban a szűrő maradjon „Minden hír” állapotban.'));
+  }
+  if (handlers.onQuick) {
+    const qb = el('button', 'btn small', 'Gyorsszavazás indítása (csak magyar hírek)');
+    qb.type = 'button'; qb.addEventListener('click', handlers.onQuick);
+    box.append(qb);
+    if (handlers.quickInfo) box.append(el('div', 'small', handlers.quickInfo));
   }
   if (handlers.blind) renderBlind(box, handlers.blind);
   if (handlers.onAudit) {
