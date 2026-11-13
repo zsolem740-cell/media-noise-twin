@@ -474,7 +474,7 @@ def test_unknown_prompt_version_is_refused(cfg):
 
 
 def test_cli_v2_run_needs_go_flag():
-    assert '"groq-run-v2" and argv[1:] == ["--go"]' in (MODULE / "run.py").read_text(encoding="utf-8")
+    assert '"groq-run-v2" and argv[1:] in (["--go"], ["--go", "--check"])' in (MODULE / "run.py").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------- v3: két pontos javítás, új ellenőrzőminta
@@ -550,3 +550,12 @@ def test_check_sample_is_new_stratified_and_seeded(tmp_path, cfg):
 def test_cli_v3_commands_are_gated():
     src = (MODULE / "run.py").read_text(encoding="utf-8")
     assert '"groq-run-v3" and argv[1:] == ["--go"]' in src and "groq-select-v3" in src and "groq-dryrun-v3" in src
+
+
+def test_v2_check_uses_the_v2_prompt_on_the_new_sample_with_separate_files(cfg):
+    from validation.webis_validation import run as runmod
+    c = runmod.groq_v2_check_cfg(cfg)
+    assert rq.system_prompt(c) == rq.SYSTEM_PROMPT_V2 and c["groq"]["inputs_file"] == cfg["groq"]["check_v3"]["inputs_file"]
+    assert list(c["groq"]["paths"].values())[1:3] == ["groq_results_v2_check.csv", "groq_log_v2_check.jsonl"] and c["groq"]["paths"]["summary"] == "groq_summary_v2_check.json"
+    a, b = rq.build_body([("t1", "Some title")], runmod.groq_v2_cfg(cfg)), rq.build_body([("t1", "Some title")], c)
+    assert a == b                                                                   # a kérés bájtra azonos a v2-vel; csak a bemenet és a kimeneti fájlok mások

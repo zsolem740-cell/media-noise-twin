@@ -8,6 +8,7 @@
   python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)
   python -m validation.webis_validation.run groq-dryrun              a Groq-ág 4 csomagja (5 cím/kérés) a MEGLÉVŐ 20 címre, HÁLÓZAT ÉS KULCS NÉLKÜL (results/groq/)
   python -m validation.webis_validation.run groq-select-v3 / groq-dryrun-v3 / groq-run-v3 --go   v3: két pontos prompt-javítás, ÚJ 20 címes ellenőrzőmintán (*_v3 fájlok)
+  python -m validation.webis_validation.run groq-dryrun-v2 --check / groq-run-v2 --go --check   a v2 prompt az új v3-ellenőrzőmintán (*_v2_check fájlok)
   python -m validation.webis_validation.run groq-dryrun-v2 / groq-run-v2 --go   ugyanez a szigorított (v2) prompttal; külön *_v2 fájlokba ír, a v1 fájlokat nem érinti
   python -m validation.webis_validation.run groq-run --go            a 20 cím valódi Groq-futtatása; kell hozzá a GROQ_API_KEY környezeti változó és az api.groq.com engedélyezése"""
 import json
@@ -105,6 +106,14 @@ def groq_v2_cfg(cfg):
     c = copy.deepcopy(cfg)
     c["groq"]["prompt_version"] = "v2"
     c["groq"]["paths"] = dict(cfg["groq"]["paths_v2"])
+    return c
+
+
+def groq_v2_check_cfg(cfg):
+    """v2 prompt az ÚJ ellenőrzőmintán (ugyanaz a 20 cím, mint a v3-nál), külön *_v2_check fájlokba; a v2 prompt, a séma, a csomagolás és a hálózat változatlan."""
+    c = groq_v2_cfg(cfg)
+    c["groq"]["paths"] = dict(cfg["groq"]["paths_v2_check"])
+    c["groq"]["inputs_file"] = cfg["groq"]["check_v3"]["inputs_file"]
     return c
 
 
@@ -221,10 +230,10 @@ def main(argv):
         print(json.dumps(do_groq_dryrun(groq_v3_cfg(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-run-v3" and argv[1:] == ["--go"]:
         print(json.dumps(do_groq_run(groq_v3_cfg(cfg), results_dir), ensure_ascii=False, indent=1))
-    elif cmd == "groq-dryrun-v2":
-        print(json.dumps(do_groq_dryrun(groq_v2_cfg(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
-    elif cmd == "groq-run-v2" and argv[1:] == ["--go"]:
-        print(json.dumps(do_groq_run(groq_v2_cfg(cfg), results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-dryrun-v2" and argv[1:] in ([], ["--check"]):
+        print(json.dumps(do_groq_dryrun((groq_v2_check_cfg if argv[1:] else groq_v2_cfg)(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-run-v2" and argv[1:] in (["--go"], ["--go", "--check"]):
+        print(json.dumps(do_groq_run((groq_v2_check_cfg if len(argv) == 3 else groq_v2_cfg)(cfg), results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-run" and argv[1:] == ["--go"]:
         print(json.dumps(do_groq_run(cfg, results_dir), ensure_ascii=False, indent=1))
     else:
