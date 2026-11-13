@@ -1,0 +1,19 @@
+{
+  "name": "hu-pilot",
+  "feed": "data/metrics/atm_history.json",
+  "results_dir": "results",
+  "seed": 20261113,
+  "sizes": {"anchors": 20, "measured_random": 15, "measured_enriched": 15},
+  "filters": {"min_len": 25, "max_len": 160, "source_cap_total": 5, "jaccard_dup": 0.7},
+  "anchor_mix": {"exclamation": 3, "caps": 3, "question": 4, "quote": 3},
+  "voters": {"primary": ["A", "B"], "third": "C", "reserve": ["D"]},
+  "label_map": {"fact": 0, "mid": 1, "bait": 2},
+  "label_names": {"0": "Nyugodt", "1": "Közepes", "2": "Hangos"},
+  "gate": {"kappa_min": 0.5, "bootstrap": 2000, "dominant_class_share_max": 0.8, "min_class_count_measured": 4, "mid_share_max": 0.6, "skip_share_max": 0.1},
+  "files": {
+    "selection": "selection.json", "anchor_preview": "anchor_preview.txt",
+    "stage1": "pilot_stage1_anchors.json", "stage2": "pilot_stage2_measured.json", "stage3": "pilot_stage3_adjudication.json",
+    "analysis": "analysis.json", "reference": "human_reference.csv", "freeze": "freeze_manifest.json"
+  },
+  "note": "Magyar emberi címkék pilotja (50 cím: 20 horgony + 30 mérési). Csak olvassa a hírmentést, csak a results/ alá ír. Modellt nem hív."
+}
