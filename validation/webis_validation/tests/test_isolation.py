@@ -90,6 +90,8 @@ def test_main_data_paths_are_named_only_in_the_isolation_module():
 
 def test_module_has_no_network_or_ai_client():
     for f in MODULE.rglob("*.py"):
+        if f.name == "groq_transport.py":
+            continue                                   # a Groq-ág egyetlen, külön tesztelt hálózati fájlja (test_groq.py: csak az érinthet hálózatot és környezetet, csak api.groq.com-ot)
         tops = {i.lstrip(".").split(".")[0] for i in imports_of(f)}
         assert not tops & {"requests", "urllib", "http", "socket", "anthropic", "openai", "google", "httpx"}, f.name
 

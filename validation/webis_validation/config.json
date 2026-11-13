@@ -143,5 +143,44 @@
       "output": null,
       "note": "ingyenes szinten a költség 0; fizetős árat csak hivatalos oldalról ellenőrizve szabad ide írni"
     }
+  },
+  "groq": {
+    "model": "openai/gpt-oss-120b",
+    "base_url": "https://api.groq.com",
+    "path": "/openai/v1/chat/completions",
+    "env_var": "GROQ_API_KEY",
+    "batch_size": 5,
+    "n_titles": 20,
+    "generation": {
+      "temperature": 0,
+      "max_completion_tokens": 2048,
+      "reasoning_effort": "low",
+      "strict": true
+    },
+    "run": {
+      "max_requests": 12,
+      "min_interval_s": 30.0,
+      "timeout_s": 90,
+      "max_retries": 2,
+      "backoff_s": [
+        3,
+        10
+      ],
+      "invalid_retries": 1,
+      "pass_min_valid": 18
+    },
+    "paths": {
+      "subdir": "groq",
+      "results_csv": "groq_results.csv",
+      "log": "groq_log.jsonl",
+      "summary": "groq_summary.json",
+      "dryrun": "groq_requests_dryrun.jsonl",
+      "dryrun_check": "groq_dryrun_check.json"
+    },
+    "prices_usd_per_million": {
+      "input": null,
+      "output": null,
+      "note": "ellenőrizetlen; az ingyenes szinten a költség 0, fizetős árat csak hivatalos oldalról ellenőrizve szabad ide írni"
+    }
   }
 }

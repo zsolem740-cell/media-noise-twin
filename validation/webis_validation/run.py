@@ -5,14 +5,16 @@
   python -m validation.webis_validation.run sample                   rétegzett minta → results/sample_meta.json, results/model_inputs.jsonl (csak id + cím)
   python -m validation.webis_validation.run evaluate SCORES.jsonl    kiértékelés → results/report.json
   python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)
-  python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)"""
+  python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)
+  python -m validation.webis_validation.run groq-dryrun              a Groq-ág 4 csomagja (5 cím/kérés) a MEGLÉVŐ 20 címre, HÁLÓZAT ÉS KULCS NÉLKÜL (results/groq/)
+  python -m validation.webis_validation.run groq-run --go            a 20 cím valódi Groq-futtatása; kell hozzá a GROQ_API_KEY környezeti változó és az api.groq.com engedélyezése"""
 import json
 import sys
 import tempfile
 from pathlib import Path
 
 from . import evaluate as ev
-from . import gemini_request, gemini_smoke, loader, sample, scoring, synthetic
+from . import gemini_request, gemini_smoke, groq_request, groq_run, loader, sample, scoring, synthetic
 from .isolation import MODULE_DIR, check_read, check_write, load_config
 
 
@@ -89,6 +91,44 @@ def do_gemini_dryrun(cfg, data_dir, results_dir):
     return report
 
 
+def _groq_inputs(cfg, results_dir):
+    """A MEGLÉVŐ 20 cím: a Gemini smoke test kiválasztott bemenete (csak id + postText), csak olvasva; a Gemini-fájlok nem módosulnak."""
+    rows = gemini_smoke.read_jsonl_file(results_dir / "smoke_gemini" / "selected_inputs.jsonl", results_dir)
+    return [{"id": r["id"], "postText": r["postText"]} for r in rows]
+
+
+def do_groq_dryrun(cfg, data_dir, results_dir):
+    """4 csomag (5 cím/kérés) kulcs és hálózat nélkül; a fájlt újraolvasva független ellenőrzés."""
+    inputs = _groq_inputs(cfg, results_dir)
+    inst = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["instances"], data_dir))}
+    truth = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["truth"], data_dir))}
+    leaks = {x["id"]: gemini_smoke.leak_strings_for(inst[x["id"]], truth[x["id"]]) for x in inputs}
+    rows, build_errors = groq_run.build_dryrun(inputs, cfg, leaks)
+    out = results_dir / cfg["groq"]["paths"]["subdir"]
+    out.mkdir(parents=True, exist_ok=True)
+    p = cfg["groq"]["paths"]
+    check_write(out / p["dryrun"], results_dir).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    rows2 = gemini_smoke.read_jsonl_file(out / p["dryrun"], results_dir)
+    verification = groq_run.verify_dryrun_rows(rows2, inputs, cfg, leaks)
+    report = {"n_titles": len(inputs), "n_requests": len(rows), "batch_sizes": [len(r["ids"]) for r in rows2], "model": cfg["groq"]["model"], "no_network": True,
+              "api_key_used": False, "build_errors": build_errors, "verification_errors": verification,
+              "prompt_sha256": gemini_request.text_sha256(groq_request.SYSTEM_PROMPT),
+              "gemini_rules_prefix_sha256": gemini_request.text_sha256(gemini_request.SYSTEM_INSTRUCTION),
+              "rules_identical_to_gemini": groq_request.SYSTEM_PROMPT.startswith(gemini_request.SYSTEM_INSTRUCTION),
+              "schema_sha256": gemini_request.text_sha256(gemini_request.canonical_json(groq_request.response_format(cfg))),
+              "generation": cfg["groq"]["generation"], "status": "OK" if not verification and not build_errors else "HIBA"}
+    check_write(out / p["dryrun_check"], results_dir).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    return report
+
+
+def do_groq_run(cfg, results_dir):
+    """Valódi futás: a hálózati fájl csak itt töltődik be. Kulcs nélkül még a kérés előtt leáll."""
+    from . import groq_transport
+    inputs = _groq_inputs(cfg, results_dir)
+    transport = groq_transport.make_transport(cfg)
+    return groq_run.run_groq(inputs, transport, cfg, results_dir / cfg["groq"]["paths"]["subdir"], results_dir)
+
+
 def do_smoke():
     cfg = load_config()
     cfg["sample"] = dict(cfg["sample"], size=60, strata=[dict(s, target=t) for s, t in zip(cfg["sample"]["strata"], (15, 15, 15, 15))])
@@ -126,6 +166,10 @@ def main(argv):
         print(json.dumps(do_smoke(), ensure_ascii=False, indent=1))
     elif cmd == "gemini-dryrun":
         print(json.dumps(do_gemini_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-dryrun":
+        print(json.dumps(do_groq_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-run" and argv[1:] == ["--go"]:
+        print(json.dumps(do_groq_run(cfg, results_dir), ensure_ascii=False, indent=1))
     else:
         print(__doc__)
         return 2

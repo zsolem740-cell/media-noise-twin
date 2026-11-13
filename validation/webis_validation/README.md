@@ -113,3 +113,15 @@ Kizárólag az azonosítót és a `postText` szövegét (`scoring.build_model_in
 ## Még nincs
 - Valódi Gemini-hívás: a modelllista lekérdezése, a kulcs és a hozzáférés jóváhagyásra vár, a száraz próbát előbb meg kell nézni.
 - A 250 elemű minta értékelése AI-pontszámokkal, és a 3000 magyar cím.
+
+## Groq-ág (openai/gpt-oss-120b), a Gemini mellett
+
+Külön ág a meglévő Gemini-címkézés mellett; a Gemini-fájlokat (`gemini_request.py`, `gemini_smoke.py`, `results/smoke_gemini/`) nem módosítja, nem olvassa az eredményeit, és nem keveri a sajátjait azokkal.
+
+- **Szabályok:** a rendszerutasítás szó szerint a Gemini-é (`gemini_request.SYSTEM_INSTRUCTION`, hash `c634bdcc…da20f`) plusz egy csomagolást leíró bekezdés. Ugyanaz a négy jel (`curiosity_gap`, `exaggeration`, `emotional_pressure`, `formal_noise`), jelenként span/reason/score. Az összeget és a `scaled` értéket a kód számolja.
+- **Csomagolás:** 5 cím egy kérésben, helyi azonosítókkal (`t1`…`t5`); a korpusz-azonosító nem megy ki, a kód képezi vissza. A meglévő Gemini-ág egy címet küld kérésenként, ezért a csomagolás különbség is: a modellek összehasonlításánál zavaró tényező.
+- **Kulcs:** csak a `GROQ_API_KEY` környezeti változóból, csak `groq_transport.py`-ban (az egyetlen fájl, amely hálózatot és környezetet érint; csak `https://api.groq.com`). Nem kerül kódba, naplóba, kimenetbe. Egy kulcs; nincs tartalék kulcs, nincs fizetős váltás.
+- **Kimenet:** `results/groq/groq_results.csv` (cím szerint, státusszal és hibaokkal), `groq_log.jsonl` (kérésenként: csomag, próbálkozás, HTTP-státusz, kimenetel, tokenek, hibák), `groq_summary.json` (kérések száma, tokenek, sikeres/sikertelen csomagok és címek). Létező fájlt nem ír felül.
+- **Hibák:** 429 percenkénti korlát (várakozás, legfeljebb 2 újrapróba; 120 s-nál hosszabb várakozásnál megáll), 429 napi korlát (megáll), időtúllépés és 5xx (legfeljebb 2 újrapróba), üres válasz, érvénytelen/csonkolt JSON, hiányzó vagy ismeretlen/duplikált címazonosító (csak a hiányzó címeket küldi újra, egyszer), végzetes hiba (megáll). Kérésplafon: 12.
+- **Parancsok:** `groq-dryrun` (hálózat és kulcs nélkül, 4 csomag), `groq-run --go` (valódi futás; kell a kulcs és az `api.groq.com` engedélyezése).
+- **Nem ellenőrzött:** a `strict` sémakényszer és a `reasoning_effort` működése a gpt-oss-120b-n harmadik féltől származó információ; a helyi ellenőrzés ezért szigorú, és a kimenetet sosem fogadja el a szolgáltató sémaellenőrzése alapján.
