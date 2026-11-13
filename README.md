@@ -12,6 +12,7 @@ Geolokalizált információs zaj- és algoritmikus torzításmérő (Vas megye /
 pip install -r requirements.txt
 python -m src.collectors.google_news   # -> data/raw/latest.json
 python -m src.core.atm_engine          # -> data/metrics/atm_history.json
+python -m pytest -q tests              # tesztek (pip install pytest)
 ```
 Források, geofence és trust-domainek: `config/sources.json`.
 
@@ -19,7 +20,7 @@ Források, geofence és trust-domainek: `config/sources.json`.
 1. Repo létrehozása, push a `main` ágra.
 2. Settings → Pages → Source: **GitHub Actions**.
 3. Actions fül → `ingest-and-analyze` → Run workflow (utána 15 percenként fut).
-4. Az adat változásakor a workflow commitol és elindítja a `deploy-pages`-t.
+4. Az adat változásakor a workflow a `data` ágra írja (egyetlen, mindig felülírt commit) és elindítja a `deploy-pages`-t.
 5. Telefonon: Chrome → az oldal megnyitása → „Telepítés" (a Megosztás-célpont csak telepített PWA-nál jelenik meg).
 
 ## PWA
@@ -123,3 +124,9 @@ Források, geofence és trust-domainek: `config/sources.json`.
 - Az Audit nyelvi bontása kódonként (magyar, angol, német, szlovén, horvát, szlovák).
 
 - **Tetszőleges számú szavazó:** a szavazó-azonosító egy anonim betű (A–J, az Öntanuló AI panelben egy választóval), minden szavazó más betűt használ. Az **Egyeztetés** több szavazó mentését is fogadja (soronként egy): páronkénti egyezés és kappa, nyelvenkénti átlag, konszenzus-címkék (a legalább két szavazó által értékelt hírek többségi címkéje), a szabály AUC-ja a konszenzussal, a többiektől kiugróan eltérő szavazó jelzése, és az eltérések listája. Azonos azonosítót használó szavazókat jelzi.
+
+## Adattárolás és tesztek
+- Az időről időre frissülő fájlok (`data/metrics/atm_history.json`, `gemini_labels.json`, `gemini_budget.json`) a **`data` ágon** élnek, egyetlen, mindig felülírt commitban (`scripts/data_branch.sh pull | push | untrack`). A `main` ág csak a kódot tartalmazza, így a története nem hízik. Helyi futtatáshoz: `git fetch origin data && git checkout origin/data -- data/metrics`.
+- A Gemini-címkéző (`scripts/gemini_labels.py`) az élő hírlistát (`atm_history.json` → `items`) címkézi.
+- `tests/`: a pontozás invariánsai (tartományok, monotonitás, egész pontszám, megőrzés, duplikátumszűrés, kizárt források) és a data ág kezelője. Szándékosan nem rögzítenek súlyokat vagy kulcsszavakat. A workflow minden futáskor lefuttatja őket; a postaláda a csomagot csak akkor alkalmazza, ha a tesztek átmennek. A csomagok a `tests/` mappát is frissíthetik.
+- A korábbi v40-es M2-rendszer (`scripts/mnt_server.py`, a gyökérben lévő régi felület, az `ovl__*` másolatok és a november 6. óta befagyott adatfájljai) törölve; a git-történetből bármikor visszahozható.
