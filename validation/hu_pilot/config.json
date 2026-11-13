@@ -108,5 +108,29 @@
       "secondary": "groq",
       "note": "Mérési futáson nincs váltás. Kimerült keretnél a futás megáll és a visszaállás után folytatódik. Az előszűrés (nem mérési munka) külön jóváhagyással jöhet."
     }
+  },
+  "deploy": {
+    "app_version": "v47.10",
+    "app_branch": "claude/szavazonkenti-tarolas",
+    "dir": "deploy",
+    "allowed_ext": [
+      ".html",
+      ".js",
+      ".css",
+      ".json",
+      ".png",
+      ".svg",
+      ".ico",
+      ".txt"
+    ],
+    "allowed_extra_files": [
+      "_headers"
+    ],
+    "stage_files": {
+      "1": "stage1",
+      "2": "stage2",
+      "3": "stage3"
+    },
+    "note": "Cloudflare Pages (közvetlen feltöltés). Egy projekt, egy origin: a szakaszok (horgony, mérési, harmadik szavazat) egymás után ugyanoda települnek, a szavazatok az eszközökön maradnak."
   }
 }

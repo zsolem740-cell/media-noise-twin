@@ -3,13 +3,14 @@
   python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
   python -m validation.hu_pilot.run analyze EXPORT...       kappa, egyezés, kapu, harmadik szavazat listája (results/analysis.json, human_reference.csv)
   python -m validation.hu_pilot.run adjudication EXPORT...  a harmadik szavazathoz kell feed (csak azok a mérési címek, ahol az elsődleges páros eltér)
+  python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed, ellenőrzéssel és ZIP-pel; nem telepít
   python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
   python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja"""
 import json
 import sys
 from pathlib import Path
 
-from . import analysis, feeds, freeze, modelrun, selection
+from . import analysis, feeds, freeze, modelrun, packaging, selection
 from .paths import REPO_ROOT, check_write, load_config, results_dir
 
 
@@ -84,6 +85,28 @@ def do_model_dryrun(cfg, provider, base=None):
             "prompt_sha256": modelrun.V.sha256_text(modelrun.P.SYSTEM_INSTRUCTION), "status": "OK" if not errs else "HIBA"}
 
 
+def do_package(cfg, app_dir, stage, app_commit=None, base=None):
+    """A telepíthető csomag egy szakaszra (1 horgony, 2 mérési, 3 harmadik szavazat): a v47.10 public/ mappa + a szakasz pilot-feedje, ellenőrzéssel és ZIP-pel. Nem telepít."""
+    rdir, f = _paths(cfg, base)
+    key = {"1": "stage1", "2": "stage2", "3": "stage3"}[str(stage)]
+    feed = json.loads(f[key].read_text(encoding="utf-8"))
+    mine = [i["title"] for i in feed["items"]]
+    others = []
+    for k in ("stage1", "stage2", "stage3"):
+        if k != key and f[k].exists():
+            others += [i["title"] for i in json.loads(f[k].read_text(encoding="utf-8"))["items"]]
+    if str(stage) == "3":
+        others = [t for t in others if t not in set(mine)]
+    out = rdir / cfg["deploy"]["dir"] / f"stage{stage}"
+    packaging.build_site(app_dir, feed, out, rdir, cfg)
+    errs = packaging.verify_site(out, mine, others, cfg)
+    zp = packaging.make_zip(out, rdir / cfg["deploy"]["dir"] / f"mz_pilot_stage{stage}.zip", rdir)
+    man = packaging.manifest(out, zp, stage, cfg, app_commit)
+    feeds.write_json(rdir / cfg["deploy"]["dir"] / f"stage{stage}_manifest.json", man, rdir)
+    return {"stage": stage, "titles": len(mine), "files": len(man["files"]), "zip": str(zp.name), "zip_sha256": man["zip_sha256"], "app_version": man["app_version"],
+            "errors": errs, "status": "OK" if not errs else "HIBA"}
+
+
 def main(argv):
     cfg = load_config()
     cmd, rest = (argv[0] if argv else ""), argv[1:]
@@ -96,6 +119,9 @@ def main(argv):
         out = do_adjudication(cfg, rest)
     elif cmd == "freeze" and rest:
         out = do_freeze(cfg, rest)
+    elif cmd == "package" and len(rest) in (4, 6) and rest[0] == "--app-dir" and rest[2] == "--stage" and rest[3] in ("1", "2", "3"):
+        commit = rest[5] if len(rest) == 6 and rest[4] == "--app-commit" else None
+        out = do_package(cfg, rest[1], rest[3], commit)
     elif cmd == "model-dryrun" and len(rest) == 1 and rest[0] in cfg["model"]["providers"]:
         out = do_model_dryrun(cfg, rest[0])
     else:
