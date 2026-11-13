@@ -19,8 +19,14 @@ Szavazók: A, B (elsődleges pár), C (harmadik szavazat az eltéréseknél), D 
 6. `freeze`: csak akkor, ha a kapu **átment** (súlyozott κ ≥ 0,5) vagy **eldönthetetlen** (a pontbecslés < 0,5, de a 95%-os bootstrap-intervallum felső határa ≥ 0,5). A lezárási jegyzék a modellfuttatás feltétele.
 7. Referencia: a mérési címek szavazatainak átlaga (`human_reference.csv`, 0–2).
 
-## Modellrész (még nincs kódolva)
-A Gemini és a Groq futtatása csak `freeze.require_freeze` sikere után indulhat. Mindkettő ugyanazt kapja: az alap-szabályszöveg szó szerint, egy cím egy kérésben, a négy jel 0–2 ponttal, ugyanaz a séma. Ez külön, jóváhagyandó lépés.
+## Modellfuttató (mérési futás, kódban kész, de nincs belőle parancssori futtatás)
+`modelrun.run_measurement` egy szolgáltatóra, egy cím egy kérésben, **hamis vagy kívülről kapott átvitellel** fut; a modulban hálózati kód és kulcs-olvasás nincs. A parancssorban csak `model-dryrun gemini|groq` van (a 50 kérés előállítása és ellenőrzése, kulcs és hálózat nélkül).
+- **Közös prompt és séma:** a prompt az eddigi Gemini-ág alap-szabályszövege szó szerint (hash `c634bdcc…`), a séma ugyanaz a négy jel span/reason/score szerkezettel, 0–2 pont; a Groq ugyanezt `json_schema` alakban kapja (azonos mezők és pontozás). A Gemini-kérés hash-e egyezik a meglévő Gemini-ágéval. A v1–v3 Groq-promptokhoz nem nyúl.
+- **Kapu:** csak érvényes lezárási jegyzékkel (`freeze_manifest.json`) és a lezárt címlistával indul; a referencia és az exportok megváltozása a kaput újra elzárja.
+- **Failover:** mérési futáson nincs váltás (a modul egyetlen átvitelt ismer, a konfigurációban a failover nem kapcsolható be). A Groq csak akkor fut, ha önállóan, elsődlegesként választod.
+- **Napi kvóta kimerülése:** a futás megáll, a kész címek megmaradnak, a nem küldöttek függőben maradnak; a folytatás ideje a visszaállás + 5 perc (Gemini: éjfél `America/Los_Angeles`, Groq: 00:00 UTC; felhasználói megadás, hivatalos forrásból nem ellenőrzött). A folytatás kézi vagy időzített, az első kérés próba, kvótanaponként legfeljebb 3 próba, a kész címeket nem küldi újra.
+- **Percenkénti 429, időtúllépés, 5xx, üres/érvénytelen/csonka JSON, blokkolás:** nem vált és nem állít le napra; újrapróba ugyanazon, hiba esetén rögzítés. Számlázási vagy hitelesítési hibánál megáll.
+- **Naplózás:** `results/model_runs/<futás>/` alatt `log.jsonl` (minden kérésnél szolgáltató, kért és visszaadott modell, kulcs-azonosító NÉV, kimenetel, tokenek), `quota_stops.jsonl`, `scores.jsonl`, `results.csv` (`provider`, `model` oszlop), `summary.json` (`failover_allowed: false`, `providers_used`). Kulcs sehol nincs.
 
 ## Adatkezelés
 A szavazói exportok valódi tesztelői adatok: nem kerülnek a repóba. A külső API-nak csak a címszöveg mehet.

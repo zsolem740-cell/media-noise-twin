@@ -3,12 +3,13 @@
   python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
   python -m validation.hu_pilot.run analyze EXPORT...       kappa, egyezés, kapu, harmadik szavazat listája (results/analysis.json, human_reference.csv)
   python -m validation.hu_pilot.run adjudication EXPORT...  a harmadik szavazathoz kell feed (csak azok a mérési címek, ahol az elsődleges páros eltér)
+  python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
   python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja"""
 import json
 import sys
 from pathlib import Path
 
-from . import analysis, feeds, freeze, selection
+from . import analysis, feeds, freeze, modelrun, selection
 from .paths import REPO_ROOT, check_write, load_config, results_dir
 
 
@@ -70,6 +71,19 @@ def do_freeze(cfg, exports, base=None):
     return freeze.freeze(rdir, cfg, exports, sel, res, ref)
 
 
+def do_model_dryrun(cfg, provider, base=None):
+    """A modellkérések előállítása és ellenőrzése HÁLÓZAT ÉS KULCS NÉLKÜL (a 50 pilotcím, egy cím egy kérésben). Modellfuttatást nem indít."""
+    rdir = results_dir(cfg, base)
+    titles = modelrun.load_titles(rdir, cfg)
+    rows = modelrun.build_requests(titles, provider, cfg)
+    p = check_write(rdir / cfg["files"]["model_dryrun"].format(provider=provider), rdir)
+    p.write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    rows2 = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    errs = modelrun.verify_requests(rows2, titles, provider, cfg)
+    return {"provider": provider, "n_requests": len(rows2), "no_network": True, "api_key_used": False, "mode": "egy cím egy kérésben", "errors": errs,
+            "prompt_sha256": modelrun.V.sha256_text(modelrun.P.SYSTEM_INSTRUCTION), "status": "OK" if not errs else "HIBA"}
+
+
 def main(argv):
     cfg = load_config()
     cmd, rest = (argv[0] if argv else ""), argv[1:]
@@ -82,6 +96,8 @@ def main(argv):
         out = do_adjudication(cfg, rest)
     elif cmd == "freeze" and rest:
         out = do_freeze(cfg, rest)
+    elif cmd == "model-dryrun" and len(rest) == 1 and rest[0] in cfg["model"]["providers"]:
+        out = do_model_dryrun(cfg, rest[0])
     else:
         print(__doc__)
         return 2

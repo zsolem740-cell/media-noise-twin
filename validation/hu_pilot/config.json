@@ -3,17 +3,110 @@
   "feed": "data/metrics/atm_history.json",
   "results_dir": "results",
   "seed": 20261113,
-  "sizes": {"anchors": 20, "measured_random": 15, "measured_enriched": 15},
-  "filters": {"min_len": 25, "max_len": 160, "source_cap_total": 5, "jaccard_dup": 0.7},
-  "anchor_mix": {"exclamation": 3, "caps": 3, "question": 4, "quote": 3},
-  "voters": {"primary": ["A", "B"], "third": "C", "reserve": ["D"]},
-  "label_map": {"fact": 0, "mid": 1, "bait": 2},
-  "label_names": {"0": "Nyugodt", "1": "Közepes", "2": "Hangos"},
-  "gate": {"kappa_min": 0.5, "bootstrap": 2000, "dominant_class_share_max": 0.8, "min_class_count_measured": 4, "mid_share_max": 0.6, "skip_share_max": 0.1},
-  "files": {
-    "selection": "selection.json", "anchor_preview": "anchor_preview.txt",
-    "stage1": "pilot_stage1_anchors.json", "stage2": "pilot_stage2_measured.json", "stage3": "pilot_stage3_adjudication.json",
-    "analysis": "analysis.json", "reference": "human_reference.csv", "freeze": "freeze_manifest.json"
+  "sizes": {
+    "anchors": 20,
+    "measured_random": 15,
+    "measured_enriched": 15
   },
-  "note": "Magyar emberi címkék pilotja (50 cím: 20 horgony + 30 mérési). Csak olvassa a hírmentést, csak a results/ alá ír. Modellt nem hív."
+  "filters": {
+    "min_len": 25,
+    "max_len": 160,
+    "source_cap_total": 5,
+    "jaccard_dup": 0.7
+  },
+  "anchor_mix": {
+    "exclamation": 3,
+    "caps": 3,
+    "question": 4,
+    "quote": 3
+  },
+  "voters": {
+    "primary": [
+      "A",
+      "B"
+    ],
+    "third": "C",
+    "reserve": [
+      "D"
+    ]
+  },
+  "label_map": {
+    "fact": 0,
+    "mid": 1,
+    "bait": 2
+  },
+  "label_names": {
+    "0": "Nyugodt",
+    "1": "Közepes",
+    "2": "Hangos"
+  },
+  "gate": {
+    "kappa_min": 0.5,
+    "bootstrap": 2000,
+    "dominant_class_share_max": 0.8,
+    "min_class_count_measured": 4,
+    "mid_share_max": 0.6,
+    "skip_share_max": 0.1
+  },
+  "files": {
+    "selection": "selection.json",
+    "anchor_preview": "anchor_preview.txt",
+    "stage1": "pilot_stage1_anchors.json",
+    "stage2": "pilot_stage2_measured.json",
+    "stage3": "pilot_stage3_adjudication.json",
+    "analysis": "analysis.json",
+    "reference": "human_reference.csv",
+    "freeze": "freeze_manifest.json",
+    "model_runs_dir": "model_runs",
+    "model_dryrun": "model_dryrun_{provider}.jsonl"
+  },
+  "note": "Magyar emberi címkék pilotja (50 cím: 20 horgony + 30 mérési). Csak olvassa a hírmentést, csak a results/ alá ír. Modellt nem hív.",
+  "model": {
+    "workload": "measurement",
+    "max_points_per_signal": 2,
+    "max_reason_words": 15,
+    "providers": {
+      "gemini": {
+        "key_alias": "GEMINI_API_KEY",
+        "quota_tz": "America/Los_Angeles",
+        "timeout_s": 60,
+        "min_interval_s": 13.0,
+        "max_output_tokens": 1024,
+        "temperature": 0
+      },
+      "groq": {
+        "model": "openai/gpt-oss-120b",
+        "key_alias": "GROQ_API_KEY",
+        "quota_tz": "UTC",
+        "timeout_s": 90,
+        "min_interval_s": 15.0,
+        "max_completion_tokens": 2048,
+        "reasoning_effort": "low",
+        "temperature": 0
+      }
+    },
+    "run": {
+      "max_retries": 2,
+      "backoff_s": [
+        2,
+        8
+      ],
+      "invalid_retries": 1,
+      "max_wait_s": 120,
+      "max_requests": 80,
+      "transient_pause_s": 600,
+      "outage_consecutive": 3,
+      "outage_pauses_max": 2,
+      "resume_margin_min": 5,
+      "probes_per_quota_day": 3,
+      "fallback_probe_wait_min": 60
+    },
+    "failover": {
+      "enabled": false,
+      "measurement_allowed": false,
+      "primary": "gemini",
+      "secondary": "groq",
+      "note": "Mérési futáson nincs váltás. Kimerült keretnél a futás megáll és a visszaállás után folytatódik. Az előszűrés (nem mérési munka) külön jóváhagyással jöhet."
+    }
+  }
 }
