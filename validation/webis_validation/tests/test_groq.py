@@ -369,7 +369,7 @@ def test_only_the_transport_file_touches_network_or_environment():
     for f in MODULE.glob("*.py"):
         src = f.read_text(encoding="utf-8")
         has = any(w in src for w in ("build_opener", "import urllib", "import socket", "os.environ", "getenv"))
-        assert has == (f.name == "groq_transport.py"), f.name
+        assert has == (f.name in ("groq_transport.py", "gemini_transport.py")), f.name        # a két külön, tesztelt hálózati fájl
 
 
 def test_transport_refuses_without_key_and_for_other_hosts(cfg, monkeypatch):

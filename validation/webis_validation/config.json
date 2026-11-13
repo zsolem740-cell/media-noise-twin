@@ -142,6 +142,20 @@
       "input": null,
       "output": null,
       "note": "ingyenes szinten a költség 0; fizetős árat csak hivatalos oldalról ellenőrizve szabad ide írni"
+    },
+    "check": {
+      "inputs_file": "groq/groq_check_inputs_v3.jsonl",
+      "subdir": "gemini_check",
+      "env_var": "GEMINI_API_KEY",
+      "host": "generativelanguage.googleapis.com",
+      "files": {
+        "results_csv": "gemini_results_check.csv",
+        "log": "gemini_log_check.jsonl",
+        "summary": "gemini_summary_check.json",
+        "dryrun": "gemini_requests_dryrun_check.jsonl",
+        "dryrun_check": "gemini_dryrun_check_check.json"
+      },
+      "note": "ugyanaz a 20 új cím, mint a Groq v2/v3 ellenőrzésnél; a meglévő egy-címes Gemini-mód és prompt változatlan (alap-szabályszöveg, szigorító kiegészítés nélkül)"
     }
   },
   "groq": {

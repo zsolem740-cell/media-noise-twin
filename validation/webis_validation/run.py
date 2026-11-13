@@ -7,6 +7,7 @@
   python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)
   python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)
   python -m validation.webis_validation.run groq-dryrun              a Groq-ág 4 csomagja (5 cím/kérés) a MEGLÉVŐ 20 címre, HÁLÓZAT ÉS KULCS NÉLKÜL (results/groq/)
+  python -m validation.webis_validation.run gemini-check-dryrun / gemini-check-run --go   a Gemini egy-címes módja az ÚJ 20 címen (results/gemini_check/); kell hozzá kulcs és a generativelanguage.googleapis.com engedélyezése
   python -m validation.webis_validation.run groq-select-v3 / groq-dryrun-v3 / groq-run-v3 --go   v3: két pontos prompt-javítás, ÚJ 20 címes ellenőrzőmintán (*_v3 fájlok)
   python -m validation.webis_validation.run groq-dryrun-v2 --check / groq-run-v2 --go --check   a v2 prompt az új v3-ellenőrzőmintán (*_v2_check fájlok)
   python -m validation.webis_validation.run groq-dryrun-v2 / groq-run-v2 --go   ugyanez a szigorított (v2) prompttal; külön *_v2 fájlokba ír, a v1 fájlokat nem érinti
@@ -17,7 +18,7 @@ import tempfile
 from pathlib import Path
 
 from . import evaluate as ev
-from . import gemini_request, gemini_smoke, groq_request, groq_run, loader, sample, scoring, synthetic
+from . import gemini_check, gemini_request, gemini_smoke, groq_request, groq_run, loader, sample, scoring, synthetic
 from .isolation import MODULE_DIR, check_read, check_write, load_config
 
 
@@ -98,6 +99,36 @@ def _groq_inputs(cfg, results_dir):
     """A MEGLÉVŐ 20 cím: a Gemini smoke test kiválasztott bemenete (csak id + postText), csak olvasva; a Gemini-fájlok nem módosulnak."""
     rows = gemini_smoke.read_jsonl_file(results_dir / cfg["groq"]["inputs_file"], results_dir)
     return [{"id": r["id"], "postText": r["postText"]} for r in rows]
+
+
+def do_gemini_check_dryrun(cfg, data_dir, results_dir):
+    """A Gemini egy-címes kérései az ÚJ 20 címre, hálózat és kulcs nélkül; a fájlt újraolvasva független ellenőrzés."""
+    c = cfg["gemini"]["check"]
+    inputs = gemini_check.load_inputs(cfg, results_dir)
+    inst = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["instances"], data_dir))}
+    truth = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["truth"], data_dir))}
+    leaks = {x["id"]: gemini_smoke.leak_strings_for(inst[x["id"]], truth[x["id"]]) for x in inputs}
+    rows, build_errors = gemini_check.build_dryrun(inputs, cfg, leaks)
+    out = results_dir / c["subdir"]
+    out.mkdir(parents=True, exist_ok=True)
+    check_write(out / c["files"]["dryrun"], results_dir).write_text("\n".join(json.dumps(r, ensure_ascii=False) for r in rows) + "\n", encoding="utf-8")
+    rows2 = gemini_smoke.read_jsonl_file(out / c["files"]["dryrun"], results_dir)
+    verification = gemini_check.verify_dryrun(rows2, inputs, cfg, leaks)
+    report = {"n_titles": len(inputs), "n_requests": len(rows), "mode": "egy cím egy kérésben", "no_network": True, "api_key_used": False, "build_errors": build_errors,
+              "verification_errors": verification, "prompt_sha256": gemini_request.text_sha256(gemini_request.SYSTEM_INSTRUCTION),
+              "schema_sha256": gemini_request.text_sha256(gemini_request.canonical_json(gemini_request.response_schema(cfg))),
+              "status": "OK" if not verification and not build_errors else "HIBA"}
+    check_write(out / c["files"]["dryrun_check"], results_dir).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    return report
+
+
+def do_gemini_check_run(cfg, results_dir):
+    """Valódi futás: a hálózati fájl csak itt töltődik be. Először csak olvasó modelllista; ha nincs megengedett Flash-Lite, a futás NEM indul (NeedUserDecision)."""
+    from . import gemini_transport
+    inputs = gemini_check.load_inputs(cfg, results_dir)
+    models = gemini_transport.list_models(cfg)
+    model = gemini_smoke.choose_model(models, cfg)
+    return gemini_check.run_check(inputs, gemini_transport.make_transport(cfg), cfg, results_dir, model)
 
 
 def groq_v2_cfg(cfg):
@@ -224,6 +255,10 @@ def main(argv):
         print(json.dumps(do_gemini_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-dryrun":
         print(json.dumps(do_groq_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "gemini-check-dryrun":
+        print(json.dumps(do_gemini_check_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "gemini-check-run" and argv[1:] == ["--go"]:
+        print(json.dumps(do_gemini_check_run(cfg, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-select-v3":
         print(json.dumps(do_groq_select_v3(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-dryrun-v3":
