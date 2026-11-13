@@ -16,7 +16,31 @@ BATCH_ADDENDUM = (
     "Return one object with the key \"items\": a list with exactly one entry per post, in the same order. Every entry has the key \"id\" "
     "(copied exactly from the post tag) and the four signals, each with span, reason and score as described above."
 )
-SYSTEM_PROMPT = gr.SYSTEM_INSTRUCTION + BATCH_ADDENDUM
+SYSTEM_PROMPT = gr.SYSTEM_INSTRUCTION + BATCH_ADDENDUM                     # v1: a futtatott első változat, változatlanul
+STRICT_ADDENDUM = (
+    "\nStrict scoring rules (they narrow the rules above; when in doubt, score lower):\n"
+    "- Judge only the linguistic wording of the post text. Never score a fact, a topic, a real-world event, a number or size as such, or what the underlying article might contain.\n"
+    "- curiosity_gap: score above 0 only if the wording itself deliberately withholds the key information, e.g. a demonstrative or vague stand-in "
+    "for the subject (\"This <noun> had a cute way of ...\") or an explicit teaser. A general question or an ordinary news statement is not enough on its own. "
+    "Phrases like \"questions why\", \"playing a key role\" or \"has set off another debate\" are not enough on their own.\n"
+    "- exaggeration: only linguistic exaggeration counts: hyperbole, superlatives, strikingly strong wording or idioms such as \"killed it\". "
+    "A factual claim, a size, a number or a surprising topic does not count by itself.\n"
+    "- emotional_pressure: only fear, anger, urgency, guilt or pressure that the wording of the text itself creates. A topic word such as a mention of race, police or an animal "
+    "does not count by itself. Words like \"under fire\" or \"threatens\" count only if the phrasing really builds pressure.\n"
+    "- formal_noise: only the formatting elements listed above count. A hashtag alone scores at most 1. An acronym such as TSA is not ALL-CAPS noise. "
+    "An \"RT\" prefix is not on the list and does not count. Score 2 only for several clear formatting elements together.\n"
+    "- For every signal: score 0, 1 or 2 and give a short reason. When the score is above 0, span must be an exact quote from the post; when the score is 0, span must be empty."
+)
+SYSTEM_PROMPT_V2 = gr.SYSTEM_INSTRUCTION + STRICT_ADDENDUM + BATCH_ADDENDUM  # v2: ugyanaz az alap, szigorító kiegészítéssel
+
+
+def system_prompt(cfg):
+    v = cfg["groq"].get("prompt_version", "v1")
+    if v == "v1":
+        return SYSTEM_PROMPT
+    if v == "v2":
+        return SYSTEM_PROMPT_V2
+    raise RequestError(f"ismeretlen prompt_version: {v}")
 POST_TEMPLATE = "<post id=\"{lid}\">\n{postText}\n</post>"
 ALLOWED_TOP_KEYS = {"model", "messages", "temperature", "max_completion_tokens", "reasoning_effort", "response_format"}
 KEY_PATTERNS = [r"gsk_[0-9A-Za-z]{10,}", r"api[_\-]?key", r"Bearer\s", r"Authorization", r"GROQ_API_KEY"]
@@ -68,7 +92,7 @@ def build_body(items, cfg):
             raise RequestError("a szöveg tartalmazza a határolót")
     gen = g["generation"]
     return {"model": g["model"],
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user_text(items)}],
+            "messages": [{"role": "system", "content": system_prompt(cfg)}, {"role": "user", "content": user_text(items)}],
             "temperature": gen["temperature"], "max_completion_tokens": gen["max_completion_tokens"],
             "reasoning_effort": gen["reasoning_effort"], "response_format": response_format(cfg)}
 
@@ -89,7 +113,7 @@ def check_request(body, items, cfg, leak_strings=()):
             or any(set(m) != {"role", "content"} for m in msgs):
         errs.append("a messages nem pontosan egy system és egy user üzenet")
     else:
-        if msgs[0]["content"] != SYSTEM_PROMPT:
+        if msgs[0]["content"] != system_prompt(cfg):
             errs.append("a system üzenet nem a rögzített utasítás")
         if msgs[1]["content"] != user_text(items):
             errs.append("a user üzenet nem a rögzített sablon és a postText-ek")

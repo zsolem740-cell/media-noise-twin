@@ -7,6 +7,7 @@
   python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)
   python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)
   python -m validation.webis_validation.run groq-dryrun              a Groq-ág 4 csomagja (5 cím/kérés) a MEGLÉVŐ 20 címre, HÁLÓZAT ÉS KULCS NÉLKÜL (results/groq/)
+  python -m validation.webis_validation.run groq-dryrun-v2 / groq-run-v2 --go   ugyanez a szigorított (v2) prompttal; külön *_v2 fájlokba ír, a v1 fájlokat nem érinti
   python -m validation.webis_validation.run groq-run --go            a 20 cím valódi Groq-futtatása; kell hozzá a GROQ_API_KEY környezeti változó és az api.groq.com engedélyezése"""
 import json
 import sys
@@ -97,6 +98,15 @@ def _groq_inputs(cfg, results_dir):
     return [{"id": r["id"], "postText": r["postText"]} for r in rows]
 
 
+def groq_v2_cfg(cfg):
+    """A szigorított prompt (v2) beállítása: csak a prompt és a kimeneti fájlnevek (*_v2) különböznek; a csomagolás, a séma és a hibakezelés ugyanaz."""
+    import copy
+    c = copy.deepcopy(cfg)
+    c["groq"]["prompt_version"] = "v2"
+    c["groq"]["paths"] = dict(cfg["groq"]["paths_v2"])
+    return c
+
+
 def do_groq_dryrun(cfg, data_dir, results_dir):
     """4 csomag (5 cím/kérés) kulcs és hálózat nélkül; a fájlt újraolvasva független ellenőrzés."""
     inputs = _groq_inputs(cfg, results_dir)
@@ -112,9 +122,9 @@ def do_groq_dryrun(cfg, data_dir, results_dir):
     verification = groq_run.verify_dryrun_rows(rows2, inputs, cfg, leaks)
     report = {"n_titles": len(inputs), "n_requests": len(rows), "batch_sizes": [len(r["ids"]) for r in rows2], "model": cfg["groq"]["model"], "no_network": True,
               "api_key_used": False, "build_errors": build_errors, "verification_errors": verification,
-              "prompt_sha256": gemini_request.text_sha256(groq_request.SYSTEM_PROMPT),
+              "prompt_version": cfg["groq"].get("prompt_version", "v1"), "prompt_sha256": gemini_request.text_sha256(groq_request.system_prompt(cfg)),
               "gemini_rules_prefix_sha256": gemini_request.text_sha256(gemini_request.SYSTEM_INSTRUCTION),
-              "rules_identical_to_gemini": groq_request.SYSTEM_PROMPT.startswith(gemini_request.SYSTEM_INSTRUCTION),
+              "rules_identical_to_gemini": groq_request.system_prompt(cfg).startswith(gemini_request.SYSTEM_INSTRUCTION),
               "schema_sha256": gemini_request.text_sha256(gemini_request.canonical_json(groq_request.response_format(cfg))),
               "generation": cfg["groq"]["generation"], "status": "OK" if not verification and not build_errors else "HIBA"}
     check_write(out / p["dryrun_check"], results_dir).write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -168,6 +178,10 @@ def main(argv):
         print(json.dumps(do_gemini_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-dryrun":
         print(json.dumps(do_groq_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-dryrun-v2":
+        print(json.dumps(do_groq_dryrun(groq_v2_cfg(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-run-v2" and argv[1:] == ["--go"]:
+        print(json.dumps(do_groq_run(groq_v2_cfg(cfg), results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-run" and argv[1:] == ["--go"]:
         print(json.dumps(do_groq_run(cfg, results_dir), ensure_ascii=False, indent=1))
     else:

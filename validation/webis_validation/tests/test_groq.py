@@ -408,3 +408,70 @@ def test_one_key_one_model_no_paid_switch_in_config(cfg):
 def test_cli_groq_run_needs_the_explicit_go_flag():
     src = (MODULE / "run.py").read_text(encoding="utf-8")
     assert '"groq-run" and argv[1:] == ["--go"]' in src
+
+
+# ---------------------------------------------------------------- v2: szigorított prompt
+
+def v2cfg(cfg):
+    from validation.webis_validation import run as runmod
+    return runmod.groq_v2_cfg(cfg)
+
+
+def test_v2_changes_only_the_prompt_and_the_output_names(cfg):
+    c2 = v2cfg(cfg)
+    assert cfg["groq"]["prompt_version"] == "v1" and c2["groq"]["prompt_version"] == "v2"
+    a, b = rq.build_body([("t1", "Some title")], cfg), rq.build_body([("t1", "Some title")], c2)
+    assert a["messages"][1] == b["messages"][1] and a["messages"][0] != b["messages"][0]
+    assert {k: v for k, v in a.items() if k != "messages"} == {k: v for k, v in b.items() if k != "messages"}       # séma, modell, generálás azonos
+    assert rq.system_prompt(cfg) == rq.SYSTEM_PROMPT and rq.system_prompt(cfg).startswith(gr.SYSTEM_INSTRUCTION)
+    assert rq.system_prompt(c2).startswith(gr.SYSTEM_INSTRUCTION) and rq.system_prompt(c2).endswith(rq.BATCH_ADDENDUM)
+    assert c2["groq"]["paths"]["results_csv"] == "groq_results_v2.csv" and cfg["groq"]["paths"]["results_csv"] == "groq_results.csv"
+    names = list(c2["groq"]["paths"].values())[1:]
+    assert all("_v2." in n for n in names) and not set(names) & set(list(cfg["groq"]["paths"].values()))
+
+
+def test_v2_prompt_contains_the_strict_rules(cfg):
+    t = rq.system_prompt(v2cfg(cfg))
+    for needle in ("Judge only the linguistic wording", "withholds the key information", "A hashtag alone scores at most 1", "acronym such as TSA",
+                   "\"RT\" prefix is not on the list", "Score 2 only for several clear formatting elements", "span must be empty", "Never score a fact"):
+        assert needle in t, needle
+
+
+def test_v2_prompt_does_not_contain_the_test_titles_or_labels(cfg):
+    t = rq.system_prompt(v2cfg(cfg))
+    for x in INPUTS:
+        assert x["postText"] not in t
+    for bad in ("This school had a cute way of telling students", "Obamacare", "truthClass", "human", "Webis"):
+        assert bad not in t
+
+
+def test_v2_requests_pass_the_same_checks_and_a_v1_prompt_is_refused_under_v2(cfg):
+    c2 = v2cfg(cfg)
+    rows, errs = gq.build_dryrun(INPUTS, c2)
+    assert not errs and not gq.verify_dryrun_rows(rows, INPUTS, c2)
+    assert gq.verify_dryrun_rows(rows, INPUTS, cfg)                      # v2-kérések v1-beállítás mellett elutasítva
+
+
+def test_v2_run_writes_separate_files_and_never_touches_v1(tmp_path, cfg):
+    res = tmp_path / "results"
+    (res / "groq").mkdir(parents=True)
+    for n in ("groq_results.csv", "groq_log.jsonl", "groq_summary.json"):
+        (res / "groq" / n).write_text("v1", encoding="utf-8")
+    c2 = copy.deepcopy(v2cfg(cfg))
+    c2["groq"]["run"].update(min_interval_s=0.0, backoff_s=[0.0, 0.0])
+    clock = Clock()
+    rep = gq.run_groq(INPUTS, Script(), c2, res / "groq", res, sleep=clock.sleep, monotonic=clock.monotonic)
+    assert rep["titles_ok"] == 20
+    assert {p.name for p in (res / "groq").iterdir()} == {"groq_results.csv", "groq_log.jsonl", "groq_summary.json", "groq_results_v2.csv", "groq_log_v2.jsonl", "groq_summary_v2.json"}
+    assert all((res / "groq" / n).read_text(encoding="utf-8") == "v1" for n in ("groq_results.csv", "groq_log.jsonl", "groq_summary.json"))
+
+
+def test_unknown_prompt_version_is_refused(cfg):
+    c = copy.deepcopy(cfg)
+    c["groq"]["prompt_version"] = "v3"
+    with pytest.raises(rq.RequestError):
+        rq.build_body([("t1", "Some title")], c)
+
+
+def test_cli_v2_run_needs_go_flag():
+    assert '"groq-run-v2" and argv[1:] == ["--go"]' in (MODULE / "run.py").read_text(encoding="utf-8")
