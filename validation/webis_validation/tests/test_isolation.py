@@ -84,7 +84,8 @@ def test_main_data_paths_are_named_only_in_the_isolation_module():
         if f.name == "isolation.py":
             continue
         text = f.read_text(encoding="utf-8")
-        assert "atm_history" not in text and "data/metrics" not in text and "gemini" not in text.lower(), f.name
+        assert "atm_history" not in text and "data/metrics" not in text and "gemini_labels" not in text and "gemini_budget" not in text, f.name
+        assert "GEMINI_API_KEY" not in text, f.name              # a fő Gemini-folyamat titka sem szerepelhet
 
 
 def test_module_has_no_network_or_ai_client():

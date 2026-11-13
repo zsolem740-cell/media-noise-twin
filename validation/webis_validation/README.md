@@ -31,8 +31,16 @@ Ellenőrizve: 2026-11-13, a letöltött archívumon és a hivatalos sémaleírá
 
 **A 250 elemű validációhoz a 148 MB-os archívum elég.** A tisztított 2380 rekord rétegenként 798 / 903 / 537 / 142 elemet ad az 0–0,25 / 0,25–0,5 / 0,5–0,75 / 0,75–1 átlagsávokban, így a 75 / 50 / 50 / 75 célszám pótlás nélkül teljesül. A nagyobb `clickbait17-train-170630.zip` (937 MB) nem szükséges; a cikkeket tartalmazó webarchívumok (kb. 20 GB darabonként) és a címkézetlen archívum nem kell.
 
+## A négy jel
+| Kulcs | Jelentés |
+|---|---|
+| `curiosity_gap` | kíváncsisági rés |
+| `exaggeration` | túlzás |
+| `emotional_pressure` | érzelmi nyomás |
+| `formal_noise` | **a „formatting noise” magyar megfelelője: formai / nyelvi zaj** (NAGYBETŰ, ismételt írásjel, felkiáltójel, listaszám, emoji, hashtag, csali-kettőspont). A kulcs neve szándékosan `formal_noise`, nem `formatting_noise` |
+
 ## Mit mér
-Az AI négy jelet ad egy címre (kíváncsisági rés, túlzás, érzelmi nyomás, formai zaj; 0–2 pont, rövid indoklás, a címből idézett részlet). Az összeg 0–8, a kezdeti, **nem bizonyított** átváltás: `scaled = total / 8`. A kiértékelés négy, egymástól külön szakaszt ad:
+Az AI mind a négy jelre ad értéket (0–2 pont, rövid indoklás, a címből szó szerint idézett részlet). Az összeg 0–8, a kezdeti, **nem bizonyított** átváltás: `scaled = total / 8`. A kiértékelés négy, egymástól külön szakaszt ad:
 
 1. **`regression_vs_truthMean`:** regresszió az emberi átlagra (MSE, RMSE, a hivatalos `eval.py` szerinti normált MSE, Spearman, Kendall tau-b, bootstrap-sáv). Ez a Clickbait Challenge elsődleges célja.
 2. **`supplementary_vs_truthMedian`:** ugyanezek a mutatók a mediánra, kiegészítésként.
@@ -55,14 +63,32 @@ python -m validation.webis_validation.run inspect       # mezők, annotátorszá
 python -m validation.webis_validation.run sample        # 250 elemű minta → results/sample_meta.json, results/model_inputs.jsonl (soronként csak {"id", "postText"}; a gitben nincs)
 python -m validation.webis_validation.run evaluate results/scores.jsonl
 python -m validation.webis_validation.run smoke         # szintetikus lánc próba-pontozóval (nem AI), a modul mappáiba nem ír
+python -m validation.webis_validation.run gemini-dryrun # a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, hálózat és kulcs nélkül
 python -m pytest -q validation
 ```
 A két adatfájl a zip-ből a `data/` mappa gyökerébe csomagolandó ki (`instances.jsonl`, `truth.jsonl`).
 
+## Gemini smoke test (20 cím)
+Csak a csővezeték ellenőrzése, nem mérési eredmény; **az ingyenes Gemini API-szinten** fut, a 20 címhez.
+
+**Döntések:** a negyedik jel `formal_noise` marad; az elsődleges modell a Gemini 3.5 Flash-Lite vagy a 3.1 Flash-Lite, a modelllistában elérhető változat (a pontos név a lista után dől el). Ha csak a Gemini 3.6 Flash vagy a 3.8 Flash érhető el (ezek ingyenes napi kerete becslés szerint kb. 20 kérés), a futás **nem indul el egy napon**: a kód `NeedUserDecision` hibával megáll, és a felhasználó dönt.
+
+**Állapot:** a kód és a tesztek elkészültek hálózat nélkül (`gemini_request.py`, `gemini_smoke.py`). A modulban **nincs hálózati kód**: a futtató (`run_smoke`) a kérések elküldését egy kívülről kapott átviteli függvényre bízza, a parancssor csak a száraz próbát (`gemini-dryrun`) indítja. Valódi hívás, kulcs és a `generativelanguage.googleapis.com` elérése jóváhagyásra vár; a száraz próbát előbb a felhasználó nézi meg.
+
+**Mit kap a modell:** egy kérés egy cím, és a kérés pontosan három kulcsot tartalmaz: `systemInstruction` (rögzített utasítás), `contents` (egyetlen `user` elem, benne a rögzített sablon és a `postText`) és `generationConfig` (JSON-kimenet, séma, `temperature` 0, `maxOutputTokens`). Nincs `tools`, nincs keresési grounding, nincs azonosító, cikkmező, forrásnév, emberi pontszám, `truthClass` vagy korábbi AI-pontszám, és magyar-specifikus betűt tartalmazó cím nem mehet ki. A kimenő kérést a `check_request` ellenőrzi, és a száraz próba fájlját újraolvasva független ellenőrzés is lefut.
+
+**Kimenet:** a modell jelenként `span`, `reason`, `score` mezőt ad (a sorrend: előbb az idézet, utána a pont). **Az összpontot (0–8) és a 0–1-es skálát (`total / 8`, kezdeti, nem bizonyított feltevés) a kód számolja**, a modell kimenetében ezek nem szerepelnek; ha mégis megjelennek, a kimenet érvénytelen. A `span` szó szerint szerepel a címben (0 pontnál üres), a `reason` legfeljebb 15 szó.
+
+**Hibakezelés:** érvénytelen JSON vagy szabálysértés egy újrapróbával, utána `errors.jsonl` (javítás nélkül); `MAX_TOKENS` érvénytelen, nem próbáljuk újra; időtúllépés (60 s) és 5xx legfeljebb 2 újrapróba 2 és 8 másodperces várakozással; percenkénti 429 a jelzett `retryDelay` után; **napi 429 azonnali leállás**; biztonsági blokk külön `blocked` kategória (nem 0 pont, nincs újrapróba, a beállítás nem lazítható); 400, 401, 403, 404 leállás. Kérések között legalább 13 másodperc, összesen legfeljebb 25 kérés (az újrapróbákkal együtt), a kész címek újrafuttatáskor nem mennek ki újra. Átmenő feltétel: legalább 18 érvényes pontszám a 20-ból, leállás nélkül.
+
+**Fájlok** (`results/smoke_gemini/`, a gitben nincsenek): `selected_inputs.jsonl` (`id`, `postText`), `requests_dryrun.jsonl` (`index`, `id`, `body_sha256`, `body`), `dryrun_check.json` (a száraz próba ellenőrzése, a rétegek), futtatás után `raw_responses.jsonl`, `scores.jsonl`, `errors.jsonl`, `smoke_report.json`.
+
+**Kapu:** a smoke test után sem indul el a 250 elemű validáció és a 3000 magyar cím; ehhez külön jóváhagyás kell. A futtató fix 20 címre szól, nagyobb futtatáshoz nincs kód.
+
 ## Elkülönítés (tesztek őrzik)
 - `config.json`: `mode` csak `benchmark_readonly`, a forrás csak `webis-clickbait-17`, a nyelv `en`.
 - Olvasás csak a modul `data/`, írás csak a `results/` mappájából/mappájába; a fő `data/`, `public/`, `inbox/`, `config/`, `src/`, `scripts/` mappákból soha.
-- A modul nem importál a fő kódból, nincs benne hálózati vagy AI-kliens; a fő adatfájlok nevei csak az `isolation.py`-ban szerepelnek.
+- A modul nem importál a fő kódból, nincs benne hálózati vagy AI-kliens; a fő adatfájlok nevei és a fő Gemini-folyamat titka (`GEMINI_API_KEY`) nem szerepel benne.
 - A magyar-specifikus betűt (ő, ű) tartalmazó rekordot a betöltő kizárja.
 
 ## Mit kap az AI
@@ -74,5 +100,5 @@ Kizárólag az azonosítót és a `postText` szövegét (`scoring.build_model_in
 - Ellenőrizetlen: hogy a `clickbait17-test-170720.zip` tartalmaz-e címkéket, és hogy a nagyobb tanító archívum tartalmazza-e a kis archívum rekordjait.
 
 ## Még nincs
-- AI-pontozó (a modell kiválasztása és a költségkeret jóváhagyásra vár) és külső AI-hívás.
-- A 250 elemű minta értékelése AI-pontszámokkal.
+- Valódi Gemini-hívás: a modelllista lekérdezése, a kulcs és a hozzáférés jóváhagyásra vár, a száraz próbát előbb meg kell nézni.
+- A 250 elemű minta értékelése AI-pontszámokkal, és a 3000 magyar cím.

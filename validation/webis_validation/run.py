@@ -4,14 +4,15 @@
   python -m validation.webis_validation.run inspect                  mezők, annotátorszám, kizárások, eloszlás (a data/ mappából)
   python -m validation.webis_validation.run sample                   rétegzett minta → results/sample_meta.json, results/model_inputs.jsonl (csak id + cím)
   python -m validation.webis_validation.run evaluate SCORES.jsonl    kiértékelés → results/report.json
-  python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)"""
+  python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)
+  python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)"""
 import json
 import sys
 import tempfile
 from pathlib import Path
 
 from . import evaluate as ev
-from . import loader, sample, scoring, synthetic
+from . import gemini_request, gemini_smoke, loader, sample, scoring, synthetic
 from .isolation import MODULE_DIR, check_read, check_write, load_config
 
 
@@ -59,6 +60,35 @@ def do_evaluate(cfg, data_dir, results_dir, scores_path):
     return rep
 
 
+def do_gemini_dryrun(cfg, data_dir, results_dir):
+    """20 kérés (rétegenként 5) előállítása a 250 elemű mintából, kulcs és hálózat nélkül; a fájlt újraolvasva független ellenőrzés."""
+    records, _ = _load(cfg, data_dir)
+    meta = json.loads(check_read(results_dir / "sample_meta.json", results_dir).read_text(encoding="utf-8"))
+    order, stratum = gemini_smoke.select_smoke(records, meta["sample"]["ids"], cfg)
+    by = {r.id: r for r in records}
+    inputs = [{"id": rid, "postText": by[rid].text} for rid in order]
+    inst = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["instances"], data_dir))}
+    truth = {str(r.get("id")): r for r in loader.read_jsonl(check_read(data_dir / cfg["files"]["truth"], data_dir))}
+    leaks = {rid: gemini_smoke.leak_strings_for(inst[rid], truth[rid]) for rid in order}
+    rows, build_errors = gemini_smoke.build_dryrun(inputs, cfg, leaks)
+    out = results_dir / "smoke_gemini"
+    report = {"n_selected": len(inputs), "n_requests": len(rows), "build_errors": build_errors, "no_network": True, "api_key_used": False,
+              "model": None, "model_note": "a modell neve nincs a kérés törzsében; a modelllista (külön jóváhagyás) után dől el",
+              "model_candidates": cfg["gemini"]["model_candidates"], "tier": cfg["gemini"]["tier"],
+              "prompt_sha256": gemini_request.text_sha256(gemini_request.SYSTEM_INSTRUCTION),
+              "schema_sha256": gemini_request.text_sha256(gemini_request.canonical_json(gemini_request.response_schema(cfg))),
+              "thinking_config": cfg["gemini"]["generation"].get("thinking_config"),
+              "strata_counts": {name: sum(1 for r in rows if stratum[r["id"]] == name) for name in sorted(set(stratum.values()))}}
+    gemini_smoke.write_dryrun(out, inputs, rows, stratum, report, results_dir)
+    rows2 = gemini_smoke.read_jsonl_file(out / "requests_dryrun.jsonl", results_dir)
+    inputs2 = gemini_smoke.read_jsonl_file(out / "selected_inputs.jsonl", results_dir)
+    verification = gemini_smoke.verify_dryrun_rows(rows2, inputs2, cfg, stratum, leaks)
+    report["verification_errors"] = verification
+    report["status"] = "OK" if not verification and not build_errors else "HIBA"
+    check_write(out / "dryrun_check.json", results_dir).write_text(json.dumps({**report, "strata_of": stratum}, ensure_ascii=False, indent=1), encoding="utf-8")
+    return report
+
+
 def do_smoke():
     cfg = load_config()
     cfg["sample"] = dict(cfg["sample"], size=60, strata=[dict(s, target=t) for s, t in zip(cfg["sample"]["strata"], (15, 15, 15, 15))])
@@ -94,6 +124,8 @@ def main(argv):
         print(json.dumps(do_evaluate(cfg, data_dir, results_dir, argv[1]), ensure_ascii=False, indent=1, default=list)[:4000])
     elif cmd == "smoke":
         print(json.dumps(do_smoke(), ensure_ascii=False, indent=1))
+    elif cmd == "gemini-dryrun":
+        print(json.dumps(do_gemini_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
     else:
         print(__doc__)
         return 2
