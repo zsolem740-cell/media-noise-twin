@@ -39,7 +39,11 @@ def make_feed(n=200, seed=1, extra=()):
         items.append({"id": f"id{i:04d}", "title": t, "source": f"Forrás{i % 30}", "source_domain": "forras.hu", "official": False, "alert": False,
                       "S": rng.random(), "G": rng.random(), "V": rng.random(), "ATM": 7, "lat": 47.1, "lng": 19.0, "region": "HU-BU", "link": "https://x.hu/" + str(i)})
     items += list(extra)
-    return {"schema": 1, "generated_at": "2026-11-12T00:00:00Z", "items": items}
+    return {"schema": 1, "generated_at": "2026-11-12T00:00:00Z", "items": items,
+            "model": {"formula": "x", "regions": [{"id": "HU", "name": "Magyarország"}], "weights": {"a": 1.5}, "clickbait": ["sokk"], "thresholds": {"hi": 0.6}},
+            "summary": {"n_items": 200, "atm_mean": 69.4, "by_region": {"HU": 3}, "top_noise": [{"t": "x"}]}, "insights": {"trend": {"d": [1, 2]}, "anomalies": [1], "sources": [2]},
+            "notified": {"ids": {"a": 1}, "terms": {"b": 2}}, "config": {"user": True, "applied": [1]}, "research": {"version": 1, "prices": {"x": 1.5}},
+            "profiles": {"forras.hu": {"n": 5, "mS": 0.5}}}
 
 
 @pytest.fixture(scope="module")

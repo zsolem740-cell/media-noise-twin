@@ -33,8 +33,8 @@ def do_select(cfg, feed_path=None, base=None):
            "anchor_ids": [i["id"] for i in s["anchors"]], "measured_ids": [i["id"] for i in s["measured"]],
            "measured_random_ids": s["measured_random_ids"], "measured_enriched_ids": s["measured_enriched_ids"], "source_counts": s["source_counts"]}
     feeds.write_json(f["selection"], sel, rdir)
-    feeds.write_json(f["stage1"], feeds.build_feed(s["anchors"], "stage1-anchors"), rdir)
-    feeds.write_json(f["stage2"], feeds.build_feed(s["measured"], "stage2-measured"), rdir)
+    feeds.write_json(f["stage1"], feeds.build_feed(s["anchors"], "stage1-anchors", feed), rdir)
+    feeds.write_json(f["stage2"], feeds.build_feed(s["measured"], "stage2-measured", feed), rdir)
     prev = check_write(f["anchor_preview"], rdir)
     prev.write_text("\n".join(f"{n:2d}. [{i['id']}] {i['title']}" for n, i in enumerate(s["anchors"], 1)) + "\n", encoding="utf-8")
     return {k: sel[k] for k in ("pool", "enriched_pool", "excluded")} | {"anchors": len(sel["anchor_ids"]), "measured": len(sel["measured_ids"])}
@@ -58,9 +58,9 @@ def do_analyze(cfg, exports, base=None):
 def do_adjudication(cfg, exports, feed_path=None, base=None):
     rdir, f, sel, votes, rep = _load(cfg, exports, base)
     ids = analysis.adjudication_ids(analysis.ratings(votes, set(sel["measured_ids"])), cfg["voters"]["primary"])
-    _, items = selection.load_feed(feed_path or REPO_ROOT / cfg["feed"])
+    feed, items = selection.load_feed(feed_path or REPO_ROOT / cfg["feed"])
     by = {i["id"]: i for i in items}
-    feeds.write_json(f["stage3"], feeds.build_feed([by[i] for i in ids], "stage3-adjudication"), rdir)
+    feeds.write_json(f["stage3"], feeds.build_feed([by[i] for i in ids], "stage3-adjudication", feed), rdir)
     return {"adjudication_titles": len(ids)}
 
 

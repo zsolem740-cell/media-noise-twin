@@ -100,12 +100,20 @@ def test_anchor_override_is_used_and_validated(cfg):
 
 def test_pilot_feed_is_neutral_and_leaks_nothing(cfg):
     items = make_feed()["items"][:5]
-    f = feeds.build_feed(items, "stage1")
+    tmpl = make_feed()
+    f = feeds.build_feed(items, "stage1", tmpl)
     for r, it in zip(f["items"], items):
         assert set(r) == feeds.ROW_KEYS and r["title"] == it["title"] and r["id"] == it["id"]
         assert all(r[k] == 0 for k in feeds.NEUTRAL_KEYS) and r["source"] == "pilot" and r["link"] == "" and r["summary"] == ""
         assert it["source"] not in json.dumps(r) and it["link"] not in json.dumps(r)
-    assert f["profiles"] == {} and f["model"] == {}
+    assert f["profiles"] == {} and f["model"] == tmpl["model"] and f["health"] == []
+    # szerkezethű, de nullázott felső szintű mezők: semmilyen hír- vagy pontszám-adat nem szivároghat át
+    assert f["summary"] == {"n_items": 0, "atm_mean": 0, "by_region": {"HU": 0}, "top_noise": []} and f["insights"] == {"trend": {"d": []}, "anomalies": [], "sources": []}
+    assert f["notified"] == {"ids": {"a": 0}, "terms": {"b": 0}} and f["config"] == {"user": False, "applied": []} and f["research"] == {"version": 0, "prices": {"x": 0}}
+    blob = json.dumps(f, ensure_ascii=False)
+    assert "forras.hu" not in blob and "69.4" not in blob and "sokk" in blob              # a model szó szerint megmarad (szabálykonfiguráció), a profilok és számok nem
+    with pytest.raises(ValueError):
+        feeds.build_feed(items, "stage1", {"items": []})
 
 
 def test_select_command_writes_only_into_results_and_never_overwrites(tmp_path, cfg, feed_path):

@@ -7,7 +7,7 @@ A Webis-modultól (`validation/webis_validation`) független; nem importál bel�
 ## Felépítés
 - 50 cím: **20 horgony** (kalibrációs kör) + **30 mérési** (15 véletlen + 15 formai jegyekkel dúsított: `!`, NAGYBETŰS szó, `?`, idézőjel). A kettőspont szándékosan nem dúsító jegy (a mentés magyar címeinek ~36%-ában van).
 - Szűrés: nem hivatalos/riasztás tétel, 25–160 karakter, a felület nyelvfelismerése a forrás-domain nélkül is magyarnak mondja, nincs pontos vagy közel-duplikátum (Jaccard ≥ 0,7), egy forrásból összesen legfeljebb 5 cím.
-- A pilot-feed fájlok semlegesek: nincs szabály- vagy AI-pontszám, valódi forrás, hely, link. A cím és az azonosító változatlan.
+- A pilot-feed fájlok semlegesek: nincs szabály- vagy AI-pontszám, valódi forrás, hely, link. A cím és az azonosító változatlan. Az alkalmazás működéséhez a hírmentés `model` mezője (szabály- és súlykonfiguráció, nincs benne hír) szó szerint bekerül, a többi felső szintű mező (summary, insights, notified, config, research) szerkezethű, de nullázott. Egy üres `model` hibát okoz az appban (helyi füstpróba találta meg).
 
 ## Szerepek és menet
 Szavazók: A, B (elsődleges pár), C (harmadik szavazat az eltéréseknél), D (tartalék). A koordinátor nem látja előre a mérési címeket.
@@ -30,3 +30,7 @@ Szavazók: A, B (elsődleges pár), C (harmadik szavazat az eltéréseknél), D 
 
 ## Adatkezelés
 A szavazói exportok valódi tesztelői adatok: nem kerülnek a repóba. A külső API-nak csak a címszöveg mehet.
+
+## Helyi füstpróba (v47.10 ág, fejtetlen böngésző, 390 px)
+A horgony-feeddel, két szavazóval (A, B) lefutott: vak mód (nincs pontszám, forrás, AI-szöveg a felületen), a szavazónkénti tárolás (A és B külön látja a 20 címet, a kihagyás és a visszavonás helyes), megmaradás újratöltés után, a „Minden szavazó mentésének másolása”, a magyar megjelenés (ő, ű, „ ”, vízszintes túlcsordulás nincs). A kapott export a Python-elemzőn átmegy; az alkalmazás saját kappája (csak Nyugodt/Hangos, a „Közepes”-t figyelmen kívül hagyja) egyezik a független kétosztályos számítással. A háromosztályos súlyozott kappát csak ez a modul számolja.
+Ismert apróságok: a gyorsszavazó fejléce a termelési számlálókat mutatja („Értékelő sor 0/300 · clickbait 0/40”); a szavazat-rekord az app belső tanulójának értékeit (`S`, `sAi`) is tárolja (nem látszanak). Nem tesztelt: szervizmunkás (service worker) https alatt, valódi telefon, hosting.
