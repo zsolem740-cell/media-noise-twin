@@ -1,0 +1,147 @@
+{
+  "mode": "benchmark_readonly",
+  "source": "webis-clickbait-17",
+  "language": "en",
+  "license": "CC BY 4.0",
+  "citation": "Potthast, Gollub, Wiegmann, Stein, Hagen, Komlossy, Schuster, Fernandez (2018). Crowdsourcing a Large Corpus of Clickbait on Twitter. COLING 2018. https://doi.org/10.5281/zenodo.5530410",
+  "paths": {
+    "data_dir": "data",
+    "results_dir": "results"
+  },
+  "files": {
+    "instances": "instances.jsonl",
+    "truth": "truth.jsonl"
+  },
+  "known_archives": {
+    "clickbait17-train-170331.zip": {
+      "md5": "738075eaf9c4d3af9c16808f5d16ce00",
+      "size": 147797714
+    },
+    "clickbait17-train-170630.zip": {
+      "md5": "8f074f3f035393b81a559bfc8bd9a467",
+      "size": 937094590
+    },
+    "clickbait17-test-170720.zip": {
+      "md5": "ed6cdee7fc4f8e7abbb45da6b162a1a5",
+      "size": 934724312
+    }
+  },
+  "field_aliases": {
+    "id": [
+      "id"
+    ],
+    "text": [
+      "postText"
+    ],
+    "judgments": [
+      "truthJudgments",
+      "truthJudgements"
+    ],
+    "file_mean": [
+      "truthMean"
+    ],
+    "file_median": [
+      "truthMedian"
+    ],
+    "truth_class": [
+      "truthClass"
+    ]
+  },
+  "expected_annotators": 5,
+  "scale_values": [
+    0.0,
+    0.33,
+    0.66,
+    1.0
+  ],
+  "scale_tolerance": 0.011,
+  "stat_tolerance": 0.02,
+  "short_title_max_words": 4,
+  "clickbait_threshold": 0.5,
+  "sample": {
+    "size": 250,
+    "seed": 20260101,
+    "strata": [
+      {
+        "name": "0-0.25",
+        "lo": 0.0,
+        "hi": 0.25,
+        "target": 75
+      },
+      {
+        "name": "0.25-0.5",
+        "lo": 0.25,
+        "hi": 0.5,
+        "target": 50
+      },
+      {
+        "name": "0.5-0.75",
+        "lo": 0.5,
+        "hi": 0.75,
+        "target": 50
+      },
+      {
+        "name": "0.75-1",
+        "lo": 0.75,
+        "hi": 1.0001,
+        "target": 75
+      }
+    ]
+  },
+  "scoring": {
+    "signals": [
+      "curiosity_gap",
+      "exaggeration",
+      "emotional_pressure",
+      "formal_noise"
+    ],
+    "max_points_per_signal": 2,
+    "max_reason_words": 15
+  },
+  "evaluation": {
+    "bootstrap_b": 500,
+    "bootstrap_seed": 7,
+    "top_errors": 20
+  },
+  "class_labels": {
+    "positive": "clickbait",
+    "negative": "no-clickbait"
+  },
+  "scale_upper_cut": 0.5,
+  "gemini": {
+    "tier": "free",
+    "model_candidates": [
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-flash-lite"
+    ],
+    "restricted_model_patterns": [
+      "^gemini-3\\.6-flash",
+      "^gemini-3\\.8-flash"
+    ],
+    "generation": {
+      "temperature": 0,
+      "max_output_tokens": 1024,
+      "thinking_config": null
+    },
+    "smoke": {
+      "n_titles": 20,
+      "per_stratum": 5,
+      "seed": 20260102,
+      "max_requests": 25,
+      "min_interval_s": 13.0,
+      "timeout_s": 60,
+      "max_retries": 2,
+      "backoff_s": [
+        2,
+        8
+      ],
+      "invalid_retries": 1,
+      "pass_min_valid": 18
+    },
+    "prices_usd_per_million": {
+      "input": null,
+      "output": null,
+      "note": "ingyenes szinten a költség 0; fizetős árat csak hivatalos oldalról ellenőrizve szabad ide írni"
+    }
+  }
+}
