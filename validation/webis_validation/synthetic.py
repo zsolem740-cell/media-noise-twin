@@ -13,7 +13,7 @@ CURIOSITY = ["You won't believe what happened next", "This is why nobody talks a
 EXAGG = ["The most shocking story of the year", "Absolutely incredible, the best ever", "The worst disaster in history", "Amazing results nobody expected"]
 EMOTION = ["Heartbreaking scenes leave everyone in tears", "Terrifying moment sparks outrage", "Furious crowd demands answers", "A devastating loss shocks the town"]
 FORMAL = ["10 things you need to know", "BREAKING!!! Read this now", "WOW this is HUGE", "7 reasons why it matters"]
-SCALE = [0.0, 0.33, 0.66, 1.0]
+SCALE = [0.0, 0.3333333, 0.6666667, 1.0]      # a valódi fájl pontosabb törtjei
 
 
 def make_corpus(n=300, seed=1):
@@ -31,7 +31,7 @@ def make_corpus(n=300, seed=1):
         rid = f"syn{i:05d}"
         inst.append({"id": rid, "postText": [text], "targetTitle": "(a cikk címe: a validációban a modell nem kapja meg)"})
         truth.append({"id": rid, "truthJudgments": judg, "truthMean": round(sum(judg) / 5, 4), "truthMedian": statistics.median(judg),
-                      "truthMode": max(set(judg), key=judg.count), "truthClass": "clickbait" if sum(judg) / 5 >= 0.5 else "no-clickbait"})
+                      "truthMode": max(set(judg), key=judg.count), "truthClass": "clickbait" if sum(1 for x in judg if x > 0.5) > 2 else "no-clickbait"})   # többségi ítélet, mint a valódi korpuszban
     return inst, truth
 
 

@@ -19,7 +19,9 @@ def test_load_synthetic_corpus(corpus, cfg):
     assert rep["annotator_counts"] == {5: rep["n_kept"]}
     assert rep["mean_mismatch"] == 0 and rep["median_mismatch"] == 0
     assert [r.id for r in recs] == sorted(r.id for r in recs)
-    assert all(0 <= r.human_mean <= 1 and r.human_median in (0.0, 0.33, 0.66, 1.0) for r in recs)
+    assert all(0 <= r.human_mean <= 1 and any(abs(r.human_median - s) < 1e-6 for s in (0.0, 1 / 3, 2 / 3, 1.0)) for r in recs)
+    assert rep["truth_class_available"] and sum(rep["truth_class_counts"].values()) == rep["n_kept"]
+    assert rep["class_vs_majority_mismatch"] == 0                     # a szintetikus címke is többségi ítélet
 
 
 def test_mean_and_median_recomputed_by_hand(tmp_path, cfg):
@@ -144,3 +146,50 @@ def test_verify_archive(tmp_path):
     assert not r["md5_ok"] and not r["size_ok"]
     with pytest.raises(loader.LoadError):
         loader.verify_archive(tmp_path / "ismeretlen.zip", good)
+
+
+def test_truth_class_is_kept_and_compared_with_majority_and_mean_threshold(tmp_path, cfg):
+    d = tmp_path / "data"
+    third, two3 = 0.3333333, 0.6666667
+    write(d, "i.jsonl", [{"id": x, "postText": [f"Headline number {x} here"]} for x in ("a", "b", "c", "d")])
+    write(d, "t.jsonl", [
+        {"id": "a", "truthJudgments": [0.0, 0.0, two3, two3, two3], "truthClass": "clickbait"},        # átlag 0,4 < 0,5, de 3 : 2 a felső szintek javára
+        {"id": "b", "truthJudgments": [third, third, third, 1.0, 1.0], "truthClass": "no-clickbait"},   # átlag 0,6 >= 0,5, de 2 : 3 az alsó szintek javára
+        {"id": "c", "truthJudgments": [0.0] * 5, "truthClass": "no-clickbait"},                          # mindkét szabály szerint nyugodt
+        {"id": "d", "truthJudgments": [1.0] * 5, "truthClass": "no-clickbait"}])                        # a fájl a többséggel is ellentmond (hibás címke)
+    recs, rep = loader.load(d / "i.jsonl", d / "t.jsonl", cfg, d)
+    by = {r.id: r for r in recs}
+    assert [by[x].truth_class for x in "abcd"] == ["clickbait", "no-clickbait", "no-clickbait", "no-clickbait"]
+    assert [by[x].majority_class for x in "abcd"] == ["clickbait", "no-clickbait", "no-clickbait", "clickbait"]
+    assert rep["truth_class_available"] and rep["truth_class_counts"] == {"clickbait": 1, "no-clickbait": 3}
+    assert rep["class_vs_mean_threshold"] == {"mismatch": 3, "clickbait_below_threshold": 1, "no_clickbait_at_or_above_threshold": 2}
+    assert rep["class_vs_majority_mismatch"] == 1 and "class_majority_mismatch" in by["d"].flags
+    assert rep["class_check_all_valid_rows"] == {"rows": 4, "mean_threshold_mismatch": 3, "majority_mismatch": 1, "unknown_label": 0}
+
+
+def test_class_check_counts_rows_before_duplicate_exclusion(tmp_path, cfg):
+    d = tmp_path / "data"
+    write(d, "i.jsonl", [{"id": "a", "postText": ["Same headline text"]}, {"id": "b", "postText": ["same HEADLINE text"]}])
+    write(d, "t.jsonl", [{"id": "a", "truthJudgments": [0.0, 0.0, 0.6666667, 0.6666667, 0.6666667], "truthClass": "clickbait"},
+                         {"id": "b", "truthJudgments": [0.0, 0.0, 0.6666667, 0.6666667, 0.6666667], "truthClass": "clickbait"}])
+    recs, rep = loader.load(d / "i.jsonl", d / "t.jsonl", cfg, d)
+    assert len(recs) == 1 and rep["class_vs_mean_threshold"]["mismatch"] == 1                     # a kizárás után egy
+    assert rep["class_check_all_valid_rows"]["rows"] == 2 and rep["class_check_all_valid_rows"]["mean_threshold_mismatch"] == 2   # kizárás előtt kettő
+
+
+def test_missing_or_unknown_truth_class(tmp_path, cfg):
+    d = tmp_path / "data"
+    write(d, "i.jsonl", [{"id": "a", "postText": ["First headline here"]}, {"id": "b", "postText": ["Second headline here"]}])
+    write(d, "t.jsonl", [{"id": "a", "truthJudgments": [0.0] * 5}, {"id": "b", "truthJudgments": [1.0] * 5, "truthClass": "maybe"}])
+    recs, rep = loader.load(d / "i.jsonl", d / "t.jsonl", cfg, d)
+    assert [r.truth_class for r in recs] == [None, "maybe"] and not rep["truth_class_available"]
+    assert rep["class_check_all_valid_rows"]["unknown_label"] == 1 and rep["class_vs_mean_threshold"]["mismatch"] == 0   # ismeretlen címke nem számít eltérésnek
+
+
+def test_even_split_has_no_majority_and_is_not_a_mismatch(tmp_path, cfg):
+    d = tmp_path / "data"
+    write(d, "i.jsonl", [{"id": "a", "postText": ["Tied headline words here"]}])
+    write(d, "t.jsonl", [{"id": "a", "truthJudgments": [0.0, 0.0, 1.0, 1.0], "truthClass": "no-clickbait"}])
+    (r,), rep = loader.load(d / "i.jsonl", d / "t.jsonl", cfg, d)
+    assert r.majority_class is None and "class_majority_mismatch" not in r.flags and rep["class_vs_majority_mismatch"] == 0
+    assert "class_mean_threshold_mismatch" in r.flags                    # az átlag 0,5, a fájl mégis no-clickbait

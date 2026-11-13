@@ -11,9 +11,9 @@ from validation.webis_validation.loader import Record
 SIG = ("curiosity_gap", "exaggeration", "emotional_pressure", "formal_noise")
 
 
-def rec(i, mean, median=None, short=False, dis=0.1):
+def rec(i, mean, median=None, short=False, dis=0.1, cls=None):
     return Record(id=f"r{i}", text=f"headline number {i}", human_mean=mean, human_median=mean if median is None else median, judgments=(mean,) * 5,
-                  n_annotators=5, short_title=short, disagreement=dis)
+                  n_annotators=5, short_title=short, disagreement=dis, truth_class=cls)
 
 
 def score(i, total):
@@ -81,17 +81,72 @@ def test_bootstrap_ci_is_deterministic_and_contains_the_estimate():
     assert ev.bootstrap_ci(ev.spearman, [1, 1, 1], [1, 2, 3], 50, 1) is None     # nem számítható minta: nincs sáv
 
 
-def test_evaluate_classification_counts_by_hand(cfg):
+def test_mean_threshold_binarization_counts_by_hand(cfg):
     recs = [rec(0, 0.1), rec(1, 0.6), rec(2, 0.9), rec(3, 0.4)]
     scs = [score(0, 0), score(1, 2), score(2, 6), score(3, 5)]          # scaled: 0, 0,25, 0,75, 0,625
-    r = ev.evaluate(recs, scs, cfg)["classification_at_threshold"]
+    r = ev.evaluate(recs, scs, cfg)["binarized_mean_threshold"]
     assert (r["false_noisy"], r["missed_noisy"], r["true_noisy"]) == (1, 1, 1)
     assert r["false_noisy_ids"] == ["r3"] and r["missed_noisy_ids"] == ["r1"] and r["precision"] == 0.5 and r["recall"] == 0.5
 
 
-def test_evaluate_precision_and_recall_not_computable(cfg):
-    out = ev.evaluate([rec(0, 0.1), rec(1, 0.2)], [score(0, 0), score(1, 1)], cfg)["classification_at_threshold"]
-    assert out["precision"] is None and out["recall"] is None and out["true_noisy"] == 0
+def test_precision_and_recall_not_computable(cfg):
+    out = ev.evaluate([rec(0, 0.1), rec(1, 0.2)], [score(0, 0), score(1, 1)], cfg)["binarized_mean_threshold"]
+    assert out["precision"] is None and out["recall"] is None and out["f1"] is None and out["true_noisy"] == 0 and out["roc_auc"] is None
+
+
+def test_binary_metrics_by_hand():
+    m = ev.binary_metrics([1, 1, 1, 0, 0, 0], [1, 1, 0, 1, 0, 0])
+    assert (m["true_noisy"], m["missed_noisy"], m["false_noisy"], m["true_calm"]) == (2, 1, 1, 2)
+    assert m["accuracy"] == pytest.approx(4 / 6) and m["precision"] == pytest.approx(2 / 3) and m["recall"] == pytest.approx(2 / 3) and m["f1"] == pytest.approx(2 / 3)
+    assert ev.binary_metrics([], [])["accuracy"] is None
+    assert ev.binary_metrics([1, 1], [0, 0])["f1"] is None and ev.binary_metrics([1, 0], [0, 1])["f1"] == 0.0
+
+
+def test_roc_auc_by_hand_and_ties():
+    assert ev.roc_auc([0, 0, 1, 1], [0.1, 0.4, 0.35, 0.8]) == 0.75
+    assert ev.roc_auc([0, 1], [0.5, 0.5]) == 0.5 and ev.roc_auc([1, 1], [0.1, 0.9]) is None
+
+
+# a két igazság szándékosan eltér: r3 (átlag 0,4, de clickbait) és r4 (átlag 0,55, de no-clickbait)
+CLS = [rec(0, 0.1, cls="no-clickbait"), rec(1, 0.6, cls="clickbait"), rec(2, 0.9, cls="clickbait"), rec(3, 0.4, cls="clickbait"), rec(4, 0.55, cls="no-clickbait")]
+CLS_SC = [score(0, 0), score(1, 2), score(2, 6), score(3, 5), score(4, 3)]    # scaled: 0, 0,25, 0,75, 0,625, 0,375 → bináris: 0, 0, 1, 1, 0
+
+
+def test_truthclass_classification_by_hand(cfg):
+    r = ev.evaluate(CLS, CLS_SC, cfg)["classification_vs_truthClass"]
+    assert r["available"] and r["n"] == 5 and (r["true_noisy"], r["false_noisy"], r["missed_noisy"], r["true_calm"]) == (2, 0, 1, 2)
+    assert r["accuracy"] == pytest.approx(0.8) and r["precision"] == 1.0 and r["recall"] == pytest.approx(2 / 3) and r["f1"] == pytest.approx(0.8)
+    assert r["roc_auc"] == pytest.approx(5 / 6) and r["missed_noisy_ids"] == ["r1"] and r["false_noisy_ids"] == []
+
+
+def test_mean_threshold_and_truthclass_are_reported_separately(cfg):
+    rep = ev.evaluate(CLS, CLS_SC, cfg)
+    a, b = rep["classification_vs_truthClass"], rep["binarized_mean_threshold"]
+    assert (b["true_noisy"], b["false_noisy"], b["missed_noisy"], b["true_calm"]) == (1, 1, 2, 1)          # átlag >= 0,5: r1, r2, r4
+    assert b["accuracy"] == pytest.approx(0.4) and b["precision"] == 0.5 and b["recall"] == pytest.approx(1 / 3)
+    assert b["false_noisy_ids"] == ["r3"] and b["missed_noisy_ids"] == ["r1", "r4"]
+    assert a["accuracy"] != b["accuracy"] and "truthClass" in a["truth_rule"] and "truthMean" in b["truth_rule"]
+
+
+def test_disagreement_between_truthclass_and_mean_threshold(cfg):
+    d = ev.evaluate(CLS, CLS_SC, cfg)["truthClass_vs_mean_threshold_disagreement"]
+    assert d == {"n_checked": 5, "n_disagree": 2, "clickbait_below_threshold": 1, "no_clickbait_at_or_above_threshold": 1, "ids": ["r3", "r4"]}
+
+
+def test_truthclass_missing_or_unknown_label(cfg):
+    none = ev.evaluate([rec(i, i / 10) for i in range(6)], [score(i, i) for i in range(6)], cfg)
+    assert none["classification_vs_truthClass"]["available"] is False and none["truthClass_vs_mean_threshold_disagreement"]["n_checked"] == 0
+    assert "binarized_mean_threshold" in none and none["regression_vs_truthMean"]["n"] == 6      # az átlag-alapú rész ettől még számolódik
+    mixed = [rec(0, 0.1, cls="no-clickbait"), rec(1, 0.9, cls="clickbait"), rec(2, 0.5, cls="Clickbait!"), rec(3, 0.7)]
+    r = ev.evaluate(mixed, [score(i, [0, 8, 4, 6][i]) for i in range(4)], cfg)["classification_vs_truthClass"]
+    assert r["n"] == 2 and r["unlabeled_or_unknown_records"] == 2 and r["accuracy"] == 1.0
+
+
+def test_four_sections_are_present_and_distinct(cfg):
+    rep = ev.evaluate(CLS, CLS_SC, cfg)
+    for k in ("regression_vs_truthMean", "supplementary_vs_truthMedian", "classification_vs_truthClass", "binarized_mean_threshold"):
+        assert k in rep
+    assert "vs_human_mean" not in rep and "classification_at_threshold" not in rep      # a régi, összemosó nevek megszűntek
 
 
 def test_evaluate_coverage_missing_and_unknown_scores(cfg):
@@ -111,10 +166,10 @@ def test_evaluate_reports_both_targets_and_scaling_assumption(cfg):
     scs = [score(i, min(8, i)) for i in range(11)]
     rep = ev.evaluate(recs, scs, cfg)
     assert "total / 8" in rep["scaling_assumption"] and "nem bizonyított" in rep["scaling_assumption"]
-    assert rep["vs_human_mean"]["spearman"] > 0.9 and rep["vs_human_median"]["spearman"] < -0.5      # a medián fordított: a két cél külön számolódik
-    assert set(rep["vs_human_mean"]["ci95"]) == {"mse", "spearman", "kendall_tau_b"}
+    assert rep["regression_vs_truthMean"]["spearman"] > 0.9 and rep["supplementary_vs_truthMedian"]["spearman"] < -0.5      # a medián fordított: a két cél külön számolódik
+    assert set(rep["regression_vs_truthMean"]["ci95"]) == {"mse", "spearman", "kendall_tau_b"}
     assert set(rep["per_signal_spearman_vs_mean"]) == set(SIG)
-    assert rep["isotonic_insample_vs_mean"]["mse"] <= rep["vs_human_mean"]["mse"] + 1e-12     # az illesztés nem lehet rosszabb a nyers átváltásnál
+    assert rep["isotonic_insample_vs_mean"]["mse"] <= rep["regression_vs_truthMean"]["mse"] + 1e-12     # az illesztés nem lehet rosszabb a nyers átváltásnál
 
 
 def test_top_errors_are_sorted_with_a_stable_tie_break(cfg):
@@ -151,5 +206,5 @@ def test_evaluate_does_not_modify_inputs(cfg):
 def test_constant_ai_score_gives_non_computable_correlations(cfg):
     recs = [rec(i, i / 10) for i in range(10)]
     rep = ev.evaluate(recs, [score(i, 3) for i in range(10)], cfg)
-    assert rep["vs_human_mean"]["spearman"] is None and rep["vs_human_mean"]["kendall_tau_b"] is None
-    assert rep["vs_human_mean"]["mse"] > 0 and rep["vs_human_mean"]["ci95"]["spearman"] is None
+    assert rep["regression_vs_truthMean"]["spearman"] is None and rep["regression_vs_truthMean"]["kendall_tau_b"] is None
+    assert rep["regression_vs_truthMean"]["mse"] > 0 and rep["regression_vs_truthMean"]["ci95"]["spearman"] is None

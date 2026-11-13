@@ -14,7 +14,7 @@ def small(cfg, size):
 def test_builtin_smoke_run():
     out = run.do_smoke()
     assert "nem AI" in out["MOCK"] and out["loaded"] == 300 and out["sampled"] == 60 and out["invalid_scores"] == 0
-    assert out["spearman_vs_mean"] > 0.5 and out["kendall"] > 0.4
+    assert out["spearman_vs_truthMean"] > 0.5 and out["kendall"] > 0.4 and out["accuracy_vs_truthClass"] > 0.6
 
 
 def test_twelve_item_chain_through_the_files(tmp_path, cfg):

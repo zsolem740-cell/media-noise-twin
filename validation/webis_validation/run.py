@@ -73,7 +73,8 @@ def do_smoke():
         rep = ev.evaluate(picked, scores, cfg)
         _write_json(results / "smoke_report.json", rep, results)
         return {"MOCK": "szabályalapú próba-pontozó, nem AI és nem mérési eredmény", "loaded": lrep["n_kept"], "sampled": srep["size_actual"],
-                "invalid_scores": len(bad), "spearman_vs_mean": rep["vs_human_mean"]["spearman"], "kendall": rep["vs_human_mean"]["kendall_tau_b"]}
+                "invalid_scores": len(bad), "spearman_vs_truthMean": rep["regression_vs_truthMean"]["spearman"], "kendall": rep["regression_vs_truthMean"]["kendall_tau_b"],
+                "accuracy_vs_truthClass": rep["classification_vs_truthClass"]["accuracy"]}
 
 
 def main(argv):

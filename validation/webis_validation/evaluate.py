@@ -78,6 +78,30 @@ def isotonic_fit(x, y):
     return out
 
 
+def binary_metrics(truth, pred):
+    """Kétosztályos mutatók (1 = zajos). Nem számítható mutató értéke None."""
+    tp = sum(1 for t_, p_ in zip(truth, pred) if t_ == 1 and p_ == 1)
+    fp = sum(1 for t_, p_ in zip(truth, pred) if t_ == 0 and p_ == 1)
+    fn = sum(1 for t_, p_ in zip(truth, pred) if t_ == 1 and p_ == 0)
+    tn = sum(1 for t_, p_ in zip(truth, pred) if t_ == 0 and p_ == 0)
+    n = tp + fp + fn + tn
+    prec = tp / (tp + fp) if tp + fp else None
+    rec = tp / (tp + fn) if tp + fn else None
+    f1 = None if prec is None or rec is None else (0.0 if prec + rec == 0 else 2 * prec * rec / (prec + rec))
+    return {"n": n, "true_noisy": tp, "false_noisy": fp, "missed_noisy": fn, "true_calm": tn,
+            "accuracy": (tp + tn) / n if n else None, "precision": prec, "recall": rec, "f1": f1}
+
+
+def roc_auc(truth, scores):
+    """Terület a ROC-görbe alatt (Mann–Whitney, holtversennyel); None, ha csak egy osztály van."""
+    truth = np.asarray(truth)
+    n1, n0 = int(np.sum(truth == 1)), int(np.sum(truth == 0))
+    if n1 == 0 or n0 == 0:
+        return None
+    r = average_ranks(scores)
+    return float((np.sum(r[truth == 1]) - n1 * (n1 + 1) / 2) / (n1 * n0))
+
+
 def bootstrap_ci(fn, y, p, b, seed):
     rng = random.Random(seed)
     n = len(y)
@@ -116,21 +140,43 @@ def evaluate(records, scores, cfg):
     pairs, cover = pair_up(records, scores)
     if len(pairs) < 2:
         return {"coverage": cover, "error": "legalább 2 pontozott cím kell"}
-    thr = cfg["clickbait_threshold"]
+    thr, lab = cfg["clickbait_threshold"], cfg["class_labels"]
     p = [s["scaled"] for _, s in pairs]
     mean = [r.human_mean for r, _ in pairs]
     med = [r.human_median for r, _ in pairs]
+    pred = [1 if pv >= thr else 0 for pv in p]          # az AI-pontszám binárisítása (a hivatalos eval.py szerint: 0,5 alatt 0, egyébként 1)
     rep = {"coverage": cover, "scaling_assumption": "scaled = total / 8 (kezdeti feltevés, nem bizonyított)",
-           "vs_human_mean": _metrics(mean, p, cfg), "vs_human_median": _metrics(med, p, cfg)}
+           # 1) regresszió a truthMean-re (a Clickbait Challenge elsődleges célja)
+           "regression_vs_truthMean": _metrics(mean, p, cfg),
+           # 2) kiegészítő eredmény a truthMedian-ra
+           "supplementary_vs_truthMedian": _metrics(med, p, cfg)}
     fit = isotonic_fit(p, mean)
     rep["isotonic_insample_vs_mean"] = {"mse": mse(mean, fit), "note": "mintán belüli, optimista illesztés; csak a 0–8 → 0–1 átváltás vizsgálatához, hangolásra nem"}
     rep["per_signal_spearman_vs_mean"] = {k: spearman(mean, [s["signals"][k]["score"] for _, s in pairs]) for k in cfg["scoring"]["signals"]}
-    fn = [r.id for (r, _), pv in zip(pairs, p) if pv >= thr and r.human_mean < thr]
-    miss = [r.id for (r, _), pv in zip(pairs, p) if pv < thr and r.human_mean >= thr]
-    tp = sum(1 for (r, _), pv in zip(pairs, p) if pv >= thr and r.human_mean >= thr)
-    prec, rec = tp / (tp + len(fn)) if tp + len(fn) else None, tp / (tp + len(miss)) if tp + len(miss) else None
-    rep["classification_at_threshold"] = {"threshold": thr, "false_noisy": len(fn), "missed_noisy": len(miss), "true_noisy": tp,
-                                          "precision": prec, "recall": rec, "false_noisy_ids": fn, "missed_noisy_ids": miss}
+    # 3) osztályozás a fájlbeli truthClass-szal (a többségi annotátori ítélet)
+    known = [(i, r) for i, (r, _) in enumerate(pairs) if r.truth_class in (lab["positive"], lab["negative"])]
+    if known:
+        y = [1 if r.truth_class == lab["positive"] else 0 for _, r in known]
+        pc = [pred[i] for i, _ in known]
+        rep["classification_vs_truthClass"] = {
+            "available": True, "truth_rule": "a fájlbeli truthClass (többségi annotátori ítélet)", "ai_rule": f"scaled >= {thr}",
+            "unlabeled_or_unknown_records": len(pairs) - len(known), **binary_metrics(y, pc), "roc_auc": roc_auc(y, [p[i] for i, _ in known]),
+            "false_noisy_ids": [r.id for (i, r), yy, pp in zip(known, y, pc) if yy == 0 and pp == 1],
+            "missed_noisy_ids": [r.id for (i, r), yy, pp in zip(known, y, pc) if yy == 1 and pp == 0]}
+    else:
+        rep["classification_vs_truthClass"] = {"available": False, "reason": "a rekordokhoz nincs ismert truthClass"}
+    # 4) az átlagküszöb alapú binárisítás (NEM azonos a truthClass-szal)
+    y2 = [1 if m >= thr else 0 for m in mean]
+    rep["binarized_mean_threshold"] = {"truth_rule": f"truthMean >= {thr}", "ai_rule": f"scaled >= {thr}", **binary_metrics(y2, pred), "roc_auc": roc_auc(y2, p),
+                                       "false_noisy_ids": [r.id for (r, _), yy, pp in zip(pairs, y2, pred) if yy == 0 and pp == 1],
+                                       "missed_noisy_ids": [r.id for (r, _), yy, pp in zip(pairs, y2, pred) if yy == 1 and pp == 0]}
+    # a két igazság eltérése a vizsgált mintán
+    dis = [(r, 1 if r.truth_class == lab["positive"] else 0, 1 if r.human_mean >= thr else 0) for r, _ in pairs if r.truth_class in (lab["positive"], lab["negative"])]
+    dis = [(r, c, m) for r, c, m in dis if c != m]
+    rep["truthClass_vs_mean_threshold_disagreement"] = {
+        "n_checked": len(known), "n_disagree": len(dis),
+        "clickbait_below_threshold": sum(1 for _, c, m in dis if c == 1 and m == 0), "no_clickbait_at_or_above_threshold": sum(1 for _, c, m in dis if c == 0 and m == 1),
+        "ids": [r.id for r, _, _ in dis]}
     errs = sorted(((abs(pv - r.human_mean), r, s) for (r, s), pv in zip(pairs, p)), key=lambda e: (-e[0], e[1].id))
     rep["top_errors"] = [{"id": r.id, "text": r.text, "human_mean": r.human_mean, "scaled": s["scaled"], "abs_error": round(e, 4),
                           "signals": {k: s["signals"][k]["score"] for k in cfg["scoring"]["signals"]}, "short_title": r.short_title,
