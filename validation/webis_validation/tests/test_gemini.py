@@ -600,3 +600,52 @@ def test_no_network_code_exists_in_the_gemini_modules():
 def test_no_real_transport_is_exposed_by_the_cli():
     src = (MODULE_DIR / "run.py").read_text(encoding="utf-8")
     assert "gemini-dryrun" in src and "run_smoke" not in src                          # a CLI csak a száraz próbát indítja
+
+
+# ------------------------------------------------------------------ a postText változatlanul megy ki
+
+@pytest.mark.parametrize("text", [
+    "RT @CNNPolitics: The U.S. sees #ISIS wives playing a key role in their operations, @barbarastarrcnn reports http://t",      # RT @fiók: előtag, @említés, csonka link
+    "RT @BBCNewsMagazine: John Lennon was paid in chocolate biscuits for a BBC show in 1975 #thingId",
+    "Watch this now http://t",
+    "  leading and trailing spaces stay  ",
+    "Double  spaces   and\ttabs stay",
+    "Line one\nline two stays",
+])
+def test_post_text_goes_out_unchanged(cfg, text):
+    b = gr.build_body(text, cfg)
+    assert b["contents"][0]["parts"][0]["text"] == "<post>\n" + text + "\n</post>"        # nincs tisztítás, vágás, előtag-eltávolítás
+    assert gr.check_request(b, text, cfg) == []
+
+
+def test_source_name_is_never_a_separate_field_but_may_be_inside_the_post_text(cfg):
+    text = "RT @CNNPolitics: Senate votes on the new bill today"
+    b = gr.build_body(text, cfg)
+    assert "CNNPolitics" in b["contents"][0]["parts"][0]["text"]                         # a poszt szövegében szerepelhet
+    fixed = json.dumps(b, ensure_ascii=False).replace(json.dumps("<post>\n" + text + "\n</post>", ensure_ascii=False)[1:-1], "")
+    assert "CNNPolitics" not in fixed                                                    # külön mezőben, a rögzített részben nem
+    b["generationConfig"]["publisher"] = "CNN"
+    assert any("generationConfig" in e for e in gr.check_request(b, text, cfg))
+    for key in ("source", "source_domain", "publisher"):
+        b2 = gr.build_body(text, cfg)
+        b2[key] = "CNN"
+        assert gr.check_request(b2, text, cfg), key
+
+
+def test_no_safety_settings_are_ever_added_and_blocks_are_not_retried(tmp_path, cfg):
+    assert "safetySettings" not in gr.build_body("Some headline here", cfg) and "safetySettings" not in gr.build_body("Some headline here", cfg)["generationConfig"]
+    b = gr.build_body("Some headline here", cfg)
+    b["safetySettings"] = [{"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"}]
+    assert any("felső szintű kulcs" in e for e in gr.check_request(b, "Some headline here", cfg))        # a lazítás a kimenő kérés ellenőrzésén elbukik
+    tr = Script([api(text="", finish="SAFETY")])
+    rep, out, _ = smoke(tmp_path, cfg, tr)
+    assert rep["n_blocked"] == 1 and rep["retries"] == 0 and rep["requests_sent"] == 20 and rep["errors_by_kind"] == {"blocked": 1}
+    assert [e["kind"] for e in jl(out / "errors.jsonl")] == ["blocked"]
+
+
+def test_unchanged_post_text_reaches_the_transport_in_the_run(tmp_path, cfg):
+    texts = ["RT @CNNPolitics: Headline one here http://t"] + TEXTS[1:]
+    inputs = [{"id": f"id{i:02d}", "postText": t} for i, t in enumerate(texts)]
+    tr = Script()
+    smoke(tmp_path, cfg, tr, inputs=inputs)
+    assert tr.calls[0][1]["contents"][0]["parts"][0]["text"] == "<post>\nRT @CNNPolitics: Headline one here http://t\n</post>"

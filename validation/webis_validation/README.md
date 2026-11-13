@@ -77,11 +77,22 @@ Csak a csővezeték ellenőrzése, nem mérési eredmény; **az ingyenes Gemini 
 
 **Mit kap a modell:** egy kérés egy cím, és a kérés pontosan három kulcsot tartalmaz: `systemInstruction` (rögzített utasítás), `contents` (egyetlen `user` elem, benne a rögzített sablon és a `postText`) és `generationConfig` (JSON-kimenet, séma, `temperature` 0, `maxOutputTokens`). Nincs `tools`, nincs keresési grounding, nincs azonosító, cikkmező, forrásnév, emberi pontszám, `truthClass` vagy korábbi AI-pontszám, és magyar-specifikus betűt tartalmazó cím nem mehet ki. A kimenő kérést a `check_request` ellenőrzi, és a száraz próba fájlját újraolvasva független ellenőrzés is lefut.
 
+**A `postText` változatlanul megy a modellhez** (döntés, 2026-11-13):
+- A szöveget nem tisztítjuk, nem vágjuk és nem alakítjuk át. Az `RT @fiók:` előtagot **nem távolítjuk el**: az eredeti Twitter-poszt része, és az annotátorok is ezt értékelték.
+- A csonka linket (például `http://t` a szöveg végén) **nem tisztítjuk**: az eredeti Webis-adat része.
+- A forrásnév **nem külön mezőként**, hanem csak a poszt szövegében szerepelhet (például egy `RT @CNNPolitics:` előtagban). A kérés rögzített részében és mezőiben forrásnév, kiadó vagy `source` mező nincs; a kimenő kérés ellenőrzése ezt elutasítja.
+- A `safetySettings` mezőt **nem adjuk hozzá**, a biztonsági beállítás nem lazítható; a kimenő kérés ellenőrzése elutasítja, ha megjelenik. A biztonsági blokkot külön `blocked` kategóriaként kezeljük, **nem próbáljuk újra**, és nem számít 0 pontnak.
+
 **Kimenet:** a modell jelenként `span`, `reason`, `score` mezőt ad (a sorrend: előbb az idézet, utána a pont). **Az összpontot (0–8) és a 0–1-es skálát (`total / 8`, kezdeti, nem bizonyított feltevés) a kód számolja**, a modell kimenetében ezek nem szerepelnek; ha mégis megjelennek, a kimenet érvénytelen. A `span` szó szerint szerepel a címben (0 pontnál üres), a `reason` legfeljebb 15 szó.
 
 **Hibakezelés:** érvénytelen JSON vagy szabálysértés egy újrapróbával, utána `errors.jsonl` (javítás nélkül); `MAX_TOKENS` érvénytelen, nem próbáljuk újra; időtúllépés (60 s) és 5xx legfeljebb 2 újrapróba 2 és 8 másodperces várakozással; percenkénti 429 a jelzett `retryDelay` után; **napi 429 azonnali leállás**; biztonsági blokk külön `blocked` kategória (nem 0 pont, nincs újrapróba, a beállítás nem lazítható); 400, 401, 403, 404 leállás. Kérések között legalább 13 másodperc, összesen legfeljebb 25 kérés (az újrapróbákkal együtt), a kész címek újrafuttatáskor nem mennek ki újra. Átmenő feltétel: legalább 18 érvényes pontszám a 20-ból, leállás nélkül.
 
 **Fájlok** (`results/smoke_gemini/`, a gitben nincsenek): `selected_inputs.jsonl` (`id`, `postText`), `requests_dryrun.jsonl` (`index`, `id`, `body_sha256`, `body`), `dryrun_check.json` (a száraz próba ellenőrzése, a rétegek), futtatás után `raw_responses.jsonl`, `scores.jsonl`, `errors.jsonl`, `smoke_report.json`.
+
+**A száraz próba után a sorrend** (mindegyik külön jóváhagyással, a száraz próbát a felhasználó már átnézte és elfogadta):
+1. a `generativelanguage.googleapis.com` engedélyezése és a kulcs biztonságos mentése;
+2. csak olvasó modelllista-lekérés (`GET /v1beta/models`), a modell kiválasztásához és a gondolkodási beállítás eldöntéséhez;
+3. a 20 valódi hívás.
 
 **Kapu:** a smoke test után sem indul el a 250 elemű validáció és a 3000 magyar cím; ehhez külön jóváhagyás kell. A futtató fix 20 címre szól, nagyobb futtatáshoz nincs kód.
 
