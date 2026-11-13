@@ -112,10 +112,14 @@ def run_groq(inputs, transport, cfg, out_dir, results_dir, strata_of=None, sleep
 
     def call(batch_no, attempt, items):
         """Egy csomag elküldése átmeneti hibák és percenkénti korlát esetén legfeljebb max_retries újrapróbával. Visszaad: BatchOutcome."""
-        body = rq.build_body(items, cfg)
-        errs = rq.check_request(body, items, cfg)
+        try:
+            body = rq.build_body(items, cfg)
+            errs = rq.check_request(body, items, cfg)
+        except rq.RequestError as e:
+            errs = [str(e)]
         if errs:
-            raise RuntimeError("a kimenő kérés ellenőrzése sikertelen: " + "; ".join(errs))
+            state["stop"] = "a kimenő kérés ellenőrzése sikertelen"          # semmi nem megy ki; a már kész címek megmaradnak a CSV-ben
+            return rq.BatchOutcome("fatal", ("a kimenő kérés ellenőrzése sikertelen: " + "; ".join(errs))[:300])
         raw_body = json.dumps(body, ensure_ascii=False).encode("utf-8")
         tries = 0
         while True:
@@ -134,6 +138,8 @@ def run_groq(inputs, transport, cfg, out_dir, results_dir, strata_of=None, sleep
                 out, status = rq.BatchOutcome("transient", "időtúllépés"), None
             except ConnectionError as e:
                 out, status = rq.BatchOutcome("transient", str(e)), None
+            except Exception as e:                                           # váratlan átviteli hiba: megáll, de a CSV és az összegzés elkészül
+                out, status = rq.BatchOutcome("fatal", f"váratlan átviteli hiba: {type(e).__name__}"), None   # az üzenet szándékosan kimarad
             kinds[out.kind] = kinds.get(out.kind, 0) + 1
             for k in state["tok"]:
                 state["tok"][k] += out.usage.get(k, 0) or 0
@@ -146,7 +152,7 @@ def run_groq(inputs, transport, cfg, out_dir, results_dir, strata_of=None, sleep
                 state["stop"] = "napi korlát"
                 return out
             if out.kind == "fatal":
-                state["stop"] = "végzetes hiba"
+                state["stop"] = "váratlan átviteli hiba" if status is None else "végzetes hiba"
                 return out
             if out.kind in ("transient", "quota_minute") and tries < run["max_retries"]:
                 wait = max(out.retry_after or 0.0, run["backoff_s"][min(tries, len(run["backoff_s"]) - 1)])
@@ -179,8 +185,8 @@ def run_groq(inputs, transport, cfg, out_dir, results_dir, strata_of=None, sleep
                 else:
                     failure = {b["id"]: f"{out.kind}: {out.detail}"[:200] for b in unresolved}
                 unresolved = [b for b in unresolved if b["id"] not in done]
-                if out.kind in ("transient", "quota_minute"):
-                    break                                          # az újrapróbák már elfogytak; érvénytelen-kimenet újrapróba csak invalid/empty/truncated esetén van
+                if out.kind in ("transient", "quota_minute", "truncated"):
+                    break                                          # az újrapróbák már elfogytak; a csonkolt kimenet ugyanazzal a kéréssel újra csonkolódna (mint a Gemini-ág MAX_TOKENS esete); újrapróba csak invalid/empty esetén van
             for b in batch:
                 if b["id"] in done:
                     sc, model = done[b["id"]]

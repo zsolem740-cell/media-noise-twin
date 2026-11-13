@@ -260,8 +260,35 @@ def test_invalid_json_is_retried_once(tmp_path, cfg):
 
 def test_truncated_output_is_classified(tmp_path, cfg):
     cut = gq.Raw(200, json.dumps({"choices": [{"finish_reason": "length", "message": {"content": '{"items": ['}}], "usage": {"total_tokens": 2800}}))
-    rep, _, _ = run(tmp_path, cfg, Script(cut, cut))
-    assert rep["outcomes"]["truncated"] == 2 and rep["batches_failed"] == 1 and rep["tokens"]["total_tokens"] >= 5600
+    rep, _, _ = run(tmp_path, cfg, Script(cut))
+    assert rep["outcomes"]["truncated"] == 1 and rep["batches_failed"] == 1 and rep["tokens"]["total_tokens"] >= 2800
+    assert rep["requests_sent"] == 4 and rep["batches_ok"] == 3            # a csonkolt csomag nem megy ki újra
+
+
+def test_unexpected_transport_error_keeps_finished_titles_and_writes_outputs(tmp_path, cfg):
+    rep, out, _ = run(tmp_path, cfg, Script(ok_raw, ok_raw, KeyError("titkos reszlet")))
+    rows = read_csv(out)
+    assert rep["titles_ok"] == 10 and rep["titles_failed"] == 5 and rep["titles_not_run"] == 5 and rep["requests_sent"] == 3
+    assert rep["stopped_because"] == "váratlan átviteli hiba"
+    assert [r["status"] for r in rows] == ["ok"] * 10 + ["failed"] * 5 + ["not_run"] * 5
+    assert (out / "groq_summary.json").exists() and read_log(out)[-1]["outcome"] == "fatal"
+    assert "titkos" not in "".join(p.read_text(encoding="utf-8") for p in out.iterdir())
+
+
+def test_failed_request_check_stops_without_sending(tmp_path, cfg, monkeypatch):
+    monkeypatch.setattr(rq, "check_request", lambda *a, **k: ["hiba"])
+    script = Script()
+    rep, out, _ = run(tmp_path, cfg, script)
+    assert script.calls == [] and rep["requests_sent"] == 0 and rep["titles_ok"] == 0
+    assert rep["stopped_because"] == "a kimenő kérés ellenőrzése sikertelen" and len(read_csv(out)) == 20
+
+
+def test_transport_never_follows_redirects():
+    from validation.webis_validation import groq_transport as gt
+    src = (MODULE / "groq_transport.py").read_text(encoding="utf-8")
+    assert "urlopen" not in src and "build_opener(NoRedirect)" in src
+    for code in (301, 302, 303, 307, 308):
+        assert gt.NoRedirect().redirect_request(object(), None, code, "", {}, "https://example.com/") is None
 
 
 def test_json_validate_failed_400_counts_as_invalid_not_fatal(tmp_path, cfg):
@@ -341,7 +368,7 @@ def test_env_var_name_is_in_config_but_no_key_value_anywhere():
 def test_only_the_transport_file_touches_network_or_environment():
     for f in MODULE.glob("*.py"):
         src = f.read_text(encoding="utf-8")
-        has = any(w in src for w in ("urlopen", "import urllib", "import socket", "os.environ", "getenv"))
+        has = any(w in src for w in ("build_opener", "import urllib", "import socket", "os.environ", "getenv"))
         assert has == (f.name == "groq_transport.py"), f.name
 
 

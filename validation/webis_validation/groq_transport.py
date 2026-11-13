@@ -15,6 +15,12 @@ class MissingKey(Exception):
     pass
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Az átirányítást nem követjük: a kulcsot hordozó fejléc így nem juthat el más géphez. A 3xx válasz hibaként jön vissza."""
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def make_transport(cfg):
     g = cfg["groq"]
     parts = urlsplit(g["base_url"])
@@ -25,13 +31,14 @@ def make_transport(cfg):
         raise MissingKey(f"a {g['env_var']} környezeti változó nincs beállítva")
     url = g["base_url"].rstrip("/") + g["path"]
     timeout = g["run"]["timeout_s"]
+    opener = urllib.request.build_opener(NoRedirect)
 
     def send(body_bytes):
         req = urllib.request.Request(url, data=body_bytes, method="POST",
                                      headers={"Content-Type": "application/json", "Authorization": "Bearer " + key, "User-Agent": "webis-validation/1"})
         t0 = time.monotonic()
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as r:
+            with opener.open(req, timeout=timeout) as r:
                 return Raw(r.status, r.read().decode("utf-8", "replace"), r.headers.get("retry-after"), time.monotonic() - t0)
         except urllib.error.HTTPError as e:
             return Raw(e.code, e.read().decode("utf-8", "replace"), e.headers.get("retry-after"), time.monotonic() - t0)
