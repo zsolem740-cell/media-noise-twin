@@ -10,8 +10,8 @@ FORBIDDEN_MODEL_FIELDS = ("targetTitle", "targetDescription", "targetKeywords", 
 
 
 def build_model_input(record):
-    """A modell bemenete: kizárólag az azonosító és a cím szövege."""
-    return {"id": record.id, "text": record.text}
+    """A modell bemenete: kizárólag az azonosító és a poszt szövege, a korpusz mezőnevén (postText; itt szöveg, az eredeti egyelemű lista eleme)."""
+    return {"id": record.id, "postText": record.text}
 
 
 def to_scaled(total):

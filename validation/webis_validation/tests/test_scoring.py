@@ -77,10 +77,10 @@ def test_mock_scores_are_valid_against_the_validator(cfg):
         assert scoring.validate_score(synthetic.mock_score(r["id"], t), t, cfg) == []
 
 
-def test_model_input_contains_only_id_and_text():
+def test_model_input_contains_only_id_and_postText():
     r = Record(id="x", text="Some title", human_mean=0.9, human_median=1.0, judgments=(1.0,) * 5, n_annotators=5, file_mean=0.9)
     inp = scoring.build_model_input(r)
-    assert inp == {"id": "x", "text": "Some title"}
+    assert inp == {"id": "x", "postText": "Some title"}
     assert not set(inp) & set(scoring.FORBIDDEN_MODEL_FIELDS)
     assert "0.9" not in json.dumps(inp)
 

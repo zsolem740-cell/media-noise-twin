@@ -52,7 +52,7 @@ A tisztított 2380 rekordban ez **144** (95 és 49); a 79 kizárt ismétlődő r
 ```
 python -m validation.webis_validation.run verify validation/webis_validation/data/clickbait17-train-170331.zip
 python -m validation.webis_validation.run inspect       # mezők, annotátorszám, kizárások, osztályellenőrzés, rétegek eloszlása
-python -m validation.webis_validation.run sample        # 250 elemű minta → results/sample_meta.json, results/model_inputs.jsonl
+python -m validation.webis_validation.run sample        # 250 elemű minta → results/sample_meta.json, results/model_inputs.jsonl (soronként csak {"id", "postText"}; a gitben nincs)
 python -m validation.webis_validation.run evaluate results/scores.jsonl
 python -m validation.webis_validation.run smoke         # szintetikus lánc próba-pontozóval (nem AI), a modul mappáiba nem ír
 python -m pytest -q validation
@@ -66,7 +66,7 @@ A két adatfájl a zip-ből a `data/` mappa gyökerébe csomagolandó ki (`insta
 - A magyar-specifikus betűt (ő, ű) tartalmazó rekordot a betöltő kizárja.
 
 ## Mit kap az AI
-Kizárólag az azonosítót és a `postText` szövegét (`scoring.build_model_input`). Nem kapja meg a cikket (`targetTitle`, `targetDescription`, `targetParagraphs`…), a kiadót, az emberi pontszámot, a `truthClass`-t, korábbi AI-pontszámot vagy más szavazók adatát.
+Kizárólag az azonosítót és a `postText` szövegét (`scoring.build_model_input`): a `model_inputs.jsonl` minden sora `{"id": "…", "postText": "…"}`, ahol a `postText` az eredeti egyelemű lista eleme, szövegként. Nem kapja meg a cikket (`targetTitle`, `targetDescription`, `targetParagraphs`…), a kiadót, az emberi pontszámot, a `truthClass`-t, korábbi AI-pontszámot vagy más szavazók adatát.
 
 ## Korlátok
 - **A korpusz 2017 óta nyilvános**, ezért egy nagy nyelvi modell láthatta tanítás közben. Az eredmény emiatt kedvezőbb lehet, mint egy ismeretlen adaton; a jelentésben ezt fel kell tüntetni.
