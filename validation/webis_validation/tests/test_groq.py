@@ -468,10 +468,85 @@ def test_v2_run_writes_separate_files_and_never_touches_v1(tmp_path, cfg):
 
 def test_unknown_prompt_version_is_refused(cfg):
     c = copy.deepcopy(cfg)
-    c["groq"]["prompt_version"] = "v3"
+    c["groq"]["prompt_version"] = "v9"
     with pytest.raises(rq.RequestError):
         rq.build_body([("t1", "Some title")], c)
 
 
 def test_cli_v2_run_needs_go_flag():
     assert '"groq-run-v2" and argv[1:] == ["--go"]' in (MODULE / "run.py").read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------- v3: két pontos javítás, új ellenőrzőminta
+
+def v3cfg(cfg):
+    from validation.webis_validation import run as runmod
+    return runmod.groq_v3_cfg(cfg)
+
+
+def test_v1_and_v2_prompts_are_frozen():
+    sha = lambda t: hashlib.sha256(t.encode()).hexdigest()
+    assert sha(rq.SYSTEM_PROMPT) == "c05712aaeb0ddb40707c113b1487845922e3eccdcf5abe1c186f394eab4390a5"
+    assert sha(rq.SYSTEM_PROMPT_V2) == "f71d9d2e1fe0ab04176b6a20ff0a45f6948a04115b5cf7b7a4886802ea1b7957"
+
+
+def test_v3_differs_from_v2_in_exactly_the_two_bullets():
+    import difflib
+    a, b = rq.SYSTEM_PROMPT_V2.splitlines(), rq.SYSTEM_PROMPT_V3.splitlines()
+    ops = [o for o in difflib.SequenceMatcher(None, a, b).get_opcodes() if o[0] != "equal"]
+    assert len(ops) == 2
+    added = [l for o in ops for l in b[o[3]:o[4]]]
+    assert any("Do not lower listicle-style" in l for l in added) and any(l.startswith("- formal_noise:") and "@username" in l for l in added)
+    removed = [l for o in ops for l in a[o[1]:o[2]]]
+    assert len(removed) == 1 and removed[0].startswith("- formal_noise:")
+    assert rq.SYSTEM_PROMPT_V3.startswith(gr.SYSTEM_INSTRUCTION) and rq.SYSTEM_PROMPT_V3.endswith(rq.BATCH_ADDENDUM)
+
+
+def test_v3_formal_noise_rules_are_explicit():
+    t = rq.SYSTEM_PROMPT_V3
+    for needle in ("An \"RT\" prefix, an @username, \"via\" and the name of a referenced account", "formal_noise is 0", "acronym such as TSA",
+                   "A hashtag alone scores at most 1", "Score 2 only for several clear formatting elements"):
+        assert needle in t, needle
+    assert "typically scores 2 for curiosity_gap" in t and "1 or 2" in t and "Never reduce such a post to 0" in t
+
+
+def test_v3_prompt_contains_none_of_the_check_or_calibration_titles(cfg):
+    for x in INPUTS:
+        assert x["postText"] not in rq.SYSTEM_PROMPT_V3
+    for bad in ("Obamacare", "JurassicWorld", "WWDC", "motion sickness", "OINTB", "Lennon"):
+        assert bad not in rq.SYSTEM_PROMPT_V3
+
+
+def test_v3_cfg_changes_only_prompt_inputs_and_output_names(cfg):
+    c3 = v3cfg(cfg)
+    a, b = rq.build_body([("t1", "Some title")], cfg), rq.build_body([("t1", "Some title")], c3)
+    assert a["messages"][1] == b["messages"][1] and a["messages"][0] != b["messages"][0]
+    assert {k: v for k, v in a.items() if k != "messages"} == {k: v for k, v in b.items() if k != "messages"}
+    assert list(c3["groq"]["paths"].values())[1:] == ["groq_results_v3.csv", "groq_log_v3.jsonl", "groq_summary_v3.json", "groq_requests_dryrun_v3.jsonl", "groq_dryrun_check_v3.json"]
+    assert c3["groq"]["inputs_file"] != cfg["groq"]["inputs_file"] and cfg["groq"]["prompt_version"] == "v1"
+
+
+def test_check_sample_is_new_stratified_and_seeded(tmp_path, cfg):
+    from validation.webis_validation import run as runmod, synthetic
+    data, res = tmp_path / "data", tmp_path / "results"
+    (res / "smoke_gemini").mkdir(parents=True)
+    synthetic.write_corpus(data, n=1200, seed=4)
+    c = copy.deepcopy(cfg)
+    c["sample"].update(size=240, strata=[dict(s, target=60) for s in cfg["sample"]["strata"]])
+    c["groq"]["check_v3"]["per_stratum"] = 5
+    runmod.do_sample(c, data, res)
+    meta = json.loads((res / "sample_meta.json").read_text(encoding="utf-8"))
+    old = [{"id": i, "postText": "x"} for i in meta["sample"]["ids"][:20]]
+    (res / "smoke_gemini" / "selected_inputs.jsonl").write_text("\n".join(json.dumps(x) for x in old) + "\n", encoding="utf-8")
+    m = runmod.do_groq_select_v3(c, data, res)
+    assert m["n"] == 20 and m["overlap_with_old"] == [] and not set(m["ids"]) & {o["id"] for o in old}
+    assert set(m["strata_counts"].values()) == {5} and len(m["strata_counts"]) == 4 and set(m["ids"]) <= set(meta["sample"]["ids"])
+    rows = [json.loads(l) for l in (res / "groq" / "groq_check_inputs_v3.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert all(set(r) == {"id", "postText"} for r in rows)
+    with pytest.raises(FileExistsError):
+        runmod.do_groq_select_v3(c, data, res)                                  # a minta nem íródik felül
+
+
+def test_cli_v3_commands_are_gated():
+    src = (MODULE / "run.py").read_text(encoding="utf-8")
+    assert '"groq-run-v3" and argv[1:] == ["--go"]' in src and "groq-select-v3" in src and "groq-dryrun-v3" in src

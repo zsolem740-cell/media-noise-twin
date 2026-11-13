@@ -7,6 +7,7 @@
   python -m validation.webis_validation.run smoke                    szintetikus adatokon végigfuttatja a láncot próba-pontozóval (tmp mappában)
   python -m validation.webis_validation.run gemini-dryrun            a 20 címes Gemini smoke test kéréseinek előállítása és ellenőrzése, HÁLÓZAT NÉLKÜL (results/smoke_gemini/)
   python -m validation.webis_validation.run groq-dryrun              a Groq-ág 4 csomagja (5 cím/kérés) a MEGLÉVŐ 20 címre, HÁLÓZAT ÉS KULCS NÉLKÜL (results/groq/)
+  python -m validation.webis_validation.run groq-select-v3 / groq-dryrun-v3 / groq-run-v3 --go   v3: két pontos prompt-javítás, ÚJ 20 címes ellenőrzőmintán (*_v3 fájlok)
   python -m validation.webis_validation.run groq-dryrun-v2 / groq-run-v2 --go   ugyanez a szigorított (v2) prompttal; külön *_v2 fájlokba ír, a v1 fájlokat nem érinti
   python -m validation.webis_validation.run groq-run --go            a 20 cím valódi Groq-futtatása; kell hozzá a GROQ_API_KEY környezeti változó és az api.groq.com engedélyezése"""
 import json
@@ -94,7 +95,7 @@ def do_gemini_dryrun(cfg, data_dir, results_dir):
 
 def _groq_inputs(cfg, results_dir):
     """A MEGLÉVŐ 20 cím: a Gemini smoke test kiválasztott bemenete (csak id + postText), csak olvasva; a Gemini-fájlok nem módosulnak."""
-    rows = gemini_smoke.read_jsonl_file(results_dir / "smoke_gemini" / "selected_inputs.jsonl", results_dir)
+    rows = gemini_smoke.read_jsonl_file(results_dir / cfg["groq"]["inputs_file"], results_dir)
     return [{"id": r["id"], "postText": r["postText"]} for r in rows]
 
 
@@ -105,6 +106,42 @@ def groq_v2_cfg(cfg):
     c["groq"]["prompt_version"] = "v2"
     c["groq"]["paths"] = dict(cfg["groq"]["paths_v2"])
     return c
+
+
+def groq_v3_cfg(cfg):
+    """v3: a v2 szigorított prompt két pontos javítása, ÚJ ellenőrzőmintán; csomagolás, séma, hibakezelés és hálózat ugyanaz, a kimenet *_v3 fájlokba megy."""
+    import copy
+    c = copy.deepcopy(cfg)
+    c["groq"]["prompt_version"] = "v3"
+    c["groq"]["paths"] = dict(cfg["groq"]["paths_v3"])
+    c["groq"]["inputs_file"] = cfg["groq"]["check_v3"]["inputs_file"]
+    return c
+
+
+def do_groq_select_v3(cfg, data_dir, results_dir):
+    """Új, 20 címes ellenőrzőminta HÁLÓZAT NÉLKÜL: a 250 elemű mintából, a v1/v2 20 címének kizárásával, rétegenként 5, új véletlen maggal.
+    Kimenet: csak id + postText (results/groq/groq_check_inputs_v3.jsonl) és a kiválasztás leírása. Nem fér hozzá a modell-eredményekhez."""
+    chk = cfg["groq"]["check_v3"]
+    records, _ = _load(cfg, data_dir)
+    meta = json.loads(check_read(results_dir / "sample_meta.json", results_dir).read_text(encoding="utf-8"))
+    old = {x["id"] for x in _groq_inputs(cfg, results_dir)}
+    pool = [i for i in meta["sample"]["ids"] if i not in old]
+    cfg2 = json.loads(json.dumps(cfg))
+    cfg2["gemini"]["smoke"].update(seed=chk["seed"], per_stratum=chk["per_stratum"], n_titles=cfg["groq"]["n_titles"])
+    order, stratum = gemini_smoke.select_smoke(records, pool, cfg2)
+    by = {r.id: r for r in records}
+    rows = [{"id": rid, "postText": by[rid].text} for rid in order]
+    out = results_dir / "groq"
+    out.mkdir(parents=True, exist_ok=True)
+    pin, pmeta = check_write(results_dir / chk["inputs_file"], results_dir), check_write(results_dir / chk["meta_file"], results_dir)
+    for f in (pin, pmeta):
+        if f.exists():
+            raise FileExistsError(f"{f.name} már létezik: a minta nem íródik felül")
+    pin.write_text("\n".join(json.dumps(x, ensure_ascii=False) for x in rows) + "\n", encoding="utf-8")
+    meta_out = {"n": len(rows), "seed": chk["seed"], "excluded_old_ids": sorted(old), "overlap_with_old": sorted(set(order) & old),
+                "strata_counts": {n: sum(1 for i in order if stratum[i] == n) for n in sorted(set(stratum.values()))}, "ids": order, "note": chk["note"]}
+    pmeta.write_text(json.dumps(meta_out, ensure_ascii=False, indent=1), encoding="utf-8")
+    return meta_out
 
 
 def do_groq_dryrun(cfg, data_dir, results_dir):
@@ -178,6 +215,12 @@ def main(argv):
         print(json.dumps(do_gemini_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-dryrun":
         print(json.dumps(do_groq_dryrun(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-select-v3":
+        print(json.dumps(do_groq_select_v3(cfg, data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-dryrun-v3":
+        print(json.dumps(do_groq_dryrun(groq_v3_cfg(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
+    elif cmd == "groq-run-v3" and argv[1:] == ["--go"]:
+        print(json.dumps(do_groq_run(groq_v3_cfg(cfg), results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-dryrun-v2":
         print(json.dumps(do_groq_dryrun(groq_v2_cfg(cfg), data_dir, results_dir), ensure_ascii=False, indent=1))
     elif cmd == "groq-run-v2" and argv[1:] == ["--go"]:

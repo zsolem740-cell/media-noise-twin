@@ -33,6 +33,26 @@ STRICT_ADDENDUM = (
 )
 SYSTEM_PROMPT_V2 = gr.SYSTEM_INSTRUCTION + STRICT_ADDENDUM + BATCH_ADDENDUM  # v2: ugyanaz az alap, szigorító kiegészítéssel
 
+# v3: a v2 szövegéből pontosan két pont változik (a curiosity_gap és a formal_noise sora); a többi bájtra azonos.
+V3_CG_EXTRA = (
+    "- Do not lower listicle-style or quiz-style posts automatically. A \"N things ... need to know\" structure that names a concrete subject but does not reveal the content "
+    "typically scores 2 for curiosity_gap. A \"Which ... Are You?\" question typically scores 1 or 2. Never reduce such a post to 0 only because it is a listicle or a quiz.\n"
+)
+_V2_FN = (
+    "- formal_noise: only the formatting elements listed above count. A hashtag alone scores at most 1. An acronym such as TSA is not ALL-CAPS noise. "
+    "An \"RT\" prefix is not on the list and does not count. Score 2 only for several clear formatting elements together.\n"
+)
+V3_FN = (
+    "- formal_noise: only the formatting elements listed above count. An \"RT\" prefix, an @username, \"via\" and the name of a referenced account are not formatting noise on their own. "
+    "If the only formatting element is an RT prefix or an @handle, formal_noise is 0. An acronym such as TSA is not ALL-CAPS noise. "
+    "A hashtag alone scores at most 1. Score 2 only for several clear formatting elements together.\n"
+)
+STRICT_ADDENDUM_V3 = STRICT_ADDENDUM.replace(_V2_FN, V3_FN)
+_cg_marker = "are not enough on their own.\n"
+assert _V2_FN in STRICT_ADDENDUM and STRICT_ADDENDUM_V3 != STRICT_ADDENDUM and STRICT_ADDENDUM.count(_cg_marker) == 1
+STRICT_ADDENDUM_V3 = STRICT_ADDENDUM_V3.replace(_cg_marker, _cg_marker + V3_CG_EXTRA)
+SYSTEM_PROMPT_V3 = gr.SYSTEM_INSTRUCTION + STRICT_ADDENDUM_V3 + BATCH_ADDENDUM
+
 
 def system_prompt(cfg):
     v = cfg["groq"].get("prompt_version", "v1")
@@ -40,6 +60,8 @@ def system_prompt(cfg):
         return SYSTEM_PROMPT
     if v == "v2":
         return SYSTEM_PROMPT_V2
+    if v == "v3":
+        return SYSTEM_PROMPT_V3
     raise RequestError(f"ismeretlen prompt_version: {v}")
 POST_TEMPLATE = "<post id=\"{lid}\">\n{postText}\n</post>"
 ALLOWED_TOP_KEYS = {"model", "messages", "temperature", "max_completion_tokens", "reasoning_effort", "response_format"}
