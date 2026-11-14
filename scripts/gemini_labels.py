@@ -338,7 +338,7 @@ def main(env=None, post=_post, get=_get, sleep=time.sleep):
     root = Path(env.get("MNT_ROOT", "."))
     MET = root / "data" / "metrics"
     model = (env.get("GEMINI_MODEL") or DEFAULT_MODEL).strip()
-    arts = (jload(root / "data" / "articles.json", {}) or {}).get("articles", [])
+    arts = (jload(MET / "atm_history.json", {}) or {}).get("items", [])          # az élő hírlista (src/core/atm_engine.py kimenete)
     store = jload(MET / "gemini_labels.json", {}) or {}
     labels, order, entries = store.get("labels") or {}, store.get("order") or [], store.get("search_entries") or {}
     cum = store.get("summary") if isinstance(store.get("summary"), dict) else {}

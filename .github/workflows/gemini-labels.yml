@@ -20,23 +20,19 @@ jobs:
         with:
           ref: main
 
+      - name: Előző adat a data ágról
+        run: scripts/data_branch.sh pull
+
       - name: Gemini-címkék (napi plafon 30 + 10 hír)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
-        run: |
-          f=scripts/gemini_labels.py
-          [ -f ovl__scripts__gemini_labels.py.txt ] && f=ovl__scripts__gemini_labels.py.txt
-          python3 "$f"
+        run: python3 scripts/gemini_labels.py
 
-      - name: Mentés
+      - name: Mentés (data ág)
         if: always()
         run: |
           git config user.name "mnt-bot"
           git config user.email "mnt-bot@users.noreply.github.com"
-          git add data/metrics/gemini_labels.json data/metrics/gemini_budget.json 2>/dev/null || true
-          if ! git diff --cached --quiet; then
-            git commit -m "Gemini javaslatok"
-            git pull --rebase -X theirs origin main
-            git push origin main
-          fi
+          scripts/data_branch.sh push "Gemini javaslatok $(date -u +%FT%TZ)"
+          scripts/data_branch.sh untrack
