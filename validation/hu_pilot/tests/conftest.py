@@ -63,3 +63,7 @@ def backup(voter, votes, skipped=(), mids=()):
         return {"id": i, "vote": kind, "title": "t " + i, "ts": 1000, "blind": blind, "voter": voter, "domain": "x.hu"}
     return {"format": "mnt-backup", "version": 1, "voter": voter, "votes": [rec(i, k, b) if len(x) == 3 else rec(i, k) for x in votes for (i, k, *b_) in [x] for b in [b_[0] if b_ else True]],
             "mids": list(mids), "skipped": list(skipped)}
+
+
+# A közös hálózati zár (tests/conftest.py) itt is érvényes: a pilot tesztjei sem hívhatnak élő API-t.
+from tests.conftest import block_external_network, dummy_env  # noqa: E402,F401

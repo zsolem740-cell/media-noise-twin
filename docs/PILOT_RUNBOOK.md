@@ -16,7 +16,7 @@ Korlátok: lásd `CLAUDE.md` (nincs élő API-hívás, nincs 250 címes futás, 
 6. Ellenőrzés: fejlécben `v47.10`; `atm_history.json` → `Cache-Control: no-store`; a lap → `X-Robots-Tag: noindex`.
 7. Ne adj meg API-kulcsot, ne köss Git-et.
 
-Helyi csomag-ellenőrzés feltöltés előtt: `python scripts/kitchen_dispatch.py --stage stage1 --dry-run`.
+A pilot zipjeit a `validation/hu_pilot/packaging.py` készíti (ez teszi bele a `_headers` fájlt). A `scripts/kitchen_dispatch.py` csomagolója csak olyan mappán fut, amelyben már ott van az `index.html`, `_headers`, `manifest.json` és `sw.js`; a `public/` mappán `_headers` hiányában megáll (ez szándékos védelem). Kiadás előtti minőségkapu: `python scripts/kitchen_dispatch.py --web-dir <mappa> --dry-run`.
 
 ## 2. Horgonykör (20 cím)
 1. `select` → `results/`: `pilot_stage1_anchors.json`, `pilot_stage2_measured.json`, `anchor_preview.txt`, `selection.json`.

@@ -19,5 +19,12 @@
 - Tilos commitolni a results/ mappa tartalmát.
 - Tilos valódi Gemini vagy Groq API-hívást indítani; csak hamis átvitellel tesztelj.
 
+## Kódhelyek
+- A magyar pilot kódja: `validation/hu_pilot/` (kiválasztás, csomagolás, modellfuttató, elemzés), tesztjei: `validation/hu_pilot/tests/`.
+- A pilot eredményei: `validation/hu_pilot/results/` (git nem követi).
+- `src/magyar_pilot/` csak a karbantartót (`maintenance.py`) tartalmazza, pilot-logikát ne tegyél ide.
+- Háttérszkriptek: `scripts/code_guard.py`, `scripts/kitchen_dispatch.py`, `scripts/context_snapshot.py`.
+- Tesztek: `python -m pytest -m "not live_api"` (a `tests/` és a `validation/hu_pilot/tests/` mappát is futtatja, közös hálózati zárral).
+
 ## Munkafolyamatok helye
 - A részletes telepítési és pilot-folyamatok a `docs/PILOT_RUNBOOK.md` fájlban vannak, nem itt.

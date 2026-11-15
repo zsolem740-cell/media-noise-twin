@@ -17,7 +17,7 @@ ALLOWED_WEB_EXTS = {".html", ".js", ".css", ".json", ".svg", ".png", ".ico", ".t
 
 def run_expediter_gate(dry_run: bool = False) -> bool:
     """Minőségellenőrzés a kiadópult előtt: code_guard + offline pytest (dry-run módban is lefut)."""
-    mode_tag = " [DRY-RUN]" if dry_run else ""
+    mode_tag = " DRY-RUN" if dry_run else ""
     if dry_run:
         print("[EXPEDITER DRY-RUN] Megjegyzés: a szárazfutás is lefuttatja a code_guard.py és az offline pytest ellenőrzést.")
     print(f"[EXPEDITER{mode_tag}] Konyhai minőségellenőrzés indítása...")
