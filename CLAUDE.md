@@ -15,7 +15,7 @@
 - Tilos módosítani a v1, v2 vagy v3 promptokat.
 - Tilos 250 címes futást indítani.
 - Tilos bármilyen súlyozást alkalmazni.
-- Tilos Pull Requestet nyitni vagy bármit egyesíteni (merge).
+- Pull Requestet nyitni vagy bármit egyesíteni (merge) csak a felhasználó kifejezett, esetenkénti jóváhagyásával szabad; a jóváhagyás a megnevezett változásra szól, nem általános. Jóváhagyás nélkül tilos. Egyesítés előtt meg kell nézni, mit visz be az ág a célághoz képest (fájlok, törlések), és ha többet, mint amit a felhasználó jóváhagyott, meg kell állni és szólni. Jóváhagyott: 2026-11-16, a Média-Zaj app (public/ és PROJECT_VERSION) v47.11 frissítése a main ágra, külön, csak az appot tartalmazó ágról.
 - Tilos commitolni a results/ mappa tartalmát.
 - Tilos valódi Gemini vagy Groq API-hívást indítani; csak hamis átvitellel tesztelj.
 
