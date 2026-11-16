@@ -595,7 +595,7 @@ async function closeQuick() {
   state.quick = null;
   paintQuick();
   render();
-  maybeAutoBackup();
+  if (fixedOrder()) cloudBackup(false); else maybeAutoBackup();      // pilot: a szavazás végén (Kilépés) azonnal ment, ha a felhő-mentés be van állítva; a főappban marad a ritkább automatikus szabály
 }
 
 function onQuickKey(e) {
