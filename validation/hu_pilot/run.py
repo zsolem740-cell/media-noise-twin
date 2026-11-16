@@ -6,12 +6,13 @@
   python -m validation.hu_pilot.run adjudication EXPORT...  a harmadik szavazathoz kell feed (csak azok a mérési címek, ahol az elsődleges páros eltér)
   python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3|4 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed (4 = külföldi nyelvű címek), ellenőrzéssel és ZIP-pel; nem telepít
   python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
-  python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja"""
+  python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja
+  python -m validation.hu_pilot.run export-bundle          futtatási csomag (50 cím + a lezárás aggregált adata, szavazat és referencia nélkül) az éles futtatáshoz; csak lezárás után"""
 import json
 import sys
 from pathlib import Path
 
-from . import analysis, feeds, freeze, modelrun, packaging, selection
+from . import analysis, bundle, feeds, freeze, modelrun, packaging, selection
 from .paths import REPO_ROOT, check_write, load_config, results_dir
 
 
@@ -128,6 +129,15 @@ def do_package(cfg, app_dir, stage, app_commit=None, base=None):
             "errors": errs, "status": "OK" if not errs else "HIBA"}
 
 
+def do_export_bundle(cfg, base=None, path=None):
+    """Csak érvényes, fájlokkal egyező lezárás után. A csomag az 50 címet és a kapu aggregált adatát tartalmazza, szavazatot és referenciát nem; nem íródik felül."""
+    rdir = results_dir(cfg, base)
+    b = bundle.build_bundle(rdir, cfg)
+    p = bundle.write_bundle(b, path)
+    return {"path": p.name, "titles": len(b["titles"]), "bundle_sha256": b["sha256"], "gate": b["freeze"]["gate"]["decision"],
+            "note": "szavazat és emberi referencia nincs benne; a commitolás külön jóváhagyás tárgya"}
+
+
 def main(argv):
     cfg = load_config()
     cmd, rest = (argv[0] if argv else ""), argv[1:]
@@ -142,6 +152,8 @@ def main(argv):
         out = do_adjudication(cfg, rest)
     elif cmd == "freeze" and rest:
         out = do_freeze(cfg, rest)
+    elif cmd == "export-bundle" and not rest:
+        out = do_export_bundle(cfg)
     elif cmd == "package" and len(rest) in (4, 6) and rest[0] == "--app-dir" and rest[2] == "--stage" and rest[3] in ("1", "2", "3", "4"):
         commit = rest[5] if len(rest) == 6 and rest[4] == "--app-commit" else None
         out = do_package(cfg, rest[1], rest[3], commit)

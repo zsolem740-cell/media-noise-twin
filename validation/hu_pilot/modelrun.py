@@ -16,7 +16,7 @@ from pathlib import Path
 from . import prompt as P
 from . import providers as V
 from . import quota as Q
-from .freeze import NotFrozen, require_freeze
+from .freeze import NotFrozen, check_manifest, require_freeze
 from .paths import check_write
 
 
@@ -138,13 +138,13 @@ def _write_results(run_dir, st, titles, scores, final_status):
 
 # ---------------------------------------------------------------- futtatás
 
-def run_measurement(titles, provider, transport, cfg, rdir, run_name, model, now=_utcnow, sleep=_time.sleep, monotonic=_time.monotonic):
+def run_measurement(titles, provider, transport, cfg, rdir, run_name, model, now=_utcnow, sleep=_time.sleep, monotonic=_time.monotonic, manifest=None):
     check_policy(cfg)
     m, run_cfg = cfg["model"], cfg["model"]["run"]
     if provider not in m["providers"]:
         raise RunRefused(f"ismeretlen szolgáltató: {provider}")
     pcfg = m["providers"][provider]
-    man = require_freeze(rdir, cfg)                                                  # lezárási kapu: nélküle nem indul
+    man = require_freeze(rdir, cfg) if manifest is None else check_manifest(manifest)   # lezárási kapu: nélküle nem indul (manifest: futtatási csomagból, fájlok nélkül)
     expected = man["anchor_ids"] + man["measured_ids"]
     if sorted(t["id"] for t in titles) != sorted(expected):
         raise RunRefused("a címek azonosítói nem egyeznek a lezárt jegyzékkel")
