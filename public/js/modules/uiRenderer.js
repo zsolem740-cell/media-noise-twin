@@ -52,7 +52,11 @@ function renderBackup(box, h) {
     const r = el('input'); r.type = 'text'; r.placeholder = 'felhasználó/tároló'; r.autocomplete = 'off';
     const t = el('input'); t.type = 'password'; t.placeholder = 'kulcs (github_pat_…)'; t.autocomplete = 'off';
     d.append(r, t, mk('Felhő-mentés beállítása', () => h.onCloudSave(r.value, t.value)));
-  } else d.append(mk('Mentés most (GitHub)', h.onCloudNow), mk('Visszaállítás a GitHubról', h.onCloudRestore), mk('Kulcs törlése erről az eszközről', h.onCloudForget));
+  } else {
+    d.append(mk('Mentés most (GitHub)', h.onCloudNow));
+    if (h.voters && h.voters.length > 1 && h.onCloudAll) d.append(mk(`Mentés most: minden szavazó (${h.voters.join(', ')}) egyszerre (GitHub)`, h.onCloudAll));
+    d.append(mk('Visszaállítás a GitHubról', h.onCloudRestore), mk('Kulcs törlése erről az eszközről', h.onCloudForget));
+  }
   box.append(d);
 }
 
