@@ -1,0 +1,49 @@
+name: quotawatch
+
+# Kvótafigyelő: egy megállt vagy kész pilot-modellfuttatás állapotát olvassa ki (hol tart, mikor folytatható, hány próba maradt, szabálysértés van-e a naplóban).
+# Csak olvas, kézzel indítható; nem indít futást, nincs titok, nincs hálózati hívás a modellszolgáltatókhoz. A futást továbbra is csak a felhasználó indíthatja.
+on:
+  workflow_dispatch:
+    inputs:
+      run_name:
+        description: "A futás neve (ugyanaz, mint a pilot-model-run munkafolyamatban)"
+        required: true
+        type: string
+      run_id:
+        description: "A pilot-model-run munkafolyamat futásának azonosítója, amelynek az artifactját olvassuk"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: A futás állapotának letöltése
+        uses: actions/download-artifact@v4
+        with:
+          name: pilot-run-${{ inputs.run_name }}
+          path: ${{ runner.temp }}/pilot_run
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Kvótafigyelő
+        env:
+          RUN_NAME: ${{ inputs.run_name }}
+          OUT_DIR: ${{ runner.temp }}/pilot_run
+        run: |
+          set -o pipefail
+          python -m validation.hu_pilot.quotawatch "$OUT_DIR/model_runs/$RUN_NAME" | tee "$RUNNER_TEMP/quotawatch.txt"
+      - name: Összegzés
+        if: ${{ always() }}
+        run: |
+          if [ -f "$RUNNER_TEMP/quotawatch.txt" ]; then
+            { echo '### Kvótafigyelő'; echo '```'; cat "$RUNNER_TEMP/quotawatch.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
