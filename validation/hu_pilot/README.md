@@ -16,7 +16,7 @@ Szavazók: A, B (elsődleges pár), C (harmadik szavazat az eltéréseknél), D 
 3. Kalibrációs megbeszélés (a koordinátor feljegyzése, nem szavazat).
 4. Mérési kör: a stage2 feeddel, vakon, külön.
 5. `analyze` → kappa (lineárisan súlyozott és sima), egyezés, Krippendorff-alfa, kapu. `adjudication` → `pilot_stage3_adjudication.json` az eltérő mérési címekkel a harmadik szavazathoz.
-6. `freeze`: csak akkor, ha a kapu **átment** (súlyozott κ ≥ 0,5) vagy **eldönthetetlen** (a pontbecslés < 0,5, de a 95%-os bootstrap-intervallum felső határa ≥ 0,5). A lezárási jegyzék a modellfuttatás feltétele.
+6. `freeze`: csak akkor, ha a kapu **átment** (a mind a négy szavazó közös egyezése, Krippendorff-alfa rendezett skálán, a magyar mérési címeken α ≥ 0,5) vagy **eldönthetetlen** (a pontbecslés < 0,5, de a 95%-os bootstrap-intervallum felső határa ≥ 0,5). Kevesebb mint 4 szavazóval a kapu nem számolható (`nem_szamolhato`), és nem is zárható le. Szavazót nem súlyozunk; az A–B páros kappa csak közölt, másodlagos szám (`secondary_pair_kappa`), nem dönt. A lezárási jegyzék a modellfuttatás feltétele.
 7. Referencia: a mérési címek szavazatainak átlaga (`human_reference.csv`, 0–2).
 
 ## Modellfuttató (mérési futás, kódban kész, de nincs belőle parancssori futtatás)
@@ -39,7 +39,7 @@ Ismert apróságok: a gyorsszavazó fejléce a termelési számlálókat mutatja
 A lezárás után: `run export-bundle` (futtatási csomag, szavazat nélkül), majd a GitHubon a kézi indítású **Pilot modellfuttatás** munkafolyamat (alapból hálózat nélküli `check`, éles hívás csak `run` + `INDITSD` mellett). A hálózati réteg a `validation/hu_pilot/live/` csomagban van, ez az egyetlen hely, ahol hálózati kód és környezeti változó szerepel; a többi modul hálózatmentes marad (tesztek őrzik). Lásd `docs/LIVE_RUN.md`. Csomagos kísérlet (egy kérésben több cím, külön futásban): `batchrun.py`, `run compare-runs`.
 
 ## Négy szavazó és külföldi nyelvű kör
-- Szavazók: A, B, C, D (betűk; életkor, nem vagy név sehol nincs rögzítve). A kapu (kappa >= 0,5) továbbra is az A–B páron, a magyar mérési címeken számol. A referencia a mind a négy szavazat átlaga.
+- Szavazók: A, B, C, D (betűk; életkor, nem vagy név sehol nincs rögzítve). A kapu a mind a négy szavazó közös egyezésén (α ≥ 0,5, `gate.alpha_min`, `gate.min_voters` = 4) dönt a magyar mérési címeken; az A–B páros kappa csak közölt szám. (Döntés: 2026-11-16, a szavazatok ismerete előtt; a küszöb változtatása a felhasználó jóváhagyásával lehet.) A referencia a mind a négy szavazat átlaga.
 - Azonos címek, azonos sorrend: a pilot-feed `pilot` mezője miatt az app (v47.11) a feed sorrendjében adja a címeket (a gyorsszavazó csak a szavazó saját nyelveire szűri). A főapp feedjében nincs `pilot` mező, ott semmi nem változik.
 - Külföldi kör (`stage4`): `config.json` `foreign`: 20 cím nyelvenként (en, de, sl), a magyar címektől és egymástól távol, nyelvek szerint váltogatva. Modellfuttatás nincs rá (a mérési futás csak az 50 magyar címre szól).
 - Elemzés (`analysis.json`): `measured.pairs` az összes szavazópár, `foreign.<nyelv>` nyelvenként a párok és az alfa, `voter_profile` szavazónként a címszám csoportonként és a három válasz aránya a mérési címeken.
