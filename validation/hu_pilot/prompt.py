@@ -40,3 +40,28 @@ def groq_response_format(max_points=2):
 
 def canonical_json(obj):
     return json.dumps(obj, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+
+
+# ---------------------------------------------------------------- csomagos mód (KÍSÉRLET): egy kérésben több cím
+# A SYSTEM_INSTRUCTION szó szerint ugyanaz marad (hash változatlan); csak a felhasználói üzenet és a válasz-séma különbözik: a címek egymástól függetlenek, a válasz egy results tömb.
+BATCH_PREFIX = ("Below are {n} independent posts. Each one is between <post id=\"k\"> and </post>. Rate every post on its own, as if the others were not there. "
+                "Answer with one JSON object {{\"results\": [...]}} that has exactly {n} entries in the same order; each entry has \"id\" (the number k of the post) "
+                "and the four signals exactly as described for a single post.")
+
+
+def batch_user_text(posts):
+    head = BATCH_PREFIX.format(n=len(posts))
+    return head + "\n\n" + "\n\n".join(f'<post id="{i}">\n{p}\n</post>' for i, p in enumerate(posts, 1))
+
+
+def gemini_batch_schema(max_points=2):
+    one = gemini_schema(max_points)
+    item = {"type": "OBJECT", "properties": {"id": {"type": "INTEGER"}, **one["properties"]}, "required": ["id"] + list(SIGNALS), "propertyOrdering": ["id"] + list(SIGNALS)}
+    return {"type": "OBJECT", "properties": {"results": {"type": "ARRAY", "items": item}}, "required": ["results"], "propertyOrdering": ["results"]}
+
+
+def groq_batch_response_format(max_points=2):
+    base = groq_response_format(max_points)["json_schema"]["schema"]
+    item = {"type": "object", "additionalProperties": False, "required": ["id"] + list(SIGNALS), "properties": {"id": {"type": "integer"}, **base["properties"]}}
+    return {"type": "json_schema", "json_schema": {"name": "title_noise_batch", "strict": True, "schema": {
+        "type": "object", "additionalProperties": False, "required": ["results"], "properties": {"results": {"type": "array", "items": item}}}}}

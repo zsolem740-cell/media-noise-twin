@@ -29,6 +29,19 @@ def freeze(rdir, cfg, export_paths, sel, analysis, reference_csv, now=None):
     return man
 
 
+def check_manifest(man):
+    """A lezárási jegyzék ellenőrzése fájlok nélkül (futtatási csomag: a modell-futtatás olyan gépen indul, ahol az emberi szavazatok és a referencia nincs meg).
+    Csak a szerkezetet és a kapu döntését nézi; a referencia és az exportok hash-ét a csomag készítésekor, helyben ellenőrizte a require_freeze."""
+    try:
+        ok = (man["gate"]["decision"] in ("atment", "eldonthetetlen") and isinstance(man["anchor_ids"], list) and isinstance(man["measured_ids"], list)
+              and man["anchor_ids"] and man["measured_ids"] and len(set(man["anchor_ids"]) & set(man["measured_ids"])) == 0)
+    except (KeyError, TypeError):
+        ok = False
+    if not ok:
+        raise NotFrozen("a lezárási jegyzék érvénytelen vagy a kapu nem engedi a modell-futtatást")
+    return man
+
+
 def require_freeze(rdir, cfg, export_paths=()):
     """A modellfuttatás kapuja: lezárási jegyzék nélkül, vagy ha a fájlok azóta változtak, kivételt dob."""
     p = Path(rdir) / cfg["files"]["freeze"]

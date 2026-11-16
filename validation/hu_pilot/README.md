@@ -35,6 +35,9 @@ A szavazói exportok valódi tesztelői adatok: nem kerülnek a repóba. A küls
 A horgony-feeddel, két szavazóval (A, B) lefutott: vak mód (nincs pontszám, forrás, AI-szöveg a felületen), a szavazónkénti tárolás (A és B külön látja a 20 címet, a kihagyás és a visszavonás helyes), megmaradás újratöltés után, a „Minden szavazó mentésének másolása”, a magyar megjelenés (ő, ű, „ ”, vízszintes túlcsordulás nincs). A kapott export a Python-elemzőn átmegy; az alkalmazás saját kappája (csak Nyugodt/Hangos, a „Közepes”-t figyelmen kívül hagyja) egyezik a független kétosztályos számítással. A háromosztályos súlyozott kappát csak ez a modul számolja.
 Ismert apróságok: a gyorsszavazó fejléce a termelési számlálókat mutatja („Értékelő sor 0/300 · clickbait 0/40”); a szavazat-rekord az app belső tanulójának értékeit (`S`, `sAi`) is tárolja (nem látszanak). Nem tesztelt: szervizmunkás (service worker) https alatt, valódi telefon, hosting.
 
+## Éles modellfuttatás
+A lezárás után: `run export-bundle` (futtatási csomag, szavazat nélkül), majd a GitHubon a kézi indítású **Pilot modellfuttatás** munkafolyamat (alapból hálózat nélküli `check`, éles hívás csak `run` + `INDITSD` mellett). A hálózati réteg a `validation/hu_pilot/live/` csomagban van, ez az egyetlen hely, ahol hálózati kód és környezeti változó szerepel; a többi modul hálózatmentes marad (tesztek őrzik). Lásd `docs/LIVE_RUN.md`. Csomagos kísérlet (egy kérésben több cím, külön futásban): `batchrun.py`, `run compare-runs`.
+
 ## Négy szavazó és külföldi nyelvű kör
 - Szavazók: A, B, C, D (betűk; életkor, nem vagy név sehol nincs rögzítve). A kapu (kappa >= 0,5) továbbra is az A–B páron, a magyar mérési címeken számol. A referencia a mind a négy szavazat átlaga.
 - Azonos címek, azonos sorrend: a pilot-feed `pilot` mezője miatt az app (v47.11) a feed sorrendjében adja a címeket (a gyorsszavazó csak a szavazó saját nyelveire szűri). A főapp feedjében nincs `pilot` mező, ott semmi nem változik.
