@@ -4,7 +4,7 @@
 export const BACKUP_FORMAT = 'mnt-backup';
 export const BACKUP_VERSION = 1;
 const VOTES = ['fact', 'bait', 'mid'];
-const FIELDS = ['id', 'domain', 'vote', 'title', 'sRule', 'sAi', 'S0', 'S', 'V', 'region', 'atm', 'ts', 'blind', 'srcShown', 'lang', 'queue', 'quick', 'shared', 'voter', 'ver', 'vote2', 'ts2'];
+const FIELDS = ['id', 'domain', 'vote', 'title', 'sRule', 'sAi', 'S0', 'S', 'V', 'region', 'atm', 'ts', 'blind', 'srcShown', 'lang', 'queue', 'quick', 'shared', 'voter', 'ver', 'vote2', 'ts2', 'mig'];
 
 const compact = v => { const o = {}; FIELDS.forEach(k => { if (v[k] !== undefined && v[k] !== null) o[k] = v[k]; }); return o; };
 

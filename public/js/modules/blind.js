@@ -4,9 +4,10 @@ import { detectLangCode } from './lang.js';
 const codeOf = v => (v.lang && v.lang !== 'other' && v.lang !== '?' ? v.lang : detectLangCode(v.title, v.domain));
 
 const KEY = 'mnt-blind';
-export function loadBlind() { try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (_) { return null; } }
-export function saveBlind(b) { try { localStorage.setItem(KEY, JSON.stringify(b)); } catch (_) {} }
-export function clearBlind() { try { localStorage.removeItem(KEY); } catch (_) {} }
+const vk = voter => (voter ? `${KEY}:${voter}` : KEY);   // szavazónkénti kulcs: a vak minta nem keveredik a szavazók között
+export function loadBlind(voter) { try { return JSON.parse(localStorage.getItem(vk(voter)) || 'null'); } catch (_) { return null; } }
+export function saveBlind(b, voter) { try { localStorage.setItem(vk(voter), JSON.stringify(b)); } catch (_) {} }
+export function clearBlind(voter) { try { localStorage.removeItem(vk(voter)); } catch (_) {} }
 
 function rng(seed) {
   let a = seed >>> 0;

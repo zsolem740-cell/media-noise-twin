@@ -14,6 +14,8 @@ export function shuffle(a, rnd = Math.random) {
 // A még nem szavazott, a szavazó nyelvein íródott hírekből három sor: véletlen (értékelő), a legnagyobb szabály–AI eltérésű 150 (tanító), és a közös hírek (azonosító szerinti, mindkét szavazónál azonos sorrendben).
 export function buildPools(rows, ctx, rnd = Math.random) {
   const free = rows.filter(r => r.title && !ctx.voted.has(r.id) && !ctx.skipped.has(r.id) && ctx.langOk(r));
+  // Pilot (rögzített sorrend): a címek a feed sorrendjében jönnek, véletlen, tanító és közös sor nélkül, így minden szavazó ugyanazt kapja ugyanabban a sorrendben (a saját nyelvei szerint szűrve).
+  if (ctx.fixedOrder) return { eval: free, train: [], shared: [] };
   const train = free.slice().sort((a, b) => Math.abs(b.S - b.sAi) - Math.abs(a.S - a.sAi)).slice(0, 150);
   const shared = free.filter(r => isShared(r.id)).sort((a, b) => hashId(String(a.id)) - hashId(String(b.id)) || String(a.id).localeCompare(String(b.id)));
   return { eval: shuffle(free, rnd), train: shuffle(train, rnd), shared };
@@ -51,7 +53,9 @@ export function progress(votes) {
 
 const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v === null ? d : v; } catch (_) { return d; } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
-export const loadRepeats = () => load(REP_KEY, []);
-export const saveRepeats = r => save(REP_KEY, r.slice(-500));
-export const loadSkipped = () => new Set(load(SKIP_KEY, []));
-export const saveSkipped = s => save(SKIP_KEY, [...s].slice(-2000));
+// A kulcs szavazónkénti (voter megadásával): az ismétlések és a kihagyottak nem keverednek a szavazók között.
+const vk = (k, voter) => (voter ? `${k}:${voter}` : k);
+export const loadRepeats = voter => load(vk(REP_KEY, voter), []);
+export const saveRepeats = (r, voter) => save(vk(REP_KEY, voter), r.slice(-500));
+export const loadSkipped = voter => new Set(load(vk(SKIP_KEY, voter), []));
+export const saveSkipped = (s, voter) => save(vk(SKIP_KEY, voter), [...s].slice(-2000));
