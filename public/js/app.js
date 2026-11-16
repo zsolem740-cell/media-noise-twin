@@ -428,6 +428,29 @@ async function cloudBackup(manual) {
     ui.setStatus(`felhő-mentés kész (${nAll()} szavazat)`);
   } finally { state.cloudBusy = false; }
 }
+// Minden helyi szavazó egy koppintásra: szavazónként egy önálló fájl a privát tárolóba (szavazatok-A.json, szavazatok-B.json, ...), a jelenleg kiválasztott szavazó felhő-beállításával.
+async function cloudBackupAll() {
+  const c = state.cloud;
+  if (!c || !c.repo || !c.token) { ui.setStatus('a felhő-mentés nincs beállítva'); return; }
+  if (state.cloudBusy) return;
+  state.cloudBusy = true;
+  try {
+    const priv = await ghRepoPrivate(cloudCfg());
+    if (!priv.ok) { cloudFail(priv.error); return; }
+    const sets = localSets(await vstore.allVotes());
+    if (!sets.length) { ui.setStatus('ezen az eszközön még nincs szavazat'); return; }
+    const okV = [], bad = [];
+    for (const st of sets) {
+      const text = st.voter === state.voter ? makeBackupText() : backupTextFor(st.voter, st.votes);
+      const r = await ghPut(cloudCfg(cloudPath(st.voter)), text, `Mentés ${new Date().toISOString().slice(0, 16)}Z · ${st.voter} · ${st.votes.length} szavazat`);
+      if (r.ok) { okV.push(st.voter); setBackup(st.voter); } else bad.push(`${st.voter}: ${r.error}`);
+    }
+    if (okV.includes(state.voter)) state.cloud = Object.assign({}, state.cloud, { last: Date.now(), count: nAll(), err: bad.length ? state.cloud.err : '' });
+    if (bad.length) state.cloud = Object.assign({}, state.cloud, { err: bad.join('; ') });
+    saveCloud(state.cloud); renderHealthBar(); renderPanels();
+    ui.setStatus(bad.length ? `felhő-mentés részben sikerült (${okV.join(', ') || '-'}); hiba: ${bad.join('; ')}` : `felhő-mentés kész: minden szavazó (${okV.join(', ')}), ${sets.reduce((a, x) => a + x.votes.length, 0)} szavazat`);
+  } finally { state.cloudBusy = false; }
+}
 function maybeAutoBackup() { if (shouldAutoBackup(state.cloud, nAll())) cloudBackup(false); }
 
 async function cloudRestore() {
@@ -505,7 +528,7 @@ function backupInfo() {
     onShare: shareBackup, onCopy: copyBackup, onRestorePreview: previewRestore, onRestoreConfirm: confirmRestore,
     onRestoreCancel: () => { state.pendingRestore = null; renderPanels(); },
     reconText: state.reconText, onRecon: runRecon, onReconCopy: copyRecon,
-    onCloudSave: cloudSave, onCloudNow: () => cloudBackup(true), onCloudRestore: cloudRestore,
+    onCloudSave: cloudSave, onCloudNow: () => cloudBackup(true), onCloudAll: cloudBackupAll, onCloudRestore: cloudRestore,
     onCloudForget: () => { state.cloud = {}; saveCloud({}); ui.setStatus('a kulcs törölve erről az eszközről'); renderHealthBar(); renderPanels(); },
   };
 }
