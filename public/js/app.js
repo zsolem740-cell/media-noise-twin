@@ -519,7 +519,8 @@ function quickView() {
     onAnswer: quickAnswer, onUndo: quickUndo, onClose: closeQuick };
 }
 const paintQuick = () => { const r = ui.$('quick'); if (r) ui.renderQuick(r, quickView()); };
-const nextQuick = () => pickRepeat(state.votes, state.repeats, Date.now()) || takeNext(state.quick.q);
+const fixedOrder = () => !!(state.data && state.data.pilot);   // csak a pilot-feedben van `pilot` mező: ott rögzített sorrend, rejtett ismétlés nélkül
+const nextQuick = () => (fixedOrder() ? null : pickRepeat(state.votes, state.repeats, Date.now())) || takeNext(state.quick.q);
 
 // Indításkor mindig megkérdezi, ki szavaz (egy koppintás): közös eszközön így nem kerül a szavazat a másik szavazó neve alá.
 function openQuick() {
@@ -531,7 +532,7 @@ async function startQuick(v) {
   if (!validVoter(v) || !state.quick || !state.quick.ask) return;
   await switchVoter(v);
   const voted = new Set(state.votes.map(v => v.id).concat(state.midVotes.map(v => v.id)));
-  const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOk });
+  const pools = buildPools(state.rows, { voted, skipped: state.skipped, langOk, fixedOrder: fixedOrder() });
   state.quick = { q: { eval: pools.eval, train: pools.train, shared: pools.shared, step: 0, used: new Set() }, cur: null, last: null, pending: null };
   state.quick.cur = nextQuick();
   paintQuick();

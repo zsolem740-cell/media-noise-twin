@@ -14,6 +14,8 @@ export function shuffle(a, rnd = Math.random) {
 // A még nem szavazott, a szavazó nyelvein íródott hírekből három sor: véletlen (értékelő), a legnagyobb szabály–AI eltérésű 150 (tanító), és a közös hírek (azonosító szerinti, mindkét szavazónál azonos sorrendben).
 export function buildPools(rows, ctx, rnd = Math.random) {
   const free = rows.filter(r => r.title && !ctx.voted.has(r.id) && !ctx.skipped.has(r.id) && ctx.langOk(r));
+  // Pilot (rögzített sorrend): a címek a feed sorrendjében jönnek, véletlen, tanító és közös sor nélkül, így minden szavazó ugyanazt kapja ugyanabban a sorrendben (a saját nyelvei szerint szűrve).
+  if (ctx.fixedOrder) return { eval: free, train: [], shared: [] };
   const train = free.slice().sort((a, b) => Math.abs(b.S - b.sAi) - Math.abs(a.S - a.sAi)).slice(0, 150);
   const shared = free.filter(r => isShared(r.id)).sort((a, b) => hashId(String(a.id)) - hashId(String(b.id)) || String(a.id).localeCompare(String(b.id)));
   return { eval: shuffle(free, rnd), train: shuffle(train, rnd), shared };
