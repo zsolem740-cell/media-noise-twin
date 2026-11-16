@@ -96,12 +96,12 @@ def check_providers(files, read_text, policy):
     out = []
     bad = policy["forbidden_providers"]
     imp = re.compile(r"^\s*(?:import|from)\s+(" + "|".join(map(re.escape, bad)) + r")\b", re.M)
-    host = re.compile(r"https?://[^\s\"']*\b(" + "|".join(map(re.escape, bad)) + r")\b[^\s\"']*", re.I)
+    host = re.compile(r"https?://[^/\s\"']*\b(" + "|".join(map(re.escape, bad)) + r")\b", re.I)                # csak a hosztnév, az útvonal (pl. hír-slug) nem
     for path in files:
         if not path.endswith((".py", ".json", ".yml", ".yaml")) or path.startswith(("scripts/policy_guard.py", "config/guard_policy.json")):
             continue
-        if path.startswith("tests/") or "/tests/" in path:
-            continue
+        if path.startswith("tests/") or "/tests/" in path or path.startswith(tuple(policy.get("data_dirs", []))):
+            continue                                                                                          # a data/ hírszöveg, nem kód: ott bármely cég neve előfordulhat
         text = read_text(path)
         if text is None:
             continue
