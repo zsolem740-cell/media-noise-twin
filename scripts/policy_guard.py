@@ -26,7 +26,7 @@ SECRET_RES = [
 ]
 PLACEHOLDERS = ("REDACTED", "DUMMY", "EXAMPLE", "PLACEHOLDER", "YOUR_", "CHANGEME", "XXXX", "CANARY", "FAKE", "TEST")
 WEIGHT_RE = re.compile(r"(?i)weight|s[uú]lyoz")
-WEIGHT_OK = re.compile(r"(?i)kappa_weighted|weighted\s*=\s*(?:True|False)|\bweighted=|ci95_weighted|\"kappa_weighted\"|quadratic|linear|if weighted else")
+WEIGHT_OK = re.compile(r"(?i)kappa_weighted|weighted\s*=\s*(?:True|False)|\bweighted=|ci95_weighted|\"kappa_weighted\"|quadratic|linear|if weighted else|weighted_kappa|s[uú]lyozott\s+kappa")
 
 
 def finding(level, rule, where, msg):
@@ -168,6 +168,7 @@ def check_weighting(files, read_text):
         if text is None:
             continue
         for n, line in enumerate(text.splitlines(), 1):
+            line = re.sub(r"(?i)font-weight", "", line)                                        # CSS: betűvastagság, nem súlyozás
             if WEIGHT_RE.search(line) and not WEIGHT_OK.search(line):
                 out.append(finding("figyelmeztetés", "weighting", f"{path}:{n}", "súlyozásra utaló szó: ellenőrizd, hogy nem a szavazatokat vagy a címkéket súlyozza"))
     return out

@@ -92,6 +92,18 @@ def test_weighting_warns_on_plain_weights_but_not_on_kappa_weighted():
     assert g.check_weighting(["src/core/atm_engine.py"], rd({"src/core/atm_engine.py": "weights = {}"})) == []
 
 
+def test_weighted_kappa_statistic_is_not_flagged_but_label_or_vote_weighting_still_is():
+    f = {"validation/hu_pilot/x.py": 'mean_weighted_kappa = 1\ntxt = "átlagos páronkénti súlyozott kappa"\nvote_weight = 2\nsúlyozás = 1\n'}
+    res = g.check_weighting(list(f), rd(f))
+    assert [r["where"] for r in res] == ["validation/hu_pilot/x.py:3", "validation/hu_pilot/x.py:4"]
+
+
+def test_css_font_weight_is_not_flagged_but_a_real_weight_on_the_same_line_is():
+    f = {"validation/hu_pilot/x.py": ".a{font-weight:700}\n.b{font-weight:600} label_weight = 3\n"}
+    res = g.check_weighting(list(f), rd(f))
+    assert [r["where"] for r in res] == ["validation/hu_pilot/x.py:2"]
+
+
 def test_run_checks_is_clean_on_a_clean_change_and_aggregates_errors():
     clean = g.run_checks([("M", "validation/hu_pilot/run.py")], ["validation/hu_pilot/run.py"], rd({"validation/hu_pilot/run.py": "x = 1\n"}), P)
     assert [r for r in clean if r["level"] == "hiba"] == []
