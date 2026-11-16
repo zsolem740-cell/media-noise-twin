@@ -40,6 +40,7 @@ Ismert apróságok: a gyorsszavazó fejléce a termelési számlálókat mutatja
 - Azonos címek, azonos sorrend: a pilot-feed `pilot` mezője miatt az app (v47.11) a feed sorrendjében adja a címeket (a gyorsszavazó csak a szavazó saját nyelveire szűri). A főapp feedjében nincs `pilot` mező, ott semmi nem változik.
 - Külföldi kör (`stage4`): `config.json` `foreign`: 20 cím nyelvenként (en, de, sl), a magyar címektől és egymástól távol, nyelvek szerint váltogatva. Modellfuttatás nincs rá (a mérési futás csak az 50 magyar címre szól).
 - Elemzés (`analysis.json`): `measured.pairs` az összes szavazópár, `foreign.<nyelv>` nyelvenként a párok és az alfa, `voter_profile` szavazónként a címszám csoportonként és a három válasz aránya a mérési címeken.
+- Mentés: a pilotban a gyorsszavazó **Kilépés** gombja azonnal feltölt (a beállított privát GitHub tárolóba, szavazónként `szavazatok-<betű>.json`); a főappban a ritkább automatikus szabály marad. Beállítás: `docs/DEPLOY_CLOUDFLARE.md`.
 - A feed semleges forrásneve `pilot.invalid`: egy `.hu` jelű név a felület nyelvfelismerésében magyarnak tüntette fel a német címet (kijavítva, teszttel).
 
 ## Telepítési csomag (Cloudflare Pages)

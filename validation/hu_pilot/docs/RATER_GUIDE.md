@@ -7,7 +7,7 @@
 2. Nyisd ki az **Öntanuló AI** panelt. A **Szavazó** legördülőben válaszd a **saját betűdet** (A, B, C vagy D). Mindenki más betűt használ, és mindenki a saját telefonját.
 3. **Szavazható nyelvek:** ugyanott a magyar mindig be van kapcsolva. Az angolt, németet és szlovént csak akkor kapcsold be, ha az adott nyelven biztosan meg tudod ítélni a cím hangnemét. Aki csak magyarul olvas, ne kapcsoljon be mást. Mindenki maga dönti el.
 4. **Közös telefon:** ha egy telefonon többen szavaztok, mindenki a saját betűjét válassza (A, B, C, D), és minden szavazás előtt újra kiválasztja. A másik szavazatai nem látszanak. Mentés is szavazónként külön történik.
-5. **Ne módosítsd** a „Vak szavazás” és a „Forrás neve szavazás előtt” beállítást, és **ne állíts be felhő-mentést** (GitHub-kulcsot sehová ne írj be).
+5. **Ne módosítsd** a „Vak szavazás” és a „Forrás neve szavazás előtt” beállítást, és **a felhő-mentést csak a koordinátor állítja be, egyszer, a saját telefonján** (GitHub-kulcsot más ne írjon be sehová).
 
 ## Szavazás
 1. Panelen: **Gyorsszavazás indítása (csak magyar hírek)**, majd a saját betűd.
@@ -33,6 +33,8 @@ Mindenki **ugyanazokat a címeket kapja ugyanabban a sorrendben** (a saját nyel
 4. **Eltérő címek** (kevés): csak ha a koordinátor kéri.
 
 ## Mentés és beküldés
+- **Automatikus (a koordinátor telefonján, ha a felhő-mentés be van állítva):** a szavazás végén koppints a **Kilépés** gombra. Az alkalmazás azonnal feltölti a szavazataidat a külön, privát tárolóba, a saját betűd nevű fájlba (`szavazatok-A.json`, `szavazatok-B.json`, ...). A státuszsorban ez látszik: „felhő-mentés kész (N szavazat)”. Ha hibát ír, szólj, és használd az alábbi kézi mentést.
+- **Fontos:** mentés előtt a **saját betűd** legyen kiválasztva (a gyorsszavazó ezt úgyis megkérdezi indításkor). A mentés csak a kiválasztott szavazó szavazatait tartalmazza, ezért mindenki a saját szavazása után lép ki.
 - **Mielőtt törölsz bármit a böngészőből vagy eszközről,** mentsd el a szavazatokat.
 - Az **Öntanuló AI** panelen: **Mentés és helyreállítás → Teljes mentés másolása**. A kimásolt szöveget küldd el **privátban a koordinátornak** (nem csoportba), a kiválasztott szakasz után.
 - Ha két ember használ egy telefont (két betű), a **Minden szavazó mentésének másolása** gombot használjátok.
