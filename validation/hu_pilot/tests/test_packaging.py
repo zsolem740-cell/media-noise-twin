@@ -12,7 +12,7 @@ from .test_hu_pilot import make_feed
 from .conftest import make_titles
 
 
-def make_app(tmp_path, version="v47.10", extra=None):
+def make_app(tmp_path, version="v47.11", extra=None):
     app = tmp_path / "app" / "public"
     for rel, body in {"index.html": "<html><title>Média-Zaj</title></html>", "js/app.js": "import './modules/diag.js';", "js/modules/diag.js": f"export const APP_VERSION = '{version}';",
                       "sw.js": "self.x = 1", "manifest.json": json.dumps({"name": "x"}), "css/main.css": "body{}", **(extra or {})}.items():
@@ -38,7 +38,7 @@ def pkg(selected, app, cfg, stage):
 def test_stage_packages_contain_only_their_own_titles_and_an_unchanged_app(tmp_path, cfg, selected):
     app = make_app(tmp_path)
     out1, out2 = pkg(selected, app, cfg, 1), pkg(selected, app, cfg, 2)
-    assert out1["status"] == "OK" and out1["titles"] == 20 and out2["status"] == "OK" and out2["titles"] == 30 and out1["app_version"] == "v47.10"
+    assert out1["status"] == "OK" and out1["titles"] == 20 and out2["status"] == "OK" and out2["titles"] == 30 and out1["app_version"] == "v47.11"
     d = selected / "deploy"
     f1 = json.loads((d / "stage1/atm_history.json").read_text(encoding="utf-8"))
     f2 = json.loads((d / "stage2/atm_history.json").read_text(encoding="utf-8"))

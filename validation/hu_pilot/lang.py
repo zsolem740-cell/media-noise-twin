@@ -34,3 +34,34 @@ def detect_lang(text, domain=''):
     if ot >= 1.5 and ot > hu:
         return 'other'
     return '?'
+
+
+# ---------------------------------------------------------------- finomabb nyelvkód (hu, en, de, sl, hr, sk): a public/js/modules/lang.js detectLangCode hű portja
+
+EN_C = EN - {'in'}                                           # az „in” német és szlovén szó is: az angol jelzésből kimarad
+SL_U = _W('v ki bo bodo so tudi ali ter bil bila bilo kot pri med lahko zelo več nov nova nove novi zaradi tega vendar kjer kako zakaj ima imajo bomo')
+HR_U = _W('u su koji koja koje će kao također ili te iz više novi nova nove bit bio bila bilo prema nakon zbog jer ovaj ova ovo kako zašto')
+SK_U = _W('sa pre ako ale ktorý ktorá ktoré nový nová nové bude budú majú podľa tiež aj už ešte preto však')
+_DE_SUFFIX = re.compile(r'(ung|heit|keit|schaft|lich|isch|meister|ins)$')
+
+
+def detect_lang_code(text, domain=''):
+    base = detect_lang(text, domain)
+    if base == 'hu':
+        return 'hu'
+    s = str(text or '').lower()
+    tok = LETTERS.findall(s)
+    d = str(domain).lower()
+    cnt = lambda st: sum(1 for w in tok if w in st)
+    ch = lambda pat: len(re.findall(pat, s))
+    sc = {
+        'en': 1.5 * cnt(EN_C),
+        'de': 1.5 * cnt(DE) + 0.8 * ch(r'[äß]') + 0.3 * ch(r'[öü]') + 0.8 * sum(1 for w in tok if _DE_SUFFIX.search(w) and len(w) > 5) + 0.4 * ch(r'sch') + (1.5 if re.search(r'\.(de|at)$', d) else 0),
+        'sl': 1.5 * cnt(SL_U) + 0.8 * ch(r'[čšž]') + (1.5 if re.search(r'\.si$', d) else 0),
+        'hr': 1.5 * cnt(HR_U) + 2 * ch(r'[ćđ]') + 0.8 * ch(r'[čšž]') + 0.8 * ch(r'ije') + (1.5 if re.search(r'\.hr$', d) else 0),
+        'sk': 1.5 * cnt(SK_U) + 2 * ch(r'[ľĺŕôďťň]') + 0.8 * ch(r'ä') + (1.5 if re.search(r'\.sk$', d) else 0),
+    }
+    r = sorted(sc.items(), key=lambda kv: -kv[1])           # a rendezés stabil, mint a JS-ben (azonos pontnál a beszúrási sorrend dönt)
+    if r[0][1] >= 1.5 and r[0][1] - r[1][1] >= 0.5:
+        return r[0][0]
+    return 'other' if base == 'other' else '?'

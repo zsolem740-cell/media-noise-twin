@@ -120,7 +120,7 @@ def test_select_command_writes_only_into_results_and_never_overwrites(tmp_path, 
     out = run.do_select(cfg, feed_path, base=tmp_path / "res")
     assert out["anchors"] == 20 and out["measured"] == 30
     names = {p.name for p in (tmp_path / "res").iterdir()}
-    assert names == {"selection.json", "pilot_stage1_anchors.json", "pilot_stage2_measured.json", "anchor_preview.txt"}
+    assert names == {"selection.json", "pilot_stage1_anchors.json", "pilot_stage2_measured.json", "pilot_stage4_foreign.json", "anchor_preview.txt"}
     with pytest.raises(FileExistsError):
         run.do_select(cfg, feed_path, base=tmp_path / "res")
     s1 = json.loads((tmp_path / "res/pilot_stage1_anchors.json").read_text(encoding="utf-8"))

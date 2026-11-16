@@ -5,7 +5,9 @@
 ## Beállítás (egyszer)
 1. Nyisd meg a kapott linket a telefonodon. Ne a böngészőn kívülről, ne másik linkről: csak a fő URL.
 2. Nyisd ki az **Öntanuló AI** panelt. A **Szavazó** legördülőben válaszd a **saját betűdet** (A, B, C vagy D). Mindenki más betűt használ, és mindenki a saját telefonját.
-3. **Ne módosítsd** a „Vak szavazás” és a „Forrás neve szavazás előtt” beállítást, és **ne állíts be felhő-mentést** (GitHub-kulcsot sehová ne írj be).
+3. **Szavazható nyelvek:** ugyanott a magyar mindig be van kapcsolva. Az angolt, németet és szlovént csak akkor kapcsold be, ha az adott nyelven biztosan meg tudod ítélni a cím hangnemét. Aki csak magyarul olvas, ne kapcsoljon be mást. Mindenki maga dönti el.
+4. **Közös telefon:** ha egy telefonon többen szavaztok, mindenki a saját betűjét válassza (A, B, C, D), és minden szavazás előtt újra kiválasztja. A másik szavazatai nem látszanak. Mentés is szavazónként külön történik.
+5. **Ne módosítsd** a „Vak szavazás” és a „Forrás neve szavazás előtt” beállítást, és **ne állíts be felhő-mentést** (GitHub-kulcsot sehová ne írj be).
 
 ## Szavazás
 1. Panelen: **Gyorsszavazás indítása (csak magyar hírek)**, majd a saját betűd.
@@ -23,9 +25,12 @@
 - Ha szétszakítod a szavazást, nem baj, onnan folytathatod, ahol abbahagytad.
 
 ## Szakaszok
+Mindenki **ugyanazokat a címeket kapja ugyanabban a sorrendben** (a saját nyelvei szerint szűrve). Nincs véletlen sorrend és nincs rejtett ismétlés.
+
 1. **Horgonykör** (20 cím): szavazz, aztán állj meg. A koordinátor közös megbeszélést tart.
 2. **Mérési kör** (30 cím): a megbeszélés után, ugyanazon a linken, frissítés után.
-3. **Eltérő címek** (kevés): csak ha a koordinátor kéri.
+3. **Külföldi nyelvű kör** (60 cím: angol, német, szlovén 20-20): csak azok szavaznak, akik az adott nyelven olvasnak. A gyorsszavazó gombján és az üres-sor üzenetén a „magyar” szó a felület régi felirata, a kiválasztott nyelvekre is érvényes.
+4. **Eltérő címek** (kevés): csak ha a koordinátor kéri.
 
 ## Mentés és beküldés
 - **Mielőtt törölsz bármit a böngészőből vagy eszközről,** mentsd el a szavazatokat.

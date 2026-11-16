@@ -8,7 +8,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from .lang import detect_lang
+from .lang import detect_lang, detect_lang_code
 
 CAPS = re.compile(r"\b[^\W\d_a-záéíóöőúüű]{4,}\b")     # legalább 4 betűs, csupa nagybetűs szó
 QUOTE = re.compile(r"[\"„”“]")
@@ -110,3 +110,51 @@ def select(items, cfg, anchors_override=None):
     return {"anchors": anchors, "measured": measured_random + measured_enriched,
             "measured_random_ids": [i["id"] for i in measured_random], "measured_enriched_ids": [i["id"] for i in measured_enriched],
             "pool": len(pool), "enriched_pool": len(enriched_pool), "excluded": reasons, "source_counts": dict(sorted(used_src.items()))}
+
+
+def eligible_foreign(items, cfg, lang, taken_norms):
+    """Külföldi nyelvű (en, de, sl) jelöltek: ugyanazok a szűrők, mint a magyaroknál; a nyelv a felület nyelvfelismerésével (forrás-domain nélkül) egyezik, és semmi sem lehet a már kiválasztott magyar címek közel-duplikátuma."""
+    f = cfg["filters"]
+    out, seen = [], list(taken_norms)
+    for it in sorted(items, key=lambda r: str(r.get("id"))):
+        t = it.get("title")
+        if not isinstance(t, str) or not t.strip() or not it.get("id") or it.get("official") or it.get("alert"):
+            continue
+        if not f["min_len"] <= len(t) <= f["max_len"] or "\n" in t:
+            continue
+        if detect_lang_code(t, "") != lang:
+            continue
+        n = norm(t)
+        if any(n == x or jaccard(n, x) >= f["jaccard_dup"] for x in seen):
+            continue
+        seen.append(n)
+        out.append(it)
+    return out
+
+
+def select_foreign(items, cfg, taken_titles):
+    """Nyelvenként azonos számú külföldi címet választ (determinisztikus), majd nyelvek szerint váltogatva sorba állítja őket (en, de, sl, en, de, sl, ...), hogy egy elfáradt szavazó
+    ne egy teljes nyelvet veszítsen. Visszaad: {ordered, ids_by_lang, pools}. A magyar kiválasztást nem érinti."""
+    fc = cfg["foreign"]
+    taken = [norm(t) for t in taken_titles]
+    cap, used_src = cfg["filters"]["source_cap_total"], {}
+    by_lang, pools = {}, {}
+    for n, lang in enumerate(fc["languages"]):
+        pool = eligible_foreign(items, cfg, lang, taken)
+        pools[lang] = len(pool)
+        rng = random.Random(cfg["seed"] + 101 + n)
+        got = []
+        for it in rng.sample(pool, len(pool)):
+            if len(got) >= fc["per_language"]:
+                break
+            k = (lang, source_key(it.get("source")))
+            if used_src.get(k, 0) >= cap:
+                continue
+            used_src[k] = used_src.get(k, 0) + 1
+            got.append(it)
+        if len(got) < fc["per_language"]:
+            raise ValueError(f"nincs elég megfelelő cím a(z) {lang} nyelvhez ({len(got)} / {fc['per_language']})")
+        by_lang[lang] = got
+        taken += [norm(i["title"]) for i in got]                      # a nyelvek közt sem lehet közel-duplikátum
+    ordered = [by_lang[lang][i] for i in range(fc["per_language"]) for lang in fc["languages"]]
+    return {"ordered": ordered, "ids_by_lang": {l: [i["id"] for i in v] for l, v in by_lang.items()}, "pools": pools}

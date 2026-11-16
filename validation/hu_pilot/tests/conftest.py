@@ -22,7 +22,35 @@ def make_titles(n, seed=1):
     return out
 
 
-def make_feed(n=200, seed=1, extra=()):
+FOREIGN_WORDS = {
+    "en": ("the council says that the new plan will not be for the city after this vote but you should know what they said about the budget".split(),
+           "harbour bridge winter orchard engine lantern valley market garden railway copper meadow village theatre".split()),
+    "de": ("der die das und ist nicht ein eine mit von zu den dem im auf für bei auch nach wie über aus wird hat sind sich noch".split(),
+           "Brücke Gemeinde Wetter Schule Markt Straße Wald Fest Bahnhof Kirche Winter Dorf Bürgermeister".split()),
+    "sl": ("in je se da na za so ki od pa bo kot po ne tudi ali ter ima bil bila bilo pri med lahko zelo več".split(),
+           "most občina vreme šola trg cesta gozd praznik postaja cerkev zima vas župan žabji".split()),
+}
+
+
+def make_foreign(n_per_lang=30, seed=5):
+    """Mesterséges en/de/sl címek, amelyeket a felület nyelvfelismerése a kívánt nyelvűnek ismer fel (forrás nélkül is)."""
+    from validation.hu_pilot.lang import detect_lang_code
+    rng, out, seen = random.Random(seed), [], set()
+    for lang, (fill, nouns) in FOREIGN_WORDS.items():
+        got = 0
+        while got < n_per_lang:
+            w = rng.sample(fill, 5) + rng.sample(nouns, 3)
+            rng.shuffle(w)
+            t = " ".join(w).capitalize() + ("!" if got % 7 == 0 else "")
+            if t in seen or detect_lang_code(t, "") != lang or detect_lang_code(t, "pilot.invalid") != lang:
+                continue
+            seen.add(t)
+            out.append((lang, t, got))
+            got += 1
+    return out
+
+
+def make_feed(n=200, seed=1, extra=(), foreign=30):
     titles = make_titles(n, seed)
     rng = random.Random(seed + 1)
     items = []
@@ -38,6 +66,9 @@ def make_feed(n=200, seed=1, extra=()):
             t = "„" + t + "”"
         items.append({"id": f"id{i:04d}", "title": t, "source": f"Forrás{i % 30}", "source_domain": "forras.hu", "official": False, "alert": False,
                       "S": rng.random(), "G": rng.random(), "V": rng.random(), "ATM": 7, "lat": 47.1, "lng": 19.0, "region": "HU-BU", "link": "https://x.hu/" + str(i)})
+    for k, (lang, t, i) in enumerate(make_foreign(foreign)):
+        items.append({"id": f"{lang}{i:04d}", "title": t, "source": f"{lang}Forrás{i % 12}", "source_domain": f"{lang}.example", "official": False, "alert": False,
+                      "S": rng.random(), "G": rng.random(), "V": rng.random(), "ATM": 7, "lat": 47.1, "lng": 19.0, "region": "HU-BU", "link": "https://x.hu/" + lang + str(i)})
     items += list(extra)
     return {"schema": 1, "generated_at": "2026-11-12T00:00:00Z", "items": items,
             "model": {"formula": "x", "regions": [{"id": "HU", "name": "Magyarország"}], "weights": {"a": 1.5}, "clickbait": ["sokk"], "thresholds": {"hi": 0.6}},

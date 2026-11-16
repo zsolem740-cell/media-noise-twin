@@ -1,9 +1,10 @@
 """A magyar pilot parancssora. Modellt és hálózatot nem használ.
 
   python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
+  python -m validation.hu_pilot.run select-foreign          külföldi nyelvű kör (en, de, sl) a meglévő kiválasztás mellé; a magyar címeket nem érinti
   python -m validation.hu_pilot.run analyze EXPORT...       kappa, egyezés, kapu, harmadik szavazat listája (results/analysis.json, human_reference.csv)
   python -m validation.hu_pilot.run adjudication EXPORT...  a harmadik szavazathoz kell feed (csak azok a mérési címek, ahol az elsődleges páros eltér)
-  python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed, ellenőrzéssel és ZIP-pel; nem telepít
+  python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3|4 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed (4 = külföldi nyelvű címek), ellenőrzéssel és ZIP-pel; nem telepít
   python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
   python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja"""
 import json
@@ -26,19 +27,39 @@ def do_select(cfg, feed_path=None, base=None):
     op = rdir / "anchors_override.json"
     if op.exists():
         override = json.loads(op.read_text(encoding="utf-8"))
-    for k in ("selection", "stage1", "stage2"):
+    for k in ("selection", "stage1", "stage2", "stage4"):
         if f[k].exists():
             raise FileExistsError(f"{f[k].name} már létezik: a kiválasztás nem íródik felül")
     s = selection.select(items, cfg, override)
+    fo = selection.select_foreign(items, cfg, [i["title"] for i in s["anchors"] + s["measured"]])
     sel = {"seed": cfg["seed"], "feed_generated_at": feed.get("generated_at"), "pool": s["pool"], "enriched_pool": s["enriched_pool"], "excluded": s["excluded"],
            "anchor_ids": [i["id"] for i in s["anchors"]], "measured_ids": [i["id"] for i in s["measured"]],
-           "measured_random_ids": s["measured_random_ids"], "measured_enriched_ids": s["measured_enriched_ids"], "source_counts": s["source_counts"]}
+           "measured_random_ids": s["measured_random_ids"], "measured_enriched_ids": s["measured_enriched_ids"], "source_counts": s["source_counts"],
+           "foreign_ids": fo["ids_by_lang"], "foreign_order": [i["id"] for i in fo["ordered"]], "foreign_pools": fo["pools"]}
     feeds.write_json(f["selection"], sel, rdir)
     feeds.write_json(f["stage1"], feeds.build_feed(s["anchors"], "stage1-anchors", feed), rdir)
     feeds.write_json(f["stage2"], feeds.build_feed(s["measured"], "stage2-measured", feed), rdir)
+    feeds.write_json(f["stage4"], feeds.build_feed(fo["ordered"], "stage4-foreign", feed), rdir)
     prev = check_write(f["anchor_preview"], rdir)
     prev.write_text("\n".join(f"{n:2d}. [{i['id']}] {i['title']}" for n, i in enumerate(s["anchors"], 1)) + "\n", encoding="utf-8")
-    return {k: sel[k] for k in ("pool", "enriched_pool", "excluded")} | {"anchors": len(sel["anchor_ids"]), "measured": len(sel["measured_ids"])}
+    return {k: sel[k] for k in ("pool", "enriched_pool", "excluded")} | {"anchors": len(sel["anchor_ids"]), "measured": len(sel["measured_ids"]),
+                                                          "foreign": {l: len(v) for l, v in sel["foreign_ids"].items()}}
+
+
+def do_select_foreign(cfg, feed_path=None, base=None):
+    """Külföldi nyelvű kör egy MÁR meglévő kiválasztáshoz: a magyar címek (selection.json, stage1/2) érintetlenek maradnak, csak a foreign_* kulcsok és a stage4 feed jönnek létre."""
+    rdir, f = _paths(cfg, base)
+    sel = json.loads(f["selection"].read_text(encoding="utf-8"))
+    if "foreign_ids" in sel or f["stage4"].exists():
+        raise FileExistsError("a külföldi kiválasztás már létezik: nem íródik felül")
+    feed, items = selection.load_feed(feed_path or REPO_ROOT / cfg["feed"])
+    by = {i["id"]: i for i in items}
+    taken = [by[i]["title"] for i in sel["anchor_ids"] + sel["measured_ids"]]
+    fo = selection.select_foreign(items, cfg, taken)
+    sel.update({"foreign_ids": fo["ids_by_lang"], "foreign_order": [i["id"] for i in fo["ordered"]], "foreign_pools": fo["pools"]})
+    feeds.write_json(f["stage4"], feeds.build_feed(fo["ordered"], "stage4-foreign", feed), rdir)
+    feeds.write_json(f["selection"], sel, rdir)
+    return {"foreign": {l: len(v) for l, v in sel["foreign_ids"].items()}, "pools": fo["pools"]}
 
 
 def _load(cfg, exports, base=None):
@@ -86,13 +107,13 @@ def do_model_dryrun(cfg, provider, base=None):
 
 
 def do_package(cfg, app_dir, stage, app_commit=None, base=None):
-    """A telepíthető csomag egy szakaszra (1 horgony, 2 mérési, 3 harmadik szavazat): a v47.10 public/ mappa + a szakasz pilot-feedje, ellenőrzéssel és ZIP-pel. Nem telepít."""
+    """A telepíthető csomag egy szakaszra (1 horgony, 2 mérési, 3 harmadik szavazat, 4 külföldi nyelvű): a v47.11 public/ mappa + a szakasz pilot-feedje, ellenőrzéssel és ZIP-pel. Nem telepít."""
     rdir, f = _paths(cfg, base)
-    key = {"1": "stage1", "2": "stage2", "3": "stage3"}[str(stage)]
+    key = {"1": "stage1", "2": "stage2", "3": "stage3", "4": "stage4"}[str(stage)]
     feed = json.loads(f[key].read_text(encoding="utf-8"))
     mine = [i["title"] for i in feed["items"]]
     others = []
-    for k in ("stage1", "stage2", "stage3"):
+    for k in ("stage1", "stage2", "stage3", "stage4"):
         if k != key and f[k].exists():
             others += [i["title"] for i in json.loads(f[k].read_text(encoding="utf-8"))["items"]]
     if str(stage) == "3":
@@ -112,6 +133,8 @@ def main(argv):
     cmd, rest = (argv[0] if argv else ""), argv[1:]
     if cmd == "select" and not rest:
         out = do_select(cfg)
+    elif cmd == "select-foreign" and not rest:
+        out = do_select_foreign(cfg)
     elif cmd == "analyze" and rest:
         r = do_analyze(cfg, rest)
         out = {"gate": r["gate"], "voters": r["voters"], "coverage": r["coverage"], "adjudication_titles": len(r["adjudication_ids"])}
@@ -119,7 +142,7 @@ def main(argv):
         out = do_adjudication(cfg, rest)
     elif cmd == "freeze" and rest:
         out = do_freeze(cfg, rest)
-    elif cmd == "package" and len(rest) in (4, 6) and rest[0] == "--app-dir" and rest[2] == "--stage" and rest[3] in ("1", "2", "3"):
+    elif cmd == "package" and len(rest) in (4, 6) and rest[0] == "--app-dir" and rest[2] == "--stage" and rest[3] in ("1", "2", "3", "4"):
         commit = rest[5] if len(rest) == 6 and rest[4] == "--app-commit" else None
         out = do_package(cfg, rest[1], rest[3], commit)
     elif cmd == "model-dryrun" and len(rest) == 1 and rest[0] in cfg["model"]["providers"]:

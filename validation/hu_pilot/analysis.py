@@ -213,6 +213,19 @@ def usage_stats(votes, ids, skipped_by_voter, cfg):
             "skip_share_ok": (skip / (skip + tot) <= g["skip_share_max"]) if (skip + tot) else None}
 
 
+def voter_profile(votes, sel):
+    """Szavazónként: hány címet értékelt csoportonként (horgony, mérési, külföldi nyelvenként), és a mérési címeken a három válasz aránya (ebből látszik, ki szigorúbb vagy engedékenyebb)."""
+    groups = {"anchors": set(sel["anchor_ids"]), "measured": set(sel["measured_ids"]), **{f"foreign_{l}": set(v) for l, v in (sel.get("foreign_ids") or {}).items()}}
+    out = {}
+    for voter in sorted({v["voter"] for v in votes}):
+        mine = [v for v in votes if v["voter"] == voter]
+        prof = {g: sum(1 for v in mine if v["id"] in ids) for g, ids in groups.items()}
+        ms = [v["ordinal"] for v in mine if v["id"] in groups["measured"]]
+        prof["measured_distribution"] = {str(c): (ms.count(c) / len(ms) if ms else None) for c in (0, 1, 2)}
+        out[voter] = prof
+    return out
+
+
 def analyze(votes, rep, sel, cfg):
     """sel: a selection.json tartalma (anchor_ids, measured_ids)."""
     anchors, measured = set(sel["anchor_ids"]), set(sel["measured_ids"])
@@ -223,6 +236,14 @@ def analyze(votes, rep, sel, cfg):
         out[name] = {"n_titles_with_votes": len(rat), "pairs": [pair_stats(rat, a, b) for a, b in combinations(voters, 2)],
                      "krippendorff_alpha_ordinal": krippendorff_alpha([list(r.values()) for r in rat.values()], "ordinal"),
                      "usage": usage_stats(votes, ids, rep["skipped_by_voter"], cfg)}
+    out["foreign"] = {}
+    for lang, ids in (sel.get("foreign_ids") or {}).items():
+        rat = ratings(votes, set(ids))
+        vs = sorted({x for r in rat.values() for x in r})
+        out["foreign"][lang] = {"n_titles": len(ids), "n_titles_with_votes": len(rat), "voters": vs,
+                                "pairs": [pair_stats(rat, a, b) for a, b in combinations(vs, 2) if any(a in r and b in r for r in rat.values())],
+                                "krippendorff_alpha_ordinal": krippendorff_alpha([list(r.values()) for r in rat.values() if len(r) >= 2], "ordinal") if any(len(r) >= 2 for r in rat.values()) else None}
+    out["voter_profile"] = voter_profile(votes, sel)
     rm = ratings(votes, measured)
     out["gate"] = gate(rm, cfg)
     out["adjudication_ids"] = adjudication_ids(rm, cfg["voters"]["primary"])

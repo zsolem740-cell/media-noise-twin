@@ -31,9 +31,16 @@ Szavazók: A, B (elsődleges pár), C (harmadik szavazat az eltéréseknél), D 
 ## Adatkezelés
 A szavazói exportok valódi tesztelői adatok: nem kerülnek a repóba. A külső API-nak csak a címszöveg mehet.
 
-## Helyi füstpróba (v47.10 ág, fejtetlen böngésző, 390 px)
+## Helyi füstpróba (v47.10 ág, a v47.11-ben a rögzített sorrendet külön próbáltam, fejtetlen böngésző, 390 px)
 A horgony-feeddel, két szavazóval (A, B) lefutott: vak mód (nincs pontszám, forrás, AI-szöveg a felületen), a szavazónkénti tárolás (A és B külön látja a 20 címet, a kihagyás és a visszavonás helyes), megmaradás újratöltés után, a „Minden szavazó mentésének másolása”, a magyar megjelenés (ő, ű, „ ”, vízszintes túlcsordulás nincs). A kapott export a Python-elemzőn átmegy; az alkalmazás saját kappája (csak Nyugodt/Hangos, a „Közepes”-t figyelmen kívül hagyja) egyezik a független kétosztályos számítással. A háromosztályos súlyozott kappát csak ez a modul számolja.
 Ismert apróságok: a gyorsszavazó fejléce a termelési számlálókat mutatja („Értékelő sor 0/300 · clickbait 0/40”); a szavazat-rekord az app belső tanulójának értékeit (`S`, `sAi`) is tárolja (nem látszanak). Nem tesztelt: szervizmunkás (service worker) https alatt, valódi telefon, hosting.
 
+## Négy szavazó és külföldi nyelvű kör
+- Szavazók: A, B, C, D (betűk; életkor, nem vagy név sehol nincs rögzítve). A kapu (kappa >= 0,5) továbbra is az A–B páron, a magyar mérési címeken számol. A referencia a mind a négy szavazat átlaga.
+- Azonos címek, azonos sorrend: a pilot-feed `pilot` mezője miatt az app (v47.11) a feed sorrendjében adja a címeket (a gyorsszavazó csak a szavazó saját nyelveire szűri). A főapp feedjében nincs `pilot` mező, ott semmi nem változik.
+- Külföldi kör (`stage4`): `config.json` `foreign`: 20 cím nyelvenként (en, de, sl), a magyar címektől és egymástól távol, nyelvek szerint váltogatva. Modellfuttatás nincs rá (a mérési futás csak az 50 magyar címre szól).
+- Elemzés (`analysis.json`): `measured.pairs` az összes szavazópár, `foreign.<nyelv>` nyelvenként a párok és az alfa, `voter_profile` szavazónként a címszám csoportonként és a három válasz aránya a mérési címeken.
+- A feed semleges forrásneve `pilot.invalid`: egy `.hu` jelű név a felület nyelvfelismerésében magyarnak tüntette fel a német címet (kijavítva, teszttel).
+
 ## Telepítési csomag (Cloudflare Pages)
-`run package --app-dir PUBLIC --stage 1|2|3 [--app-commit SHA]`: a `claude/szavazonkenti-tarolas` ág `public/` mappáját (v47.10, `git archive claude/szavazonkenti-tarolas public | tar -x -C DIR`) változatlanul + a szakasz pilot-feedjét csomagolja determinisztikus ZIP-be a `results/deploy/` alá, ellenőrzéssel (verzió, fájltípusok, csak a szakasz címei, semleges sorok, `_headers`). Nem telepít. Lásd a `docs/DEPLOY_CLOUDFLARE.md` és a `docs/RATER_GUIDE.md` fájlt. Helyi próba: a szakaszváltás ugyanazon az origin-en, aktív service workerrel, 20 + 30 = 50 szavazat megmarad.
+`run package --app-dir PUBLIC --stage 1|2|3|4 [--app-commit SHA]`: a `claude/pilot-rogzitett-sorrend` ág `public/` mappáját (v47.11, `git archive claude/pilot-rogzitett-sorrend public | tar -x -C DIR`) változatlanul + a szakasz pilot-feedjét csomagolja determinisztikus ZIP-be a `results/deploy/` alá, ellenőrzéssel (verzió, fájltípusok, csak a szakasz címei, semleges sorok, `_headers`). Nem telepít. Lásd a `docs/DEPLOY_CLOUDFLARE.md` és a `docs/RATER_GUIDE.md` fájlt. Helyi próba: a szakaszváltás ugyanazon az origin-en, aktív service workerrel, 20 + 30 = 50 szavazat megmarad.

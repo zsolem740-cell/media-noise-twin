@@ -12,7 +12,7 @@ ROW_KEYS = {"ATM", "G", "S", "S0", "V", "V0", "alert", "id", "lat", "link", "lng
 def neutral_row(item):
     r = {k: 0 for k in NEUTRAL_KEYS}
     r.update({"alert": False, "official": False, "id": item["id"], "link": "", "published": "2000-01-01T00:00:00Z", "region": "HU",
-              "source": "pilot", "source_domain": "pilot.hu", "summary": "", "title": item["title"]})
+              "source": "pilot", "source_domain": "pilot.invalid", "summary": "", "title": item["title"]})
     return r
 
 

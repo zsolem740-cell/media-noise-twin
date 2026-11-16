@@ -10,7 +10,7 @@ import pytest
 from validation.hu_pilot import modelrun as mr
 from validation.hu_pilot import run
 from validation.hu_pilot.freeze import NotFrozen
-from .test_hu_pilot import write_exports, KIND
+from .test_four_voters import four_voter_exports
 from .test_modelrun import CANARY, Clock, GEM, GRQ, Script, jl, ok_raw, post_of, quota_day
 from .test_packaging import make_app
 
@@ -25,10 +25,8 @@ def chain(tmp_path, cfg, feed_path):
     log["select"] = run.do_select(cfg, feed_path, base=res)
     sel = json.loads((res / "selection.json").read_text(encoding="utf-8"))
     app = make_app(tmp_path)
-    log["package"] = [run.do_package(cfg, app, s, "abc123", base=res) for s in (1, 2)]
-    ids = sel["anchor_ids"] + sel["measured_ids"]
-    a = [KIND[(n * 7) % 3] for n in range(len(ids))]
-    exp = write_exports(tmp_path, {"A": list(zip(ids, a)), "B": list(zip(ids, a)), "C": list(zip(ids, a))})
+    log["package"] = [run.do_package(cfg, app, s, "abc123", base=res) for s in (1, 2, 4)]
+    exp = four_voter_exports(tmp_path, sel)                                    # A, B, C: magyar + külföldi; D: csak magyar
     log["analyze"] = run.do_analyze(cfg, [exp], base=res)
     log["adjudication"] = run.do_adjudication(cfg, [exp], feed_path, base=res)
     with pytest.raises(NotFrozen):                                            # a lezárás előtt a modell nem indulhat
@@ -51,8 +49,9 @@ def run_model(chain, cfg, provider, steps, name, t):
 def test_the_preparation_chain_hands_consistent_data_from_step_to_step(chain):
     res, sel, log, titles = chain
     assert log["select"]["anchors"] == 20 and log["select"]["measured"] == 30
-    assert [p["status"] for p in log["package"]] == ["OK", "OK"] and [p["titles"] for p in log["package"]] == [20, 30]
-    assert log["analyze"]["gate"]["decision"] == "atment" and log["adjudication"] == {"adjudication_titles": 0}
+    assert [p["status"] for p in log["package"]] == ["OK", "OK", "OK"] and [p["titles"] for p in log["package"]] == [20, 30, 60]
+    assert log["analyze"]["gate"]["decision"] == "atment" and log["analyze"]["voters"] == ["A", "B", "C", "D"]
+    assert log["analyze"]["voter_profile"]["D"]["foreign_en"] == 0 and log["analyze"]["foreign"]["sl"]["voters"] == ["A", "B", "C"]
     assert log["freeze"]["anchor_ids"] == sorted(sel["anchor_ids"]) and log["freeze"]["measured_ids"] == sorted(sel["measured_ids"])
     assert [t["id"] for t in titles] == sel["anchor_ids"] + sel["measured_ids"]
     for p in ("gemini", "groq"):
