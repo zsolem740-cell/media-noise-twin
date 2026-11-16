@@ -59,3 +59,6 @@ A snapshot a `data/`, `mentesek/` és `results/` mappát nem olvassa, a titkokat
 A `results/` nincs gitben, ezért elveszhet. A horgonykör közben már leszavazott lehet, ezért a horgonyokat nem a feedből, hanem a leszavazott exportokból kell rögzíteni:
 `python -m validation.hu_pilot.run select --anchors-from EXPORT...` (mind a 20 címnek azonosan szerepelnie kell az exportokban).
 A mérési és a külföldi címek az aktuális feedből jönnek, a horgonyokat és közel-duplikátumaikat kizárva; a `selection.json` `reselection` mezője rögzíti ezt. Ez csak addig tisztességes, amíg a mérési címeket senki nem látta és a modell nem futott. Ne töröld a `results/` mappát (`git clean` nélkül dolgozz a munkafán).
+
+## A napi Gemini-címkézés kivezetve
+A korábbi óránkénti `gemini-labels` munkafolyamat és a `scripts/gemini_labels.py` megszűnt, hogy a napi Gemini-kvótát a pilot mérése használja. A `data/metrics/gemini_labels.json` és `gemini_budget.json` utolsó állapota megmarad (az alkalmazás ezeket olvassa). Kulcsot használó munkafolyamat csak kézzel indítható (`tests/unit/test_workflow_keys.py` ellenőrzi).
