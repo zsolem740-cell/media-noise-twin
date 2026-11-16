@@ -196,7 +196,7 @@ def bootstrap_alpha(rat, B, seed, k=3):
 
 
 def gate(rat_measured, cfg, seed=1):
-    """A kapu a mind a négy szavazó közös egyezésén (Krippendorff-alfa, ordinális skála, a magyar mérési címeken) dönt. Szavazót nem súlyozunk.
+    """A kapu a mind a négy szavazó közös egyezésén (Krippendorff-alfa, ordinális skála, a magyar mérési címeken) dönt. Minden szavazó egyformán számít.
     Az A–B páros kappa csak közölt, másodlagos szám: nem dönt. Kevesebb szavazóval, mint min_voters, a kapu nem számolható."""
     g = cfg["gate"]
     voters = sorted({x for r in rat_measured.values() for x in r})
