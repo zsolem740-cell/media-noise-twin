@@ -62,6 +62,14 @@ def test_third_provider_import_and_host_are_errors_but_gemini_groq_are_fine():
     assert {r["where"].split(":")[0] for r in res} == {"x.py", "y.json"} and rules(res) == {"third-provider"}
 
 
+def test_provider_name_in_a_news_slug_or_in_data_is_not_a_third_provider_but_a_real_host_is():
+    slug = {"cfg.json": '{"link": "https://nypost.com/2026/11/16/us-news/california-sues-openai-after-hack/"}'}
+    assert g.check_providers(["cfg.json"], rd(slug), P) == []                                  # útvonal-slug: nem hosztnév
+    data = {"data/metrics/x.json": '{"u": "https://api.openai.com/v1"}', "scripts/a.py": "import json\nU='https://api.openai.com/v1'\n"}
+    res = g.check_providers(list(data), rd(data), P)
+    assert [r["where"] for r in res] == ["scripts/a.py:2"]                                       # a data/ kimarad, a kódban lévő valódi hoszt hiba
+
+
 def test_live_endpoint_outside_allowed_files_is_error_inside_is_ok_and_in_tests_only_warning():
     ep = "generativelanguage.googleapis.com"
     files = {"scripts/new.py": f"U='https://{ep}/v1'", "validation/hu_pilot/live/transport.py": f"U='{ep}'", "tests/unit/t.py": f"U='{ep}'"}
