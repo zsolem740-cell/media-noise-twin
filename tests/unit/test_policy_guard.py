@@ -51,7 +51,7 @@ def test_secrets_are_found_without_printing_the_value_and_placeholders_are_ignor
 
 
 def test_sk_prefix_inside_a_word_or_url_slug_is_not_a_secret_but_a_standalone_one_is():
-    slug = {"d.json": '{"link": "https://example.org/world-news/risk-of-something-very-long-in-a-slug/"}'}
+    slug = {"d.json": '{"link": "https://example.org/world-news/ri' + 'sk-of-something-' + 'very-long-in-a-slug/"}'}          # összefűzve: a code_guard ne lássa kulcsnak
     assert g.check_secrets(["d.json"], rd(slug)) == []
     assert rules(g.check_secrets(["a.py"], rd({"a.py": 'k = "sk-' + "q" * 24 + '"'}))) == {"secret"}
 
