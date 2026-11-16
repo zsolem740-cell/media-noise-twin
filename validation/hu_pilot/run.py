@@ -107,7 +107,7 @@ def do_model_dryrun(cfg, provider, base=None):
 
 
 def do_package(cfg, app_dir, stage, app_commit=None, base=None):
-    """A telepíthető csomag egy szakaszra (1 horgony, 2 mérési, 3 harmadik szavazat, 4 külföldi nyelvű): a v47.11 public/ mappa + a szakasz pilot-feedje, ellenőrzéssel és ZIP-pel. Nem telepít."""
+    """A telepíthető csomag egy szakaszra (1 horgony, 2 mérési, 3 harmadik szavazat, 4 külföldi nyelvű): a v47.12 public/ mappa + a szakasz pilot-feedje, ellenőrzéssel és ZIP-pel. Nem telepít."""
     rdir, f = _paths(cfg, base)
     key = {"1": "stage1", "2": "stage2", "3": "stage3", "4": "stage4"}[str(stage)]
     feed = json.loads(f[key].read_text(encoding="utf-8"))

@@ -34,7 +34,7 @@ Mindenki **ugyanazokat a címeket kapja ugyanabban a sorrendben** (a saját nyel
 
 ## Mentés és beküldés
 - **Automatikus (a koordinátor telefonján, ha a felhő-mentés be van állítva):** a szavazás végén koppints a **Kilépés** gombra. Az alkalmazás azonnal feltölti a szavazataidat a külön, privát tárolóba, a saját betűd nevű fájlba (`szavazatok-A.json`, `szavazatok-B.json`, ...). A státuszsorban ez látszik: „felhő-mentés kész (N szavazat)”. Ha hibát ír, szólj, és használd az alábbi kézi mentést.
-- **Fontos:** mentés előtt a **saját betűd** legyen kiválasztva (a gyorsszavazó ezt úgyis megkérdezi indításkor). A mentés csak a kiválasztott szavazó szavazatait tartalmazza, ezért mindenki a saját szavazása után lép ki.
+- **Fontos:** mentés előtt a **saját betűd** legyen kiválasztva (a gyorsszavazó ezt úgyis megkérdezi indításkor). A Kilépés a kilépő szavazót menti. A nap végén a koordinátor a **Mentés most: minden szavazó egyszerre (GitHub)** gombbal egyszerre feltölti az összes szavazót, ez a biztonsági mentés.
 - **Mielőtt törölsz bármit a böngészőből vagy eszközről,** mentsd el a szavazatokat.
 - Az **Öntanuló AI** panelen: **Mentés és helyreállítás → Teljes mentés másolása**. A kimásolt szöveget küldd el **privátban a koordinátornak** (nem csoportba), a kiválasztott szakasz után.
 - Ha két ember használ egy telefont (két betű), a **Minden szavazó mentésének másolása** gombot használjátok.

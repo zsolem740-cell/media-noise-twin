@@ -1,4 +1,4 @@
-"""A pilot telepíthető csomagja (Cloudflare Pages, közvetlen feltöltés): a v47.11 alkalmazás `public/` mappája VÁLTOZATLANUL + a szakasz semleges pilot-feedje (`atm_history.json`).
+"""A pilot telepíthető csomagja (Cloudflare Pages, közvetlen feltöltés): a v47.12 alkalmazás `public/` mappája VÁLTOZATLANUL + a szakasz semleges pilot-feedje (`atm_history.json`).
 Az alkalmazás kódjához nem nyúl; csak másol, ellenőriz és ZIP-be csomagol. Hálózati kód nincs.
 Ellenőrzések: az alkalmazás verziója, csak engedélyezett fájltípusok, a feed pontosan a szakasz címei (nincs más szakasz címe, nincs pontszám), nincs valódi hírmentés a csomagban."""
 import hashlib
