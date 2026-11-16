@@ -5,7 +5,7 @@
 import { Learner } from './learner.js';
 import { detectLang } from './lang.js';
 
-export const AUDIT_VERSION = 'v47.9';
+export const AUDIT_VERSION = 'v47.10';
 
 // Rang-alapú AUC (O(n log n)), egyező pontszámoknál átlagrang.
 export function aucRank(scores, labels) {
