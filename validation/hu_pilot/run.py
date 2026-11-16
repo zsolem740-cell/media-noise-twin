@@ -1,12 +1,14 @@
 """A magyar pilot parancssora. Modellt és hálózatot nem használ.
 
-  python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
+  python -m validation.hu_pilot.run select --anchors-from EXPORT...   újrakiválasztás: a horgonyok a leszavazott exportokból, a többi a feedből
+python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
   python -m validation.hu_pilot.run select-foreign          külföldi nyelvű kör (en, de, sl) a meglévő kiválasztás mellé; a magyar címeket nem érinti
   python -m validation.hu_pilot.run analyze EXPORT...       kappa, egyezés, kapu, harmadik szavazat listája (results/analysis.json, human_reference.csv)
   python -m validation.hu_pilot.run adjudication EXPORT...  a harmadik szavazathoz kell feed (csak azok a mérési címek, ahol az elsődleges páros eltér)
   python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3|4 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed (4 = külföldi nyelvű címek), ellenőrzéssel és ZIP-pel; nem telepít
   python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
   python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja"""
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -20,7 +22,26 @@ def _paths(cfg, base=None):
     return rdir, {k: rdir / v for k, v in cfg["files"].items()}
 
 
-def do_select(cfg, feed_path=None, base=None):
+def anchors_from_exports(paths, cfg):
+    """A már leszavazott horgonyok (id, cím) a szavazói exportokból. Minden szavazó ugyanazt a horgonykört látta: az azonosítóhoz tartozó cím mindenhol azonos, és pontosan a konfigurált darabszám kell."""
+    rows, order = {}, []
+    for p in paths:
+        for b in analysis._backups_from_text(Path(p).read_bytes().decode("utf-8")):
+            if b.get("format") != "mnt-backup":
+                continue
+            for v in sorted(list(b.get("votes") or []) + list(b.get("mids") or []), key=lambda x: str(x.get("ts", ""))):
+                if not isinstance(v, dict) or not isinstance(v.get("id"), str) or not isinstance(v.get("title"), str):
+                    continue
+                if rows.setdefault(v["id"], v["title"]) != v["title"]:
+                    raise ValueError(f"az azonosítóhoz két különböző cím tartozik: {v['id']}")
+                if v["id"] not in order:
+                    order.append(v["id"])
+    if len(order) != cfg["sizes"]["anchors"]:
+        raise ValueError(f"{len(order)} különböző cím van az exportokban, kellene: {cfg['sizes']['anchors']} horgony")
+    return [{"id": i, "title": rows[i]} for i in order]
+
+
+def do_select(cfg, feed_path=None, base=None, anchors_from=None):
     rdir, f = _paths(cfg, base)
     feed, items = selection.load_feed(feed_path or REPO_ROOT / cfg["feed"])
     override = None
@@ -30,12 +51,16 @@ def do_select(cfg, feed_path=None, base=None):
     for k in ("selection", "stage1", "stage2", "stage4"):
         if f[k].exists():
             raise FileExistsError(f"{f[k].name} már létezik: a kiválasztás nem íródik felül")
-    s = selection.select(items, cfg, override)
+    fixed = anchors_from_exports(anchors_from, cfg) if anchors_from else None
+    s = selection.select(items, cfg, override, fixed)
     fo = selection.select_foreign(items, cfg, [i["title"] for i in s["anchors"] + s["measured"]])
     sel = {"seed": cfg["seed"], "feed_generated_at": feed.get("generated_at"), "pool": s["pool"], "enriched_pool": s["enriched_pool"], "excluded": s["excluded"],
            "anchor_ids": [i["id"] for i in s["anchors"]], "measured_ids": [i["id"] for i in s["measured"]],
            "measured_random_ids": s["measured_random_ids"], "measured_enriched_ids": s["measured_enriched_ids"], "source_counts": s["source_counts"],
            "foreign_ids": fo["ids_by_lang"], "foreign_order": [i["id"] for i in fo["ordered"]], "foreign_pools": fo["pools"]}
+    if fixed:
+        sel["reselection"] = {"anchors_fixed_from": "leszavazott exportok", "anchor_ids_sha256": hashlib.sha256("\n".join(a["id"] for a in fixed).encode()).hexdigest(),
+                              "note": "újrakiválasztás: a régi selection.json elveszett; a horgonyok a leszavazott címek, a mérési és külföldi címek az aktuális feedből"}
     feeds.write_json(f["selection"], sel, rdir)
     feeds.write_json(f["stage1"], feeds.build_feed(s["anchors"], "stage1-anchors", feed), rdir)
     feeds.write_json(f["stage2"], feeds.build_feed(s["measured"], "stage2-measured", feed), rdir)
@@ -133,6 +158,8 @@ def main(argv):
     cmd, rest = (argv[0] if argv else ""), argv[1:]
     if cmd == "select" and not rest:
         out = do_select(cfg)
+    elif cmd == "select" and len(rest) >= 2 and rest[0] == "--anchors-from":
+        out = do_select(cfg, anchors_from=rest[1:])
     elif cmd == "select-foreign" and not rest:
         out = do_select_foreign(cfg)
     elif cmd == "analyze" and rest:

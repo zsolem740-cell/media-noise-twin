@@ -54,3 +54,8 @@ python scripts/kitchen_dispatch.py --backup-only --dry-run
 python scripts/context_snapshot.py --max-file-bytes 20000
 ```
 A snapshot a `data/`, `mentesek/` és `results/` mappát nem olvassa, a titkokat a csonkolás előtt maszkolja, és `--max-chars 120000` esetén `context_snapshot_part1.txt`, `_part2.txt`… részekre bontja (a fájlokat a `.gitignore` kizárja).
+
+## Újrakiválasztás (ha a `results/` elveszett)
+A `results/` nincs gitben, ezért elveszhet. A horgonykör közben már leszavazott lehet, ezért a horgonyokat nem a feedből, hanem a leszavazott exportokból kell rögzíteni:
+`python -m validation.hu_pilot.run select --anchors-from EXPORT...` (mind a 20 címnek azonosan szerepelnie kell az exportokban).
+A mérési és a külföldi címek az aktuális feedből jönnek, a horgonyokat és közel-duplikátumaikat kizárva; a `selection.json` `reselection` mezője rögzíti ezt. Ez csak addig tisztességes, amíg a mérési címeket senki nem látta és a modell nem futott. Ne töröld a `results/` mappát (`git clean` nélkül dolgozz a munkafán).
