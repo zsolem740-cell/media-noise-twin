@@ -66,9 +66,16 @@ def eligible(items, cfg):
     return out, reasons
 
 
-def select(items, cfg, anchors_override=None):
+def select(items, cfg, anchors_override=None, fixed_anchors=None):
+    """fixed_anchors: már leszavazott horgonyok (id, title) szó szerint, a feedtől függetlenül. A mérési címek ezekből és ezek közel-duplikátumaiból nem választhatók."""
     sz, f = cfg["sizes"], cfg["filters"]
     pool, reasons = eligible(items, cfg)
+    if fixed_anchors:
+        fn = [norm(a["title"]) for a in fixed_anchors]
+        fid = {a["id"] for a in fixed_anchors}
+        before = len(pool)
+        pool = [it for it in pool if it["id"] not in fid and not any(norm(it["title"]) == n or jaccard(norm(it["title"]), n) >= f["jaccard_dup"] for n in fn)]
+        reasons = dict(reasons, rogzitett_horgony_duplikatum=before - len(pool))
     rng = random.Random(cfg["seed"])
     cap, used_src = f["source_cap_total"], {}
     chosen_ids = set()
@@ -90,7 +97,12 @@ def select(items, cfg, anchors_override=None):
 
     shuffled = lambda xs: rng.sample(xs, len(xs))
     by_id = {it["id"]: it for it in pool}
-    if anchors_override:
+    if fixed_anchors:
+        if len(fixed_anchors) != sz["anchors"]:
+            raise ValueError(f"a rögzített horgonyok száma {len(fixed_anchors)}, kellene: {sz['anchors']}")
+        anchors = [dict(a) for a in fixed_anchors]
+        chosen_ids.update(a["id"] for a in anchors)
+    elif anchors_override:
         bad = [i for i in anchors_override if i not in by_id]
         if bad:
             raise ValueError(f"a felülírt horgony nem megfelelő vagy nem létezik: {bad[:3]}")
