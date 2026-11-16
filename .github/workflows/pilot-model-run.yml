@@ -1,0 +1,110 @@
+name: Pilot modellfuttatás (kézi indítású)
+
+# Csak kézzel indítható (Run workflow). Egy futás = egy szolgáltató (Gemini vagy Groq), mérési futás: nincs szolgáltatóváltás.
+# Alapértelmezés: mode = check (hálózat nélküli ellenőrzés). Éles hívás csak mode = run ÉS confirm = INDITSD mellett, és csak lezárt (kapun átment) futtatási csomaggal.
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Szolgáltató (egy futás egy szolgáltató)"
+        required: true
+        type: choice
+        options: [gemini, groq]
+      mode:
+        description: "check = hálózat nélküli ellenőrzés, run = éles hívások"
+        required: true
+        default: check
+        type: choice
+        options: [check, run]
+      model:
+        description: "Gemini modellje (Groqnál üresen hagyható: a konfigurációban rögzített)"
+        required: false
+        default: ""
+        type: string
+      run_name:
+        description: "A futás neve (folytatásnál ugyanaz)"
+        required: true
+        default: pilot-1
+        type: string
+      confirm:
+        description: "Éles futtatáshoz írd be: INDITSD"
+        required: false
+        default: ""
+        type: string
+      resume_run_id:
+        description: "Folytatás: a megállt futás azonosítója (a kész címek megmaradnak, nem mennek ki újra). Üresen új futás."
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: pilot-model-run
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Megállt futás állapotának letöltése (folytatás)
+        if: ${{ inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: pilot-run-${{ inputs.run_name }}
+          path: ${{ runner.temp }}/pilot_run
+          run-id: ${{ inputs.resume_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Ellenőrzés (hálózat nélkül)
+        if: ${{ inputs.mode == 'check' }}
+        env:
+          PROVIDER: ${{ inputs.provider }}
+          MODEL: ${{ inputs.provider == 'gemini' && (inputs.model || vars.GEMINI_MODEL) || '' }}
+          RUN_NAME: ${{ inputs.run_name }}
+          OUT_DIR: ${{ runner.temp }}/pilot_run
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --mode check | tee "$RUNNER_TEMP/summary.json"
+
+      - name: Éles futtatás
+        if: ${{ inputs.mode == 'run' }}
+        env:
+          PROVIDER: ${{ inputs.provider }}
+          MODEL: ${{ inputs.provider == 'gemini' && (inputs.model || vars.GEMINI_MODEL) || '' }}
+          RUN_NAME: ${{ inputs.run_name }}
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+          OUT_DIR: ${{ runner.temp }}/pilot_run
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          set +e
+          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --mode run --live --confirm "$CONFIRM_INPUT" | tee "$RUNNER_TEMP/summary.json"
+          code=${PIPESTATUS[0]}
+          exit $code
+
+      - name: Összegzés
+        if: ${{ always() }}
+        run: |
+          if [ -f "$RUNNER_TEMP/summary.json" ]; then
+            { echo '### Pilot modellfuttatás'; echo '```json'; cat "$RUNNER_TEMP/summary.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Futás fájljai (napló, pontszámok, állapot; kulcs nincs bennük)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilot-run-${{ inputs.run_name }}
+          path: ${{ runner.temp }}/pilot_run
+          retention-days: 14
+          if-no-files-found: ignore

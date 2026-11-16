@@ -20,7 +20,7 @@ from .test_hu_pilot import full_flow
 MOD = Path(mr.__file__).resolve().parent
 UTC = timezone.utc
 T0 = datetime(2026, 11, 14, 10, 0, tzinfo=UTC)          # november: PST (UTC-8)
-CANARY = "AIzaSyFAKEFAKEFAKEFAKEFAKE12345"
+CANARY = "AIzaSy" + "FAKE" * 5 + "12345"             # futásidőben összerakott mesterséges minta (nem kulcs)
 GEM, GRQ = "gemini-3.5-flash-lite", "openai/gpt-oss-120b"
 
 
