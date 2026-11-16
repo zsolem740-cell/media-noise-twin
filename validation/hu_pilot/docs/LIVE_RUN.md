@@ -18,6 +18,15 @@ Actions, **Pilot modellfuttatás (kézi indítású)**, **Run workflow**:
 2. **Éles futás:** `mode = run`, `confirm = INDITSD`, Geminihez a `model` (vagy a `GEMINI_MODEL` változó). Egy futás egy szolgáltató: előbb a Gemini, a Groq külön futásban.
 3. Egy futás az 50 címet egyesével küldi, a konfigurált időközzel (Gemini 13 mp, Groq 15 mp), kb. 11-13 perc.
 
+## Csomagos kísérlet (egy kérésben több cím)
+A pilot **mérése egy cím egy kérésben** marad (ez az elfogadott mód, tiszta mérés). A csomagos mód ettől **külön kísérlet** ugyanazon az 50 címen, hogy kiderüljön, egyezik-e az eredménye az egyesével kapottal, mielőtt az éles címkézésben csomagot használnánk.
+- **Mi változik:** a rendszerszabály szó szerint ugyanaz (hash változatlan), csak a felhasználói üzenet és a válasz-séma különbözik: a címek egymástól függetlenek (`<post id="k">`), a válasz `{"results": [...]}`, címenként a négy jellel. A csomagok összeállítása rögzített maggal véletlenszerű (a szomszéd címek nem a feed sorrendje).
+- **Indítás:** ugyanaz a munkafolyamat, `batch_size` = 2-20 (javaslat: 10), **külön `run_name`-mel** (például `pilot-csomag-10`). A `batch_size` 0 = egyesével (a mérés).
+- **Mit nyersz:** 50 cím helyett 5 kérés (10-es csomaggal), és a hosszú utasítás nem megy ki ötvenszer, tehát kevesebb token (a napi keretet a token is korlátozza).
+- **Hibák:** csonka vagy blokkolt válasznál a csomag felezése (a hibás cím elkülönül), a címenként érvénytelen válasz egyszer újra csomagba kerül, utána hiba. A folytatás ugyanazokat a csomagokat adja.
+- **Összevetés:** `python -m validation.hu_pilot.run compare-runs <egyesével futás mappája> <csomagos futás mappája>` (a két futás `model_runs/<név>` mappája, az artifactokból). Kiírja az azonos összpontszámú címek arányát, az átlagos eltérést (0-8), a rangkorrelációt, a jelenkénti egyezést, az érvénytelen arányt, a kérések és a tokenek arányát, és a `config.json`-ban rögzített elfogadási küszöbök szerinti igen/nem választ (javasolt: rangkorreláció legalább 0,8, átlagos eltérés legfeljebb 0,75, érvénytelen arány legfeljebb 10%). **A küszöböket a csomagos futás előtt kell véglegesíteni.**
+- **Következtetés csak ennyi:** ha a csomagos mód a küszöbökön belül marad, az éles címkézésben megfontolható; a pilot emberi összevetésének alapja akkor is az egyesével futás.
+
 ## 4. Szabályok, amiket a kód tart
 - Mérési futás: szolgáltatóváltás nincs, harmadik szolgáltató nincs, fizetős csomagra váltás nincs.
 - Napi kvótánál a futás azonnal megáll, a kész címek megmaradnak. A folytatás a visszaállás + 5 perc után lehet, az első kérés próba (napi legfeljebb 3).

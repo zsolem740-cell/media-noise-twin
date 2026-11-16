@@ -8,13 +8,14 @@ python -m validation.hu_pilot.run select                  kiválasztás + pilot-
   python -m validation.hu_pilot.run package --app-dir PUBLIC_MAPPA --stage 1|2|3|4 [--app-commit SHA]   telepíthető csomag (Cloudflare Pages): app + szakasz-feed (4 = külföldi nyelvű címek), ellenőrzéssel és ZIP-pel; nem telepít
   python -m validation.hu_pilot.run model-dryrun gemini|groq  a 50 modellkérés előállítása és ellenőrzése, hálózat és kulcs nélkül (modellfuttatás NINCS a parancssorban)
   python -m validation.hu_pilot.run freeze EXPORT...        a címkézés lezárása (csak ha a kapu átment vagy eldönthetetlen); a modellfuttatás ezt várja
+  python -m validation.hu_pilot.run compare-runs DIR_A DIR_B  két modellfutás összevetése (egyes és csomagos mód): egyezés, rangkorreláció, tokenek; csak a results.csv és summary.json fájlokat olvassa
   python -m validation.hu_pilot.run export-bundle          futtatási csomag (50 cím + a lezárás aggregált adata, szavazat és referencia nélkül) az éles futtatáshoz; csak lezárás után"""
 import hashlib
 import json
 import sys
 from pathlib import Path
 
-from . import analysis, bundle, feeds, freeze, modelrun, packaging, selection
+from . import analysis, bundle, compare, feeds, freeze, modelrun, packaging, selection
 from .paths import REPO_ROOT, check_write, load_config, results_dir
 
 
@@ -179,6 +180,8 @@ def main(argv):
         out = do_adjudication(cfg, rest)
     elif cmd == "freeze" and rest:
         out = do_freeze(cfg, rest)
+    elif cmd == "compare-runs" and len(rest) == 2:
+        out = compare.compare(rest[0], rest[1], cfg["model"]["batch"]["accept"])
     elif cmd == "export-bundle" and not rest:
         out = do_export_bundle(cfg)
     elif cmd == "package" and len(rest) in (4, 6) and rest[0] == "--app-dir" and rest[2] == "--stage" and rest[3] in ("1", "2", "3", "4"):

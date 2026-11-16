@@ -173,7 +173,8 @@ def _usage(provider, d):
     return {k: v for k, v in m.items() if isinstance(v, int)}
 
 
-def parse_response(provider, status, raw_text, post, mcfg, retry_header=None):
+def _envelope(provider, status, raw_text, retry_header=None):
+    """A válasz borítéka (közös az egy és a csomagos módban): vagy Outcome (hiba/blokk/csonka/üres), vagy (szöveg, usage, finish_reason, model)."""
     try:
         d = json.loads(raw_text)
     except (TypeError, ValueError):
@@ -209,6 +210,14 @@ def parse_response(provider, status, raw_text, post, mcfg, retry_header=None):
         text = (ch.get("message") or {}).get("content")
     if not isinstance(text, str) or not text.strip():
         return Outcome("empty", "üres szöveges kimenet", finish_reason=fr, usage=usage, model_returned=mv)
+    return text, usage, fr, mv
+
+
+def parse_response(provider, status, raw_text, post, mcfg, retry_header=None):
+    env = _envelope(provider, status, raw_text, retry_header)
+    if isinstance(env, Outcome):
+        return env
+    text, usage, fr, mv = env
     try:
         obj = json.loads(text)
     except ValueError:
@@ -217,3 +226,93 @@ def parse_response(provider, status, raw_text, post, mcfg, retry_header=None):
     if err:
         return Outcome("invalid", sanitize(err), finish_reason=fr, usage=usage, model_returned=mv)
     return Outcome("ok", score=score, finish_reason=fr, usage=usage, model_returned=mv)
+
+
+# ---------------------------------------------------------------- csomagos mód (kísérlet): egy kérésben több cím
+
+@dataclass
+class BatchOutcome:
+    kind: str                   # mint az Outcome-nál; "ok" = a boríték és a results szerkezete rendben (a címenkénti hiba az items-ben van)
+    detail: str = ""
+    retry_after: float | None = None
+    items: list = field(default_factory=list)       # címenként egy Outcome, a kérés sorrendjében
+    usage: dict = field(default_factory=dict)
+    finish_reason: str | None = None
+    model_returned: str | None = None
+
+
+def check_batch_posts(posts, mcfg):
+    cap = mcfg.get("batch", {}).get("max_size", 20)
+    if not posts or len(posts) > cap:
+        raise RequestError(f"a csomag mérete 1 és {cap} között lehet")
+    for t in posts:
+        check_text(t)
+        if "<post" in t or "</post" in t:
+            raise RequestError("a cím tartalmazza a határolót")
+
+
+def _batch_tokens(per_title, n, mcfg):
+    return min(per_title * n, mcfg["batch"]["token_cap"])
+
+
+def gemini_batch_body(posts, mcfg):
+    check_batch_posts(posts, mcfg)
+    g = mcfg["providers"]["gemini"]
+    return {"systemInstruction": {"parts": [{"text": P.SYSTEM_INSTRUCTION}]},
+            "contents": [{"role": "user", "parts": [{"text": P.batch_user_text(posts)}]}],
+            "generationConfig": {"responseMimeType": "application/json", "responseSchema": P.gemini_batch_schema(mcfg["max_points_per_signal"]),
+                                 "temperature": g["temperature"], "maxOutputTokens": _batch_tokens(g["max_output_tokens"], len(posts), mcfg)}}
+
+
+def groq_batch_body(posts, mcfg):
+    check_batch_posts(posts, mcfg)
+    g = mcfg["providers"]["groq"]
+    return {"model": g["model"], "messages": [{"role": "system", "content": P.SYSTEM_INSTRUCTION}, {"role": "user", "content": P.batch_user_text(posts)}],
+            "temperature": g["temperature"], "max_completion_tokens": _batch_tokens(g["max_completion_tokens"], len(posts), mcfg), "reasoning_effort": g["reasoning_effort"],
+            "response_format": P.groq_batch_response_format(mcfg["max_points_per_signal"])}
+
+
+BATCH_BUILDERS = {"gemini": gemini_batch_body, "groq": groq_batch_body}
+
+
+def check_batch_body(provider, body, posts, mcfg):
+    errs = []
+    try:
+        if body != BATCH_BUILDERS[provider](posts, mcfg):
+            errs.append("a csomagos kérés nem egyezik az épített kérés tartalmával")
+    except RequestError as e:
+        errs.append(str(e))
+    if SECRET.search(json.dumps(body, ensure_ascii=False).replace("api_key", "")):
+        errs.append("kulcsra vagy hitelesítésre utaló minta a kérésben")
+    return errs
+
+
+def parse_batch_response(provider, status, raw_text, posts, mcfg, retry_header=None):
+    env = _envelope(provider, status, raw_text, retry_header)
+    if isinstance(env, Outcome):
+        return BatchOutcome(env.kind, env.detail, env.retry_after, [], env.usage, env.finish_reason, env.model_returned)
+    text, usage, fr, mv = env
+    base = dict(usage=usage, finish_reason=fr, model_returned=mv)
+    try:
+        obj = json.loads(text)
+    except ValueError:
+        return BatchOutcome("invalid", "a modell kimenete nem érvényes JSON", **base)
+    res = obj.get("results") if isinstance(obj, dict) and set(obj) == {"results"} else None
+    if not isinstance(res, list):
+        return BatchOutcome("invalid", "a kimenet nem {results: [...]} alakú", **base)
+    by_id, dup = {}, set()
+    for e in res:
+        i = e.get("id") if isinstance(e, dict) else None
+        if isinstance(i, bool) or not isinstance(i, int) or not 1 <= i <= len(posts):
+            continue                                                       # ismeretlen azonosító: figyelmen kívül marad
+        (dup.add(i) if i in by_id else by_id.__setitem__(i, e))
+    items = []
+    for i, post in enumerate(posts, 1):
+        if i in dup:
+            items.append(Outcome("invalid", f"a(z) {i}. azonosító többször szerepel", **base))
+        elif i not in by_id:
+            items.append(Outcome("invalid", f"hiányzik a(z) {i}. cím", **base))
+        else:
+            score, err = validate_signals({k: v for k, v in by_id[i].items() if k != "id"}, post, mcfg)
+            items.append(Outcome("invalid", sanitize(err), **base) if err else Outcome("ok", score=score, **base))
+    return BatchOutcome("ok", "", items=items, **base)

@@ -31,6 +31,11 @@ on:
         required: false
         default: ""
         type: string
+      batch_size:
+        description: "0 = egy cím egy kérésben (a pilot mérése, ezt használd a méréshez). 2-20 = csomagos KÍSÉRLET (külön run_name-mel, a mérést nem helyettesíti)"
+        required: false
+        default: "0"
+        type: string
       resume_run_id:
         description: "Folytatás: a megállt futás azonosítója (a kész címek megmaradnak, nem mennek ki újra). Üresen új futás."
         required: false
@@ -71,11 +76,12 @@ jobs:
           PROVIDER: ${{ inputs.provider }}
           MODEL: ${{ inputs.provider == 'gemini' && (inputs.model || vars.GEMINI_MODEL) || '' }}
           RUN_NAME: ${{ inputs.run_name }}
+          BATCH_SIZE: ${{ inputs.batch_size }}
           OUT_DIR: ${{ runner.temp }}/pilot_run
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --mode check | tee "$RUNNER_TEMP/summary.json"
+          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --batch-size "$BATCH_SIZE" --mode check | tee "$RUNNER_TEMP/summary.json"
 
       - name: Éles futtatás
         if: ${{ inputs.mode == 'run' }}
@@ -83,13 +89,14 @@ jobs:
           PROVIDER: ${{ inputs.provider }}
           MODEL: ${{ inputs.provider == 'gemini' && (inputs.model || vars.GEMINI_MODEL) || '' }}
           RUN_NAME: ${{ inputs.run_name }}
+          BATCH_SIZE: ${{ inputs.batch_size }}
           CONFIRM_INPUT: ${{ inputs.confirm }}
           OUT_DIR: ${{ runner.temp }}/pilot_run
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           set +e
-          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --mode run --live --confirm "$CONFIRM_INPUT" | tee "$RUNNER_TEMP/summary.json"
+          python -m validation.hu_pilot.live.run_live --provider "$PROVIDER" --model "$MODEL" --run-name "$RUN_NAME" --out-dir "$OUT_DIR" --batch-size "$BATCH_SIZE" --mode run --live --confirm "$CONFIRM_INPUT" | tee "$RUNNER_TEMP/summary.json"
           code=${PIPESTATUS[0]}
           exit $code
 

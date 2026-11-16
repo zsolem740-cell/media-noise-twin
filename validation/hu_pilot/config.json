@@ -108,6 +108,17 @@
       "primary": "gemini",
       "secondary": "groq",
       "note": "Mérési futáson nincs váltás. Kimerült keretnél a futás megáll és a visszaállás után folytatódik. Az előszűrés (nem mérési munka) külön jóváhagyással jöhet."
+    },
+    "batch": {
+      "default_size": 10,
+      "max_size": 20,
+      "token_cap": 32768,
+      "accept": {
+        "spearman_min": 0.8,
+        "mean_abs_total_diff_max": 0.75,
+        "invalid_rate_max": 0.1,
+        "note": "A küszöböket a csomagos futás ELŐTT kell rögzíteni; itt javasolt értékek (az összpontszám 0-8)."
+      }
     }
   },
   "deploy": {
