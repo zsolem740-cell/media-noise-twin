@@ -107,6 +107,22 @@ jobs:
             { echo '### Pilot modellfuttatás'; echo '```json'; cat "$RUNNER_TEMP/summary.json"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Kvótafigyelő (csak olvas; állapot, folytatási idő, szabályellenőrzés)
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          RUN_NAME: ${{ inputs.run_name }}
+          OUT_DIR: ${{ runner.temp }}/pilot_run
+        run: |
+          d="$OUT_DIR/model_runs/$RUN_NAME"
+          if [ -f "$d/state.json" ]; then
+            python -m validation.hu_pilot.quotawatch "$d" > "$RUNNER_TEMP/quotawatch.txt"; code=$?
+            { echo '### Kvótafigyelő'; echo '```'; cat "$RUNNER_TEMP/quotawatch.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            exit $code
+          else
+            echo "Nincs állapotfájl ($d): a Kvótafigyelő kihagyva."
+          fi
+
       - name: Futás fájljai (napló, pontszámok, állapot; kulcs nincs bennük)
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

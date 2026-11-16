@@ -1,0 +1,43 @@
+name: release-check
+
+# Kiadási ellenőr: pull requesten megmutatja, mit visz be az ág a célághoz képest (fájlok, törlések), és elbukik, ha törlés van vagy az Őr szabályait sérti.
+# Csak olvas: nem egyesít, nem ír a tárolóba, nincs titok, nincs modellszolgáltató. A jóváhagyott kört (--approved) itt nem lehet megadni:
+# a felhasználó jóváhagyása a megnevezett változásra szól, ezt egyesítés előtt kézzel kell összevetni (python scripts/release_check.py --head <ág> --approved <minta>).
+# Törlés engedélyezése: a felhasználó a PR-re felteszi a „torles-engedelyezve” címkét (ezt az ügynök nem teszi fel).
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Kiadási ellenőr
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          DELETE_OK: ${{ contains(github.event.pull_request.labels.*.name, 'torles-engedelyezve') }}
+        run: |
+          set -o pipefail
+          args=(--base "origin/$BASE_REF" --head HEAD --approved '**')
+          if [ "$DELETE_OK" = "true" ]; then args+=(--allow-delete '**'); fi
+          python scripts/release_check.py "${args[@]}" | tee "$RUNNER_TEMP/release_check.txt"
+      - name: Összegzés
+        if: ${{ always() }}
+        run: |
+          if [ -f "$RUNNER_TEMP/release_check.txt" ]; then
+            { echo '### Kiadási ellenőr'; echo '```'; cat "$RUNNER_TEMP/release_check.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
