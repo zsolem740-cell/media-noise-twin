@@ -53,3 +53,4 @@ python -m src.magyar_pilot.maintenance
 python scripts/kitchen_dispatch.py --backup-only --dry-run
 python scripts/context_snapshot.py --max-file-bytes 20000
 ```
+A snapshot a `data/`, `mentesek/` és `results/` mappát nem olvassa, a titkokat a csonkolás előtt maszkolja, és `--max-chars 120000` esetén `context_snapshot_part1.txt`, `_part2.txt`… részekre bontja (a fájlokat a `.gitignore` kizárja).
