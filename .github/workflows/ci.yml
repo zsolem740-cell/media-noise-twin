@@ -1,0 +1,44 @@
+name: ellenőrzés
+
+# Pull requestre futó ellenőrzés: Python-tesztek, JS szintaxis, JS-tesztek.
+# Csak olvas: nem telepít, nem ír a repóba, nem használ titkot, és nem nyúl az adatokhoz.
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tesztek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - run: pip install -q -r requirements.txt pytest
+
+      - name: Python-tesztek
+        run: python3 -m pytest -q tests validation
+
+      - name: JS szintaxis
+        run: |
+          for f in $(find public -name '*.js'); do
+            cp "$f" "$RUNNER_TEMP/t.mjs"
+            node --check "$RUNNER_TEMP/t.mjs" || { echo "::error file=$f::szintaxishiba"; exit 1; }
+          done
+
+      - name: JS-tesztek (kappa, AUC, mentés, egyeztetés)
+        run: node --test "tests/js/*.test.mjs"
