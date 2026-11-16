@@ -1,0 +1,26 @@
+{
+  "megjegyzes": "Az Őr szabályzata. A CLAUDE.md tiltásainak gépi tükre; a szabály módosítása csak a felhasználó jóváhagyásával.",
+  "protected_paths": [
+    "validation/webis_validation/groq_request.py",
+    "validation/webis_validation/gemini_request.py"
+  ],
+  "pinned_sha256": {
+    "validation/hu_pilot/prompt.py": null
+  },
+  "forbidden_dirs_in_diff": ["validation/hu_pilot/results/", "results/"],
+  "forbidden_providers": ["openai", "anthropic", "mistral", "cohere", "perplexity", "together", "deepseek", "xai", "cerebras", "openrouter"],
+  "allowed_providers": ["gemini", "groq"],
+  "live_endpoints": ["generativelanguage.googleapis.com", "api.groq.com"],
+  "live_endpoint_allowed_files": [
+    "validation/hu_pilot/live/transport.py",
+    "validation/hu_pilot/providers.py",
+    "validation/hu_pilot/config.json",
+    "scripts/gemini_labels.py",
+    "validation/webis_validation/gemini_transport.py",
+    "validation/webis_validation/groq_transport.py",
+    "validation/webis_validation/gemini_request.py",
+    "validation/webis_validation/groq_request.py"
+  ],
+  "max_titles_per_run": 249,
+  "title_count_keys": ["n", "count", "titles", "n_titles", "max_requests", "limit", "sample_size"]
+}

@@ -1,0 +1,36 @@
+name: guard
+
+# Őr: csak olvasó szabályellenőrzés (CLAUDE.md tiltásai). Nem ír a tárolóba, nem használ titkot, nem hív modellszolgáltatót.
+# Hibás szabálysértésnél (results/ commit, védett prompt, kulcs, harmadik szolgáltató, valódi végpont, 250+ cím) a futás elbukik.
+on:
+  pull_request:
+  push:
+    branches: ["claude/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Őr (szabályellenőrzés a kiinduló ághoz képest)
+        env:
+          BASE_REF: ${{ github.base_ref || 'main' }}
+        run: python scripts/policy_guard.py --base "origin/$BASE_REF"
+      - name: Az Őr saját tesztjei
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest tests/unit/test_policy_guard.py -q -p no:cacheprovider
