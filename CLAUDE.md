@@ -30,11 +30,14 @@
 - **Közös csatorna:** pull request és issue megjegyzések. A döntés és a jóváhagyás mindig a felhasználónál van; kiadás, `main`-be írás és költség csak az ő jóváhagyásával.
 
 ## Ügynökök
-A projekt négy csak olvasó ellenőrző ügynököt használ; a szkript a forrás, az ügynök csak a keret. Egyik sem egyesít, nem nyit PR-t, nem indít éles futást, és nem ír a tárolóba.
+A projekt hét csak olvasó ellenőrző ügynököt használ; a szkript a forrás, az ügynök csak a keret. Egyik sem egyesít, nem nyit PR-t, nem indít éles futást, és nem ír a tárolóba.
 - **Őr** (`scripts/policy_guard.py`, a GitHub Actionsben minden PR-en): a fenti tiltások gépi ellenőre.
 - **Kiadási ellenőr** (`scripts/release_check.py`, ügynök: `.claude/agents/kiadasi-ellenor.md`): minden egyesítés előtt kötelező; a jóváhagyott kört a felhasználó mondja meg, nem te.
 - **Kvótafigyelő** (`validation/hu_pilot/quotawatch.py`, ügynök: `kvotafigyelo`): kvótamegállás után és folytatás előtt.
 - **Elemző** (`validation/hu_pilot/briefing.py`, ügynök: `elemzo`): csak helyben, szavazói adat miatt soha nem CI-ban.
+- **Telepítés-ellenőr** (`validation/hu_pilot/deploycheck.py`, ügynök: `telepites-ellenor`): minden Cloudflare-feltöltés előtt kötelező.
+- **Kimenő-ellenőr** (`scripts/outcheck.py`, ügynök: `kimeno-ellenor`): minden külső kérés (Perplexity, keresés, nyilvános szöveg) előtt kötelező.
+- **Pilot-állapot** (`validation/hu_pilot/pilotstate.py`, ügynök: `pilot-allapot`): új munkamenet elején vagy hosszú szünet után.
 - Az ügynökök fájljai (`.claude/`) kód-szerűek: módosításuk külön ágon, PR-ben, a felhasználó jóváhagyásával történik, és nem gyengíthetik ezeket a szabályokat.
 
 ## Kódhelyek
