@@ -29,6 +29,14 @@
 - **A Perplexity a címkézésbe és a mérésbe nem vonható be** (a harmadik szolgáltató tilalma rá is érvényes); címkét nem ad.
 - **Közös csatorna:** pull request és issue megjegyzések. A döntés és a jóváhagyás mindig a felhasználónál van; kiadás, `main`-be írás és költség csak az ő jóváhagyásával.
 
+## Ügynökök
+A projekt négy csak olvasó ellenőrző ügynököt használ; a szkript a forrás, az ügynök csak a keret. Egyik sem egyesít, nem nyit PR-t, nem indít éles futást, és nem ír a tárolóba.
+- **Őr** (`scripts/policy_guard.py`, a GitHub Actionsben minden PR-en): a fenti tiltások gépi ellenőre.
+- **Kiadási ellenőr** (`scripts/release_check.py`, ügynök: `.claude/agents/kiadasi-ellenor.md`): minden egyesítés előtt kötelező; a jóváhagyott kört a felhasználó mondja meg, nem te.
+- **Kvótafigyelő** (`validation/hu_pilot/quotawatch.py`, ügynök: `kvotafigyelo`): kvótamegállás után és folytatás előtt.
+- **Elemző** (`validation/hu_pilot/briefing.py`, ügynök: `elemzo`): csak helyben, szavazói adat miatt soha nem CI-ban.
+- Az ügynökök fájljai (`.claude/`) kód-szerűek: módosításuk külön ágon, PR-ben, a felhasználó jóváhagyásával történik, és nem gyengíthetik ezeket a szabályokat.
+
 ## Kódhelyek
 - A magyar pilot kódja: `validation/hu_pilot/` (kiválasztás, csomagolás, modellfuttató, elemzés), tesztjei: `validation/hu_pilot/tests/`.
 - A pilot eredményei: `validation/hu_pilot/results/` (git nem követi).
