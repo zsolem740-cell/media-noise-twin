@@ -5,7 +5,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 AGENTS = ROOT / ".claude" / "agents"
 READ_ONLY = {"Read", "Grep", "Glob", "Bash"}
-EXPECTED = {"kiadasi-ellenor", "kvotafigyelo", "elemzo"}
+EXPECTED = {"kiadasi-ellenor", "kvotafigyelo", "elemzo", "telepites-ellenor", "kimeno-ellenor", "pilot-allapot"}
 
 
 def parse(path):
@@ -39,6 +39,11 @@ def test_every_agent_states_it_only_reads_and_lists_what_is_forbidden():
     assert "személyes adat" in parse(AGENTS / "elemzo.md")[1] and "CI" in parse(AGENTS / "elemzo.md")[1]
     assert "jóváhagyott kört" in parse(AGENTS / "kiadasi-ellenor.md")[1] and "Egyesíteni" in parse(AGENTS / "kiadasi-ellenor.md")[1]
     assert "visszaállás + 5 perc" in parse(AGENTS / "kvotafigyelo.md")[1] and "szolgáltatóváltás" in parse(AGENTS / "kvotafigyelo.md")[1]
+    assert "ne töltsd fel" in parse(AGENTS / "telepites-ellenor.md")[1] and "Cloudflare-ba bármit írni" in parse(AGENTS / "telepites-ellenor.md")[1]
+    kim = parse(AGENTS / "kimeno-ellenor.md")[1]
+    assert "**tárolón kívül**" in kim and "Kiírni a talált" in kim and "ne küldd ki" in kim
+    pa = parse(AGENTS / "pilot-allapot.md")[1]
+    assert "csak betűk" in pa and "A lezárást, a feltöltést vagy az éles futást elindítani" in pa
 
 
 def test_every_command_the_agents_run_points_to_an_existing_script_or_module():
@@ -52,7 +57,7 @@ def test_every_command_the_agents_run_points_to_an_existing_script_or_module():
                 target = ROOT / parts[1]
             assert target.exists(), f"{p.name}: nincs ilyen fájl: {target.relative_to(ROOT)}"
             seen += 1
-    assert seen >= 3
+    assert seen >= 6
 
 
 def test_claude_md_agents_section_lists_every_agent_file_and_forbids_merging():
