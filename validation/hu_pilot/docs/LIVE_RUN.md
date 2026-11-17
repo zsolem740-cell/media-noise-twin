@@ -37,6 +37,12 @@ A pilot **mérése egy cím egy kérésben** marad (ez az elfogadott mód, tiszt
 ## 5. Ha megáll (kvóta)
 A munkafolyamat hibával zárul (kilépési kód 3), de a futás fájljait feltölti (*pilot-run-<run_name>* artifact, 14 napig). Folytatás: a kvóta visszaállása + 5 perc után indítsd újra **ugyanazzal a `run_name`-mel**, és a `resume_run_id` mezőbe írd a megállt futás azonosítóját (a futás oldalának címében a szám). A kész címek nem mennek ki újra.
 
+### Folytatás-jelző (értesítés, nem indít semmit)
+A `resume-notify` munkafolyamat félóránként megnézi a legfrissebb `pilot-run-*` artifactot, és ha a futás kvótamegállással állt meg, a folytatási idő (visszaállás + 5 perc) letelt, és van még próba a kvótanapra, **egyszer** értesítést küld a telefonodra (ntfy, a repó `NTFY_TOPIC` titka; ha nincs, csak az Actions-összegzésben látszik a döntés). Az üzenet a folytatás lépéseit és a `resume_run_id`-t tartalmazza.
+- **Csak olvas és értesít:** nincs benne modellkulcs, nem indít futást, nem ír a tárolóba. A futást továbbra is te indítod (`confirm = INDITSD`).
+- Csak ütemezett és kézi indítású; az üzenet a Kimenő-ellenőrön átmegy küldés előtt; a duplikációt egy kis, 3 napig élő jelölő-artifact akadályozza.
+- Kézzel is indítható (Actions, resume-notify, Run workflow), ilyenkor ugyanazt a döntést hozza.
+
 ## 6. Eredmény
 A futás fájljai az Actions futás **artifactjában** vannak (`log.jsonl`, `scores.jsonl`, `results.csv`, `summary.json`, `quota_stops.jsonl`), a `results/` mappába nem commitolunk semmit. Egy nyilvános tárolóban az artifact a tárolóhoz hozzáférők számára letölthető, ezért a pontszámok 14 napig nem titkosak (50 nyilvános hírcímről szólnak).
 
