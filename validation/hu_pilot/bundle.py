@@ -40,7 +40,7 @@ def build_bundle(rdir, cfg):
     titles = modelrun.load_titles(rdir, cfg)
     g = man["gate"]
     freeze = {"created_utc": man["created_utc"], "voters": man["voters"], "anchor_ids": man["anchor_ids"], "measured_ids": man["measured_ids"],
-              "gate": {k: g.get(k) for k in ("decision", "pair", "n_common", "kappa_weighted", "kappa_min")},
+              "gate": {k: g.get(k) for k in ("decision", "basis", "voters", "n_titles", "alpha", "alpha_min", "min_voters")},
               "reference_sha256": man["reference_csv"]["sha256"], "exports": [{"sha256": e["sha256"]} for e in man["exports"]]}
     m = cfg["model"]
     b = {"schema": SCHEMA, "titles": titles, "freeze": freeze, "prompt_sha256": V.sha256_text(P.SYSTEM_INSTRUCTION),

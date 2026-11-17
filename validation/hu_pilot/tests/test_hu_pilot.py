@@ -208,19 +208,61 @@ def mk(rows, tmp_path, cfg):
     return ids, *votes_for(ids, [KIND[r[0]] for r in rows], [KIND[r[1]] for r in rows], tmp_path, cfg)
 
 
-def test_gate_pass_fail_and_inconclusive(tmp_path, cfg):
-    good = [(0, 0)] * 10 + [(1, 1)] * 8 + [(2, 2)] * 8 + [(0, 1), (1, 2), (1, 0), (2, 1)]
-    ids, votes, rep = mk(good, tmp_path, cfg)
-    g = an.gate(an.ratings(votes, set(ids)), cfg)
-    assert g["decision"] == "atment" and g["kappa_weighted"] > 0.5 and not g["warnings"]
-    bad = [(0, 2), (2, 0), (1, 0), (0, 1), (2, 1), (1, 2)] * 5
-    ids, votes, rep = mk(bad, tmp_path, cfg)
-    g = an.gate(an.ratings(votes, set(ids)), cfg)
-    assert g["decision"] == "elbukott" and g["kappa_weighted"] < 0.5
-    small = [(0, 0), (1, 1), (2, 2), (0, 1), (1, 0), (2, 2), (0, 0), (1, 2)]
-    ids, votes, rep = mk(small, tmp_path, cfg)
-    g = an.gate(an.ratings(votes, set(ids)), cfg)
-    assert g["decision"] in ("eldonthetetlen", "elbukott", "atment") and g["n_common"] == 8
+def rat4(rows, voters="ABCD"):
+    """rows: címenként a szavazók értékei (0/1/2) a voters sorrendjében."""
+    return {f"m{i:02d}": dict(zip(voters, r)) for i, r in enumerate(rows)}
+
+
+def test_gate_uses_all_four_voters_alpha_and_reports_the_ab_kappa_only_as_secondary(cfg):
+    good = rat4([(0, 0, 0, 0)] * 8 + [(1, 1, 1, 1)] * 8 + [(2, 2, 2, 2)] * 8 + [(0, 1, 0, 0), (1, 2, 1, 1), (2, 1, 2, 2)])
+    g = an.gate(good, cfg)
+    assert g["decision"] == "atment" and g["alpha"] >= cfg["gate"]["alpha_min"] and g["voters"] == ["A", "B", "C", "D"] and not g["warnings"]
+    assert g["alpha"] == pytest.approx(an.krippendorff_alpha([list(r.values()) for r in good.values()], "ordinal"))
+    sec = g["secondary_pair_kappa"]
+    assert sec["pair"] == ["A", "B"] and sec["decides"] is False and sec["kappa_weighted"] is not None and sec["n_common"] == len(good)
+
+
+def test_gate_fails_when_c_and_d_disagree_even_though_the_old_ab_pair_agrees_perfectly(cfg):
+    base = [0, 1, 2, 0, 1, 2, 1, 0, 2, 1, 0, 2, 1, 2, 0, 1, 0, 2, 1, 0, 2, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+    rows = [(v, v, (v + 1) % 3, (v + 2) % 3) for v in base]                              # A=B mindenhol, C és D szisztematikusan eltér
+    g = an.gate(rat4(rows), cfg)
+    assert g["secondary_pair_kappa"]["kappa_weighted"] == pytest.approx(1.0)                 # a régi kapu átengedte volna
+    assert g["decision"] == "elbukott" and g["alpha"] < 0
+
+
+def test_gate_is_inconclusive_when_the_point_estimate_is_below_but_the_interval_reaches_the_threshold(cfg):
+    import random
+    rng = random.Random(3)
+    rows, found = None, None
+    for t in range(400):                                                                      # kis minta: a pontbecslés a küszöb alatt, a bootstrap felső határa fölötte
+        cand = [tuple(rng.choice((0, 1, 2)) if rng.random() < 0.35 else x for x in (v,) * 4) for v in [rng.choice((0, 1, 2)) for _ in range(12)]]
+        g = an.gate(rat4(cand), cfg)
+        if g["decision"] == "eldonthetetlen":
+            rows, found = cand, g
+            break
+    assert found is not None and found["alpha"] < cfg["gate"]["alpha_min"] <= found["ci95_alpha"][1]
+
+
+def test_gate_is_not_computable_with_fewer_than_four_voters(cfg):
+    three = rat4([(0, 0, 0)] * 10 + [(1, 1, 1)] * 10 + [(2, 2, 2)] * 10, voters="ABC")
+    g = an.gate(three, cfg)
+    assert g["decision"] == "nem_szamolhato" and any("legalább 4" in w for w in g["warnings"])
+    two = rat4([(0, 0)] * 12 + [(1, 1)] * 12, voters="AB")
+    assert an.gate(two, cfg)["decision"] == "nem_szamolhato"
+
+
+def test_gate_warns_about_incomplete_titles_and_dominant_class(cfg):
+    rows = rat4([(0, 0, 0, 0)] * 29 + [(1, 1, 1, 1)])
+    rows["m00"].pop("D")
+    g = an.gate(rows, cfg)
+    assert any("nem értékelt minden szavazó" in w for w in g["warnings"]) and any("80%" in w for w in g["warnings"])
+
+
+def test_gate_does_not_weight_voters_each_vote_counts_the_same(cfg):
+    rows = rat4([(0, 0, 1, 1), (2, 2, 1, 1), (0, 0, 2, 2), (1, 1, 0, 0), (2, 2, 0, 0), (1, 1, 2, 2)] * 5)
+    a1 = an.gate(rows, cfg)["alpha"]
+    swapped = {i: {"A": r["C"], "B": r["D"], "C": r["A"], "D": r["B"]} for i, r in rows.items()}
+    assert an.gate(swapped, cfg)["alpha"] == pytest.approx(a1)                       # a szavazók sorrendje, azonossága nem számít
 
 
 def test_gate_flags_dominant_class_and_unmeasurable(tmp_path, cfg):
@@ -258,7 +300,8 @@ def full_flow(tmp_path, cfg, feed_path, agree=True):
     a = [KIND[(n * 7) % 3] for n in range(len(ids))]
     b = a[:] if agree else [KIND[(n * 5 + 1) % 3] for n in range(len(ids))]
     c = a[:]
-    exp = write_exports(tmp_path, {"A": list(zip(ids, a)), "B": list(zip(ids, b)), "C": list(zip(ids, c))})
+    d = a[:] if agree else [KIND[(n * 4 + 2) % 3] for n in range(len(ids))]                  # a kapu mind a négy szavazót kéri
+    exp = write_exports(tmp_path, {"A": list(zip(ids, a)), "B": list(zip(ids, b)), "C": list(zip(ids, c)), "D": list(zip(ids, d))})
     return res, sel, exp
 
 

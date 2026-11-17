@@ -107,7 +107,9 @@ def test_analysis_compares_all_four_voters_by_group_and_language(tmp_path, cfg, 
     r = run.do_analyze(cfg, [exp], base=res)
     assert r["voters"] == ["A", "B", "C", "D"]
     assert {tuple(p["voters"]) for p in r["measured"]["pairs"]} == {("A", "B"), ("A", "C"), ("A", "D"), ("B", "C"), ("B", "D"), ("C", "D")}
-    assert r["gate"]["pair"] == ["A", "B"] and r["gate"]["decision"] == "atment"                                   # a kapu a két elsődleges szavazón marad
+    g = r["gate"]
+    assert g["voters"] == ["A", "B", "C", "D"] and g["decision"] == "atment" and g["alpha"] >= cfg["gate"]["alpha_min"]       # a kapu mind a négy szavazó közös egyezésén dönt
+    assert g["secondary_pair_kappa"]["pair"] == ["A", "B"] and g["secondary_pair_kappa"]["decides"] is False                 # az A-B kappa csak közölt szám
     assert set(r["foreign"]) == {"en", "de", "sl"}
     for lang, g in r["foreign"].items():
         assert g["voters"] == ["A", "B", "C"] and g["n_titles"] == g["n_titles_with_votes"] == 20 and len(g["pairs"]) == 3 and g["krippendorff_alpha_ordinal"] is not None

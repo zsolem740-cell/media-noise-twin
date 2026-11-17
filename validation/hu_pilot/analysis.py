@@ -178,29 +178,58 @@ def adjudication_ids(rat, primary):
     return sorted(i for i, r in rat.items() if a in r and b in r and r[a] != r[b])
 
 
+def bootstrap_alpha(rat, B, seed, k=3):
+    """A mérési címek újramintázása (visszatevéssel): az ordinális alfa 95%-os intervalluma. Legalább 5 cím kell, ahol van két szavazat."""
+    ids = sorted(i for i, r in rat.items() if len(r) >= 2)
+    if len(ids) < 5:
+        return None
+    rng, vals = random.Random(seed), []
+    for _ in range(B):
+        s = [ids[rng.randrange(len(ids))] for _ in ids]
+        v = krippendorff_alpha([list(rat[i].values()) for i in s], "ordinal", k)
+        if v is not None:
+            vals.append(v)
+    if not vals:
+        return None
+    vals.sort()
+    return [vals[int(0.025 * (len(vals) - 1))], vals[int(0.975 * (len(vals) - 1))]]
+
+
 def gate(rat_measured, cfg, seed=1):
-    g, (a, b) = cfg["gate"], cfg["voters"]["primary"]
+    """A kapu a mind a négy szavazó közös egyezésén (Krippendorff-alfa, ordinális skála, a magyar mérési címeken) dönt. Minden szavazó egyformán számít.
+    Az A–B páros kappa csak közölt, másodlagos szám: nem dönt. Kevesebb szavazóval, mint min_voters, a kapu nem számolható."""
+    g = cfg["gate"]
+    voters = sorted({x for r in rat_measured.values() for x in r})
+    units = [list(r.values()) for r in rat_measured.values()]
+    alpha = krippendorff_alpha(units, "ordinal")
+    ci = bootstrap_alpha(rat_measured, g["bootstrap"], seed)
+    a, b = cfg["voters"]["primary"]
     ps = pair_stats(rat_measured, a, b)
-    ci = bootstrap_ci(rat_measured, a, b, g["bootstrap"], seed)
     ref = reference(rat_measured)
     n = len(ref)
     shares = {c: sum(1 for r in ref.values() if r["majority"] == c) for c in (0, 1, 2)}
     warnings = []
+    if len(voters) < g["min_voters"]:
+        warnings.append(f"csak {len(voters)} szavazó adott mérési szavazatot, a kapuhoz legalább {g['min_voters']} kell")
+    incomplete = sum(1 for r in rat_measured.values() if len(r) < len(voters))
+    if incomplete:
+        warnings.append(f"{incomplete} mérési címet nem értékelt minden szavazó")
     if n and max(shares.values()) / n > g["dominant_class_share_max"]:
-        warnings.append("egy osztály a címek több mint 80%-a: a kappa megbízhatatlan lehet")
+        warnings.append("egy osztály a címek több mint 80%-a: az alfa megbízhatatlan lehet")
     if any(v < g["min_class_count_measured"] for v in shares.values()):
         warnings.append(f"van osztály, amelyből kevesebb mint {g['min_class_count_measured']} cím van (többségi címke szerint)")
-    k = ps["kappa_weighted"]
-    if k is None:
+    if len(voters) < g["min_voters"] or alpha is None:
         decision = "nem_szamolhato"
-    elif k >= g["kappa_min"]:
+    elif alpha >= g["alpha_min"]:
         decision = "atment"
-    elif ci and ci[1] >= g["kappa_min"]:
+    elif ci and ci[1] >= g["alpha_min"]:
         decision = "eldonthetetlen"
     else:
         decision = "elbukott"
-    return {"pair": [a, b], "n_common": ps["n"], "kappa_weighted": k, "kappa_unweighted": ps["kappa"], "agreement": ps["agreement"], "ci95_weighted": ci,
-            "kappa_min": g["kappa_min"], "decision": decision, "majority_class_counts": shares, "warnings": warnings}
+    return {"basis": "krippendorff_alpha_rendezett_skala_minden_szavazo", "voters": voters, "n_titles": n, "alpha": alpha, "ci95_alpha": ci, "alpha_min": g["alpha_min"], "min_voters": g["min_voters"],
+            "decision": decision, "majority_class_counts": shares, "warnings": warnings,
+            "secondary_pair_kappa": {"pair": [a, b], "n_common": ps["n"], "kappa_weighted": ps["kappa_weighted"], "kappa_unweighted": ps["kappa"], "agreement": ps["agreement"],
+                                     "ci95_weighted": bootstrap_ci(rat_measured, a, b, g["bootstrap"], seed), "decides": False}}
 
 
 def usage_stats(votes, ids, skipped_by_voter, cfg):
