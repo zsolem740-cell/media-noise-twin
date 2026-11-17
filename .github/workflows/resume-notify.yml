@@ -1,0 +1,181 @@
+name: resume-notify
+
+# Folytatás-jelző: ha a pilot-modellfuttatás kvótamegállással megállt, és a folytatási idő letelt, egyetlen értesítést küld a telefonra (ntfy, NTFY_TOPIC titok).
+# CSAK OLVAS ÉS ÉRTESÍT: nem indít futást, nincs benne Gemini- vagy Groq-kulcs, nem hív modellszolgáltatót, nem ír a tárolóba, nem egyesít.
+# A futást továbbra is csak a felhasználó indíthatja (Run workflow, confirm = INDITSD).
+# Biztonság: csak ütemezett és kézi indítás (nincs pull_request, nincs megjegyzés- vagy issue-indító); a futásnév és az artifact neve szigorúan ellenőrzött;
+# bemenetek nem kerülnek a shellbe (csak környezeti változón át); az üzenet a Kimenő-ellenőrön átmegy küldés előtt; a duplikációt egy kis jelölő-artifact akadályozza.
+on:
+  schedule:
+    - cron: "10,40 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: resume-notify
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: A legfrissebb pilot-futás artifactja
+        id: pick
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$REPO/actions/artifacts?per_page=50" > "$RUNNER_TEMP/artifacts.json"
+          python -m validation.hu_pilot.resumewatch pick "$RUNNER_TEMP/artifacts.json" > "$RUNNER_TEMP/pick.json"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          p = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "pick.json")))
+          if p:
+              print("found=true")
+              print("artifact_name=" + p["artifact_name"])
+              print("run_name=" + p["run_name"])
+              print("actions_run_id=" + str(p["actions_run_id"]))
+          else:
+              print("found=false")
+          PY
+
+      - name: A futás állapotának letöltése
+        id: dl
+        if: ${{ steps.pick.outputs.found == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTIONS_RUN_ID: ${{ steps.pick.outputs.actions_run_id }}
+          ARTIFACT_NAME: ${{ steps.pick.outputs.artifact_name }}
+        run: |
+          set -euo pipefail
+          gh run download "$ACTIONS_RUN_ID" --repo "$REPO" -n "$ARTIFACT_NAME" -D "$RUNNER_TEMP/pilot_run"
+
+      - name: Kvótafigyelő (csak olvas)
+        id: qw
+        if: ${{ steps.pick.outputs.found == 'true' }}
+        env:
+          RUN_NAME: ${{ steps.pick.outputs.run_name }}
+        run: |
+          set +e
+          python -m validation.hu_pilot.quotawatch "$RUNNER_TEMP/pilot_run/model_runs/$RUN_NAME" --json > "$RUNNER_TEMP/report.json"
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "readable=false" >> "$GITHUB_OUTPUT"
+            echo "A futás állapota nem olvasható (nincs state.json): nincs teendő."
+          else
+            echo "readable=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Volt-e már értesítés erről a megállásról
+        id: dedupe
+        if: ${{ steps.qw.outputs.readable == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          ACTIONS_RUN_ID: ${{ steps.pick.outputs.actions_run_id }}
+        run: |
+          set -euo pipefail
+          marker=$(python -m validation.hu_pilot.resumewatch marker "$RUNNER_TEMP/report.json" --actions-run-id "$ACTIONS_RUN_ID" | python -c 'import json,sys;print(json.load(sys.stdin)["marker"])')
+          gh api "repos/$REPO/actions/artifacts?name=$marker&per_page=10" > "$RUNNER_TEMP/marker_list.json"
+          python - "$marker" <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, sys
+          lst = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "marker_list.json")))
+          done = any(not a.get("expired") for a in lst.get("artifacts", []))
+          print("notified=" + ("true" if done else "false"))
+          PY
+
+      - name: Döntés és üzenet
+        id: decide
+        if: ${{ steps.qw.outputs.readable == 'true' }}
+        env:
+          RUN_NAME: ${{ steps.pick.outputs.run_name }}
+          ACTIONS_RUN_ID: ${{ steps.pick.outputs.actions_run_id }}
+          NOTIFIED: ${{ steps.dedupe.outputs.notified }}
+        run: |
+          set -euo pipefail
+          flag=""
+          if [ "$NOTIFIED" = "true" ]; then flag="--notified"; fi
+          python -m validation.hu_pilot.resumewatch decide "$RUNNER_TEMP/report.json" --actions-run-id "$ACTIONS_RUN_ID" --run-name "$RUN_NAME" $flag > "$RUNNER_TEMP/decision.json"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os
+          t = os.environ["RUNNER_TEMP"]
+          d = json.load(open(os.path.join(t, "decision.json")))
+          print("notify=" + ("true" if d.get("notify") else "false"))
+          print("reason=" + str(d.get("reason", "")).replace("\n", " "))
+          if d.get("notify"):
+              open(os.path.join(t, "message.txt"), "w", encoding="utf-8").write(d["message"])
+              open(os.path.join(t, "title.txt"), "w", encoding="utf-8").write(d["title"])
+              print("marker=" + d["marker"])
+          PY
+
+      - name: Kimenő-ellenőr (az üzenet nem tartalmazhat szavazói adatot vagy titkot)
+        if: ${{ steps.decide.outputs.notify == 'true' }}
+        run: |
+          python scripts/outcheck.py "$RUNNER_TEMP/message.txt"
+
+      - name: Értesítés küldése (ntfy)
+        id: send
+        if: ${{ steps.decide.outputs.notify == 'true' }}
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, os, sys, urllib.request
+          topic = os.environ.get("NTFY_TOPIC", "").strip()
+          if not topic:
+              print("sent=false")
+              print("Nincs beállítva NTFY_TOPIC: az értesítés kihagyva.", file=sys.stderr)
+              sys.exit(0)
+          t = os.environ["RUNNER_TEMP"]
+          body = {"topic": topic, "title": open(os.path.join(t, "title.txt"), encoding="utf-8").read(), "message": open(os.path.join(t, "message.txt"), encoding="utf-8").read(), "priority": 3, "tags": ["hourglass_flowing_sand"]}
+          req = urllib.request.Request("https://ntfy.sh", data=json.dumps(body).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+          try:
+              with urllib.request.urlopen(req, timeout=15) as r:
+                  ok = 200 <= r.status < 300
+          except Exception as e:
+              ok = False
+              print("ntfy hiba: " + type(e).__name__, file=sys.stderr)
+          print("sent=" + ("true" if ok else "false"))
+          PY
+
+      - name: Jelölő (hogy ugyanarról a megállásról ne menjen második értesítés)
+        if: ${{ steps.send.outputs.sent == 'true' }}
+        run: |
+          echo "értesítve" > "$RUNNER_TEMP/marker.txt"
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ steps.send.outputs.sent == 'true' }}
+        with:
+          name: ${{ steps.decide.outputs.marker }}
+          path: ${{ runner.temp }}/marker.txt
+          retention-days: 3
+
+      - name: Összegzés
+        if: ${{ always() }}
+        env:
+          FOUND: ${{ steps.pick.outputs.found }}
+          READABLE: ${{ steps.qw.outputs.readable }}
+          NOTIFY: ${{ steps.decide.outputs.notify }}
+          REASON: ${{ steps.decide.outputs.reason }}
+          SENT: ${{ steps.send.outputs.sent }}
+        run: |
+          {
+            echo '### Folytatás-jelző'
+            echo "- pilot-run artifact: ${FOUND:-nincs adat}"
+            echo "- állapot olvasható: ${READABLE:-nincs adat}"
+            echo "- értesítés kell: ${NOTIFY:-nincs adat} (${REASON:-nincs adat})"
+            echo "- elküldve: ${SENT:-nem}"
+          } >> "$GITHUB_STEP_SUMMARY"
