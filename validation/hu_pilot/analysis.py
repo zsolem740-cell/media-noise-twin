@@ -226,7 +226,7 @@ def gate(rat_measured, cfg, seed=1):
         decision = "eldonthetetlen"
     else:
         decision = "elbukott"
-    return {"basis": "krippendorff_alpha_rendezett_skala_minden_szavazo", "voters": voters, "n_titles": n, "alpha": alpha, "ci95_alpha": ci, "alpha_min": g["alpha_min"], "min_voters": g["min_voters"],
+    return {"basis": "krippendorff_alpha_rendezett_skala_minden_szavazo", "voters": voters, "n_titles": n, "alpha": alpha, "ci95_alpha": ci, "alpha_min": g["alpha_min"], "min_voters": g["min_voters"], "min_voters_note": g.get("min_voters_note"),
             "decision": decision, "majority_class_counts": shares, "warnings": warnings,
             "secondary_pair_kappa": {"pair": [a, b], "n_common": ps["n"], "kappa_weighted": ps["kappa_weighted"], "kappa_unweighted": ps["kappa"], "agreement": ps["agreement"],
                                      "ci95_weighted": bootstrap_ci(rat_measured, a, b, g["bootstrap"], seed), "decides": False}}

@@ -243,12 +243,26 @@ def test_gate_is_inconclusive_when_the_point_estimate_is_below_but_the_interval_
     assert found is not None and found["alpha"] < cfg["gate"]["alpha_min"] <= found["ci95_alpha"][1]
 
 
-def test_gate_is_not_computable_with_fewer_than_four_voters(cfg):
-    three = rat4([(0, 0, 0)] * 10 + [(1, 1, 1)] * 10 + [(2, 2, 2)] * 10, voters="ABC")
-    g = an.gate(three, cfg)
-    assert g["decision"] == "nem_szamolhato" and any("legalább 4" in w for w in g["warnings"])
+def test_gate_is_not_computable_with_fewer_voters_than_min_voters(cfg):
+    import copy
+    assert cfg["gate"]["min_voters"] == 2                                                   # 2026-11-17: 4-ről 2-re, a felhasználó jóváhagyásával
+    one = rat4([(0,)] * 10 + [(1,)] * 10 + [(2,)] * 10, voters="A")
+    g = an.gate(one, cfg)
+    assert g["decision"] == "nem_szamolhato" and any("legalább 2" in w for w in g["warnings"])
     two = rat4([(0, 0)] * 12 + [(1, 1)] * 12, voters="AB")
-    assert an.gate(two, cfg)["decision"] == "nem_szamolhato"
+    g2 = an.gate(two, cfg)
+    assert g2["decision"] != "nem_szamolhato" and g2["min_voters"] == 2
+    old = copy.deepcopy(cfg)
+    old["gate"]["min_voters"] = 4                                                          # a korábbi, négy szavazós szabály továbbra is működik
+    three = rat4([(0, 0, 0)] * 10 + [(1, 1, 1)] * 10 + [(2, 2, 2)] * 10, voters="ABC")
+    g3 = an.gate(three, old)
+    assert g3["decision"] == "nem_szamolhato" and any("legalább 4" in w for w in g3["warnings"])
+
+
+def test_gate_reports_the_note_about_the_changed_min_voters(cfg):
+    two = rat4([(0, 0)] * 12 + [(1, 1)] * 12, voters="AB")
+    g = an.gate(two, cfg)
+    assert "jóváhagyásával" in g["min_voters_note"] and "2026-11-16" in g["min_voters_note"]
 
 
 def test_gate_warns_about_incomplete_titles_and_dominant_class(cfg):
