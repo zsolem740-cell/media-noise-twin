@@ -55,6 +55,9 @@ def votes_for_groups(sel, who):
 
 
 def test_partial_voting_names_who_is_still_missing_and_complete_voting_points_to_analyze(tmp_path, cfg, sel_res):
+    import copy
+    cfg = copy.deepcopy(cfg)
+    cfg["gate"]["min_voters"] = 4                                                           # a négy szavazós ág a régi küszöbbel
     res, sel = sel_res
     exp = write_exports(tmp_path, votes_for_groups(sel, {"A": ["anchors", "measured"], "B": ["anchors", "measured"], "C": ["anchors"], "D": ["anchors"]}))
     o = state(res, cfg, [exp])
@@ -113,3 +116,14 @@ def test_the_report_only_contains_voter_letters_and_counts_and_changes_nothing(t
 
 def after_same(res, before):
     return {str(p): p.read_bytes() for p in sorted(res.rglob("*")) if p.is_file()} == before
+
+
+def test_with_two_required_voters_the_state_points_to_analyze_when_a_and_b_are_done(tmp_path, cfg, sel_res):
+    res, sel = sel_res
+    assert cfg["gate"]["min_voters"] == 2
+    exp = write_exports(tmp_path, votes_for_groups(sel, {"A": ["anchors", "measured"], "B": ["anchors", "measured"], "C": ["anchors"], "D": ["anchors"]}))
+    assert "run analyze" in nxt(state(res, cfg, [exp]))
+    (tmp_path / "p").mkdir()
+    only_a = write_exports(tmp_path / "p", votes_for_groups(sel, {"A": ["anchors", "measured"], "B": ["anchors"]}))
+    o = state(res, cfg, [only_a])
+    assert o["complete"]["measured"] == ["A"] and "kész 1 / 2 szavazó (A); hiányzik: B" in nxt(o)

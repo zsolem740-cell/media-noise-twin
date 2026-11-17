@@ -76,7 +76,7 @@ def assess(info, cfg):
             todo = [x for x in v["by_voter"] if x not in m_full] or ["senki"]
             nxt.append(f"A mérési kör szavazása folyamatban: kész {len(m_full)} / {need} szavazó ({', '.join(m_full) or '–'}); hiányzik: {', '.join(todo)}. Mindenki a saját betűjével, egyedül szavaz.")
         elif an is None:
-            nxt.append("Mind a négy szavazó kész a mérési körrel: `python -m validation.hu_pilot.run analyze EXPORT...` (a kapu a négy szavazó alfáján dönt).")
+            nxt.append(f"A kapuhoz szükséges {need} szavazó kész a mérési körrel ({', '.join(m_full)}): `python -m validation.hu_pilot.run analyze EXPORT...` (a kapu a mérési kör szavazóinak közös alfáján dönt).")
     if an:
         g = an["gate"]
         out["gate"] = {"decision": g.get("decision"), "alpha": g.get("alpha"), "alpha_min": g.get("alpha_min"), "voters": g.get("voters"), "warnings": g.get("warnings")}
