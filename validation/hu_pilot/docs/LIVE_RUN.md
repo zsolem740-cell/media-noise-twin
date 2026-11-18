@@ -37,6 +37,17 @@ A pilot **mérése egy cím egy kérésben** marad (ez az elfogadott mód, tiszt
 ## 5. Ha megáll (kvóta)
 A munkafolyamat hibával zárul (kilépési kód 3), de a futás fájljait feltölti (*pilot-run-<run_name>* artifact, 14 napig). Folytatás: a kvóta visszaállása + 5 perc után indítsd újra **ugyanazzal a `run_name`-mel**, és a `resume_run_id` mezőbe írd a megállt futás azonosítóját (a futás oldalának címében a szám). A kész címek nem mennek ki újra.
 
+> **FIGYELEM: a GitHub "Re-run" (újrafuttatás) gombja NEM folytat, használni tilos megállt mérésnél.**
+> A "Re-run" ugyanazokkal a bemenetekkel indul, mint az eredeti indítás. Ha az eredeti indításnál a `resume_run_id` üres volt, a folytatás-lépés kimarad, és a futás **üres állapotból** indul ugyanazzal a `run_name`-mel: a kész címek újra kimennek, az első kérés nem próba, és az előző kísérlet artifactja elveszhet (2026-11-18-án pontosan ez történt a `pilot-1`-gyel: a 12 kész cím pontszáma elveszett, a mérést új névvel kellett újrakezdeni).
+> Folytatáshoz **mindig új indítás** kell: Actions, **Run workflow**, ugyanaz a `run_name`, és a `resume_run_id` mezőben a megállt futás azonosítója.
+> Az első indítás is csak akkor folytatható később, ha az URL-ben lévő futásazonosítót megjegyzed (a folytatás-jelző értesítése is kiírja).
+
+### Folytatás előtti ellenőrzőlista
+1. Az indítás **új** "Run workflow", nem "Re-run".
+2. `run_name` ugyanaz, mint a megállt futásé; `resume_run_id` kitöltve (az első indításnál üres).
+3. A futás összegzésében (vagy a Kvótafigyelő kimenetében) látszik: `invocations` nő, `n_ok` nem esik vissza, az első kérés próba (`probes`).
+4. Ha az összegzés `n_ok 0` és `probes []` egy olyan futásnál, amelynek már voltak kész címei: **állj meg**, ne indíts újat, nézd meg az artifactot.
+
 ### Folytatás-jelző (értesítés, nem indít semmit)
 A `resume-notify` munkafolyamat félóránként megnézi a legfrissebb `pilot-run-*` artifactot, és ha a futás kvótamegállással állt meg, a folytatási idő (visszaállás + 5 perc) letelt, és van még próba a kvótanapra, **egyszer** értesítést küld a telefonodra (ntfy, a repó `NTFY_TOPIC` titka; ha nincs, csak az Actions-összegzésben látszik a döntés). Az üzenet a folytatás lépéseit és a `resume_run_id`-t tartalmazza.
 - **Csak olvas és értesít:** nincs benne modellkulcs, nem indít futást, nem ír a tárolóba. A futást továbbra is te indítod (`confirm = INDITSD`).
