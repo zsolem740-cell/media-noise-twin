@@ -3,11 +3,13 @@
 **Állapot:** a 9. pont hét választását a felhasználó 2026-11-19-én jóváhagyta, **kizárólag a szintetikus szimulátor feltevéseiként**. Ez **nem piaci végrehajtási modell**, és nem engedély valódi adatos értékelésre. A mérési kapu zárva marad. Solaris- és Média-Zaj-integráció nincs.
 Megvalósítás: `trading_model/simulator.py`, tesztek: `trading_model/tests/test_simulator.py`.
 
+**Felülvizsgálat utáni javítások (2026-11-19):** a független kódfelülvizsgálat nyomán a stratégia Decimal-kontextusa elkülönül a motorétól (`strategy_error`), a `simulate` a belépési ponton a teljes adatszerződést kikényszeríti (`input_contract`), a paraméterfeldolgozás független a hívó kontextusától és ábrázolási korlátot kapott, a paraméter-előellenőrzés határa pontosítva lett (6. pont), a negatív számláló indoklása javítva (5. pont), és a stratégia megbízható callback-jellege kimondva (1. pont). A szabályok jelentése (szigorú `>`, előtag-szabály, nyitóár-teljesítés) nem változott.
+
 **Cél:** kizárólag a működés ellenőrzése szintetikus adaton. Nem kereskedési előny bizonyítása. A kimenete nem kapu-bemenet, és nem optimalizálható.
 
 ## 0. Keretek
 - Egy eszköz, csak long/flat, piaci megbízás, tőkeáttétel nélkül. Nincs MOC, limit, stop, megbízás-visszavonás, same-bar teljesítés, rövid pozíció.
-- Csak `synthetic: true` és `SYN-` jelölésű idősor (a `data.py` ellenőrzése után). Más: blokkoló hiba (`input_not_synthetic`, `input_symbol`).
+- Csak `synthetic: true` és `SYN-` jelölésű idősor. A `simulate` a belépési ponton a **teljes bemeneti adatszerződést** kikényszeríti a közvetlenül létrehozott `Series` esetén is (7. pont), nem csak a `load_series` útján érkezőnél. Hibás bemenet: egységes, dokumentált `SimulationError` (`input_contract`, `input_not_synthetic`, `input_symbol`, `input_overlap`), nem nyers `IndexError` vagy `KeyError`.
 - **A szigorú `>` teljesítési szabály és az előtag-szabály (hatékony elérhetőség) szimulációs feltevés, nem elfogadott piaci végrehajtási modell.** A „nyitón teljesül" sem piaci állítás, csak a szimuláció kerete.
 - Minden paraméter kötelező, nincs rejtett alapérték.
 - Determinisztikus. Nincs hálózat, szolgáltató, kulcs. A véletlen csak a generátor `seed`-je.
@@ -16,7 +18,10 @@ Megvalósítás: `trading_model/simulator.py`, tesztek: `trading_model/tests/tes
 - A stratégia egy tiszta függvény: `stratégia(nézet) → "LONG" | "FLAT" | None`. A `None` jelentése „nincs váltás".
 - A **nézet** a döntés pillanatában látható sávok **változtathatatlan sorozata** (nyitó, csúcs, mélypont, záró, forgalom, időbélyeg). A stratégia **nem kap** teljesítési árat, számlaállapotot (készpénz, pozíció, függő megbízás), megbízás-információt, döntési időt vagy jövőbeli adatot.
 - A cél és a tényleges/vetített állapot összevetése, a megbízás létrehozása és minden számolás a **motor** feladata.
-- Más visszatérési érték: blokkoló hiba (`strategy_target`).
+- Más visszatérési érték: blokkoló hiba (`strategy_target`). A cél pontosan `str` típusú (`LONG` vagy `FLAT`) kell legyen: egy `str`-alosztály, amelynek az egyenlőség-vizsgálata felülírt, nem fogadható el.
+- **A stratégia megbízható, folyamaton belüli visszahívás (callback).** A nézet korlátozása (változtathatatlan sávok, nincs ár, számla vagy megbízás) **API-szerződés, nem biztonsági sandbox**: a stratégia ugyanabban a Python-folyamatban fut, és szándékosan rosszindulatú kód elérheti a motor belső állapotát (pl. a `ViewBar` `__dict__`-jét, a hívási keretek lokális változóit). Folyamatizolációt a szimulátor nem épít. A „nem kap" állítás tehát a jóhiszemű stratégiára vonatkozik.
+- **A stratégia saját Decimal-kontextusban fut**, a motorétól és a hívóétól függetlenül: `prec=28`, `ROUND_HALF_EVEN`, csapdák: `InvalidOperation`, `DivisionByZero`, `Overflow` (nincs `Inexact` csapda). A stratégia kontextus-módosítása (precizitás, csapdák, `setcontext`) nem változtathatja meg a motor számítását, és a kilépéskor a motor kontextusa áll vissza.
+- **A stratégia bármely kivétele `strategy_error`** (a részlet a kivétel típusa, az eredeti kivétel láncolva). Egy stratégia aritmetikai hibája tehát nem minősül a motor saját pontossági hibájának (`decimal_precision`).
 
 ## 2. Idő és események
 **Jelölés.** `t_i` az `i`. sáv vége (`timestamp`), `dur` a `timeframe` hossza, `o_i = t_i − dur` a sáv nyitása, a sáv a `[o_i, t_i)` intervallum. Az `o_i − t_{i−1}` szünet: 0 folytonos, > 0 kereskedési szünet, **< 0 átfedés: blokkoló hiba** (`input_overlap`). A szünet és a hiányzó sáv nem különböztethető meg, szünetként kezelendő.
@@ -53,27 +58,33 @@ Megvalósítás: `trading_model/simulator.py`, tesztek: `trading_model/tests/tes
 - `s`, `r`, `f`: szintetikus tesztértékek, nem piaci becslések, nem bizonyíték.
 
 ## 5. Számábrázolás és méretezés
-**Konverzió.** A JSON-ból érkező szám: `float` esetén `Decimal(repr(x))` (nem `Decimal(x)`), `int` esetén `Decimal(x)`. Paraméter csak `str`, `int` vagy `Decimal` lehet, a `float` és a `bool` `param_type` hiba.
+**Konverzió.** A JSON-ból érkező szám: `float` esetén `Decimal(repr(x))` (nem `Decimal(x)`), `int` esetén `Decimal(x)`. Paraméter csak `str`, `int` vagy `Decimal` lehet, a `float` és a `bool` `param_type` hiba. A paraméterek feldolgozása a motor saját kontextusában történik (nem a hívó globális kontextusában), így a hívó csapdabeállításai nem változtatják meg az eredményt.
 
 **Helyi kontextus** (a globális kontextus nem változik): `decimal.Context(prec=60, rounding=ROUND_HALF_EVEN, traps=[InvalidOperation, DivisionByZero, Overflow, Inexact], Emin=−999999, Emax=999999)`. Az `Inexact` csapda miatt **semmilyen műveletet nem kerekít a rendszer**: ha egy művelet nem pontos, blokkoló hiba (`decimal_precision`). A kiírás szöveg (`format(d, 'f')`), nem `float`.
 
 **Vételi mennyiség** (nincs osztás, csak a lefelé vágó egész osztás `//`):
-- Ha `készpénz − f ≤ 0`: `q = 0` (a `Decimal` `//` a nulla felé csonkít, ezért az előzetes ellenőrzés kötelező).
+- Ha `készpénz − f ≤ 0`: `q = 0`. Ez az ág explicit védelem az olvashatóságért, **viselkedésileg egyenértékű** az elhagyásával: negatív számlálónál a `Decimal` `//` a nulla felé csonkít (pl. `−5 // 3 = −1`), így a `q` ekkor nem pozitív, tehát kisebb `u`-nál, és a vétel úgyis `insufficient_cash`. Az ág elhagyása nem változtat semmilyen eredményen (a tesztek ezt egyenértékű mutánsként igazolják, nem hibaként kezelik).
 - Különben `k = (készpénz − f) // (p·(1+r)·u)`, `q = k·u`.
 - Ha `q < u`: `REJECTED(insufficient_cash)`.
 
 **Ellenőrzés a képlet után (kötelező, minden vételnél):** `terhelés = q·p + (r·q·p + f)`; ha `terhelés > készpénz`, a futás belső hibával (`sizing_violation`) leáll, nem csökkenti csendben a mennyiséget. A tesztben ezen felül `terhelés(q + u) > készpénz` (maximalitás).
 
-## 6. Paraméterek érvényességi tartománya
-Bármely hiba **blokkoló**, a futás el sem indul (`param_missing`, `param_unknown`, `param_type`, `param_range`):
-- Pontosan az öt paraméter szerepel: `initial_cash`, `unit`, `fee_rate`, `fixed_fee`, `slippage` (ismeretlen kulcs: `param_unknown`).
-- `initial_cash` > 0, `unit` > 0, véges.
-- `fee_rate` (`r`) ≥ 0, `fixed_fee` (`f`) ≥ 0, véges.
-- `slippage` (`s`): **0 ≤ s < 1**.
-- `NaN` és végtelen: `param_range`; nem decimális szöveg és nem megengedett típus: `param_type`.
+## 6. Paraméterek érvényességi tartománya és az előzetes ellenőrzés határa
+**Indulás előtt ellenőrzött** (bármely hiba blokkoló, a futás el sem indul, a stratégia egyszer sem hívódik): **típus**, **tartomány** és **az elfogadott ábrázolási korlát**. Hibakódok: `param_missing`, `param_unknown`, `param_type`, `param_range`.
+- Pontosan az öt paraméter szerepel: `initial_cash`, `unit`, `fee_rate`, `fixed_fee`, `slippage`.
+- Kulcsok (determinisztikus sorrend): először a nem `str` típusú kulcs (`param_unknown`, a részletben a típus neve), majd az ismeretlen `str` kulcs (a névsor szerinti első), majd a hiányzó. A kulcsok sorrendje a beszúrási sorrendtől nem függ, vegyes típusú kulcsokra sem keletkezik nyers kivétel.
+- Típus: `str` (csak ASCII, szélén szóköz és `_` nélkül), `int` vagy `Decimal`; `float`, `bool`, más: `param_type`. Nem decimális szöveg: `param_type`.
+- Végesség: `NaN` és a végtelen: `param_range`.
+- **Ábrázolási korlát** (`param_range`): legfeljebb 20 értékes jegy, és a kiigazított kitevő abszolút értéke legfeljebb 30. A nulla (a negatív nulla és a nagy kitevőjű nulla is) pozitív, egyszerű nullává alakul.
+- Tartomány: `initial_cash` > 0, `unit` > 0, `fee_rate` ≥ 0, `fixed_fee` ≥ 0, **0 ≤ `slippage` < 1**.
 - Határesetek, amelyek érvényesek: `s = 0`, `r = 0`, `f = 0`.
 
-## 7. Azonosságok (minden futásra, tesztelendő)
+**Amit az előzetes ellenőrzés NEM ígér.** Nem zárja ki előre a későbbi aritmetikai hibákat. A határon belüli paraméterekkel is keletkezhet **adatfüggő** pontossági hiba futás közben (`decimal_precision`): például 20 jegyű paraméterek és 17 jegyű árak szorzata nem fér a 60 jegyű kontextusba, és az `Inexact` csapda miatt a művelet nem kerekít, hanem blokkoló hibát ad. Az ábrázolási korlát célja, hogy a nyilvánvalóan szélsőséges értékek indulás előtt elbukjanak, nem az, hogy minden későbbi művelet pontos legyen. Ilyen hibánál nincs részeredmény.
+
+## 7. Bemeneti adatszerződés a belépési ponton
+A `simulate` a futás előtt, a közvetlenül létrehozott `Series`-re is ellenőrzi (a `data.check_bar` sáv-ellenőrzésével): `Series` típus, logikai `synthetic`, a szimbólum szabálya, ismert `timeframe`, nem üres sávsorozat, `Bar` típusú, időzónás időpontú sávok, véges pozitív árak, érvényes OHLC-összefüggés, `available_at ≥ timestamp`, szigorúan növekvő időbélyegek. Hiba: `input_contract` (mező: a hiba helye, pl. `bars[2].open`; részlet: az ok). Ezt követi a `synthetic: true` (`input_not_synthetic`), a `SYN-` előtag (`input_symbol`) és az átfedésmentesség (`input_overlap`). A `load_series` útján érkező idősor ezeken változatlanul átmegy.
+
+## 7/b. Azonosságok (minden futásra, tesztelendő)
 - **A. Készpénz-főkönyv:** `Δkészpénz = −σ·q·open − csúszás − díj`, `σ` = +1 vétel, −1 eladás, `csúszás = q·open·s`.
 - **B. Pozíció:** `q_t = Σ vételi q − Σ eladási q`, `q_t ≥ 0`, `u` többszöröse.
 - **C. Érték:** `V = készpénz + q·ref`, ahol `ref` a `close` (CLOSE) vagy az aktuális `open` (OPEN_MARK). A készpénz sosem negatív.
@@ -121,6 +132,15 @@ Intervallumok: [12-31, 01-01), [01-01, 01-02), [01-03, 01-04): nincs átfedés, 
 - `A*`: 1. nap, majd a 2–5. sáv mind a **7. napon**. Döntési események: 1. nap, 7. nap. CLOSE a 1–5. napon (mind **1000**).
 - A stratégia (LONG, amikor a nézetben van a 2. sáv) a 7. napon dönt, a nézet az 1–5. sáv. Nincs `o_j > 7. nap` → azonnal `EXPIRED(end_of_data)`. Záró érték (5. nap CLOSE): **1000**.
 
+**H. Eladás nulla nettó bevétellel (határeset).** `initial_cash` = 110, `f` = 10, `s = r = 0`, `u` = 1. Sávok 1–6 (open/close): 1–4: 10/10; 5: 5/5; 6: 1/1. Stratégia: LONG az 1. sáv után, FLAT a 4. sáv után.
+- Vétel a 2. napon, 10-en: `k = (110 − 10) // 10 = 10`, `N = 100`, `díj = 10`, terhelés 110, készpénz **0**.
+- Döntés a 4. napon: `o_5` = 4. nap ✗, `o_6` = 5. nap ✓ → eladás a 6. sáv nyitóján, 1-en: `N = 10`, `díj = 10`, bevétel 0, `készpénz + 0 = 0`, nem negatív → **teljesül**, készpénz **0**, pozíció 0.
+
+**I. A függő eladás nem változik ellentétes céltól.** Sávok 1–8, `open_k = 99 + k`, `close_k = open_k + 1`, `s = r = f = 0`. A 3. sáv `available_at` = 5,5. nap, a 4. sáv 5,8. nap. Stratégia (a nézet hossza szerint): 1 → LONG, 3 → FLAT, 5 → LONG.
+- Vétel a 2. napon, 102-n: `q = 1000 // 102 = 9`, készpénz 82.
+- Döntés az 5,5. napon (nézet: 1–3. sáv): FLAT, az eladás `j*` = 7. sáv (`o_7` = 6. nap).
+- Döntés az 5,8. napon (nézet: 1–5. sáv): LONG, ellentétes a függő eladással → `REJECTED(opposite_while_pending)`. Az eredeti eladás szándéka (`j*` = 7) változatlan, teljesül a 6. napon 106-on: 9·106 = 954, készpénz **1036**, pozíció 0.
+
 ## 9. Elfogadási tesztlista
 1. **Sorrend:** `CLOSE → OPEN → OPEN_MARK → DECISION` (A példa 2. napja). Fajtánként legfeljebb egy esemény időbélyegenként.
 2. **Szigorú `>`:** folytonos sávoknál egy sávval későbbi teljesítés (A), szünetnél a következő nyitó (B); a B példa sávjainak átfedés-mentessége.
@@ -138,6 +158,8 @@ Intervallumok: [12-31, 01-01), [01-01, 01-02), [01-03, 01-04): nincs átfedés, 
 14. **Azonosságok A–D** véletlenszerű szintetikus idősorokon; a készpénz sosem negatív.
 15. **Példák A–G** fixtúraként, pontos `Decimal`-egyezéssel.
 16. **Determinizmus**, **bemenet** (`synthetic: false`, átfedés, nem `SYN-`), **hálózati zár**.
+17/b. **Felülvizsgálat utáni regressziók:** a stratégia kontextus-módosítása nem változtatja a motor számítását, és a stratégia saját alapértelmezett kontextust kap; a stratégia `Decimal`-osztása nem motorhiba; a stratégia hibája `strategy_error`; `str`-alosztályú cél elutasítva; a közvetlenül épített `Series` hibái (lookahead, üres, ismeretlen időkeret, `NaN`/nulla/negatív/végtelen ár, naiv időpont, azonos és nem növekvő időbélyeg, `Decimal` ár, rossz szimbólum, nem logikai `synthetic`, nem `Series`) `input_contract`; a túl pontos paraméter (jegy- és kitevőkorlát) indulás előtt `param_range`; vegyes és ismeretlen kulcsok determinisztikusan `param_unknown`; a hívó kontextusa nem befolyásolja a feldolgozást; nem ASCII számjegy `param_type`; a negatív nulla nem jelenik meg a kimenetben.
+17/c. **Hiányzó tesztek pótlása:** eladás nulla nettó bevétellel teljesül (H); az eladás-elutasítás utáni függőállapot-törlés, vagyis a következő döntés új megbízást hozhat; az eredeti függő eladás változatlansága ellentétes cél mellett (I); nem monoton elérhetőség kézi példával és véletlen mintákon, a döntési időkre, nézethosszra, `j*`-ra, a teljesítés idejére és referenciaárára a szimulátor kódjától független (lineáris keresésű) újraszámolással; a `sizing_violation` védelem **célzott hibainjektálással** egy eldobható másolaton (a helyes aritmetika nem gyengül); az egyenértékű mutáns (`cash − f ≤ 0` ág) nem változtat eredményt, ezért nem teszthiba.
 17. **Mutációs próbák** (mindegyiknek el kell buknia legalább egy teszten): a `>` helyett `≥`, a méretezés a döntéskori árral, a díj kihagyása a méretből, az `A*` helyett `available_at`, a CLOSE és a teljesítés sorrendjének felcserélése, az `Inexact` csapda kikapcsolása, az azonnali lejárat helyett késői lejáratás, a vetített állapot figyelmen kívül hagyása.
 
 ## 10. Ami nincs eldöntve

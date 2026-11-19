@@ -3,18 +3,26 @@
 Egy eszköz, csak long/flat, piaci megbízás, tőkeáttétel nélkül. Csak `synthetic: true`, `SYN-` jelölésű idősort fogad el. A kimenete a működés ellenőrzésére szolgál:
 nem teljesítmény, nem kapu-bemenet, és nem optimalizálható. Hálózatot, szolgáltatót, kulcsot és környezeti beállítást nem használ; csak a Python standard könyvtárát.
 A számítás `Decimal`-lal, helyi kontextusban történik (prec=60, Inexact csapda): semmit nem kerekít, a nem pontos művelet blokkoló hiba.
+
+A stratégia MEGBÍZHATÓ, folyamaton belüli visszahívás (callback). A nézet korlátozása (változtathatatlan sávok, nincs ár, számla vagy megbízás) API-szerződés,
+NEM biztonsági sandbox: a stratégia ugyanabban a Python-folyamatban fut, és szándékosan rosszindulatú kód elérheti a motor belső állapotát. Folyamatizolációt a szimulátor nem épít.
+A stratégia saját, a motorétól független Decimal-kontextusban fut; a kivételei `strategy_error` hibaként jelennek meg, nem a motor pontossági hibájaként.
 """
 import bisect
 import dataclasses
 import datetime
 import decimal
+import re
 from decimal import Decimal
 
-from .data import TIMEFRAMES
+from .data import NON_BLOCKING, TIMEFRAMES, Bar, Series, check_bar
 
 PARAMS = ("initial_cash", "unit", "fee_rate", "fixed_fee", "slippage")
 TARGETS = ("LONG", "FLAT")
 _CLOSE, _OPEN, _DECISION = 0, 1, 3          # azonos időbélyegen belüli sorrend; a 2 az OPEN_MARK (nem külön esemény, a teljesítés után készül)
+MAX_DIGITS = 20                             # a paraméter legfeljebb ennyi értékes jegyű lehet (ábrázolási korlát, nem a későbbi pontosság garanciája)
+MAX_EXPONENT = 30                           # a paraméter kiigazított kitevőjének abszolút értéke legfeljebb ennyi
+_SYMBOL = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,31}", re.ASCII)   # az adatszerződés szimbólum-szabálya (a teszt egyezésüket őrzi)
 
 
 class SimulationError(Exception):
@@ -25,8 +33,8 @@ class SimulationError(Exception):
         self.reason, self.field, self.detail = reason, field, detail
 
 
-REASONS = ("param_missing", "param_unknown", "param_type", "param_range", "input_not_synthetic", "input_symbol", "input_overlap",
-           "strategy_target", "sizing_violation", "decimal_precision")
+REASONS = ("param_missing", "param_unknown", "param_type", "param_range", "input_contract", "input_not_synthetic", "input_symbol", "input_overlap",
+           "strategy_error", "strategy_target", "sizing_violation", "decimal_precision")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -46,6 +54,12 @@ def make_context():
                            traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow, decimal.Inexact])
 
 
+def make_strategy_context():
+    """A stratégia saját Decimal-kontextusa: a motorétól és a hívóétól független, rögzített alapérték (prec=28, nincs Inexact csapda)."""
+    return decimal.Context(prec=28, rounding=decimal.ROUND_HALF_EVEN, Emin=-999999, Emax=999999,
+                           traps=[decimal.InvalidOperation, decimal.DivisionByZero, decimal.Overflow])
+
+
 def to_decimal(value):
     """A JSON-ból érkező szám pontos `Decimal`-lá alakítása: float esetén a legrövidebb körbeforduló alakon (`repr`) át, int esetén közvetlenül. Logikai és más típus tilos."""
     if isinstance(value, bool):
@@ -57,47 +71,97 @@ def to_decimal(value):
     raise TypeError("nem szám")
 
 
+def _parse_param(key, value):
+    """Egy paraméter típus-, ábrázolási és végesség-ellenőrzése. A hívó Decimal-kontextusától független (a hívó a motor saját kontextusában fut)."""
+    if isinstance(value, bool) or not isinstance(value, (str, int, Decimal)):
+        raise SimulationError("param_type", key, "csak str, int vagy Decimal lehet (a float tilos)")
+    if isinstance(value, str):
+        if not value.isascii() or value != value.strip() or "_" in value:
+            raise SimulationError("param_type", key, "nem decimális szöveg")
+        try:
+            dec = Decimal(value)
+        except decimal.InvalidOperation:
+            raise SimulationError("param_type", key, "nem decimális szöveg") from None
+    else:
+        dec = Decimal(value)
+    if not dec.is_finite():
+        raise SimulationError("param_range", key, "nem véges")
+    if dec == 0:
+        return Decimal(0)                                                                                    # a negatív nulla és a nagy kitevőjű nulla pozitív, egyszerű nullává alakul
+    if len(dec.as_tuple().digits) > MAX_DIGITS:
+        raise SimulationError("param_range", key, f"legfeljebb {MAX_DIGITS} értékes jegy")
+    if abs(dec.adjusted()) > MAX_EXPONENT:
+        raise SimulationError("param_range", key, f"a kiigazított kitevő abszolút értéke legfeljebb {MAX_EXPONENT}")
+    return dec
+
+
 def check_params(params):
-    """Paraméterek ellenőrzése és `Decimal`-lá alakítása. Bármely hiba blokkoló (SimulationError), a futás el sem indul."""
+    """Paraméterek előzetes ellenőrzése (a futás indulása előtt): típus, tartomány és ábrázolási korlát. Bármely hiba blokkoló (SimulationError), a futás el sem indul.
+    Sorrend (determinisztikus): nem szöveg típusú kulcs, ismeretlen kulcs (a névsor szerinti első), hiányzó kulcs, majd paraméterenként típus/ábrázolás, végül tartomány.
+    NEM garantálja, hogy a későbbi adatfüggő műveletek pontosak lesznek: ilyen hiba a futás közben még `decimal_precision` lehet."""
     if not isinstance(params, dict):
         raise SimulationError("param_type", None, "a paraméterek szótár kell legyenek")
-    for key in sorted(k for k in params if k not in PARAMS):
-        raise SimulationError("param_unknown", str(key))
+    odd = sorted({type(k).__name__ for k in params if type(k) is not str})
+    if odd:
+        raise SimulationError("param_unknown", None, f"nem szöveg típusú kulcs: {odd[0]}")
+    unknown = sorted(k for k in params if k not in PARAMS)
+    if unknown:
+        raise SimulationError("param_unknown", unknown[0])
     for key in PARAMS:
         if key not in params:
             raise SimulationError("param_missing", key)
-    out = {}
-    for key in PARAMS:
-        value = params[key]
-        if isinstance(value, bool) or not isinstance(value, (str, int, Decimal)):
-            raise SimulationError("param_type", key, "csak str, int vagy Decimal lehet (a float tilos)")
-        if isinstance(value, str):
-            if value != value.strip() or "_" in value:
-                raise SimulationError("param_type", key, "nem decimális szöveg")
-            try:
-                dec = Decimal(value)
-            except decimal.InvalidOperation:
-                raise SimulationError("param_type", key, "nem decimális szöveg") from None
-        else:
-            dec = Decimal(value)
-        if not dec.is_finite():
-            raise SimulationError("param_range", key, "nem véges")
-        out[key] = dec
-    if not out["initial_cash"] > 0:
-        raise SimulationError("param_range", "initial_cash", "pozitív kell legyen")
-    if not out["unit"] > 0:
-        raise SimulationError("param_range", "unit", "pozitív kell legyen")
-    if out["fee_rate"] < 0:
-        raise SimulationError("param_range", "fee_rate", "nem negatív kell legyen")
-    if out["fixed_fee"] < 0:
-        raise SimulationError("param_range", "fixed_fee", "nem negatív kell legyen")
-    if not 0 <= out["slippage"] < 1:
-        raise SimulationError("param_range", "slippage", "0 <= s < 1 kell legyen")
+    with decimal.localcontext(make_context()):
+        out = {key: _parse_param(key, params[key]) for key in PARAMS}
+        if not out["initial_cash"] > 0:
+            raise SimulationError("param_range", "initial_cash", "pozitív kell legyen")
+        if not out["unit"] > 0:
+            raise SimulationError("param_range", "unit", "pozitív kell legyen")
+        if out["fee_rate"] < 0:
+            raise SimulationError("param_range", "fee_rate", "nem negatív kell legyen")
+        if out["fixed_fee"] < 0:
+            raise SimulationError("param_range", "fixed_fee", "nem negatív kell legyen")
+        if not 0 <= out["slippage"] < 1:
+            raise SimulationError("param_range", "slippage", "0 <= s < 1 kell legyen")
     return out
 
 
+def _aware_utc_text(value, field):
+    if not isinstance(value, datetime.datetime) or value.tzinfo is None or value.utcoffset() is None:
+        raise SimulationError("input_contract", field, "nem időzónás időpont")
+    try:
+        return value.astimezone(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    except (OverflowError, ValueError):
+        raise SimulationError("input_contract", field, "érvénytelen időpont") from None
+
+
 def check_series(series):
-    """A szimulátor saját bemeneti feltételei az adatszerződés ellenőrzésén túl."""
+    """A teljes bemeneti adatszerződés kikényszerítése a belépési ponton, a közvetlenül létrehozott Series esetén is (az adatszerződés sáv-ellenőrzésével, `data.check_bar`).
+    Hibás bemenetre egységes SimulationError jön: `input_contract` (mező: a hiba helye, részlet: az ok), `input_not_synthetic`, `input_symbol` vagy `input_overlap`."""
+    if not isinstance(series, Series):
+        raise SimulationError("input_contract", "series", "nem Series")
+    if not isinstance(series.synthetic, bool):
+        raise SimulationError("input_contract", "synthetic", "logikai érték kell legyen")
+    if not isinstance(series.symbol, str) or _SYMBOL.fullmatch(series.symbol) is None:
+        raise SimulationError("input_contract", "symbol", "érvénytelen szimbólum")
+    if not isinstance(series.timeframe, str) or series.timeframe not in TIMEFRAMES:
+        raise SimulationError("input_contract", "timeframe", "ismeretlen időkeret")
+    if not isinstance(series.bars, (tuple, list)) or len(series.bars) == 0:
+        raise SimulationError("input_contract", "bars", "üres vagy nem sorozat")
+    previous = None
+    for i, bar in enumerate(series.bars):
+        where = f"bars[{i}]"
+        if not isinstance(bar, Bar):
+            raise SimulationError("input_contract", where, "nem Bar")
+        raw = {name: getattr(bar, name) for name in ("open", "high", "low", "close", "volume")}
+        raw["timestamp"] = _aware_utc_text(bar.timestamp, f"{where}.timestamp")
+        raw["available_at"] = _aware_utc_text(bar.available_at, f"{where}.available_at")
+        _clean, problems = check_bar(raw)
+        for field, reason in problems:
+            if reason not in NON_BLOCKING:
+                raise SimulationError("input_contract", f"{where}.{field}", reason)
+        if previous is not None and bar.timestamp <= previous:
+            raise SimulationError("input_contract", f"{where}.timestamp", "duplicate_timestamp" if bar.timestamp == previous else "not_increasing")
+        previous = bar.timestamp
     if series.synthetic is not True:
         raise SimulationError("input_not_synthetic")
     if not series.symbol.startswith("SYN-"):
@@ -195,8 +259,13 @@ def _run(series, strategy, params):
             marks.append(_mark(time, idx, "open_ref", cash, qty, open_))
         else:
             m = bisect.bisect_right(astar, time)                                                     # a látható sávok száma (az astar monoton nem csökkenő)
-            target = strategy(tuple(vbars[:m]))
-            if target is not None and target not in TARGETS:
+            view = tuple(vbars[:m])
+            try:
+                with decimal.localcontext(make_strategy_context()):                                  # a stratégia a motorétól független kontextusban fut, a kilépéskor a motoré áll vissza
+                    target = strategy(view)
+            except Exception as exc:                                                                   # a stratégia bármely kivétele a stratégia hibája, nem a motor pontossági hibája
+                raise SimulationError("strategy_error", None, type(exc).__name__) from exc
+            if target is not None and not (type(target) is str and target in TARGETS):
                 raise SimulationError("strategy_target", None, "a cél LONG, FLAT vagy None lehet")
             if pending is not None:
                 projected = "LONG" if pending["side"] == "BUY" else "FLAT"
