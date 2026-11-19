@@ -25,8 +25,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Függőség (csak a tesztfuttató)
-        run: python -m pip install --quiet pytest
+      - name: Függőségek (tesztfuttató és PyYAML a meglévő tesztekhez)
+        run: python -m pip install --quiet pytest pyyaml
       - name: Kódellenőr
         run: python scripts/code_guard.py
       - name: Offline tesztek (not live_api)
