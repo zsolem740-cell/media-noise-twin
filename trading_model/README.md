@@ -7,7 +7,8 @@ Külön, a Média-Zaj pilottól **független** modul (nem importál a `validatio
 ## Mi van most (1. alap)
 - `docs/SZABALYOK.md`: a modul szabálykönyve (tiltások, a kapu és a zárt teszt szabályai).
 - `docs/ADATSZERZODES.md`: az árfolyam-idősor formátuma és ellenőrzési szabályai.
-- `docs/KUTATASI_KERDES_ES_KAPU.md`: a kutatási kérdés és a kapu **tervezete, nem rögzített, jóváhagyásra vár**.
+- `docs/KUTATASI_KERDES_ES_KAPU.md`: a kutatási kérdés és a kapu. **A protokoll rögzítve (2026-11-19)**; a költségmodell, a viszonyítási alapok és a számszerű küszöb (döntési szabállyal) **még nyitott**.
+- `gate_config.json`, `gate.py`: a rögzített protokoll-paraméterek, szigorú betöltéssel, ellenőrzéssel és hash-eléssel. Amíg a nyitott tételek (`pending`) nincsenek rögzítve, a mérés kapuja zárva (`measurement_ready` hamis).
 - `data.py`: az adatszerződés szigorú ellenőrzése (nincs csendes javítás, kizárás vagy típusátalakítás).
 - `synthetic.py`: determinisztikus, szintetikusnak jelölt idősor-generátor.
 - `tests/`: tesztek, szintetikus fixture-rel és a közös hálózati zárral.
