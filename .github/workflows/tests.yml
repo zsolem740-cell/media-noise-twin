@@ -2,17 +2,20 @@ name: tests
 
 # Offline tesztkészlet: a `not live_api` szűréssel futtatott tesztek (tests/, validation/hu_pilot/tests/, trading_model/tests/), a közös hálózati zárral.
 # Csak olvas: nincs titok, nincs modellszolgáltató, nincs éles hívás, nem ír a tárolóba. A kódellenőr (code_guard) ugyanitt fut.
+# Futás: pull requestre, a claude/** ágak és a main pushára, valamint kézzel. Útvonalszűrés nincs: a bot atm_history.json-frissítése is futást indíthat.
+# A main-on nincs megszakítás (cancel-in-progress ki), de ez nem garantálja, hogy minden egyes push külön lefut: a GitHub az azonos csoportban várakozó futások közül csak a legfrissebbet tartja meg.
 on:
   pull_request:
   push:
-    branches: ["claude/**"]
+    branches: ["claude/**", "main"]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   tests:
