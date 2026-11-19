@@ -45,7 +45,8 @@ A projekt hét csak olvasó ellenőrző ügynököt használ; a szkript a forrá
 - A pilot eredményei: `validation/hu_pilot/results/` (git nem követi).
 - `src/magyar_pilot/` csak a karbantartót (`maintenance.py`) tartalmazza, pilot-logikát ne tegyél ide.
 - Háttérszkriptek: `scripts/code_guard.py`, `scripts/kitchen_dispatch.py`, `scripts/context_snapshot.py`.
-- Tesztek: `python -m pytest -m "not live_api"` (a `tests/` és a `validation/hu_pilot/tests/` mappát is futtatja, közös hálózati zárral).
+- Tesztek: `python -m pytest -m "not live_api"` (a `tests/`, a `validation/hu_pilot/tests/` és a `trading_model/tests/` mappát is futtatja, közös hálózati zárral; a `.github/workflows/tests.yml` ugyanezt futtatja a kódellenőrrel együtt).
+- A kereskedelmi modell alapjai: `trading_model/` (adatszerződés, szintetikus generátor, rögzített kapuprotokoll; a mérési kapu zárva); a közös hálózati zár és a valódi API-hívás tilalma rá is érvényes.
 
 ## Munkafolyamatok helye
 - A részletes telepítési és pilot-folyamatok a `docs/PILOT_RUNBOOK.md` fájlban vannak, nem itt.

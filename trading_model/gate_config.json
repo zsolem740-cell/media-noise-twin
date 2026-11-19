@@ -1,0 +1,17 @@
+{
+ "_note": "A kapu RÖGZÍTETT protokoll-paraméterei. Csendes módosítás tilos: a változtatás csak a felhasználó kifejezett jóváhagyásával, a changes listában jelölve, a hash és a dokumentáció frissítésével történhet (lásd docs/KUTATASI_KERDES_ES_KAPU.md).",
+ "schema": 1,
+ "status": "protocol_frozen",
+ "frozen_on": "2026-11-19",
+ "approved_by": "a felhasználó, a munkamenetben megadott kifejezett döntésével (2026-11-19)",
+ "split_percent": {"train": 60, "validation": 20, "test": 20},
+ "embargo": {"rule": "at_least_max_lookback_bars"},
+ "metrics": ["net_result_after_costs", "max_drawdown", "trade_count"],
+ "bootstrap": {"resamples": 2000, "base_confidence_percent": 95},
+ "min_trades": 30,
+ "multiple_testing": {"method": "bonferroni_by_trials", "trial_log_required": true, "trials_may_not_decrease": true},
+ "states": ["atment", "nem_ment_at", "eldonthetetlen", "nem_szamolhato"],
+ "pending": {"cost_model": null, "benchmarks": null, "thresholds": null},
+ "changes": [],
+ "rules": {"test_opens_once": true, "silent_change_forbidden": true, "no_lookahead": true}
+}
