@@ -4,7 +4,9 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCAN_DIRS = [ROOT / "src", ROOT / "tests", ROOT / "scripts"]
+SCAN_DIRS = [ROOT / "src", ROOT / "tests", ROOT / "scripts", ROOT / "trading_model"]
+
+ALLOWED_SOCKET_FILES = {"tests/conftest.py", "trading_model/tests/test_network_guard.py"}
 
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -51,8 +53,9 @@ def analyze_python_file(path: Path) -> list[str]:
     errors: list[str] = []
     rel = path.relative_to(ROOT).as_posix()
     is_conftest = rel == "tests/conftest.py"
-    is_restricted_test = is_conftest or rel.startswith(("tests/unit/", "tests/integration/"))
-    allowed_in_file = {"socket"} if is_conftest else set()
+    is_restricted_test = is_conftest or rel.startswith(("tests/unit/", "tests/integration/", "trading_model/tests/"))
+    # A socket importja csak ott engedett, ahol a hálózati zárat magát állítja vagy próbálja ki; a kereskedelmi modell zárpróbája nem hoz létre kapcsolatot.
+    allowed_in_file = {"socket"} if rel in ALLOWED_SOCKET_FILES else set()
 
     try:
         source = path.read_text(encoding="utf-8")
