@@ -1001,3 +1001,172 @@ def test_lstat_failure_on_a_tmp_name_is_unknown_not_absent_and_nothing_is_delete
     armed["on"] = False
     err = capsys.readouterr().err
     assert unlinks == [] and len(list((tmp_path / "out").iterdir())) == 2 and "az állapot nem állapítható meg" in err
+
+
+# --- A pár végi (0-s kód előtti) ellenőrzés tesztvédelme: az M29 és az M30 mutáns ellen ---
+# Fázisalapú instrumentáció: a közzétételi fázist a végrehajtott `os.link` hívások száma adja (0 = még nincs link, 1 = a sidecar közzétéve, 2 = mindkét végleges fájl közzétéve),
+# nem globális hívásszámlálás. Minden teszt (1) bizonyítja, hogy az injektált hiba ténylegesen és a szándékolt fázisban következett be; (2) a pontos kilépési kódot és
+# diagnosztikát állítja, nem csak „nem nulla”-t; (3) kontrollteszttel igazolja, hogy a hibainjektáló gépezet hiba nélkül inert (0-s kód, hash-sor), tehát a bukás az
+# injektált hibából ered, nem a fixture-ből vagy más futási hibából.
+
+def _published_paths(err):
+    """A hibakimenet „közzétett, NEM visszagörgetett végleges fájl” soraiban felsorolt útvonalak."""
+    out = set()
+    for line in err.splitlines():
+        if "közzétett, NEM visszagörgetett végleges fájl" in line:
+            out.add(line.split("(a kimenet hiányos): ", 1)[1].split(": ", 1)[0])
+    return out
+
+
+def _link_phase_tracker(monkeypatch):
+    """A közzétételi fázis: a sikeresen végrehajtott `os.link` hívások száma (0, 1, 2)."""
+    phase = {"links": 0}
+
+    def hook(n, src, dst, real):
+        result = real()
+        phase["links"] = n
+        return result
+
+    link_hook(monkeypatch, hook)
+    return phase
+
+
+def _inject_sidecar_pread(monkeypatch, out, target_phase):
+    """A sidecar ideiglenes fájl leírójára az `os.pread` EGYSZER I/O-hibát dob: a `target_phase` fázis ELSŐ sidecar-olvasásakor (None: nincs injektálás, csak a fázisok rögzítése).
+    A fázisok szándékolt ellenőrzései: 0 = közzététel előtti ellenőrzés, 1 = a sidecar közzététele utáni tartalom-ellenőrzés, 2 = a pár végi újraellenőrzés."""
+    phase = _link_phase_tracker(monkeypatch)
+    sidecar_final, data_final = out / sidecar_name(), out / g.FILE_NAMES["base"]
+    real_open, real_pread = os.open, os.pread
+    sidecar_fds, seen, injected = set(), [], []
+
+    def spy_open(path, *args, **kwargs):
+        fd = real_open(path, *args, **kwargs)
+        name = Path(path).name
+        if ".sha256." in name and name.endswith(".tmp"):
+            sidecar_fds.add(fd)
+        return fd
+
+    def pread(fd, length, offset):
+        if fd in sidecar_fds:
+            seen.append(phase["links"])
+            if target_phase is not None and phase["links"] == target_phase and not injected:
+                injected.append({"phase": phase["links"], "sidecar_final": sidecar_final.exists(), "data_final": data_final.exists()})
+                raise OSError(5, "szándékos I/O-hiba")
+        return real_pread(fd, length, offset)
+
+    monkeypatch.setattr(os, "open", spy_open)
+    monkeypatch.setattr(os, "pread", pread)
+    return seen, injected
+
+
+def test_control_sidecar_pread_instrumentation_is_inert_without_injection(tmp_path, monkeypatch, capsys):
+    """Kontroll (M29): injektálás nélkül a kiírás 0-s kóddal, a hash-sorral zárul, és a sidecar leírót mindhárom fázisban (közzététel előtt, a sidecar közzététele után, a pár végén) olvasta a kód."""
+    out = tmp_path / "out"
+    seen, injected = _inject_sidecar_pread(monkeypatch, out, None)
+    assert g.main(["--variant", "base", "--out", str(out)]) == 0
+    captured = capsys.readouterr()
+    assert injected == [] and set(seen) == {0, 1, 2} and seen == sorted(seen)
+    assert captured.out.strip() == f"{g.reproducibility_check('base')[1]}  {out / g.FILE_NAMES['base']}" and captured.err == ""
+
+
+@pytest.mark.parametrize("target_phase,expected_exit,published", [
+    pytest.param(0, 2, set(), id="before-publication"),               # a közzététel előtti ellenőrzés: semmi sincs közzétéve
+    pytest.param(1, 3, {"sidecar"}, id="after-sidecar-publication"),  # a sidecar közzététele után, az adatfájl előtt
+    pytest.param(2, 3, {"sidecar", "data"}, id="final-pair-recheck"), # a pár végi újraellenőrzés: mindkét végleges fájl közzétéve
+])
+def test_pread_failure_on_the_sidecar_tmp_never_yields_exit_0(tmp_path, monkeypatch, capsys, target_phase, expected_exit, published):
+    """M29-védelem: az `os.pread` hibája (csak a sidecar ideiglenes leírón, a szándékolt fázisban) semelyik ellenőrzési ponton nem minősülhet „a tartalom egyezik”-nek."""
+    unlinks = record_unlinks(monkeypatch)
+    out = tmp_path / "out"
+    sidecar, data = out / sidecar_name(), out / g.FILE_NAMES["base"]
+    seen, injected = _inject_sidecar_pread(monkeypatch, out, target_phase)
+    assert g.main(["--variant", "base", "--out", str(out)]) == expected_exit
+    captured = capsys.readouterr()
+    # 1. az injektált hiba ténylegesen, pontosan egyszer és a szándékolt fázisban következett be; a fázist a tényleges végleges fájlok megléte is megerősíti
+    assert injected == [{"phase": target_phase, "sidecar_final": target_phase >= 1, "data_final": target_phase >= 2}]
+    # 2. pontos diagnosztika és kilépési kód; nincs sikeres hash-sor a standard kimeneten
+    assert "a kiírás sikertelen: [Errno 5] szándékos I/O-hiba" in captured.err
+    assert captured.out == "" and f"{g.reproducibility_check('base')[1]}  " not in captured.out
+    expected_paths = {{"sidecar": str(sidecar), "data": str(data)}[k] for k in published}
+    assert _published_paths(captured.err) == expected_paths
+    if published:
+        assert "NEM visszagörgetett" in captured.err
+    else:
+        assert "Ez a hívás nem hagyott maga után fájlt." in captured.err and "közzétett" not in captured.err
+    # 3. a közzétett végleges fájlok érintetlenek (tartalom, nincs törlés), az ideiglenesek takarítva
+    if "sidecar" in published:
+        assert sidecar.read_bytes() == expected_sidecar_text()
+    if "data" in published:
+        assert data.read_bytes() == g.canonical_bytes(g.build_capture("base"))
+    assert sidecar not in unlinks and data not in unlinks
+    assert sorted(p.name for p in out.iterdir()) == sorted(Path(p).name for p in expected_paths)
+
+
+def _instrument_final_recheck(monkeypatch, out, inject):
+    """Fázisalapú eseménynapló. A sidecar végleges nevére az `lstat` hibát dob (inject=True), de CSAK a 2. fázisban, azaz a második sikeres link UTÁN. Események: (fajta, fázis)."""
+    phase = _link_phase_tracker(monkeypatch)
+    sidecar = out / sidecar_name()
+    real_open, real_pread, real_lstat = os.open, os.pread, os.lstat
+    data_fds, events = set(), []
+
+    def spy_open(path, *args, **kwargs):
+        fd = real_open(path, *args, **kwargs)
+        name = Path(path).name
+        if name.endswith(".tmp") and ".sha256." not in name:
+            data_fds.add(fd)
+        return fd
+
+    def pread(fd, length, offset):
+        if fd in data_fds:
+            events.append(("data-pread", phase["links"]))
+        return real_pread(fd, length, offset)
+
+    def lstat(path, *args, **kwargs):
+        if phase["links"] == 2 and Path(path) == sidecar:
+            events.append(("sidecar-lstat-injected" if inject else "sidecar-lstat", 2))
+            if inject:
+                raise PermissionError(13, "szándékos lstat-hiba")
+        return real_lstat(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", spy_open)
+    monkeypatch.setattr(os, "pread", pread)
+    monkeypatch.setattr(os, "lstat", lstat)
+    return events
+
+
+def _phase2_kinds(events):
+    return [kind for kind, links in events if links == 2]
+
+
+def test_control_final_recheck_instrumentation_is_inert_without_injection(tmp_path, monkeypatch, capsys):
+    """Kontroll (M30): injektálás nélkül a kiírás 0-s kóddal zárul, és a 2. fázisban (a második link után) a sorrend: az adatfájl közzététel utáni ellenőrzése, a sidecar pár végi `lstat`-ja, az adatfájl pár végi ellenőrzése."""
+    out = tmp_path / "out"
+    events = _instrument_final_recheck(monkeypatch, out, inject=False)
+    assert g.main(["--variant", "base", "--out", str(out)]) == 0
+    captured = capsys.readouterr()
+    assert _phase2_kinds(events) == ["data-pread", "sidecar-lstat", "data-pread"]
+    assert captured.out.strip() == f"{g.reproducibility_check('base')[1]}  {out / g.FILE_NAMES['base']}" and captured.err == ""
+
+
+def test_late_lstat_failure_on_the_sidecar_final_blocks_exit_0(tmp_path, monkeypatch, capsys):
+    """M30-védelem: ha a sidecar végleges nevének állapota csak a pár végi újraellenőrzéskor (a második sikeres link után) nem állapítható meg, az nem adhat 0-s kódot."""
+    unlinks = record_unlinks(monkeypatch)
+    out = tmp_path / "out"
+    sidecar, data = out / sidecar_name(), out / g.FILE_NAMES["base"]
+    events = _instrument_final_recheck(monkeypatch, out, inject=True)
+    assert g.main(["--variant", "base", "--out", str(out)]) == 3
+    captured = capsys.readouterr()
+    # 1. a hiba a SZÁNDÉKOLT fázisban jött: a második link után az adatfájl közzététel utáni ellenőrzése már lefutott (egy korábbi ellenőrzés nem számolhatja el a hibát),
+    #    az első injektált hiba a sidecar pár végi lépésében jött, és az adatfájl pár végi ellenőrzése utána már nem futott le (a kód a sidecar-lépésnél megállt)
+    kinds = _phase2_kinds(events)
+    assert kinds[:2] == ["data-pread", "sidecar-lstat-injected"] and "data-pread" not in kinds[2:]
+    assert [kind for kind, links in events if links < 2 and kind.endswith("injected")] == []      # a második link előtt nem volt injektált hiba
+    # 2. pontos diagnosztika és kilépési kód; nincs sikeres hash-sor
+    assert f"a végleges pár végső ellenőrzése sikertelen (unknown): {sidecar}" in captured.err
+    assert f"{sidecar}: az állapot nem állapítható meg (bizonytalan végleges állapot)" in captured.err
+    assert captured.out == "" and f"{g.reproducibility_check('base')[1]}  " not in captured.out
+    assert _published_paths(captured.err) == {str(data)}          # az adatfájl közzétett; a sidecar állapota bizonytalan, nem „közzétett”-ként jelentett
+    # 3. a végleges fájlok érintetlenek (tartalom, nincs törlés), az ideiglenesek takarítva
+    assert sidecar.read_bytes() == expected_sidecar_text() and data.read_bytes() == g.canonical_bytes(g.build_capture("base"))
+    assert sidecar not in unlinks and data not in unlinks
+    assert sorted(p.name for p in out.iterdir()) == sorted([g.FILE_NAMES["base"], sidecar_name()])
