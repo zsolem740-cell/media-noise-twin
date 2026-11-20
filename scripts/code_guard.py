@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-SCAN_DIRS = [ROOT / "src", ROOT / "tests", ROOT / "scripts", ROOT / "trading_model"]
+SCAN_DIRS = [ROOT / "src", ROOT / "tests", ROOT / "scripts", ROOT / "trading_model", ROOT / "video_research"]
 
 ALLOWED_SOCKET_FILES = {"tests/conftest.py", "trading_model/tests/test_network_guard.py"}
 
