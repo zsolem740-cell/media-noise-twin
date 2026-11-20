@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import time
 from datetime import datetime
 from typing import Callable
@@ -13,7 +14,7 @@ from .executor import CostBudgetExhausted, Executor, JobStopped, UncertainRun
 from .extraction import ExtractionStats, TokenBudgetExceeded, extract_findings, semantic_check
 from .llm import LLMClient, LLMUnavailable
 from .merge import merge_findings
-from .models import (AccessStatus, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
+from .models import (AccessStatus, FilterEntry, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
 from .planner import build_plan
 from .report import build_report
 from .urls import UrlRejected, normalize_video_url
@@ -33,7 +34,8 @@ class Pipeline:
         job = self.store.get_job(jid)
         self.store.set_status(jid, JobStatus.planning)
         plan = build_plan(job.request, self.settings, self.registry, llm=self.llm, requested_limits=job.limits,
-                          requested_platforms=[p.value for p in job.platforms] or None)
+                          requested_platforms=[p.value for p in job.platforms] or None,
+                          known_information=json.loads(self.store.get_field(jid, "known_information") or "[]"))
         if not plan.platforms or (not plan.direct_urls and not plan.search_queries):
             self.store.set_status(jid, JobStatus.failed, error="A kérésből nem készíthető érvényes terv (nincs engedélyezett platform vagy kereshető kifejezés/link).")
             return
@@ -225,7 +227,7 @@ class Pipeline:
                 problems.append("Az LLM-tokenkeret kimerült, a további videók kinyerése kimaradt.")
                 self.store.set_step(jid, name, StepStatus.skipped, {"reason": "token_budget"})
                 break
-            before = stats.tokens
+            before, n0 = stats.tokens, len(stats.skipped)
             self.store.set_step(jid, name, StepStatus.running)
             try:
                 found = extract_findings(self.llm, jid, plan, v, t, remaining, stats)
@@ -238,18 +240,37 @@ class Pipeline:
                 continue
             self.store.save_findings(jid, v.id, found)
             self.store.add_usage(jid, tokens=stats.tokens - before)
-            self.store.set_step(jid, name, StepStatus.done, {"findings": len(found)})
+            self.store.set_step(jid, name, StepStatus.done, {"findings": len(found), "segments": len(t.segments),
+                                                             "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]]})
 
     # ---- lezárás ----
     def _finish(self, jid, plan, ex: Executor, stats: ExtractionStats, problems, stop_reason) -> JobStatus:
         videos = self.store.videos(jid)
-        findings = merge_findings(self.store.findings(jid), {v.id: v for v in videos})
+        order = {v.id: i for i, v in enumerate(videos)}
+
+        def pos(f):                                           # determinisztikus sorrend: videó, majd az első szegmens helye az átiratban
+            r = f.source_references[0]
+            return (order.get(r.video_source_id, 0), int(r.transcript_segment_ids[0].rsplit(":s", 1)[-1]))
+        findings, merge_log = merge_findings(sorted(self.store.findings(jid), key=pos), {v.id: v for v in videos})
         steps = self.store.get_steps(jid)
         ok = [v for v in videos if v.access_status == AccessStatus.ok and self._step_done(steps, f"ex:{v.id}")
               and steps[f"ex:{v.id}"][0] == StepStatus.done]
+        # a szűrési napló a tárolt lépés-részletekből épül, így újraindítás után is teljes
+        skipped, seen, segments = [], set(), 0
+        for v in videos:
+            st = steps.get(f"ex:{v.id}")
+            if st and st[0] == StepStatus.done:
+                segments += st[1].get("segments", 0)
+                for raw in st[1].get("skipped", []):
+                    e = FilterEntry.model_validate(raw)
+                    k = (e.video_source_id, e.snippet, e.reason_code)
+                    if k not in seen:
+                        seen.add(k)
+                        skipped.append(e)
         job = self.store.get_job(jid)
         report = build_report(job, plan, videos, findings, self.store.transcripts(jid), problems + ex.notes, stats,
-                              rejected=stats.rejected_unverified, provider_runs=self.store.provider_runs(jid), stop_reason=stop_reason)
+                              provider_runs=self.store.provider_runs(jid), stop_reason=stop_reason,
+                              filter_log=skipped + merge_log, segments_total=segments, videos_processed=len(ok))
         if stop_reason == "cancelled":
             status = JobStatus.cancelled
         elif not ok:
@@ -257,7 +278,7 @@ class Pipeline:
         elif len(ok) < len(videos) or problems or stop_reason:
             status = JobStatus.partially_completed
         else:
-            status = JobStatus.completed
+            status = JobStatus.completed                  # üres eredménnyel is: a „nincs találat” érvényes kimenet
         self.store.set_status(jid, status, report=report.model_dump_json(), error="; ".join(problems)[:2000] or None)
         return status
 

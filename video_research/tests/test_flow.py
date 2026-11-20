@@ -56,7 +56,7 @@ def test_end_to_end_sourced_report(tmp_path):
     from video_research.models import ResearchReport
     r = ResearchReport.model_validate_json(store.get_field(jid, "report"))
     assert r.findings and all(f.source_references for f in r.findings)  # minden megállapításnak van forrása
-    assert not any(f.statement_hu == "Kitalált állítás" for f in r.findings)  # kitalált idézet: kiszűrve
+    assert not any(f.statement_hu.startswith("Kitalált állítás") for f in r.findings)  # kitalált idézet: kiszűrve
     assert any("unsupported" in l for l in r.coverage_limitations)
     auto = [f for f in r.findings if "AutoDroid" in f.statement_hu]
     assert len(auto) == 1 and auto[0].evidence_status == EvidenceStatus.repeated_across_sources
@@ -359,8 +359,8 @@ def test_api_full_flow_approve_report_formats(tmp_path):
     Worker(store, pipe, s, name="w").run_once()
     md = c.get(f"/api/jobs/{jid}/report?format=markdown", headers=H)
     assert "TESZT-FIXTURE" in md.text and "AutoDroid" in md.text and "nem független ellenőrzés" in md.text and "youtube.com/watch?v=AAAAAAAAAAA" in md.text
-    assert c.get(f"/api/jobs/{jid}/report?format=csv", headers=H).text.startswith("finding_id,")
-    assert c.get(f"/api/jobs/{jid}/report", headers=H).json()["source_list"]
+    assert c.get(f"/api/jobs/{jid}/export?format=csv", headers=H).text.startswith("finding_id,")
+    assert c.get(f"/api/jobs/{jid}/evidence", headers=H).json()["source_list"]
 
 
 def test_api_cancel_queued_job_and_best_effort_note(tmp_path):

@@ -15,24 +15,46 @@ pre{white-space:pre-wrap;border:1px solid var(--line);padding:.75rem;border-radi
 <label>API-kulcs (csak ebben a böngészőlapban marad) <input id="key" type="password" autocomplete="off"></label>
 <label>Kutatási kérdés (magyarul) <textarea id="q" rows="3"></textarea></label>
 <label>Videólinkek (YouTube/TikTok, soronként egy) <textarea id="links" rows="4"></textarea></label>
+<label>Már ismert információk (opcionális, soronként egy; ezek puszta ismétlése nem kerül a megtartandók közé) <textarea id="known" rows="2"></textarea></label>
 <button id="go">Feladat indítása (terv készül)</button>
 <h2>Állapot</h2><pre id="status" class="mut">—</pre>
 <div id="approve" hidden><h2>Terv jóváhagyása</h2><pre id="plan"></pre><button id="ok">Jóváhagyom ezt a tervet</button></div>
-<h2>Jelentés</h2><pre id="report" class="mut">—</pre>
+<h2>Jelentés</h2><div id="cards"></div><pre id="report" class="mut">—</pre>
+<p><button id="evb" hidden>Részletes bizonyíték</button><button id="flb" hidden>Szűrési napló</button></p><pre id="more" hidden></pre>
 <script>
 const $=id=>document.getElementById(id);let jid=null,plan=null,timer=null;
 const hdr=()=>({"Authorization":"Bearer "+$("key").value,"Content-Type":"application/json","Idempotency-Key":(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random())});
 async function api(path,opt={}){const r=await fetch(path,{...opt,headers:{...hdr(),...(opt.headers||{})}});const t=await r.text();if(!r.ok)throw new Error(r.status+" "+t);return t}
 $("go").onclick=async()=>{try{
   const q=$("q").value.trim(),links=$("links").value.split("\n").map(s=>s.trim()).filter(Boolean);
-  const out=JSON.parse(await api("/api/jobs",{method:"POST",body:JSON.stringify({request:(q+"\n"+links.join("\n")).trim()})}));
+  const out=JSON.parse(await api("/api/jobs",{method:"POST",body:JSON.stringify({request:(q+"\n"+links.join("\n")).trim(),known_information:$("known").value.split("\n").map(x=>x.trim()).filter(Boolean)})}));
   jid=out.job_id;clearInterval(timer);timer=setInterval(poll,2000);poll();
 }catch(e){$("status").textContent="Hiba: "+e.message}};
 async function poll(){try{
   const v=JSON.parse(await api("/api/jobs/"+jid));$("status").textContent="Állapot: "+v.status+"\nBecsült költség: "+(v.estimated_cost??"nincs megbízható becslés")+" | Rögzített (ismert) költség: "+v.recorded_cost+(v.error?"\nHibák/hiányok: "+v.error:"")+"\nLépések: "+Object.entries(v.steps).map(([k,s])=>k+"="+s.status).join(", ");
   if(v.status==="awaiting_approval"){plan=v.plan;$("plan").textContent=JSON.stringify(plan,null,2);$("approve").hidden=false}else $("approve").hidden=true;
   if(["completed","partially_completed","failed","cancelled"].includes(v.status)){clearInterval(timer);
-    try{$("report").textContent=await api("/api/jobs/"+jid+"/report?format=markdown")}catch(e){$("report").textContent="Nincs jelentés: "+e.message}}
+    try{await showReport()}catch(e){$("report").textContent="Nincs jelentés: "+e.message}}
 }catch(e){$("status").textContent="Hiba: "+e.message}}
+const LABELS=[["useful","hasznos"],["not_relevant","nem releváns"],["already_known","már ismert"],["extracted_wrong","hibásan kinyert"],["needs_check","további ellenőrzést igényel"]];
+function card(f,kind){const d=document.createElement("div");d.style.cssText="border:1px solid var(--line);border-radius:6px;padding:.5rem;margin:.5rem 0";
+  const h=document.createElement("strong");h.textContent=f.statement_hu;d.appendChild(h);
+  const m=document.createElement("div");m.className="mut";m.textContent=kind+" · "+f.category+" · "+f.evidence_status+(f.condition?" · feltétel: "+f.condition:"")+(f.version?" · verzió: "+f.version:"")+(f.lead_reasons.length?" · ok: "+f.lead_reasons.join("; "):"");d.appendChild(m);
+  f.sources.forEach(s=>{const l=document.createElement("div");const t=(s.title||s.url||"")+(s.timestamp!=null?" @"+Math.floor(s.timestamp/60)+":"+String(Math.floor(s.timestamp%60)).padStart(2,"0"):"");
+    if(s.url&&s.url.startsWith("https://")){const a=document.createElement("a");a.href=s.url;a.rel="noopener noreferrer";a.target="_blank";a.textContent=t;l.appendChild(a)}else l.textContent=t;d.appendChild(l)});
+  const st=document.createElement("div");st.className="mut";st.textContent=f.feedback?"Visszajelzés: "+(LABELS.find(x=>x[0]===f.feedback)||[0,f.feedback])[1]:"";
+  LABELS.forEach(([k,txt])=>{const b=document.createElement("button");b.textContent=txt;b.style.cssText="font-size:.8rem;padding:.2rem .4rem;margin:.2rem .2rem 0 0";
+    b.onclick=async()=>{try{await api("/api/jobs/"+jid+"/findings/"+f.id+"/feedback",{method:"POST",body:JSON.stringify({label:k})});st.textContent="Visszajelzés: "+txt+" (tárolva; modellbetanítás nincs)"}catch(e){st.textContent="Hiba: "+e.message}};d.appendChild(b)});
+  d.appendChild(st);return d}
+async function showReport(){const r=JSON.parse(await api("/api/jobs/"+jid+"/report"));const c=$("cards");c.textContent="";
+  const sum=document.createElement("p");sum.textContent=r.summary;c.appendChild(sum);
+  if(r.no_result_note){const n=document.createElement("p");n.className="warn";n.textContent=r.no_result_note;c.appendChild(n)}
+  const grp=(title,list,kind)=>{if(!list.length)return;const h=document.createElement("h3");h.textContent=title;c.appendChild(h);list.forEach(f=>c.appendChild(card(f,kind)))};
+  grp("Megtartandó információk",r.keep,"megtartandó");grp("Ellenőrizendő nyomok",r.leads,"nyom");
+  const sk=document.createElement("p");sk.className="mut";sk.textContent="Kihagyott részletek: "+(Object.entries(r.skipped_by_reason).map(([k,v])=>k+"="+v).join(", ")||"nincs");c.appendChild(sk);
+  $("report").textContent=r.missing_information.length?"Hiányok:\n"+r.missing_information.join("\n"):"";
+  $("evb").hidden=false;$("flb").hidden=false}
+$("evb").onclick=async()=>{$("more").hidden=false;$("more").textContent=await api("/api/jobs/"+jid+"/evidence?format=markdown")};
+$("flb").onclick=async()=>{$("more").hidden=false;$("more").textContent=await api("/api/jobs/"+jid+"/filter-log?format=markdown")};
 $("ok").onclick=async()=>{try{await api("/api/jobs/"+jid+"/approve",{method:"POST",body:JSON.stringify({plan_hash:plan.plan_hash})});$("approve").hidden=true;poll()}catch(e){$("status").textContent="Hiba: "+e.message}};
 </script></body></html>

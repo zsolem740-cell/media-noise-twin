@@ -56,6 +56,40 @@ class FindingCategory(str, Enum):
     other = "other"
 
 
+class Relevance(str, Enum):
+    """HASZNOSSÁG-tengely (a kutatási kérdéshez): nem azonos az alátámasztottsággal (EvidenceStatus, szemantikai ellenőrzés)."""
+    direct = "direct"
+    partial = "partial"
+
+
+class Disposition(str, Enum):
+    keep = "keep"        # megtartandó információ
+    lead = "lead"        # ellenőrizendő nyom
+
+
+class Stance(str, Enum):
+    supports = "supports"
+    counterexample = "counterexample"
+    neutral = "neutral"
+
+
+class SkipReason(str, Enum):
+    irrelevant = "irrelevant"
+    not_concrete = "not_concrete"
+    unverified_quote = "unverified_quote"
+    already_known = "already_known"                      # a felhasználó által megadott, már rögzített információ
+    duplicate_source_attached = "duplicate_source_attached"   # ismétlés: az új forrás a meglévő megállapításhoz csatolva
+    malformed = "malformed"
+
+
+class FeedbackLabel(str, Enum):
+    useful = "useful"
+    not_relevant = "not_relevant"
+    already_known = "already_known"          # NEM hamis és NEM értéktelen: csak a felhasználó számára nem új
+    extracted_wrong = "extracted_wrong"
+    needs_check = "needs_check"
+
+
 class StepStatus(str, Enum):
     pending = "pending"
     running = "running"
@@ -90,6 +124,7 @@ class ResearchPlan(BaseModel):
     search_queries: list[str] = []
     direct_urls: list[str] = []
     focus_categories: list[FindingCategory] = list(FindingCategory)
+    known_information: list[str] = []          # a felhasználó által már rögzített információ: ennek puszta ismétlése nem kerül a megtartandók közé
     plan_hash: str = ""
     limits: Limits
     estimated_cost_usd: float | None = None
@@ -160,6 +195,27 @@ class Finding(BaseModel):
     source_references: list[SourceReference]
     evidence_status: EvidenceStatus = EvidenceStatus.source_claim
     limitations: list[str] = []
+    # --- hasznosság (külön az alátámasztottságtól) ---
+    relevance: Relevance = Relevance.direct
+    concrete: bool = True
+    disposition: Disposition = Disposition.keep
+    lead_reasons: list[str] = []
+    # --- feltétel / ellenpélda / verzió: nem mosható össze az általános állítással ---
+    condition: str | None = None
+    stance: Stance = Stance.supports
+    version: str | None = None
+    related_ids: list[str] = []
+
+
+class FilterEntry(BaseModel):
+    """Szűrési naplóbejegyzés: a KIHAGYOTT (vagy ismétlésként csatolt) részlet rövid indokkal. Nem minden szegmens kap bejegyzést,
+    csak a javaslatba került jelöltek; a javaslatba sem került szegmensek számát a `filter_stats` összesíti."""
+    video_source_id: str
+    segment_ids: list[str] = []
+    snippet: str
+    reason_code: SkipReason
+    reason_hu: str
+    finding_id: str | None = None
 
 
 class ResearchReport(BaseModel):
@@ -170,6 +226,9 @@ class ResearchReport(BaseModel):
     missing_information: list[str]
     source_list: list[dict]
     coverage_limitations: list[str]
+    no_result_note: str | None = None        # pl. „Nem találtam a feltételeknek megfelelő információt.”
+    filter_log: list[FilterEntry] = []
+    filter_stats: dict = {}
     unsupported: list[dict] = []             # elutasított, nem alátámasztott javaslatok (állítás + ok); nem megállapítások
 
 

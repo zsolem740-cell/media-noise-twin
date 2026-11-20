@@ -82,7 +82,7 @@ def _v(i, creator):
 
 def test_merge_keeps_all_sources_and_never_claims_verification():
     vids = {"a": _v("a", "k1"), "b": _v("b", "k2")}
-    out = merge_findings([_f("Az AutoDroid root nélkül vezérli a telefont", "a", "q1 idézet"), _f("AutoDroid root nélkül vezérli a telefon felületét", "b", "q2 idézet")], vids)
+    out, log = merge_findings([_f("Az AutoDroid root nélkül vezérli a telefont", "a", "q1 idézet"), _f("AutoDroid root nélkül vezérli a telefon felületét", "b", "q2 idézet")], vids)
     assert len(out) == 1 and len(out[0].source_references) == 2
     assert out[0].evidence_status == EvidenceStatus.repeated_across_sources
     assert any("nem független ellenőrzés" in l for l in out[0].limitations)
@@ -91,14 +91,14 @@ def test_merge_keeps_all_sources_and_never_claims_verification():
 
 def test_merge_single_is_source_claim_and_same_creator_flagged():
     vids = {"a": _v("a", "k"), "b": _v("b", "k")}
-    one = merge_findings([_f("Egyedi állítás szöveg", "a")], vids)
+    one, _ = merge_findings([_f("Egyedi állítás szöveg", "a")], vids)
     assert one[0].evidence_status == EvidenceStatus.source_claim
-    two = merge_findings([_f("Az eszköz sokat fogyaszt akkut", "a"), _f("Az eszköz sokat fogyaszt akkut", "b", "más idézet szöveg")], vids)
+    two, _ = merge_findings([_f("Az eszköz sokat fogyaszt akkut", "a"), _f("Az eszköz sokat fogyaszt akkut", "b", "más idézet szöveg")], vids)
     assert any("ugyanattól a készítőtől" in l for l in two[0].limitations)
 
 
 def test_merge_different_categories_not_merged():
-    out = merge_findings([_f("Az eszköz gyors", "a", cat="recommendation"), _f("Az eszköz gyors", "b", "más idézet szöveg", cat="warning")], {})
+    out, log = merge_findings([_f("Az eszköz gyors", "a", cat="recommendation"), _f("Az eszköz gyors", "b", "más idézet szöveg", cat="warning")], {})
     assert len(out) == 2
 
 
@@ -142,7 +142,7 @@ def store(tmp_path):
 
 def test_migrations_idempotent(tmp_path):
     e = make_engine(f"sqlite:///{tmp_path/'m.db'}")
-    assert migrate(e) == ["0001_init.sql"] and migrate(e) == []
+    assert migrate(e) == ["0001_init.sql", "0002_feedback_known.sql"] and migrate(e) == []
 
 
 def test_idempotency_key(store):

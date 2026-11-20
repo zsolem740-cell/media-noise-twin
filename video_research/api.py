@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field
 from .adapters.base import AdapterRegistry
 from .config import Settings
 from .db import Store
-from .models import JobStatus, Limits, ResearchPlan, ResearchReport, compute_plan_hash
+from .models import FeedbackLabel, JobStatus, Limits, ResearchPlan, ResearchReport, compute_plan_hash
 from .planner import build_plan, effective_limits
-from .report import to_csv, to_json, to_markdown
+from .report import evidence_markdown, filter_log_markdown, short_json, to_csv, to_json, to_markdown
 
 
 class JobRequest(BaseModel):
@@ -21,6 +21,12 @@ class JobRequest(BaseModel):
     platforms: list[str] = []
     languages: list[str] = ["hu", "en"]
     limits: Limits | None = None
+    known_information: list[str] = Field(default=[], max_length=20)      # a felhasználó által már rögzített információ (ismétlése nem megtartandó)
+
+
+class FeedbackBody(BaseModel):
+    label: FeedbackLabel
+    note: str | None = Field(default=None, max_length=500)
 
 
 class ApproveBody(BaseModel):
@@ -67,7 +73,7 @@ def create_app(store: Store, settings: Settings, registry: AdapterRegistry | Non
             raise HTTPException(422, "támogatott nyelvek: hu, en")
         limits = effective_limits(settings, body.limits)
         try:
-            job, created = store.create_job(body.request, body.platforms, body.languages, limits, idempotency_key)
+            job, created = store.create_job(body.request, body.platforms, body.languages, limits, idempotency_key, [k.strip()[:300] for k in body.known_information if k.strip()])
         except ValueError as exc:
             raise HTTPException(409, str(exc))
         if not created:
@@ -78,7 +84,8 @@ def create_app(store: Store, settings: Settings, registry: AdapterRegistry | Non
     def plan_preview(body: JobRequest) -> dict:
         """Terv-előnézet: determinisztikus, nem hív szolgáltatót, nem költ, nem ment feladatot."""
         reg = registry or AdapterRegistry(production=settings.mode == "production")
-        plan = build_plan(body.request, settings, reg, llm=None, requested_limits=body.limits, requested_platforms=body.platforms or None)
+        plan = build_plan(body.request, settings, reg, llm=None, requested_limits=body.limits, requested_platforms=body.platforms or None,
+                          known_information=body.known_information)
         return plan.model_dump(mode="json")
 
     @api.get("/jobs/{jid}", dependencies=[Depends(auth)])
@@ -112,26 +119,70 @@ def create_app(store: Store, settings: Settings, registry: AdapterRegistry | Non
                             "a worker a következő lépéshatárnál áll meg.")
         return v
 
-    @api.get("/jobs/{jid}/report", dependencies=[Depends(auth)])
-    def report(jid: str, format: str = "json"):
+    def load_report(jid: str):
         job = store.get_job(jid)
-        raw = store.get_field(jid, "report") if job else None
         if not job:
             raise HTTPException(404, "Nincs ilyen feladat")
+        raw = store.get_field(jid, "report")
         if not raw:
             raise HTTPException(409, f"A jelentés még nem készült el (állapot: {job.status.value})")
-        r = ResearchReport.model_validate_json(raw)
+        return job, ResearchReport.model_validate_json(raw), store.feedback(jid)
+
+    @api.get("/jobs/{jid}/report", dependencies=[Depends(auth)])
+    def report(jid: str, format: str = "json"):
+        """RÖVID fő jelentés: megtartandók, ellenőrizendő nyomok, kihagyottak összesítve. A részletek: /evidence, /filter-log."""
+        job, r, fb = load_report(jid)
         if format == "markdown":
-            return Response(to_markdown(r, job), media_type="text/markdown; charset=utf-8")
-        if format == "csv":
-            return Response(to_csv(r), media_type="text/csv; charset=utf-8")
+            return Response(to_markdown(r, job, fb), media_type="text/markdown; charset=utf-8")
         if format == "json":
-            return Response(to_json(r), media_type="application/json")
-        raise HTTPException(422, "format: json | markdown | csv")
+            return short_json(r, fb)
+        raise HTTPException(422, "format: json | markdown")
+
+    @api.get("/jobs/{jid}/evidence", dependencies=[Depends(auth)])
+    def evidence(jid: str, format: str = "json"):
+        job, r, fb = load_report(jid)
+        if format == "markdown":
+            return Response(evidence_markdown(r, job, fb), media_type="text/markdown; charset=utf-8")
+        if format == "json":
+            return {"findings": [f.model_dump(mode="json") for f in r.findings], "source_list": r.source_list, "coverage_limitations": r.coverage_limitations,
+                    "feedback": fb}
+        raise HTTPException(422, "format: json | markdown")
+
+    @api.get("/jobs/{jid}/filter-log", dependencies=[Depends(auth)])
+    def filter_log(jid: str, format: str = "json"):
+        _, r, _ = load_report(jid)
+        if format == "markdown":
+            return Response(filter_log_markdown(r), media_type="text/markdown; charset=utf-8")
+        if format == "json":
+            return {"stats": r.filter_stats, "entries": [e.model_dump(mode="json") for e in r.filter_log]}
+        raise HTTPException(422, "format: json | markdown")
+
+    @api.post("/jobs/{jid}/findings/{fid}/feedback", dependencies=[Depends(auth)], status_code=201)
+    def add_feedback(jid: str, fid: str, body: FeedbackBody) -> dict:
+        """Visszajelzés tárolása. Csak rögzítjük és megjelenítjük; modellbetanítás vagy önfejlesztés NINCS, és nem is ígérjük.
+        A `already_known` nem jelent hamisat vagy értéktelent."""
+        _, r, _ = load_report(jid)
+        if fid not in {f.id for f in r.findings}:
+            raise HTTPException(404, "Nincs ilyen megállapítás ebben a jelentésben")
+        return store.add_feedback(jid, fid, body.label.value, body.note)
+
+    @api.get("/jobs/{jid}/feedback", dependencies=[Depends(auth)])
+    def get_feedback(jid: str) -> list[dict]:
+        if not store.get_job(jid):
+            raise HTTPException(404, "Nincs ilyen feladat")
+        return store.feedback(jid)
 
     @api.get("/jobs/{jid}/export", dependencies=[Depends(auth)])
     def export(jid: str, format: str = "json"):
-        return report(jid, format=format)
+        """TELJES export: minden megállapítás, bizonyíték és a szűrési napló."""
+        job, r, fb = load_report(jid)
+        if format == "json":
+            return Response(to_json(r), media_type="application/json")
+        if format == "csv":
+            return Response(to_csv(r), media_type="text/csv; charset=utf-8")
+        if format == "markdown":
+            return Response("\n".join([to_markdown(r, job, fb), evidence_markdown(r, job, fb), filter_log_markdown(r)]), media_type="text/markdown; charset=utf-8")
+        raise HTTPException(422, "format: json | markdown | csv")
 
     @api.delete("/jobs/{jid}", dependencies=[Depends(auth)])
     def delete(jid: str) -> dict:

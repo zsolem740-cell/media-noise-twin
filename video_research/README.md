@@ -15,7 +15,8 @@ Részletes, platformonkénti lista: `docs/CAPABILITIES.md`. A három külső pro
 | Keresés, beszédfelismerés, vizuális elemzés | nincs |
 | Információkivonat | modell nélküli extraktív alapút; **LLM-adapter nincs** (lásd lent) |
 | Apify-adapter (korábbi kör) | változatlan, csak hamis klienssel tesztelt |
-| API (`/api/jobs…`, export, törlés), egyszerű weboldal (`/`) | kész, TestClient-tel tesztelt |
+| Zajszűrés: nincs kötelező találat, részletszintű szűrés, megtartandó/nyom/kihagyott csoport, rövid fő jelentés + külön bizonyíték és napló, visszajelzés | kész, offline tesztelt; valódi modellel nem próbáltam |
+| API (`/api/jobs…`, export, törlés), egyszerű weboldal (`/`) | API: TestClient-tel tesztelt; a weboldal JS-e szintaktikailag ellenőrzött, **böngészőben nem futtattam** |
 | PostgreSQL, Docker Compose | nem futtatva |
 
 Vertikális próba (nincs modell- és fizetős hívás): `python -m video_research.trial "kérdés" LINK [LINK…] [--fixture video_research/tests/fixtures/videos.json]`.

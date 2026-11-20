@@ -56,10 +56,10 @@ class Store:
 
     # ---- feladatok ----
     def create_job(self, request: str, platforms: list[str], languages: list[str], limits: Limits,
-                   idempotency_key: str | None = None) -> tuple[ResearchJob, bool]:
+                   idempotency_key: str | None = None, known_information: list[str] | None = None) -> tuple[ResearchJob, bool]:
         """Idempotens létrehozás. Ugyanazzal a kulccsal és kéréssel a meglévő feladat jön vissza (created=False);
         ugyanazzal a kulccsal más kéréssel ValueError."""
-        rh = hashlib.sha256(json.dumps([request, sorted(platforms), sorted(languages), limits.model_dump()], sort_keys=True).encode()).hexdigest()
+        rh = hashlib.sha256(json.dumps([request, sorted(platforms), sorted(languages), limits.model_dump(), known_information or []], sort_keys=True).encode()).hexdigest()
         jid, t = new_id("job"), iso(now())
         with self.e.begin() as c:
             if idempotency_key:
@@ -68,10 +68,10 @@ class Store:
                     if row._mapping["request_hash"] != rh:
                         raise ValueError("az Idempotency-Key már más kéréshez tartozik")
                     return _job(row), False
-            c.execute(text("""INSERT INTO research_jobs (id, idempotency_key, request_hash, request, platforms, languages, status, limits, created_at, updated_at)
-                              VALUES (:id,:k,:rh,:rq,:pl,:lg,'queued',:li,:t,:t)"""),
+            c.execute(text("""INSERT INTO research_jobs (id, idempotency_key, request_hash, request, platforms, languages, status, limits, known_information, created_at, updated_at)
+                              VALUES (:id,:k,:rh,:rq,:pl,:lg,'queued',:li,:ki,:t,:t)"""),
                       {"id": jid, "k": idempotency_key, "rh": rh, "rq": request, "pl": json.dumps(platforms), "lg": json.dumps(languages),
-                       "li": limits.model_dump_json(), "t": t})
+                       "li": limits.model_dump_json(), "ki": json.dumps(known_information or [], ensure_ascii=False), "t": t})
         return self.get_job(jid), True
 
     def get_job(self, jid: str) -> ResearchJob | None:
@@ -80,7 +80,7 @@ class Store:
         return _job(row) if row else None
 
     def get_field(self, jid: str, name: str):
-        assert name in {"plan", "approved_plan", "report", "error", "cancel_requested", "llm_tokens_used", "attempts", "lease_owner", "estimated_cost"}
+        assert name in {"known_information", "plan", "approved_plan", "report", "error", "cancel_requested", "llm_tokens_used", "attempts", "lease_owner", "estimated_cost"}
         with self.e.connect() as c:
             return c.execute(text(f"SELECT {name} FROM research_jobs WHERE id=:i"), {"i": jid}).scalar()
 
@@ -227,7 +227,7 @@ class Store:
         with self.e.begin() as c:
             if c.execute(text("DELETE FROM research_jobs WHERE id=:j AND lease_owner IS NULL"), {"j": jid}).rowcount != 1:
                 return False                      # lefoglalt (futó) feladat: semmit nem törlünk
-            for t in ("findings", "transcripts", "video_sources", "provider_runs", "job_steps"):
+            for t in ("findings", "transcripts", "video_sources", "provider_runs", "job_steps", "finding_feedback"):
                 c.execute(text(f"DELETE FROM {t} WHERE job_id=:j"), {"j": jid})
         return True
 
@@ -237,3 +237,14 @@ class Store:
         with self.e.connect() as c:
             ids = [r[0] for r in c.execute(text(f"SELECT id FROM research_jobs WHERE status IN ({terminal}) AND updated_at < :c"), {"c": cutoff})]
         return sum(1 for i in ids if self.delete_job(i))
+
+    # ---- felhasználói visszajelzés: tárolás; nincs automatikus modellbetanítás vagy önfejlesztés ----
+    def add_feedback(self, jid: str, finding_id: str, label: str, note: str | None) -> dict:
+        row = {"id": new_id("fb"), "j": jid, "f": finding_id, "l": label, "n": (note or "")[:500] or None, "t": iso(now())}
+        with self.e.begin() as c:
+            c.execute(text("INSERT INTO finding_feedback (id, job_id, finding_id, label, note, created_at) VALUES (:id,:j,:f,:l,:n,:t)"), row)
+        return {"id": row["id"], "finding_id": finding_id, "label": label, "note": row["n"], "created_at": row["t"]}
+
+    def feedback(self, jid: str) -> list[dict]:
+        with self.e.connect() as c:
+            return [dict(r._mapping) for r in c.execute(text("SELECT id, finding_id, label, note, created_at FROM finding_feedback WHERE job_id=:j ORDER BY created_at, id"), {"j": jid})]

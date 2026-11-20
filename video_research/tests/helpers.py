@@ -26,10 +26,10 @@ class ScriptedLLM:
         for m in segs:
             t = m.group("text")
             if "AutoDroid" in t:
-                findings.append({"category": "tool", "statement_hu": "Az AutoDroid a telefon felületét root nélkül vezérli.", "quotes": [{"segment_id": m.group("id"), "quote": t}]})
+                findings.append({"category": "tool", "statement_hu": "Az AutoDroid a telefon felületét root nélkül vezérli.", "quotes": [{"segment_id": m.group("id"), "quote": t}], "relevance": "direct", "concrete": True})
             if "elakad" in t or "battery" in t:
-                findings.append({"category": "warning", "statement_hu": "Problémát jeleztek: " + t[:30], "quotes": [{"segment_id": m.group("id"), "quote": t}]})
-        findings.append({"category": "claim", "statement_hu": "Kitalált állítás", "quotes": [{"segment_id": "x", "quote": "ez a mondat sosem hangzott el a videóban"}]})
+                findings.append({"category": "warning", "statement_hu": "Problémát jeleztek: " + t[:30], "quotes": [{"segment_id": m.group("id"), "quote": t}], "relevance": "direct", "concrete": True})
+        findings.append({"category": "claim", "statement_hu": "Kitalált állítás a videóról", "quotes": [{"segment_id": "x", "quote": "ez a mondat sosem hangzott el a videóban"}], "relevance": "direct", "concrete": True})
         return LLMResult({"findings": findings}, self.tokens)
 
 

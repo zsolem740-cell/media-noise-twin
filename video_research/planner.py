@@ -38,7 +38,7 @@ def _clean_query(text: str) -> str:
 
 
 def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, llm: LLMClient | None = None,
-               requested_limits: Limits | None = None, requested_platforms: list[str] | None = None) -> ResearchPlan:
+               requested_limits: Limits | None = None, requested_platforms: list[str] | None = None, known_information: list[str] | None = None) -> ResearchPlan:
     notes: list[str] = []
     allowed = [Platform(p) for p in settings.allowed_platforms]
     mentioned = [p for w, p in _PLATFORM_WORDS.items() if w in request.lower()]
@@ -101,7 +101,7 @@ def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, l
         estimated_cost_usd=round(est, 4) if reliable else None,
         cost_estimate_note=("Becslés a beállított egységárakból; nem ténylegesen ismert költség." if reliable else
                             "Nincs megbízható költségbecslés (hiányzó egységár vagy szolgáltató). A költségkeretet a rendszer futás közben így is érvényesíti."),
-        notes=notes, providers=providers,
+        notes=notes, providers=providers, known_information=[k.strip()[:300] for k in (known_information or []) if k.strip()][:20],
         operations=([f"{len(direct)} megadott link feldolgozása (metaadat, felirat)"] if direct else []) +
                    [f"keresés: „{q}” ({', '.join(p.value for p in platforms)})" for q in queries] + ["magyar információkivonat és forráshoz kötött jelentés"])
     plan.plan_hash = compute_plan_hash(plan)
