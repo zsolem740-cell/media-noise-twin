@@ -8,9 +8,9 @@ import json
 from .models import AccessStatus, EvidenceStatus, Finding, ResearchJob, ResearchPlan, ResearchReport, Transcript, VideoSource
 
 STATUS_HU = {
-    EvidenceStatus.creator_claim: "a videó készítőjének állítása",
-    EvidenceStatus.repeated_across_videos: "több videóban megismételt állítás (nem független ellenőrzés)",
-    EvidenceStatus.independently_verified: "független forrással ellenőrzött",
+    EvidenceStatus.source_claim: "a videó készítőjének állítása (nem ellenőrzött)",
+    EvidenceStatus.repeated_across_sources: "több videóban megismételt állítás (nem független ellenőrzés)",
+    EvidenceStatus.unsupported: "nem alátámasztott",
 }
 
 
@@ -30,10 +30,15 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
         limits.append("FIGYELEM: TESZT-FIXTURE adatok szerepelnek a jelentésben, nem valódi videók.")
     limits.append("A rendszer külső (független forrásos) ellenőrzést nem végzett: az állítások a videók tartalmát tükrözik, nem igazolt tények.")
     limits.append("Ellentmondás-észlelés ebben a verzióban nem történik; a `contradictions` mező üres, ez NEM jelenti, hogy nincs ellentmondás.")
+    limits.append("Vizuális elemzés ebben a verzióban nincs: a csak képen látható információkat (felirat a képen, kijelzők, ábrák) a rendszer nem vizsgálja.")
     limits.append("Az idézetek programozottan ellenőrzöttek az átiratban; az állítás és az idézet jelentésbeli kapcsolatának ellenőrzése heurisztikus, nem tévedhetetlen.")
     if rejected:
-        limits.append(f"{rejected} javasolt megállapítás kimaradt, mert az idézete nem volt ellenőrizhető az átiratban.")
-    unknown = [r for r in provider_runs if not r["cost_known"]]
+        limits.append(f"{rejected} javasolt megállapítás kimaradt (unsupported), mert az idézete nem volt ellenőrizhető az átiratban.")
+    if any(t.auto_generated for t in transcripts):
+        limits.append("Egyes átiratok a platform automatikus (gépi) feliratai, elírásokat tartalmazhatnak.")
+    if any(v.duration_seconds is None for v in videos):
+        limits.append("Egyes videók hossza ismeretlen, ezért a videóperc-keret rájuk nem érvényesíthető.")
+    unknown = [r for r in provider_runs if not r["cost_known"] and r["status"] in ("succeeded", "running", "abort_requested", "aborted")]
     if unknown:
         limits.append(f"{len(unknown)} szolgáltatói futás költsége nem ismert; a rögzített költség alsó becslés.")
     if stop_reason:
@@ -48,15 +53,16 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
             missing.append(f"Nem feldolgozható ({v.access_status.value}): {v.canonical_url}")
         elif v.id not in tmap:
             missing.append(f"Átirat nem készült el: {v.canonical_url}")
-    repeated = [{"statement": f.statement, "video_count": len({r.video_source_id for r in f.source_references}), "finding_id": f.id}
-                for f in findings if f.evidence_status == EvidenceStatus.repeated_across_videos]
+    repeated = [{"statement": f.statement_hu, "video_count": len({r.video_source_id for r in f.source_references}), "finding_id": f.id}
+                for f in findings if f.evidence_status == EvidenceStatus.repeated_across_sources]
     sources = [{"video_source_id": v.id, "platform": v.platform.value, "url": v.canonical_url, "title": v.title, "creator": v.creator,
                 "provider": v.provider, "provider_run_id": v.provider_run_id, "access_status": v.access_status.value,
-                "transcript_origin": tmap[v.id].origin.value if v.id in tmap else None, "fixture": v.is_fixture} for v in videos]
+                "transcript_origin": tmap[v.id].origin.value if v.id in tmap else None, "transcript_language": tmap[v.id].language if v.id in tmap else None,
+                "auto_generated": tmap[v.id].auto_generated if v.id in tmap else None, "fixture": v.is_fixture} for v in videos]
     summary = (f"{len(videos)} videó azonosítva, ebből {len(tmap)} átirattal; {len(findings)} megállapítás, ebből {len(repeated)} több videóban is szerepel. "
-               f"Kutatási kérdés: {plan.question}")
+               f"Kutatási kérdés: {plan.question.splitlines()[0]}")
     return ResearchReport(summary=summary, findings=findings, repeated_mentions=repeated, contradictions=[], missing_information=missing,
-                          source_list=sources, coverage_limitations=limits)
+                          source_list=sources, coverage_limitations=limits, unsupported=list(stats.unsupported))
 
 
 def to_markdown(r: ResearchReport, job: ResearchJob) -> str:
@@ -66,21 +72,23 @@ def to_markdown(r: ResearchReport, job: ResearchJob) -> str:
         out = out[:1] + ["", "> **⚠ TESZT-FIXTURE adatok, nem valódi videók.**"] + out[1:]
     cats: dict[str, list[Finding]] = {}
     for f in r.findings:
-        cats.setdefault(f.category, []).append(f)
+        cats.setdefault(f.category.value, []).append(f)
     out.append("## Megállapítások")
     for cat, fs in cats.items():
         out += ["", f"### {cat}"]
         for f in fs:
-            out.append(f"- **{f.statement}** — _{STATUS_HU[f.evidence_status]}_")
+            out.append(f"- **{f.statement_hu}** — _{STATUS_HU[f.evidence_status]}_")
             for ref in f.source_references:
                 src = next((s for s in r.source_list if s["video_source_id"] == ref.video_source_id), {})
-                out.append(f"  - „{ref.supporting_quote}” — {src.get('title') or src.get('url')} ({src.get('platform')}, {fmt_ts(ref.timestamp)}) {src.get('url', '')} [jelentés-ellenőrzés: {ref.semantic_check}]")
+                out.append(f"  - „{ref.supporting_quote}” — {src.get('title') or src.get('url')} ({src.get('platform')}, {fmt_ts(ref.timestamp)}; szegm.: {', '.join(ref.transcript_segment_ids)}) {src.get('url', '')} [jelentés-ellenőrzés: {ref.semantic_check}]")
             for l in f.limitations:
                 out.append(f"  - _Korlát:_ {l}")
     if not r.findings:
         out.append("\nNincs forrással alátámasztott megállapítás.")
     out += ["", "## Több videóban említett (nem független igazolás)"] + [f"- {m['statement']} ({m['video_count']} videó)" for m in r.repeated_mentions] if r.repeated_mentions else []
     out += ["", "## Hiányzó információ"] + [f"- {m}" for m in r.missing_information] if r.missing_information else []
+    if r.unsupported:
+        out += ["", "## Elutasított, nem alátámasztott javaslatok (nem megállapítások)"] + [f"- {u['statement_hu'] or '(üres)'} — {u['reason']}" for u in r.unsupported]
     out += ["", "## Források"] + [f"- {s['title'] or s['url']} — {s['platform']} — {s['url']} (szolgáltató: {s['provider']}, átirat: {s['transcript_origin'] or 'nincs'})" for s in r.source_list]
     out += ["", "## Lefedettségi korlátok"] + [f"- {l}" for l in r.coverage_limitations]
     return "\n".join(out) + "\n"
@@ -93,7 +101,7 @@ def to_csv(r: ResearchReport) -> str:
     urls = {s["video_source_id"]: s["url"] for s in r.source_list}
     for f in r.findings:
         for ref in f.source_references:
-            w.writerow([f.id, f.category, f.statement, f.evidence_status.value, urls.get(ref.video_source_id, ""), ref.timestamp if ref.timestamp is not None else "",
+            w.writerow([f.id, f.category.value, f.statement_hu, f.evidence_status.value, urls.get(ref.video_source_id, ""), ref.timestamp if ref.timestamp is not None else "",
                         ref.supporting_quote, ref.semantic_check])
     return buf.getvalue()
 

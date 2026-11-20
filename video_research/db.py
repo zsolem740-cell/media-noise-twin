@@ -219,3 +219,21 @@ class Store:
     def findings(self, jid: str) -> list[Finding]:
         with self.e.connect() as c:
             return [Finding.model_validate_json(r[0]) for r in c.execute(text("SELECT data FROM findings WHERE job_id=:j ORDER BY id"), {"j": jid})]
+
+    # ---- törlés és megőrzés ----
+    def delete_job(self, jid: str) -> bool:
+        """A feladat és minden hozzá tartozó adat törlése. A videók, átiratok és megállapítások jelenleg feladatonként tárolódnak
+        (nincs feladatok közti megosztott gyorsítótár), ezért más feladat forrását a törlés nem érinti."""
+        with self.e.begin() as c:
+            if c.execute(text("DELETE FROM research_jobs WHERE id=:j AND lease_owner IS NULL"), {"j": jid}).rowcount != 1:
+                return False                      # lefoglalt (futó) feladat: semmit nem törlünk
+            for t in ("findings", "transcripts", "video_sources", "provider_runs", "job_steps"):
+                c.execute(text(f"DELETE FROM {t} WHERE job_id=:j"), {"j": jid})
+        return True
+
+    def purge_expired(self, retention_days: int, when=None) -> int:
+        cutoff = iso((when or now()) - timedelta(days=retention_days))
+        terminal = ",".join(f"'{x.value}'" for x in TERMINAL_STATUSES)
+        with self.e.connect() as c:
+            ids = [r[0] for r in c.execute(text(f"SELECT id FROM research_jobs WHERE status IN ({terminal}) AND updated_at < :c"), {"c": cutoff})]
+        return sum(1 for i in ids if self.delete_job(i))

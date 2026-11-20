@@ -52,6 +52,8 @@ class Settings:
     backoff_base_seconds: float = 1.0
     backoff_max_seconds: float = 30.0
     max_transcript_chars: int = 200_000
+    data_retention_days: int = 90
+    allow_cloud_transcription: bool = False      # a felhős beszédfelismerés külön engedély; rejtett váltás nincs (jelenleg nincs ilyen útvonal)
 
     def validate(self) -> None:
         if self.mode not in ("dev", "production"):
@@ -64,6 +66,9 @@ class Settings:
 
 def load_settings(env: dict | None = None) -> Settings:
     e = os.environ if env is None else env
+    alias = {"DATABASE_URL": "VR_DATABASE_URL", "APP_API_KEY": "VR_API_TOKEN", "DEFAULT_MAX_VIDEOS": "VR_MAX_VIDEOS",
+             "DEFAULT_MAX_TOTAL_MINUTES": "VR_MAX_VIDEO_MINUTES", "DEFAULT_MAX_COST_USD": "VR_COST_BUDGET_USD"}
+    e = {**e, **{new: e[old] for old, new in alias.items() if old in e and new not in e}}
     limits = Limits(
         max_videos=int(e.get("VR_MAX_VIDEOS", 10)),
         max_total_video_minutes=float(e.get("VR_MAX_VIDEO_MINUTES", 120)),
@@ -85,6 +90,8 @@ def load_settings(env: dict | None = None) -> Settings:
         limits=limits,
         actors=actors,
         lease_seconds=int(e.get("VR_LEASE_SECONDS", 60)),
+        data_retention_days=int(e.get("DATA_RETENTION_DAYS", 90)),
+        allow_cloud_transcription=e.get("ALLOW_CLOUD_TRANSCRIPTION", "false").lower() == "true",
     )
     s.validate()
     return s

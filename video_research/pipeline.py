@@ -17,7 +17,7 @@ from .models import (AccessStatus, JobStatus, Platform, ResearchPlan, StepStatus
 from .planner import build_plan
 from .report import build_report
 from .urls import UrlRejected, normalize_video_url
-from .util import get_logger, new_id, now, parse_iso
+from .util import RetryableError, get_logger, new_id, now, parse_iso
 
 log = get_logger("video_research.pipeline")
 
@@ -103,8 +103,8 @@ class Pipeline:
                     adapter = self.registry.get(Capability.search_videos, platform)
                     run_id, found, state = ex.run(jid, name, adapter, Capability.search_videos, platform,
                                                   {"query": q, "max_results": plan.limits.max_videos}, plan.limits.provider_cost_budget_usd)
-                except (ProviderPermanentError, UncertainRun) as exc:
-                    self.store.set_step(jid, name, StepStatus.failed if isinstance(exc, ProviderPermanentError) else StepStatus.uncertain, {"error": str(exc)})
+                except (ProviderPermanentError, UncertainRun, RetryableError) as exc:
+                    self.store.set_step(jid, name, StepStatus.uncertain if isinstance(exc, UncertainRun) else StepStatus.failed, {"error": str(exc)})
                     problems.append(f"Keresés sikertelen ({platform.value}): {exc}")
                     if isinstance(exc, ProviderNotConfigured):
                         raise
@@ -152,14 +152,12 @@ class Pipeline:
             try:
                 adapter = self.registry.get(Capability.fetch_video_metadata, v.platform)
                 run_id, md, state = ex.run(jid, name, adapter, Capability.fetch_video_metadata, v.platform, {"url": v.canonical_url}, plan.limits.provider_cost_budget_usd)
-            except (ProviderPermanentError, UncertainRun) as exc:
+            except (ProviderPermanentError, UncertainRun, RetryableError) as exc:
                 self.store.set_step(jid, name, StepStatus.uncertain if isinstance(exc, UncertainRun) else StepStatus.failed, {"error": str(exc)})
                 v.access_status = AccessStatus.error
                 v.provider = adapter.name if adapter else v.provider
                 self.store.update_video(jid, v)
                 problems.append(f"Metaadat nem érhető el ({v.canonical_url}): {exc}")
-                if isinstance(exc, ProviderNotConfigured):
-                    raise
                 continue
             v.title, v.creator, v.duration_seconds = md.title, md.creator, md.duration_seconds
             v.published_at = _dt(md.published_at)
@@ -188,11 +186,9 @@ class Pipeline:
             try:
                 adapter = self.registry.get(Capability.fetch_transcript, v.platform)
                 run_id, tr, state = ex.run(jid, name, adapter, Capability.fetch_transcript, v.platform, {"url": v.canonical_url, "language": plan.languages[0]}, plan.limits.provider_cost_budget_usd)
-            except (ProviderPermanentError, UncertainRun) as exc:
+            except (ProviderPermanentError, UncertainRun, RetryableError) as exc:
                 self.store.set_step(jid, name, StepStatus.uncertain if isinstance(exc, UncertainRun) else StepStatus.failed, {"error": str(exc)})
                 problems.append(f"Átirat nem érhető el ({v.canonical_url}): {exc}")
-                if isinstance(exc, ProviderNotConfigured):
-                    raise
                 continue
             self._account(jid, state)
             segs = [s for s in tr.segments if s.text and s.text.strip()]
@@ -213,7 +209,7 @@ class Pipeline:
             self.store.save_transcript(jid, Transcript(
                 id=new_id("trn"), video_source_id=v.id, language=tr.language, origin=tr.origin, segments=kept,
                 timestamps_available=any(s.start_seconds is not None for s in kept),
-                content_hash=hashlib.sha256(body.encode()).hexdigest(), provider=adapter.name))
+                content_hash=hashlib.sha256(body.encode()).hexdigest(), provider=adapter.name, auto_generated=tr.auto_generated, fetched_at=now()))
             self.store.set_step(jid, name, StepStatus.done, {"transcript": True})
 
     def _extract(self, jid, plan, check, stats: ExtractionStats, problems) -> None:

@@ -5,19 +5,20 @@ Különálló csomag: a Média-Zaj appot, a magyar pilotot és a `trading_model/
 
 ## Állapot (őszintén)
 
+Részletes, platformonkénti lista: `docs/CAPABILITIES.md`. A három külső projekt értékelése: `docs/ASSESSMENT.md`. Példa jelentés: `docs/EXAMPLE_REPORT.md` (fixture).
+
 | Rész | Állapot |
 |---|---|
-| Adatmodellek, URL-normalizálás + platform-engedélylista | kész, tesztelt |
-| Adatbázis (SQLAlchemy Core, verziózott migráció, idempotencia, lease/heartbeat, részállapotok, szolgáltatói futásazonosítók) | kész, **SQLite-on tesztelt**; PostgreSQL-en nem futtattam (nincs itt PG) |
-| Tervezés + jóváhagyás fizetős futás előtt, költség-/idő-/token-/videókeret, megszakítás, újraindítás, retry+backoff+jitter, bizonytalan kimenetel kezelése | kész, tesztelt |
-| Idézet programozott ellenőrzése, összevonás forrásmegőrzéssel, magyar jelentés, export | kész, tesztelt |
-| Webes API (FastAPI, bearer-token) + háttér-worker | kész, tesztelt (TestClient) |
-| Apify-adapter (hivatalos `apify-client`) | kész, **csak hamis klienssel tesztelt**; Actor nincs kiválasztva |
-| **Valódi LLM-adapter** | **nincs** (lásd alább) |
-| Docker Compose | megírva, **nem futtattam** (nincs Docker itt) |
-| Éles Apify-/LLM-hívás, valódi videó | **egyszer sem történt** |
-| Ellentmondás-észlelés, külső (független) forrásos ellenőrzés | nincs; a jelentés ezt kimondja |
-| Instagram, Facebook, OCR, Android-kliens, ütemezés, MCP | nincs; nincs is adapterhely, amely működőnek látszana |
+| Folyamat (terv → hash-hez kötött jóváhagyás → metaadat → felirat → kivonat → idézetellenőrzés → magyar jelentés) | kész, offline tesztelt (SQLite) |
+| YouTube metaadat + felirat | kész; **metaadat élőben igazolt, felirat élőben sikertelen** (a YouTube blokkolta a felhő-IP-t, nem kerültem meg) |
+| TikTok | csak metaadat (élőben részleges: cím nélkül); **átirat nincs** |
+| Keresés, beszédfelismerés, vizuális elemzés | nincs |
+| Információkivonat | modell nélküli extraktív alapút; **LLM-adapter nincs** (lásd lent) |
+| Apify-adapter (korábbi kör) | változatlan, csak hamis klienssel tesztelt |
+| API (`/api/jobs…`, export, törlés), egyszerű weboldal (`/`) | kész, TestClient-tel tesztelt |
+| PostgreSQL, Docker Compose | nem futtatva |
+
+Vertikális próba (nincs modell- és fizetős hívás): `python -m video_research.trial "kérdés" LINK [LINK…] [--fixture video_research/tests/fixtures/videos.json]`.
 
 ## Döntést igénylő ütközés: harmadik szolgáltató
 
@@ -33,13 +34,13 @@ Az MI: javasol keresőkifejezést, kinyer, (később) jelentést fogalmaz. A kó
 
 ## Folyamat és állapotok
 
-`POST /jobs` (Idempotency-Key fejléc) → azonnal `job_id`, `queued` → worker: `planning` → `awaiting_approval` (a terv, a keretek és a költségbecslés megjelenik) → `POST /jobs/{id}/approve` → `queued` → `running` → `completed | partially_completed | failed | cancelled`. A részlépések (`job_steps`) és a szolgáltatói futások (`provider_runs`) tároltak; újraindításkor a kész lépések kimaradnak, a mentett futásazonosítójú futást lekérdezi, nem indítja újra.
+`POST /api/jobs` (Idempotency-Key fejléc) → azonnal `job_id`, `queued` → worker: `planning` → `awaiting_approval` (a terv, a keretek és a költségbecslés megjelenik) → `POST /api/jobs/{id}/approve` → `queued` → `running` → `completed | partially_completed | failed | cancelled`. A részlépések (`job_steps`) és a szolgáltatói futások (`provider_runs`) tároltak; újraindításkor a kész lépések kimaradnak, a mentett futásazonosítójú futást lekérdezi, nem indítja újra.
 
-Végpontok (bearer-token): `GET /jobs/{id}`, `POST /jobs/{id}/cancel`, `GET /jobs/{id}/report?format=json|markdown|csv`, `GET /health`.
+Végpontok (bearer-token, `/api` alatt): `POST /jobs/plan` (ingyenes előnézet), `POST /jobs`, `POST /jobs/{id}/approve` (törzs: `{"plan_hash": …}`; eltérő hash 409), `GET /jobs/{id}`, `POST /jobs/{id}/cancel`, `GET /jobs/{id}/report` és `/export?format=json|markdown|csv`, `DELETE /jobs/{id}`; `GET /health`, `GET /` (oldal).
 
 ## Forráshűség
 
-- Állítás-státusz: `creator_claim` (egy videó), `repeated_across_videos` (több videó; **nem** igazolás). Az `independently_verified` értéket az 1. verzió soha nem állítja elő.
+- Állítás-státusz: `source_claim` (egy videó), `repeated_across_sources` (több videó; **nem** igazolás, a videók ugyanazt az eredeti forrást is ismételhetik), `unsupported` (nem ellenőrizhető idézet: külön listába kerül, nem megállapítás). `verified` nincs.
 - Idézet: normalizált szó szerinti egyezés keresése az átiratban (legfeljebb 6 szomszédos szegmens). Nem található → a megállapítás kimarad, és ez a jelentésben szerepel. Időbélyeg csak az átiratból, ha van.
 - Az állítás–idézet jelentésbeli ellenőrzése külön, heurisztikus lépés (`semantic_check`), a jelentés nem garanciaként mutatja.
 - Összevonáskor minden forráshivatkozás megmarad; az eltérő megfogalmazások a korlátok közé kerülnek.

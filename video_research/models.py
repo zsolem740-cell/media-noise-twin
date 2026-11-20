@@ -39,10 +39,21 @@ class TranscriptOrigin(str, Enum):
 
 
 class EvidenceStatus(str, Enum):
-    """Az `independently_verified` értéket az 1. verzió soha nem állítja elő: külső ellenőrzést nem végez."""
-    creator_claim = "creator_claim"
-    repeated_across_videos = "repeated_across_videos"
-    independently_verified = "independently_verified"
+    """Nincs `verified` érték: független külső tényellenőrzést az 1. verzió nem végez.
+    A forrásban ismétlődő állítás nem igazolt: a különböző videók ugyanazt az eredeti forrást is ismételhetik."""
+    source_claim = "source_claim"
+    repeated_across_sources = "repeated_across_sources"
+    unsupported = "unsupported"          # nem ellenőrizhető idézet: soha nem kerül a jelentés megállapításai közé
+
+
+class FindingCategory(str, Enum):
+    tool = "tool"
+    product = "product"
+    method = "method"
+    recommendation = "recommendation"
+    claim = "claim"
+    warning = "warning"
+    other = "other"
 
 
 class StepStatus(str, Enum):
@@ -63,6 +74,14 @@ class Limits(BaseModel):
     max_parallel_runs: int = Field(2, ge=1)
 
 
+def compute_plan_hash(plan: "ResearchPlan") -> str:
+    """A jóváhagyás ehhez a hashhez kötött: a hash a terv minden mezőjét lefedi a hash mező kivételével."""
+    import hashlib
+    import json
+    data = plan.model_dump(mode="json", exclude={"plan_hash"})
+    return hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+
+
 class ResearchPlan(BaseModel):
     """Strukturált kutatási terv. Csak ellenőrzött, engedélyezett elemeket tartalmazhat."""
     question: str
@@ -70,11 +89,14 @@ class ResearchPlan(BaseModel):
     languages: list[str] = ["hu", "en"]
     search_queries: list[str] = []
     direct_urls: list[str] = []
-    focus_categories: list[str] = ["eszköz", "megoldás", "előny", "probléma"]
+    focus_categories: list[FindingCategory] = list(FindingCategory)
+    plan_hash: str = ""
     limits: Limits
     estimated_cost_usd: float | None = None
     cost_estimate_note: str = ""
     notes: list[str] = []
+    providers: dict[str, str] = {}           # "<platform>:<capability>" -> szolgáltató neve vagy "nincs"
+    operations: list[str] = []
 
     @field_validator("languages")
     @classmethod
@@ -101,6 +123,8 @@ class Transcript(BaseModel):
     timestamps_available: bool
     content_hash: str
     provider: str
+    auto_generated: bool | None = None       # a platform automatikus (gépi) feliratozása; None = nem ismert
+    fetched_at: datetime | None = None
 
 
 class VideoSource(BaseModel):
@@ -131,10 +155,10 @@ class SourceReference(BaseModel):
 class Finding(BaseModel):
     id: str
     research_job_id: str
-    category: str
-    statement: str
+    category: FindingCategory
+    statement_hu: str
     source_references: list[SourceReference]
-    evidence_status: EvidenceStatus = EvidenceStatus.creator_claim
+    evidence_status: EvidenceStatus = EvidenceStatus.source_claim
     limitations: list[str] = []
 
 
@@ -146,6 +170,7 @@ class ResearchReport(BaseModel):
     missing_information: list[str]
     source_list: list[dict]
     coverage_limitations: list[str]
+    unsupported: list[dict] = []             # elutasított, nem alátámasztott javaslatok (állítás + ok); nem megállapítások
 
 
 class ResearchJob(BaseModel):

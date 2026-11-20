@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import hmac
+from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Response
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 
+from .adapters.base import AdapterRegistry
 from .config import Settings
 from .db import Store
-from .models import JobStatus, Limits, ResearchPlan, ResearchReport
-from .planner import effective_limits
+from .models import JobStatus, Limits, ResearchPlan, ResearchReport, compute_plan_hash
+from .planner import build_plan, effective_limits
 from .report import to_csv, to_json, to_markdown
 
 
@@ -20,8 +23,13 @@ class JobRequest(BaseModel):
     limits: Limits | None = None
 
 
-def create_app(store: Store, settings: Settings) -> FastAPI:
-    app = FastAPI(title="Videós kutatóügynök", version="1.0")
+class ApproveBody(BaseModel):
+    plan_hash: str = Field(min_length=64, max_length=64)
+
+
+def create_app(store: Store, settings: Settings, registry: AdapterRegistry | None = None) -> FastAPI:
+    app = FastAPI(title="Videós kutatóügynök", version="1.1")
+    api = APIRouter(prefix="/api")
 
     def auth(authorization: str | None = Header(default=None)) -> None:
         if not settings.api_token:
@@ -48,7 +56,7 @@ def create_app(store: Store, settings: Settings) -> FastAPI:
     def health() -> dict:
         return {"ok": True}
 
-    @app.post("/jobs", status_code=202, dependencies=[Depends(auth)])
+    @api.post("/jobs", status_code=202, dependencies=[Depends(auth)])
     def create_job(body: JobRequest, response: Response, idempotency_key: str | None = Header(default=None)) -> dict:
         if idempotency_key is not None and not (8 <= len(idempotency_key) <= 128):
             raise HTTPException(422, "Az Idempotency-Key 8–128 karakter lehet")
@@ -66,22 +74,35 @@ def create_app(store: Store, settings: Settings) -> FastAPI:
             response.status_code = 200
         return {"job_id": job.id, "status": job.status.value, "created": created}
 
-    @app.get("/jobs/{jid}", dependencies=[Depends(auth)])
+    @api.post("/jobs/plan", dependencies=[Depends(auth)])
+    def plan_preview(body: JobRequest) -> dict:
+        """Terv-előnézet: determinisztikus, nem hív szolgáltatót, nem költ, nem ment feladatot."""
+        reg = registry or AdapterRegistry(production=settings.mode == "production")
+        plan = build_plan(body.request, settings, reg, llm=None, requested_limits=body.limits, requested_platforms=body.platforms or None)
+        return plan.model_dump(mode="json")
+
+    @api.get("/jobs/{jid}", dependencies=[Depends(auth)])
     def get_job(jid: str) -> dict:
         return view(jid)
 
-    @app.post("/jobs/{jid}/approve", dependencies=[Depends(auth)])
-    def approve(jid: str) -> dict:
+    @api.post("/jobs/{jid}/approve", dependencies=[Depends(auth)])
+    def approve(jid: str, body: ApproveBody) -> dict:
+        """A jóváhagyás a terv hash-éhez kötött: ha a terv közben megváltozott, a hash nem egyezik, és új jóváhagyás kell."""
         job = store.get_job(jid)
         if not job:
             raise HTTPException(404, "Nincs ilyen feladat")
-        plan = store.get_field(jid, "plan")
-        if job.status != JobStatus.awaiting_approval or not plan:
+        plan_json = store.get_field(jid, "plan")
+        if job.status != JobStatus.awaiting_approval or not plan_json:
             raise HTTPException(409, f"Jóváhagyás csak awaiting_approval állapotban lehetséges (jelenleg: {job.status.value})")
-        store.set_status(jid, JobStatus.queued, approved_plan=plan)
+        plan = ResearchPlan.model_validate_json(plan_json)
+        if plan.plan_hash != compute_plan_hash(plan):
+            raise HTTPException(409, "A tárolt terv sértetlensége nem igazolható")
+        if not hmac.compare_digest(body.plan_hash, plan.plan_hash):
+            raise HTTPException(409, "A megadott plan_hash nem egyezik a jelenlegi tervvel: nézd át a tervet, és hagyd jóvá újra")
+        store.set_status(jid, JobStatus.queued, approved_plan=plan_json)
         return view(jid)
 
-    @app.post("/jobs/{jid}/cancel", dependencies=[Depends(auth)])
+    @api.post("/jobs/{jid}/cancel", dependencies=[Depends(auth)])
     def cancel(jid: str) -> dict:
         st = store.request_cancel(jid)
         if st is None:
@@ -91,7 +112,7 @@ def create_app(store: Store, settings: Settings) -> FastAPI:
                             "a worker a következő lépéshatárnál áll meg.")
         return v
 
-    @app.get("/jobs/{jid}/report", dependencies=[Depends(auth)])
+    @api.get("/jobs/{jid}/report", dependencies=[Depends(auth)])
     def report(jid: str, format: str = "json"):
         job = store.get_job(jid)
         raw = store.get_field(jid, "report") if job else None
@@ -108,4 +129,26 @@ def create_app(store: Store, settings: Settings) -> FastAPI:
             return Response(to_json(r), media_type="application/json")
         raise HTTPException(422, "format: json | markdown | csv")
 
+    @api.get("/jobs/{jid}/export", dependencies=[Depends(auth)])
+    def export(jid: str, format: str = "json"):
+        return report(jid, format=format)
+
+    @api.delete("/jobs/{jid}", dependencies=[Depends(auth)])
+    def delete(jid: str) -> dict:
+        job = store.get_job(jid)
+        if not job:
+            raise HTTPException(404, "Nincs ilyen feladat")
+        if not store.delete_job(jid):
+            raise HTTPException(409, "A feladat éppen feldolgozás alatt áll: előbb szakítsd meg, és várd meg a leállást")
+        return {"deleted": jid}
+
+    app.include_router(api)
+
+    @app.get("/", response_class=HTMLResponse)
+    def ui() -> str:
+        return UI_HTML
+
     return app
+
+
+UI_HTML = (Path(__file__).parent / "templates" / "index.html").read_text(encoding="utf-8")

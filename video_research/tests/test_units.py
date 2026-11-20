@@ -71,8 +71,8 @@ def test_prompt_marks_transcript_untrusted_and_escapes_delimiters():
     assert p.count("</untrusted_transcript>") == 1 and p.rstrip().endswith("</untrusted_transcript>")
 
 
-def _f(stmt, vid, quote="idézet szöveg itt", cat="eszköz"):
-    return Finding(id=f"f{vid}{stmt[:3]}", research_job_id="j", category=cat, statement=stmt,
+def _f(stmt, vid, quote="idézet szöveg itt", cat="tool"):
+    return Finding(id=f"f{vid}{stmt[:3]}", research_job_id="j", category=cat, statement_hu=stmt,
                    source_references=[SourceReference(video_source_id=vid, transcript_segment_ids=["s"], supporting_quote=quote)])
 
 
@@ -84,21 +84,21 @@ def test_merge_keeps_all_sources_and_never_claims_verification():
     vids = {"a": _v("a", "k1"), "b": _v("b", "k2")}
     out = merge_findings([_f("Az AutoDroid root nélkül vezérli a telefont", "a", "q1 idézet"), _f("AutoDroid root nélkül vezérli a telefon felületét", "b", "q2 idézet")], vids)
     assert len(out) == 1 and len(out[0].source_references) == 2
-    assert out[0].evidence_status == EvidenceStatus.repeated_across_videos
+    assert out[0].evidence_status == EvidenceStatus.repeated_across_sources
     assert any("nem független ellenőrzés" in l for l in out[0].limitations)
     assert any("Összevont megfogalmazás" in l for l in out[0].limitations)
 
 
-def test_merge_single_is_creator_claim_and_same_creator_flagged():
+def test_merge_single_is_source_claim_and_same_creator_flagged():
     vids = {"a": _v("a", "k"), "b": _v("b", "k")}
     one = merge_findings([_f("Egyedi állítás szöveg", "a")], vids)
-    assert one[0].evidence_status == EvidenceStatus.creator_claim
+    assert one[0].evidence_status == EvidenceStatus.source_claim
     two = merge_findings([_f("Az eszköz sokat fogyaszt akkut", "a"), _f("Az eszköz sokat fogyaszt akkut", "b", "más idézet szöveg")], vids)
     assert any("ugyanattól a készítőtől" in l for l in two[0].limitations)
 
 
 def test_merge_different_categories_not_merged():
-    out = merge_findings([_f("Az eszköz gyors", "a", cat="előny"), _f("Az eszköz gyors", "b", "más idézet szöveg", cat="probléma")], {})
+    out = merge_findings([_f("Az eszköz gyors", "a", cat="recommendation"), _f("Az eszköz gyors", "b", "más idézet szöveg", cat="warning")], {})
     assert len(out) == 2
 
 

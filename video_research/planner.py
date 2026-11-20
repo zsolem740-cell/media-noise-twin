@@ -7,7 +7,7 @@ import re
 from .adapters.base import AdapterRegistry, Capability, ProviderNotConfigured
 from .config import Settings
 from .llm import LLMClient
-from .models import Limits, Platform, ResearchPlan
+from .models import Limits, Platform, ResearchPlan, compute_plan_hash
 from .urls import UrlRejected, normalize_video_url
 
 _URL_RE = re.compile(r"https?://[^\s<>\"']+")
@@ -77,14 +77,18 @@ def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, l
     limits = effective_limits(settings, requested_limits)
     # becslés: keresés platformonként 1 futás + videónként metaadat és átirat
     est, reliable = 0.0, True
+    providers: dict[str, str] = {}
     for p in platforms:
         for cap, units in ((Capability.search_videos, 1 if queries else 0), (Capability.fetch_video_metadata, limits.max_videos),
                            (Capability.fetch_transcript, limits.max_videos)):
             if units == 0:
                 continue
             try:
-                c = registry.get(cap, p).estimate_cost(cap, p, units)
+                ad = registry.get(cap, p)
+                providers[f"{p.value}:{cap.value}"] = ad.name + (" (TESZT-FIXTURE)" if ad.is_fixture else "")
+                c = ad.estimate_cost(cap, p, units)
             except ProviderNotConfigured:
+                providers[f"{p.value}:{cap.value}"] = "nincs"
                 reliable = False
                 notes.append(f"Nincs beállított szolgáltató: {p.value}:{cap.value}")
                 continue
@@ -92,9 +96,13 @@ def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, l
                 reliable = False
             else:
                 est += c
-    return ResearchPlan(
+    plan = ResearchPlan(
         question=request.strip()[:2000], platforms=platforms, search_queries=queries, direct_urls=direct, limits=limits,
         estimated_cost_usd=round(est, 4) if reliable else None,
         cost_estimate_note=("Becslés a beállított egységárakból; nem ténylegesen ismert költség." if reliable else
                             "Nincs megbízható költségbecslés (hiányzó egységár vagy szolgáltató). A költségkeretet a rendszer futás közben így is érvényesíti."),
-        notes=notes)
+        notes=notes, providers=providers,
+        operations=([f"{len(direct)} megadott link feldolgozása (metaadat, felirat)"] if direct else []) +
+                   [f"keresés: „{q}” ({', '.join(p.value for p in platforms)})" for q in queries] + ["magyar információkivonat és forráshoz kötött jelentés"])
+    plan.plan_hash = compute_plan_hash(plan)
+    return plan

@@ -56,12 +56,13 @@ def test_end_to_end_sourced_report(tmp_path):
     from video_research.models import ResearchReport
     r = ResearchReport.model_validate_json(store.get_field(jid, "report"))
     assert r.findings and all(f.source_references for f in r.findings)  # minden megállapításnak van forrása
-    assert not any(f.statement == "Kitalált állítás" for f in r.findings)  # kitalált idézet: kiszűrve
-    assert any("kimaradt, mert az idézete nem volt ellenőrizhető" in l for l in r.coverage_limitations)
-    auto = [f for f in r.findings if "AutoDroid" in f.statement]
-    assert len(auto) == 1 and auto[0].evidence_status == EvidenceStatus.repeated_across_videos
+    assert not any(f.statement_hu == "Kitalált állítás" for f in r.findings)  # kitalált idézet: kiszűrve
+    assert any("unsupported" in l for l in r.coverage_limitations)
+    auto = [f for f in r.findings if "AutoDroid" in f.statement_hu]
+    assert len(auto) == 1 and auto[0].evidence_status == EvidenceStatus.repeated_across_sources
     assert len({x.video_source_id for x in auto[0].source_references}) == 2        # mindkét videó forrása megmaradt
-    assert all(f.evidence_status != EvidenceStatus.independently_verified for f in r.findings)
+    assert {e.value for e in EvidenceStatus} == {"source_claim", "repeated_across_sources", "unsupported"}                 # nincs verified érték
+    assert all(f.evidence_status != EvidenceStatus.unsupported for f in r.findings)
     assert any("Nincs hozzáférhető átirat" in m for m in r.missing_information)
     assert any("FIXTURE" in l for l in r.coverage_limitations)
     assert all(ref.timestamp is not None for f in r.findings for ref in f.source_references)
@@ -327,48 +328,50 @@ H = {"Authorization": "Bearer " + "t" * 20}
 
 def test_api_auth_and_async_job_id(tmp_path):
     c, store, s, pipe = api_client(tmp_path)
-    assert c.post("/jobs", json={"request": "android ai"}).status_code == 401
-    assert c.post("/jobs", json={"request": "android ai"}, headers={"Authorization": "Bearer rossz"}).status_code == 401
-    r = c.post("/jobs", json={"request": Q}, headers={**H, "Idempotency-Key": "abcdef123456"})
+    assert c.post("/api/jobs", json={"request": "android ai"}).status_code == 401
+    assert c.post("/api/jobs", json={"request": "android ai"}, headers={"Authorization": "Bearer rossz"}).status_code == 401
+    r = c.post("/api/jobs", json={"request": Q}, headers={**H, "Idempotency-Key": "abcdef123456"})
     assert r.status_code == 202 and r.json()["status"] == "queued" and r.json()["created"]
-    again = c.post("/jobs", json={"request": Q}, headers={**H, "Idempotency-Key": "abcdef123456"})
+    again = c.post("/api/jobs", json={"request": Q}, headers={**H, "Idempotency-Key": "abcdef123456"})
     assert again.status_code == 200 and again.json()["job_id"] == r.json()["job_id"]
-    clash = c.post("/jobs", json={"request": "másik kérés"}, headers={**H, "Idempotency-Key": "abcdef123456"})
+    clash = c.post("/api/jobs", json={"request": "másik kérés"}, headers={**H, "Idempotency-Key": "abcdef123456"})
     assert clash.status_code == 409
 
 
 def test_api_validation_and_limits_cannot_be_raised(tmp_path):
     c, store, s, pipe = api_client(tmp_path)
-    assert c.post("/jobs", json={"request": Q, "platforms": ["instagram"]}, headers=H).status_code == 422
-    r = c.post("/jobs", json={"request": Q, "limits": {"max_videos": 500}}, headers=H).json()
+    assert c.post("/api/jobs", json={"request": Q, "platforms": ["instagram"]}, headers=H).status_code == 422
+    r = c.post("/api/jobs", json={"request": Q, "limits": {"max_videos": 500}}, headers=H).json()
     assert store.get_job(r["job_id"]).limits.max_videos == 10
 
 
 def test_api_full_flow_approve_report_formats(tmp_path):
     c, store, s, pipe = api_client(tmp_path)
-    jid = c.post("/jobs", json={"request": Q}, headers=H).json()["job_id"]
-    assert c.post(f"/jobs/{jid}/approve", headers=H).status_code == 409           # tervezés előtt nem hagyható jóvá
+    jid = c.post("/api/jobs", json={"request": Q}, headers=H).json()["job_id"]
+    assert c.post(f"/api/jobs/{jid}/approve", json={"plan_hash": "0" * 64}, headers=H).status_code == 409   # tervezés előtt nem hagyható jóvá
     Worker(store, pipe, s, name="w").run_once()
-    v = c.get(f"/jobs/{jid}", headers=H).json()
+    v = c.get(f"/api/jobs/{jid}", headers=H).json()
     assert v["status"] == "awaiting_approval" and v["plan"]["platforms"] and "cost_note" in v
-    assert c.get(f"/jobs/{jid}/report", headers=H).status_code == 409
-    assert c.post(f"/jobs/{jid}/approve", headers=H).json()["status"] == "queued"
+    assert c.get(f"/api/jobs/{jid}/report", headers=H).status_code == 409
+    bad = c.post(f"/api/jobs/{jid}/approve", json={"plan_hash": "f" * 64}, headers=H)
+    assert bad.status_code == 409 and "nem egyezik" in bad.text                    # rossz hash: nincs jóváhagyás
+    assert c.post(f"/api/jobs/{jid}/approve", json={"plan_hash": v["plan"]["plan_hash"]}, headers=H).json()["status"] == "queued"
     Worker(store, pipe, s, name="w").run_once()
-    md = c.get(f"/jobs/{jid}/report?format=markdown", headers=H)
+    md = c.get(f"/api/jobs/{jid}/report?format=markdown", headers=H)
     assert "TESZT-FIXTURE" in md.text and "AutoDroid" in md.text and "nem független ellenőrzés" in md.text and "youtube.com/watch?v=AAAAAAAAAAA" in md.text
-    assert c.get(f"/jobs/{jid}/report?format=csv", headers=H).text.startswith("finding_id,")
-    assert c.get(f"/jobs/{jid}/report", headers=H).json()["source_list"]
+    assert c.get(f"/api/jobs/{jid}/report?format=csv", headers=H).text.startswith("finding_id,")
+    assert c.get(f"/api/jobs/{jid}/report", headers=H).json()["source_list"]
 
 
 def test_api_cancel_queued_job_and_best_effort_note(tmp_path):
     c, store, s, pipe = api_client(tmp_path)
-    jid = c.post("/jobs", json={"request": Q}, headers=H).json()["job_id"]
-    r = c.post(f"/jobs/{jid}/cancel", headers=H).json()
+    jid = c.post("/api/jobs", json={"request": Q}, headers=H).json()["job_id"]
+    r = c.post(f"/api/jobs/{jid}/cancel", headers=H).json()
     assert r["status"] == "cancelled" and "best effort" in r["cancel_note"].lower()
-    assert c.post(f"/jobs/{jid}/approve", headers=H).status_code == 409
+    assert c.post(f"/api/jobs/{jid}/approve", json={"plan_hash": "0" * 64}, headers=H).status_code == 409
 
 
 def test_prod_api_without_token_is_closed(tmp_path):
     store, s, pipe, ad, llm = make(tmp_path)
     s.mode, s.api_token = "production", None
-    assert TestClient(create_app(store, s)).get("/jobs/x").status_code == 503
+    assert TestClient(create_app(store, s)).get("/api/jobs/x").status_code == 503

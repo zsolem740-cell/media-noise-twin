@@ -61,6 +61,7 @@ class TranscriptResult:
     language: str
     origin: TranscriptOrigin
     segments: list[RawSegment] = field(default_factory=list)   # üres: nincs hozzáférhető átirat
+    auto_generated: bool | None = None
 
 
 @runtime_checkable

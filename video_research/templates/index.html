@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Videós kutatóügynök</title>
+<style>
+:root{--bg:#fff;--fg:#1a1a1a;--mut:#666;--line:#ddd;--acc:#1d5fd1;--warn:#a15c00}
+@media(prefers-color-scheme:dark){:root{--bg:#161616;--fg:#eee;--mut:#aaa;--line:#333;--acc:#6aa3ff;--warn:#f0b050}}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;max-width:60rem;margin:0 auto;padding:1rem}
+textarea,input,button{font:inherit;width:100%;box-sizing:border-box;margin:.25rem 0;padding:.5rem;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+button{width:auto;background:var(--acc);color:#fff;border:0;cursor:pointer;margin-right:.5rem}
+pre{white-space:pre-wrap;border:1px solid var(--line);padding:.75rem;border-radius:6px;overflow-x:auto}
+.warn{color:var(--warn)}.mut{color:var(--mut)}
+</style></head><body>
+<h1>Videós kutatóügynök</h1>
+<p class="warn">API-kulcsos MVP: helyi használatra. Változtatás nélkül nem tehető ki a nyilvános internetre (HTTPS, korlátozás és naplózás kell elé).</p>
+<label>API-kulcs (csak ebben a böngészőlapban marad) <input id="key" type="password" autocomplete="off"></label>
+<label>Kutatási kérdés (magyarul) <textarea id="q" rows="3"></textarea></label>
+<label>Videólinkek (YouTube/TikTok, soronként egy) <textarea id="links" rows="4"></textarea></label>
+<button id="go">Feladat indítása (terv készül)</button>
+<h2>Állapot</h2><pre id="status" class="mut">—</pre>
+<div id="approve" hidden><h2>Terv jóváhagyása</h2><pre id="plan"></pre><button id="ok">Jóváhagyom ezt a tervet</button></div>
+<h2>Jelentés</h2><pre id="report" class="mut">—</pre>
+<script>
+const $=id=>document.getElementById(id);let jid=null,plan=null,timer=null;
+const hdr=()=>({"Authorization":"Bearer "+$("key").value,"Content-Type":"application/json","Idempotency-Key":(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random())});
+async function api(path,opt={}){const r=await fetch(path,{...opt,headers:{...hdr(),...(opt.headers||{})}});const t=await r.text();if(!r.ok)throw new Error(r.status+" "+t);return t}
+$("go").onclick=async()=>{try{
+  const q=$("q").value.trim(),links=$("links").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const out=JSON.parse(await api("/api/jobs",{method:"POST",body:JSON.stringify({request:(q+"\n"+links.join("\n")).trim()})}));
+  jid=out.job_id;clearInterval(timer);timer=setInterval(poll,2000);poll();
+}catch(e){$("status").textContent="Hiba: "+e.message}};
+async function poll(){try{
+  const v=JSON.parse(await api("/api/jobs/"+jid));$("status").textContent="Állapot: "+v.status+"\nBecsült költség: "+(v.estimated_cost??"nincs megbízható becslés")+" | Rögzített (ismert) költség: "+v.recorded_cost+(v.error?"\nHibák/hiányok: "+v.error:"")+"\nLépések: "+Object.entries(v.steps).map(([k,s])=>k+"="+s.status).join(", ");
+  if(v.status==="awaiting_approval"){plan=v.plan;$("plan").textContent=JSON.stringify(plan,null,2);$("approve").hidden=false}else $("approve").hidden=true;
+  if(["completed","partially_completed","failed","cancelled"].includes(v.status)){clearInterval(timer);
+    try{$("report").textContent=await api("/api/jobs/"+jid+"/report?format=markdown")}catch(e){$("report").textContent="Nincs jelentés: "+e.message}}
+}catch(e){$("status").textContent="Hiba: "+e.message}}
+$("ok").onclick=async()=>{try{await api("/api/jobs/"+jid+"/approve",{method:"POST",body:JSON.stringify({plan_hash:plan.plan_hash})});$("approve").hidden=true;poll()}catch(e){$("status").textContent="Hiba: "+e.message}};
+</script></body></html>

@@ -1,4 +1,4 @@
-"""Belépési pontok: `python -m video_research.main api|worker|migrate`. Az éles LLM-adapter beadása a README szerint történik."""
+"""Belépési pontok: `python -m video_research.main api|worker|migrate|purge`. Az éles LLM-adapter beadása a README szerint történik."""
 from __future__ import annotations
 
 import sys
@@ -6,9 +6,11 @@ import sys
 from .adapters.apify import ApifyAdapter
 from .adapters.base import AdapterRegistry
 from .adapters.fixture import FixtureAdapter
+from .adapters.tiktok import TikTokAdapter
+from .adapters.youtube import YouTubeAdapter
+from .extractive import ExtractiveBaselineLLM
 from .config import load_settings
 from .db import Store, make_engine, migrate
-from .llm import NullLLM
 from .pipeline import Pipeline
 from .worker import Worker
 import os
@@ -19,6 +21,8 @@ def build(settings):
     migrate(engine)
     store = Store(engine)
     registry = AdapterRegistry(production=settings.mode == "production")
+    registry.register(YouTubeAdapter(tuple(settings.allowed_platforms)))     # ingyenes: nyilvános oEmbed + elérhető felirat
+    registry.register(TikTokAdapter(tuple(settings.allowed_platforms)))      # csak metaadat; átirat nincs
     if settings.actors:
         registry.register(ApifyAdapter(settings.apify_token, settings.actors))
     if settings.mode == "dev" and os.environ.get("VR_FIXTURE_FILE"):
@@ -30,7 +34,7 @@ def app():
     from .api import create_app
     s = load_settings()
     store, _ = build(s)
-    return create_app(store, s)
+    return create_app(store, s, _)
 
 
 def main(argv: list[str]) -> int:
@@ -39,14 +43,16 @@ def main(argv: list[str]) -> int:
     store, registry = build(s)
     if cmd == "migrate":
         print("migráció kész")
+    elif cmd == "purge":
+        print(f"törölt feladatok: {store.purge_expired(s.data_retention_days)}")
     elif cmd == "worker":
-        Worker(store, Pipeline(store, s, registry, NullLLM()), s).loop()
+        Worker(store, Pipeline(store, s, registry, ExtractiveBaselineLLM(), semantic=False), s).loop()
     elif cmd == "api":
         import uvicorn
         from .api import create_app
-        uvicorn.run(create_app(store, s), host="0.0.0.0", port=8000)
+        uvicorn.run(create_app(store, s, registry), host="0.0.0.0", port=8000)
     else:
-        print("használat: python -m video_research.main api|worker|migrate")
+        print("használat: python -m video_research.main api|worker|migrate|purge")
         return 2
     return 0
 
