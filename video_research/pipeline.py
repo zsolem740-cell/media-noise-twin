@@ -14,7 +14,7 @@ from .executor import CostBudgetExhausted, Executor, JobStopped, UncertainRun
 from .extraction import ExtractionStats, TokenBudgetExceeded, extract_findings, semantic_check
 from .llm import LLMClient, LLMQuotaExhausted, LLMRejected, LLMTransient, LLMUnavailable, RetryingLLM
 from .merge import merge_findings
-from .models import (AccessStatus, FilterEntry, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
+from .models import (AccessStatus, FilterEntry, SkipReason, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
 from .planner import build_plan
 from .report import build_report
 from .urls import UrlRejected, normalize_video_url
@@ -129,18 +129,21 @@ class Pipeline:
                 cands += [(Platform(p), i, c) for p, i, c in refs]
         seen: set[tuple[str, str]] = set()
         added = 0
+        dropped = 0
         for platform, vid, url in cands:                                  # F. duplikált videók kiszűrése
             if (platform.value, vid) in seen:
                 continue
             seen.add((platform.value, vid))
             if added >= plan.limits.max_videos:
-                problems.append(f"A videószám-keret ({plan.limits.max_videos}) miatt további találatok kimaradtak.")
-                break
+                dropped += 1
+                continue
             v = VideoSource(id=new_id("vid"), platform=platform, platform_video_id=vid, canonical_url=url, retrieved_at=now(),
                             provider="pending", access_status=AccessStatus.ok)
             if self.store.add_video(jid, v):
                 added += 1
-        self.store.set_step(jid, "collect", StepStatus.done, {"videos": added})
+        if dropped:
+            problems.append(f"A videószám-keret ({plan.limits.max_videos}) miatt {dropped} további találat feldolgozatlan maradt (erőforráskorlát, nem tartalmi szűrés).")
+        self.store.set_step(jid, "collect", StepStatus.done, {"videos": added, "dropped_by_max_videos": dropped})
 
     def _account(self, jid, state) -> None:
         if state.cost_usd is not None:
@@ -233,13 +236,20 @@ class Pipeline:
                 problems.append("Az LLM-tokenkeret kimerült, a további videók kinyerése kimaradt.")
                 self.store.set_step(jid, name, StepStatus.skipped, {"reason": "token_budget"})
                 break
-            before, n0 = stats.tokens, len(stats.skipped)
+            before, n0, k0 = stats.tokens, len(stats.skipped), len(stats.known_matches)
             self.store.set_step(jid, name, StepStatus.running)
             try:
                 found = extract_findings(self._llm, jid, plan, v, t, remaining, stats)
                 if self.semantic:
+                    kept = []
                     for f in found:
-                        semantic_check(self._llm, f, stats)
+                        if semantic_check(self._llm, f, stats):        # kétes jelentésbeli egyezés = kinyerési hiba: nem nyom, kihagyjuk és naplózzuk
+                            stats.skipped.append(FilterEntry(video_source_id=v.id, segment_ids=f.source_references[0].transcript_segment_ids,
+                                                             snippet=f.source_references[0].supporting_quote[:160], reason_code=SkipReason.extraction_unreliable,
+                                                             reason_hu="az idézet és az állítás jelentésbeli egyezése kétes: megbízhatatlan kinyerés, nem publikáljuk (hibakezelés, nem nyom)"))
+                        else:
+                            kept.append(f)
+                    found = kept
             except (LLMRejected, LLMTransient) as exc:
                 self.store.set_step(jid, name, StepStatus.failed, {"error": str(exc)})
                 problems.append(f"{v.canonical_url}: a modellkérés sikertelen, a videó kimaradt: {exc}")
@@ -251,9 +261,42 @@ class Pipeline:
             self.store.save_findings(jid, v.id, found)
             self.store.add_usage(jid, tokens=stats.tokens - before)
             self.store.set_step(jid, name, StepStatus.done, {"findings": len(found), "segments": len(t.segments),
-                                                             "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]]})
+                                                             "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]],
+                                                             "known_matches": stats.known_matches[k0:]})
 
     # ---- lezárás ----
+    def _coverage(self, videos, steps, ok, stop_reason) -> dict:
+        """Az ERŐFORRÁSKORLÁTOK miatti hiányos lefedettség. Nem tartalmi kvóta: a jelentésbe kerülő tételek számát semmilyen arány nem korlátozza."""
+        hit: set[str] = set()
+        collect = steps.get("collect")
+        dropped = collect[1].get("dropped_by_max_videos", 0) if collect else 0
+        if dropped:
+            hit.add("max_videos")
+        stop_map = {"runtime_limit": "timeout_seconds", "cost_budget": "max_cost_usd", "llm_quota": "llm_quota", "cancelled": "cancelled", "unavailable": "service_unavailable"}
+        if stop_reason in stop_map and stop_reason != "cancelled":
+            hit.add(stop_map[stop_reason])
+        not_done = []
+        for v in videos:
+            ex_, me, tr = steps.get(f"ex:{v.id}"), steps.get(f"meta:{v.id}"), steps.get(f"tr:{v.id}")
+            if ex_ and ex_[0] == StepStatus.done:
+                continue
+            if me and me[0] == StepStatus.skipped and me[1].get("reason") == "video_minutes_limit":
+                reason = "max_total_minutes"
+            elif ex_ and ex_[0] == StepStatus.skipped and ex_[1].get("reason") == "token_budget":
+                reason = "max_llm_tokens"
+            elif v.access_status == AccessStatus.no_transcript:
+                reason = "no_transcript"
+            elif any(x and x[0] in (StepStatus.failed, StepStatus.uncertain) for x in (me, tr, ex_)):
+                reason = "error"
+            else:
+                reason = stop_map.get(stop_reason or "", "not_reached")
+            if reason in ("max_total_minutes", "max_llm_tokens"):
+                hit.add(reason)
+            not_done.append({"url": v.canonical_url, "reason": reason})
+        return {"content_quota": "nincs: a megtartott tételek számát semmilyen arány vagy darabszám nem korlátozza; csak a jóváhagyott erőforráskeretek korlátoznak",
+                "videos_identified": len(videos) + dropped, "videos_processed": len(ok), "videos_dropped_by_video_cap": dropped, "not_processed": not_done,
+                "limits_hit": sorted(hit), "complete": not not_done and not dropped and not stop_reason}
+
     def _finish(self, jid, plan, ex: Executor, stats: ExtractionStats, problems, stop_reason) -> JobStatus:
         videos = self.store.videos(jid)
         order = {v.id: i for i, v in enumerate(videos)}
@@ -277,11 +320,19 @@ class Pipeline:
                     if k not in seen:
                         seen.add(k)
                         skipped.append(e)
+        known, kseen = [], set()
+        for v in videos:
+            st = steps.get(f"ex:{v.id}")
+            for m in (st[1].get("known_matches", []) if st and st[0] == StepStatus.done else []):
+                if (m["known"], m["quote"]) not in kseen:
+                    kseen.add((m["known"], m["quote"]))
+                    known.append(m)
+        coverage = self._coverage(videos, steps, ok, stop_reason)
         job = self.store.get_job(jid)
         report = build_report(job, plan, videos, findings, self.store.transcripts(jid), problems + ex.notes, stats,
                               provider_runs=self.store.provider_runs(jid), stop_reason=stop_reason,
                               filter_log=skipped + merge_log, segments_total=segments, videos_processed=len(ok),
-                              llm=self.llm)
+                              llm=self.llm, coverage=coverage, known_matches=known)
         if stop_reason == "cancelled":
             status = JobStatus.cancelled
         elif not ok:

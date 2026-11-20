@@ -25,13 +25,13 @@ class Scripted:
     """Forgatókönyves hamisító modell: a megadott szegmens-indexekhez a prompt szegmensszövegéből szó szerinti idézetet ad."""
     provider, model, kind = "scripted-fake", "scripted", "ai"
 
-    def __init__(self, items):
-        self.items, self.prompts = items, []
+    def __init__(self, items, doubtful_if=None):
+        self.items, self.prompts, self.doubtful_if = items, [], doubtful_if
 
     def complete_json(self, *, system, user, schema_name, max_tokens):
         self.prompts.append((schema_name, user))
         if schema_name == "semantic":
-            return LLMResult({"verdict": "consistent"}, 1)
+            return LLMResult({"verdict": "doubtful" if self.doubtful_if and self.doubtful_if in user else "consistent"}, 1)
         block = user.split("<untrusted_transcript>")[1].split("</untrusted_transcript>")[0].strip().splitlines()
         segs = {}
         for line in block:
@@ -41,7 +41,8 @@ class Scripted:
         for it in self.items:
             it = dict(it)
             sid, text = segs[it.pop("seg")]
-            out.append({"quotes": [{"segment_id": sid, "quote": text}], **it})
+            quotes = [{"segment_id": sid, "quote": text}] + [{"segment_id": segs[k][0], "quote": segs[k][1]} for k in it.pop("also", [])]
+            out.append({"quotes": quotes, **it})
         return LLMResult({"findings": out}, 50)
 
 
@@ -56,10 +57,10 @@ def run_case(case: dict, llm=None, tmp: Path | None = None) -> dict:
     engine = make_engine(f"sqlite:///{tmp / (case['id'] + '.db')}")
     migrate(engine)
     store, settings = Store(engine), Settings(limits=Limits())
-    llm = llm or Scripted(case["model"])
+    llm = llm or Scripted(case["model"], case.get("doubtful_if"))
     pipe = Pipeline(store, settings, AdapterRegistry(production=False), llm, sleep=lambda _x: None, poll_interval=0, semantic=getattr(llm, "kind", "") == "ai")
     text = to_srt(case["segments"]) if case["fmt"] == "srt" else "\n".join(case["segments"])
-    jid, _ = import_job(store, settings, question=case["question"], transcript_text=text, fmt=case["fmt"], language=case["lang"], title="Teszt átirat", video_url=None)
+    jid, _ = import_job(store, settings, question=case["question"], transcript_text=text, fmt=case["fmt"], language=case["lang"], title="Teszt átirat", video_url=None, known_information=case.get("known"))
     w = Worker(store, pipe, settings, name="acc")
     w.run_once()
     store.set_status(jid, JobStatus.queued, approved_plan=store.get_field(jid, "plan"))
@@ -69,8 +70,13 @@ def run_case(case: dict, llm=None, tmp: Path | None = None) -> dict:
     return {"job": job, "report": r, "llm": llm, "store": store, "jid": jid}
 
 
+def _segnum(sid: str) -> int:
+    return int(sid.rsplit(":s", 1)[1])
+
+
 def _seg(f) -> int:
-    return int(f.source_references[0].transcript_segment_ids[0].rsplit(":s", 1)[1])
+    sup = next((r for r in f.source_references if r.role == "support"), f.source_references[0])
+    return _segnum(sup.transcript_segment_ids[0])
 
 
 def evaluate(case: dict, res: dict) -> dict:
@@ -90,8 +96,15 @@ def evaluate(case: dict, res: dict) -> dict:
         matched.append(f)
         if f.disposition.value != bucket:
             wrong_bucket.append(f"szegmens {e['seg']}: {f.disposition.value} helyett {bucket} lett volna az elvárás")
-        if _norm(f.source_references[0].supporting_quote) != _norm(segs[e["seg"]]):
+        sup = next(r for r in f.source_references if r.role == "support")
+        if _norm(sup.supporting_quote) != _norm(segs[e["seg"]]):
             quote_bad.append(f"szegmens {e['seg']}: az idézet nem a teljes elvárt szegmens")
+        if e.get("refs") and not set(e["refs"]) <= {_segnum(x) for r in f.source_references for x in r.transcript_segment_ids}:
+            lost_limits.append(f"szegmens {e['seg']}: a minősítő/kapcsolódó szegmens(ek) {e['refs']} nem szerepelnek a forráskapcsolatok között")
+        if e.get("question") and not (f.verification_question or "").strip():
+            wrong_bucket.append(f"szegmens {e['seg']}: a nyomhoz nincs ellenőrzési kérdés")
+        if e.get("extends_known") and not f.extends_known:
+            wrong_bucket.append(f"szegmens {e['seg']}: nincs jelölve, hogy ismert információhoz ad újat")
         st = f.statement_hu.casefold()
         for group in e["must"]:
             if not any(w.casefold() in st for w in group):
@@ -105,6 +118,26 @@ def evaluate(case: dict, res: dict) -> dict:
         "status": [] if res["job"].status.value == g["status"] else [f"státusz {res['job'].status.value} (elvárt: {g['status']})"],
         "no_result": [] if bool(r.no_result_note) == g["no_result"] else [f"no_result_note={bool(r.no_result_note)} (elvárt: {g['no_result']})"],
     }
+    link_bad = []                                         # forráskapcsolat-helyesség: létező szegmens, az idézet a szegmens szövege, az időbélyeg a fájlból való
+    texts = {i: t for i, t in enumerate(segs)}
+    for s_, f in out_items:
+        for ref in f.source_references:
+            first = _segnum(ref.transcript_segment_ids[0])
+            joined = " ".join(texts.get(_segnum(x), "") for x in ref.transcript_segment_ids)
+            if _norm(ref.supporting_quote) not in _norm(joined):
+                link_bad.append(f"{f.id}: az idézet nincs a hivatkozott szegmensekben")
+            want = None if case["fmt"] == "text" else first * 6.0
+            if ref.timestamp != want:
+                link_bad.append(f"{f.id}: időbélyeg {ref.timestamp} (elvárt: {want})")
+            if ref.video_source_id != res["report"].source_list[0]["video_source_id"]:
+                link_bad.append(f"{f.id}: rossz videó-azonosító")
+    checks["source_link_bad"] = link_bad
+    if g.get("known_matches") is not None:
+        checks["known_matches"] = [] if len(r.known_information_matches) == g["known_matches"] else [f"{len(r.known_information_matches)} ismert-egyezés (elvárt: {g['known_matches']})"]
+        checks["known_not_in_main"] = [f.statement_hu for f in r.findings if f.statement_hu == "Az alkalmazás minden Android-verzión működik."]
+    if g.get("skip_reason"):
+        checks["skip_reason"] = [] if any(e.reason_code.value == g["skip_reason"] for e in r.filter_log) else [f"nincs {g['skip_reason']} naplóbejegyzés"]
+    checks["leads_have_question"] = [f.id for f in r.findings if f.disposition.value == "lead" and not (f.verification_question or "").strip()]
     if g.get("timestamps_null"):
         checks["timestamp"] = [f"szegmens {s}: időbélyeg {f.source_references[0].timestamp}" for s, f in out_items if f.source_references[0].timestamp is not None]
     if g.get("contradictions") is not None:
@@ -121,6 +154,8 @@ def render(case: dict, res: dict, checks: dict) -> str:
     r, job = res["report"], res["job"]
     lines = [f"### {case['id']} — {case['title']}", "", f"**Kérdés:** {case['question']}", f"**Átirat ({case['lang']}, {case['fmt']}):**"]
     lines += [f"  {i}. {t}" for i, t in enumerate(case["segments"]) if len(case["segments"]) <= 10 or i in (0, 13, 14)] + (["  … (további töltelék szegmensek elhagyva a kijelzésből)"] if len(case["segments"]) > 10 else [])
+    if case.get("known"):
+        lines.append(f"**Ismert információ (a felhasználó állítása, nem ellenőrzött):** {case['known']}")
     lines += ["", f"**Kimenet** (állapot: {job.status.value}, elemzés: {r.analysis_method}):"]
     if not r.findings:
         lines.append(f"  - (nincs megtartott tétel) {r.no_result_note or ''}")
@@ -128,9 +163,17 @@ def render(case: dict, res: dict, checks: dict) -> str:
         ref = f.source_references[0]
         lines.append(f"  - [{f.report_bucket}/{f.category.value}] {f.statement_hu}")
         lines.append(f"      idézet [{ref.quote_language}] „{ref.supporting_quote}” · időbélyeg: {ref.timestamp} · szegm.: {ref.transcript_segment_ids[0].rsplit(':', 1)[1]}")
+        for extra in f.source_references[1:]:
+            lines.append(f"      + {extra.role}: „{extra.supporting_quote}” · időbélyeg: {extra.timestamp} · szegm.: {extra.transcript_segment_ids[0].rsplit(':', 1)[1]}")
         lines.append(f"      source_support_status={f.source_support_status} · verification_status={f.verification_status} · stance={f.stance.value} · indok: {f.classification_reason}")
+        if f.verification_question:
+            lines.append(f"      ellenőrzési kérdés: {f.verification_question}")
+        if f.extends_known:
+            lines.append(f"      ismert információhoz ad újat: „{f.extends_known}”")
     if r.filter_log:
         lines.append("  Szűrési napló: " + "; ".join(f"[{e.reason_code.value}] „{e.snippet[:50]}”" for e in r.filter_log))
+    if r.known_information_matches:
+        lines.append("  Ismétlésként elmentve (nem a fő jelentésben, nem megerősítés): " + "; ".join(f"„{m['quote'][:50]}”" for m in r.known_information_matches))
     if r.contradictions:
         lines.append("  Ellentmondás-jelzés: " + "; ".join(c["note"] for c in r.contradictions))
     bad = {k: v for k, v in checks.items() if v}

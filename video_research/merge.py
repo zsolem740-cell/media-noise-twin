@@ -62,6 +62,7 @@ def merge_findings(findings: list[Finding], videos: dict[str, VideoSource]) -> t
                 if f.disposition == Disposition.lead:         # a kétség nem oldódik fel ismétléssel: a szigorúbb besorolás marad
                     c.disposition = Disposition.lead
                     c.lead_reasons += [x for x in f.lead_reasons if x not in c.lead_reasons]
+                    c.verification_question = c.verification_question or f.verification_question
                 if attached:
                     log.append(FilterEntry(video_source_id=f.source_references[0].video_source_id, segment_ids=f.source_references[0].transcript_segment_ids,
                                            snippet=f.statement_hu[:160], reason_code=SkipReason.duplicate_source_attached,

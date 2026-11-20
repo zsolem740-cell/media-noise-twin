@@ -40,6 +40,8 @@ const LABELS=[["useful","hasznos"],["not_relevant","nem releváns"],["already_kn
 function card(f,kind){const d=document.createElement("div");d.style.cssText="border:1px solid var(--line);border-radius:6px;padding:.5rem;margin:.5rem 0";
   const h=document.createElement("strong");h.textContent=f.statement_hu;d.appendChild(h);
   const m=document.createElement("div");m.className="mut";m.textContent=kind+" · "+f.category+" · "+f.evidence_status+(f.condition?" · feltétel: "+f.condition:"")+(f.version?" · verzió: "+f.version:"")+(f.lead_reasons.length?" · ok: "+f.lead_reasons.join("; "):"");d.appendChild(m);
+  if(f.verification_question){const q=document.createElement("div");q.className="warn";q.textContent="Ellenőrzési kérdés: "+f.verification_question;d.appendChild(q)}
+  if(f.extends_known){const k=document.createElement("div");k.className="mut";k.textContent="Az ismert információhoz ad újat: "+f.extends_known;d.appendChild(k)}
   f.sources.forEach(s=>{const l=document.createElement("div");const t=(s.title||s.url||"")+(s.timestamp!=null?" @"+Math.floor(s.timestamp/60)+":"+String(Math.floor(s.timestamp%60)).padStart(2,"0"):"");
     if(s.url&&s.url.startsWith("https://")){const a=document.createElement("a");a.href=s.url;a.rel="noopener noreferrer";a.target="_blank";a.textContent=t;l.appendChild(a)}else l.textContent=t;d.appendChild(l)});
   const st=document.createElement("div");st.className="mut";st.textContent=f.feedback?"Visszajelzés: "+(LABELS.find(x=>x[0]===f.feedback)||[0,f.feedback])[1]:"";
@@ -51,8 +53,11 @@ async function showReport(){const r=JSON.parse(await api("/api/jobs/"+jid+"/repo
   if(r.no_result_note){const n=document.createElement("p");n.className="warn";n.textContent=r.no_result_note;c.appendChild(n)}
   const grp=(title,list,kind)=>{if(!list.length)return;const h=document.createElement("h3");h.textContent=title;c.appendChild(h);list.forEach(f=>c.appendChild(card(f,kind)))};
   grp("Megtartandó információk",r.keep,"megtartandó");grp("Ellenőrizendő nyomok",r.leads,"nyom");
+  const cv=r.coverage||{};const cp=document.createElement("p");cp.className=cv.complete?"mut":"warn";
+  cp.textContent="Lefedettség: "+(cv.videos_processed??0)+"/"+(cv.videos_identified??0)+" videó feldolgozva"+(cv.complete?"":" — HIÁNYOS ("+((cv.limits_hit||[]).join(", ")||"hiba vagy hiányzó átirat")+"); erőforráskeret miatti hiány, nem tartalmi kvóta");c.appendChild(cp);
+  if(r.known_information_repeats){const kp=document.createElement("p");kp.className="mut";kp.textContent="Ismert információt ismétlő részlet: "+r.known_information_repeats+" (nem került a fő jelentésbe; nem független megerősítés)";c.appendChild(kp)}
   const sk=document.createElement("p");sk.className="mut";sk.textContent="Kihagyott részletek: "+(Object.entries(r.skipped_by_reason).map(([k,v])=>k+"="+v).join(", ")||"nincs");c.appendChild(sk);
-  $("report").textContent=r.missing_information.length?"Hiányok:\n"+r.missing_information.join("\n"):"";
+  const miss=r.missing_information.length?"Hiányok:\n"+r.missing_information.join("\n"):"";$("report").textContent=miss;$("report").hidden=!miss;
   $("evb").hidden=false;$("flb").hidden=false}
 $("evb").onclick=async()=>{$("more").hidden=false;$("more").textContent=await api("/api/jobs/"+jid+"/evidence?format=markdown")};
 $("flb").onclick=async()=>{$("more").hidden=false;$("more").textContent=await api("/api/jobs/"+jid+"/filter-log?format=markdown")};

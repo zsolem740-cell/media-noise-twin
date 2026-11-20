@@ -49,10 +49,10 @@ class Cand:
         return LLMResult({"findings": out}, 10)
 
 
-def build(tmp_path, videos, llm, semantic=True):
+def build(tmp_path, videos, llm, semantic=True, limits=None):
     e = make_engine(f"sqlite:///{tmp_path/'f.db'}")
     migrate(e)
-    store, s = Store(e), Settings(limits=Limits())
+    store, s = Store(e), Settings(limits=limits or Limits())
     reg = AdapterRegistry(production=False)
     reg.register(FixtureAdapter({"videos": videos}))
     pipe = Pipeline(store, s, reg, llm, sleep=lambda _x: None, poll_interval=0, semantic=semantic)
@@ -97,23 +97,32 @@ def test_detail_level_filtering_weak_video_keeps_one_good_video_drops_noise(tmp_
 
 
 def test_usefulness_and_support_are_separate_axes(tmp_path):
-    # pontos, ellenőrzött idézet, de a modell szerint csak részben releváns / ellenőrzendő: nyom, nem megtartandó; az alátámasztottság nem nő
-    llm = Cand({U1: [(1, {"relevance": "partial"}), (3, {**D, "needs_check": "szokatlan, egyetlen forrásból származó állítás"})]})
+    # pontos, ellenőrzött idézet + a modell megnevezi a hiányzó ellenőrzést: nyom; az alátámasztottság (eredet) nem nő
+    q = "Igazolja-e más forrás, hogy ez általánosan igaz?"
+    llm = Cand({U1: [(1, {"relevance": "partial", "verification_question": q}), (3, {**D, "needs_check": "szokatlan, egyetlen forrásból származó állítás", "verification_question": q})]})
     store, s, pipe = build(tmp_path, [vid(U1, "V", T1)], llm)
     jid, r = run(store, s, pipe, [U1])
     assert [f.disposition for f in r.findings] == [Disposition.lead, Disposition.lead]
-    assert all(f.evidence_status.value == "source_claim" for f in r.findings)
+    assert all(f.evidence_status.value == "source_claim" and f.verification_question == q for f in r.findings)
     assert any("csak részben releváns" in x for x in r.findings[0].lead_reasons) and "szokatlan" in r.findings[1].lead_reasons[0]
     assert all(ref.supporting_quote for f in r.findings for ref in f.source_references)
 
 
-def test_doubtful_semantic_check_demotes_to_lead(tmp_path):
+def test_lead_requires_a_nameable_check_otherwise_skipped_not_collected(tmp_path):
+    llm = Cand({U1: [(1, {"relevance": "partial"}), (3, {**D, "needs_check": "talán"})]})          # nincs verification_question: nem nyom
+    store, s, pipe = build(tmp_path, [vid(U1, "V", T1)], llm)
+    jid, r = run(store, s, pipe, [U1])
+    assert r.findings == [] and r.no_result_note
+    assert {e.reason_code for e in r.filter_log} == {SkipReason.lead_without_check}
+    assert llm.calls >= 2                                                         # a hiányzó kérdés miatt javítási kísérlet történt
+
+
+def test_doubtful_semantic_check_is_extraction_error_not_a_lead(tmp_path):
     t = ["Az AutoDroid root nélkül kezeli az ablakokat. KÉTES"]
     llm = Cand({U1: [(0, {**D})]})
     store, s, pipe = build(tmp_path, [vid(U1, "V", t)], llm)
     jid, r = run(store, s, pipe, [U1])
-    f = r.findings[0]
-    assert f.disposition == Disposition.lead and any("kétes" in x for x in f.lead_reasons)
+    assert r.findings == [] and [e.reason_code for e in r.filter_log] == [SkipReason.extraction_unreliable]
 
 
 def test_fabricated_quote_is_skipped_log_and_never_a_finding(tmp_path):
@@ -168,7 +177,7 @@ def test_known_information_is_not_repeated_but_logged(tmp_path):
 
 
 def test_short_report_vs_evidence_and_filter_log_views(tmp_path):
-    llm = Cand({U1: [(1, {**D}), (0, {"relevance": "none"}), (3, {"relevance": "partial"})]})
+    llm = Cand({U1: [(1, {**D}), (0, {"relevance": "none"}), (3, {"relevance": "partial", "verification_question": "Igaz-e ez a rendezvényről szóló állítás?"})]})
     store, s, pipe = build(tmp_path, [vid(U1, "V", T1)], llm)
     s.api_token = SecretStr("t" * 20)
     c = TestClient(create_app(store, s, pipe.registry))
@@ -187,7 +196,7 @@ def test_short_report_vs_evidence_and_filter_log_views(tmp_path):
 
 
 def test_feedback_stored_shown_not_destructive_and_no_learning(tmp_path):
-    llm = Cand({U1: [(1, {**D}), (3, {"relevance": "partial"})]})
+    llm = Cand({U1: [(1, {**D}), (3, {"relevance": "partial", "verification_question": "Igaz-e ez a rendezvényről szóló állítás?"})]})
     store, s, pipe = build(tmp_path, [vid(U1, "V", T1)], llm)
     s.api_token = SecretStr("t" * 20)
     c = TestClient(create_app(store, s, pipe.registry))
@@ -204,6 +213,34 @@ def test_feedback_stored_shown_not_destructive_and_no_learning(tmp_path):
     after = ResearchReport.model_validate_json(store.get_field(jid, "report"))
     assert [f.model_dump() for f in after.findings] == [f.model_dump() for f in r.findings]       # a visszajelzés nem írja át a megállapításokat
     # új feladat ugyanazzal a bemenettel: a korábbi visszajelzés nem változtat a kinyerésen (nincs önfejlesztés)
-    store2, s2, pipe2 = build(tmp_path, [vid(U1, "V", T1)], Cand({U1: [(1, {**D}), (3, {"relevance": "partial"})]}))
+    store2, s2, pipe2 = build(tmp_path, [vid(U1, "V", T1)], Cand({U1: [(1, {**D}), (3, {"relevance": "partial", "verification_question": "Igaz-e ez a rendezvényről szóló állítás?"})]}))
     jid2, r2 = run(store2, s2, pipe2, [U1])
     assert [f.statement_hu for f in r2.findings] == [f.statement_hu for f in r.findings]
+
+
+def test_resource_limit_gives_coverage_report_and_is_not_a_content_quota(tmp_path):
+    llm = Cand({U1: [(1, {**D})], U2: [(1, {**D})]})
+    store, s, pipe = build(tmp_path, [vid(U1, "V1", T1), vid(U2, "V2", T1)], llm, limits=Limits(max_videos=1))
+    jid, r = run(store, s, pipe, [U1, U2])
+    cov = r.coverage
+    assert cov["videos_dropped_by_video_cap"] == 1 and "max_videos" in cov["limits_hit"] and cov["complete"] is False and cov["videos_processed"] == 1
+    assert "nincs" in cov["content_quota"] and store.get_job(jid).status == JobStatus.partially_completed
+    from video_research.report import to_markdown
+    md = to_markdown(r, store.get_job(jid))
+    assert "## Lefedettség" in md and "HIÁNYOS" in md and "nem tartalmi kvóta" in md
+    assert len(r.findings) == 1                                                    # a feldolgozott videó eredménye megmaradt
+
+
+def test_token_budget_marks_unprocessed_videos_in_coverage(tmp_path):
+    llm = Cand({U1: [(1, {**D})]})
+    store, s, pipe = build(tmp_path, [vid(U1, "V1", T1)], llm, limits=Limits(llm_token_budget=1000))
+    jid, r = run(store, s, pipe, [U1])
+    assert "max_llm_tokens" in r.coverage["limits_hit"] and r.coverage["not_processed"][0]["reason"] == "max_llm_tokens" and r.coverage["complete"] is False
+    assert r.no_result_note is None                                               # nem dolgoztunk fel semmit: ez nem „nincs találat”
+    assert llm.calls == 0
+
+
+def test_complete_run_reports_complete_coverage(tmp_path):
+    store, s, pipe = build(tmp_path, [vid(U1, "V1", T1)], Cand({U1: [(1, {**D})]}))
+    jid, r = run(store, s, pipe, [U1])
+    assert r.coverage["complete"] is True and r.coverage["limits_hit"] == [] and r.coverage["videos_processed"] == 1

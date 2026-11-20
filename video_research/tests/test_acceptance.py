@@ -75,3 +75,32 @@ def test_contradiction_flagged_not_resolved(results):
 def test_baseline_is_labelled_not_ai_and_misses_semantic_items():
     txt, checks = baseline_cross_language()
     assert "NEM AI" in txt and checks["missed"] and checks["wrongly_included"]
+
+
+def test_known_information_repeat_does_not_grow_main_report_and_is_not_confirmation(results):
+    case, res, _ = results["L_known_counter"]
+    r, job = res["report"], res["job"]
+    from video_research.report import evidence_markdown, to_markdown
+    main, ev = to_markdown(r, job), evidence_markdown(r, job)
+    assert [f.version for f in r.findings] == ["Android 14"] and r.findings[0].extends_known == case["known"][0]
+    assert main.count("Az alkalmazás minden Android-verzión működik") == 0                # az ismert állítás ismétlése nincs a fő jelentésben
+    assert "nem független" in main and "Ismert információt ismétlő részlet: 1" in main
+    assert "nem független megerősítés" in ev and r.findings[0].verification_status == "not_externally_verified"
+    assert r.findings[0].evidence_status.value == "source_claim"                           # az ismert + új URL nem lett „repeated”
+
+
+def test_following_sentence_condition_is_kept_as_qualifier_reference(results):
+    lost = results["K_multiseg_lost"][1]["report"].findings[0]
+    assert lost.report_bucket == "lead" and [r.role for r in lost.source_references] == ["support", "qualifier"]
+    assert "accessibility" in lost.source_references[1].supporting_quote and "kisegítő" not in lost.statement_hu
+    assert "accessibility" in lost.verification_question
+    ok = results["K_multiseg_ok"][1]["report"].findings[0]
+    assert ok.report_bucket == "keep" and [r.role for r in ok.source_references] == ["support", "support"]     # a modell mindkét mondatot idézte: nincs felesleges nyom
+
+
+def test_every_lead_has_verification_question_and_irrelevant_is_never_a_lead(results):
+    for cid, (case, res, checks) in results.items():
+        for f in res["report"].findings:
+            if f.report_bucket == "lead":
+                assert (f.verification_question or "").strip(), cid
+    assert results["N_unreliable"][1]["report"].filter_log[0].reason_code.value in ("extraction_unreliable", "irrelevant")

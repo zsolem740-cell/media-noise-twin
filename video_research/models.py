@@ -87,6 +87,8 @@ class SkipReason(str, Enum):
     already_known = "already_known"                      # a felhasználó által megadott, már rögzített információ
     duplicate_source_attached = "duplicate_source_attached"   # ismétlés: az új forrás a meglévő megállapításhoz csatolva
     malformed = "malformed"
+    lead_without_check = "lead_without_check"            # részben releváns/kétes, de nem nevezhető meg a hiányzó ellenőrzés: nem nyom, kihagyva
+    extraction_unreliable = "extraction_unreliable"      # a kinyerés megbízhatatlan (pl. kétes jelentésbeli egyezés): hibakezelés, NEM nyom
     suspected_injection = "suspected_injection"          # a forrásszöveg utasításnak látszó részlete: nem információ
 
 
@@ -196,6 +198,7 @@ class SourceReference(BaseModel):
     timestamp: float | None = None
     semantic_check: str = "not_checked"      # not_checked | consistent | doubtful: heurisztikus, nem tévedhetetlen
     quote_language: str | None = None        # az idézet NYELVE (az átirat nyelve): az idézet mindig az eredeti nyelvű szöveg
+    role: str = "support"                    # support | qualifier: a „minősítő” hivatkozás a következő mondatban álló feltételt/cáfolatot őrzi meg
 
 
 class Finding(BaseModel):
@@ -211,6 +214,8 @@ class Finding(BaseModel):
     concrete: bool = True
     disposition: Disposition = Disposition.keep
     lead_reasons: list[str] = []
+    verification_question: str | None = None   # KÖTELEZŐ nyomnál: megnevezi a hiányzó ellenőrzést; megtartottnál nincs
+    extends_known: str | None = None           # a felhasználó ismert információja, amelyhez ez új feltételt/ellenpéldát/verziót ad
     # --- feltétel / ellenpélda / verzió: nem mosható össze az általános állítással ---
     condition: str | None = None
     stance: Stance = Stance.supports
@@ -252,7 +257,7 @@ class Finding(BaseModel):
     @property
     def classification_reason(self) -> str:
         if self.disposition == Disposition.lead:
-            return "; ".join(self.lead_reasons) or "ellenőrzés javasolt"
+            return "; ".join(self.lead_reasons) or "ellenőrzés szükséges"
         return self.why_relevant or "releváns, konkrét, programozottan igazolt idézettel"
 
 
@@ -290,6 +295,8 @@ class ResearchReport(BaseModel):
     missing_information: list[str]
     source_list: list[dict]
     coverage_limitations: list[str]
+    coverage: dict = {}                      # erőforráskorlátok miatti lefedettség (nem tartalmi kvóta): lásd report.build_report
+    known_information_matches: list[dict] = []   # a felhasználó ismert információihoz talált újabb források (nem növelik a fő jelentést, nem független megerősítés)
     no_result_note: str | None = None        # pl. „Nem találtam a feltételeknek megfelelő információt.”
     filter_log: list[FilterEntry] = []
     filter_stats: dict = {}

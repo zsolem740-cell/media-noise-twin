@@ -16,7 +16,7 @@ Részletes, platformonkénti lista: `docs/CAPABILITIES.md`. A három külső pro
 | Információkivonat | kérdésvezérelt szemantikai kinyerés **Gemini-adapterrel (hamis átvitellel tesztelt, valódi hívás nem történt)**; külön, NEM AI-elemzésként jelölt kulcsszavas baseline; felhasználói átiratimport (text/SRT/VTT). Részletek és bizonyítottsági szintek: `docs/CAPABILITIES.md`, `docs/ACCEPTANCE_RESULTS.md`, `docs/LLM_TRIAL_PLAN.md`, `docs/LIVE_ACCESS.md`, `docs/ENVIRONMENT.md` |
 | Apify-adapter (korábbi kör) | változatlan, csak hamis klienssel tesztelt |
 | Zajszűrés: nincs kötelező találat, részletszintű szűrés, megtartandó/nyom/kihagyott csoport, rövid fő jelentés + külön bizonyíték és napló, visszajelzés | kész, offline tesztelt; valódi modellel nem próbáltam |
-| API (`/api/jobs…`, export, törlés), egyszerű weboldal (`/`) | API: TestClient-tel tesztelt; a weboldal JS-e szintaktikailag ellenőrzött, **böngészőben nem futtattam** |
+| API (`/api/jobs…`, export, törlés), egyszerű weboldal (`/`) | API: TestClient-tel tesztelt; a weboldal **valódi Chromiumban végigpróbálva** (`e2e/`, fixture + hamisító modell) |
 | PostgreSQL, Docker Compose | nem futtatva |
 
 Vertikális próba (nincs modell- és fizetős hívás): `python -m video_research.trial "kérdés" LINK [LINK…] [--fixture video_research/tests/fixtures/videos.json]`.
