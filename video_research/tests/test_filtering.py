@@ -28,6 +28,7 @@ def vid(url, title, texts, lang="hu"):
 
 
 class Cand:
+    provider, model, kind = "scripted-fake", "fake-model", "ai"
     """Forgatókönyves modell: a jelölteket a videó átiratának szegmens-indexe alapján adja (az idézet mindig szó szerinti)."""
     def __init__(self, plan_by_url):
         self.plan, self.calls = plan_by_url, 0

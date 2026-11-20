@@ -38,7 +38,7 @@ def _clean_query(text: str) -> str:
 
 
 def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, llm: LLMClient | None = None,
-               requested_limits: Limits | None = None, requested_platforms: list[str] | None = None, known_information: list[str] | None = None) -> ResearchPlan:
+               requested_limits: Limits | None = None, requested_platforms: list[str] | None = None, known_information: list[str] | None = None, imported_sources: int = 0) -> ResearchPlan:
     notes: list[str] = []
     allowed = [Platform(p) for p in settings.allowed_platforms]
     mentioned = [p for w, p in _PLATFORM_WORDS.items() if w in request.lower()]
@@ -56,8 +56,10 @@ def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, l
         except UrlRejected as exc:
             notes.append(f"Elutasított link ({raw[:80]}): {exc}")
 
+    if imported_sources and not direct:
+        platforms = []                                  # importált átirat: nincs platformhívás, nincs szolgáltatói költség
     queries: list[str] = []
-    if not direct:
+    if not direct and not imported_sources:
         q = _clean_query(request)
         if q:
             queries.append(q)
@@ -101,8 +103,9 @@ def build_plan(request: str, settings: Settings, registry: AdapterRegistry, *, l
         estimated_cost_usd=round(est, 4) if reliable else None,
         cost_estimate_note=("Becslés a beállított egységárakból; nem ténylegesen ismert költség." if reliable else
                             "Nincs megbízható költségbecslés (hiányzó egységár vagy szolgáltató). A költségkeretet a rendszer futás közben így is érvényesíti."),
-        notes=notes, providers=providers, known_information=[k.strip()[:300] for k in (known_information or []) if k.strip()][:20],
+        notes=notes, providers=providers, imported_sources=imported_sources, known_information=[k.strip()[:300] for k in (known_information or []) if k.strip()][:20],
         operations=([f"{len(direct)} megadott link feldolgozása (metaadat, felirat)"] if direct else []) +
+                   ([f"{imported_sources} felhasználó által megadott átirat feldolgozása (a videó–átirat egyezést nem ellenőrizzük)"] if imported_sources else []) +
                    [f"keresés: „{q}” ({', '.join(p.value for p in platforms)})" for q in queries] + ["magyar információkivonat és forráshoz kötött jelentés"])
     plan.plan_hash = compute_plan_hash(plan)
     return plan

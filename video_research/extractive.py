@@ -24,6 +24,8 @@ def _keywords(question: str) -> list[str]:
 
 
 class ExtractiveBaselineLLM:
+    """NEM AI-ELEMZÉS: kulcsszavas baseline. A jelentés ezt kimondja (analysis_method = keyword_baseline)."""
+    provider, model, kind = "keyword-baseline", "", "baseline"
     name = "extractive-baseline"
 
     def complete_json(self, *, system: str, user: str, schema_name: str, max_tokens: int) -> LLMResult:
@@ -46,6 +48,6 @@ class ExtractiveBaselineLLM:
             if not lang.startswith("hu"):
                 lims.append("Magyar fordítás nincs: az állítás az eredeti nyelvű átirati szöveg.")
             findings.append({"category": cat, "statement_hu": stmt, "quotes": [{"segment_id": m.group("id"), "quote": t}], "limitations": lims,
-                             "relevance": "direct" if score >= 2 else "partial", "concrete": words >= 5,
+                             "relevance": "direct" if score >= 2 else "partial", "concrete": words >= 5, "untranslated": not lang.startswith("hu"),
                              "needs_check": "gyenge kulcsszó-egyezés: a relevanciát ember ellenőrizze" if score == 1 and len(kws) > 2 else None})
         return LLMResult({"findings": findings}, 0)

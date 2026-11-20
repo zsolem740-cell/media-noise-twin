@@ -18,6 +18,7 @@ from video_research.db import Store, make_engine, migrate
 from video_research.extractive import ExtractiveBaselineLLM
 from video_research.models import JobStatus, Limits, Platform, ResearchReport
 from video_research.pipeline import Pipeline
+from video_research.report import to_markdown
 from video_research.util import RetryableError, now
 from video_research.worker import Worker
 
@@ -183,6 +184,8 @@ def test_blocked_youtube_gives_failed_job_with_clear_error_no_fabrication(tmp_pa
     j = store.get_job(jid)
     assert j.status == JobStatus.failed and "nem kerüljük meg" in (store.get_field(jid, "error") or "")
     assert store.transcripts(jid) == [] and store.findings(jid) == []
+    r = ResearchReport.model_validate_json(store.get_field(jid, "report"))
+    assert r.no_result_note is None and "Nem találtam" not in to_markdown(r, j)        # sikertelen letöltés NEM üres kutatási eredmény
 
 
 def test_no_captions_marks_video_and_reports_gap(tmp_path):

@@ -1,5 +1,17 @@
 # Képességek, korlátok, eltérések a specifikációtól (2026-11-20)
 
+## Bizonyítottsági szintek (külön tartva)
+| Szint | Mi tartozik ide |
+|---|---|
+| **Mockkal bizonyított** | A teljes csővezeték hamis adapterekkel/átvitellel: terv, jóváhagyás, kvóta- és hibaágak, idézetellenőrzés, besorolás, jelentésnézetek, visszajelzés, felhasználói import, Gemini-adapter kérés/válasz/hiba-besorolás **hamis átvitellel**, a 10 elfogadási eset forgatókönyves hamisító modellel (`docs/ACCEPTANCE_RESULTS.md`). |
+| **Valódi modellhívással bizonyított** | **Semmi.** Valódi Gemini-hívás egyszer sem történt (a `CLAUDE.md` tiltja az ügynöknek). A próbaterv: `docs/LLM_TRIAL_PLAN.md`. |
+| **Valódi átiratimporttal bizonyított** | Az import (text/SRT/VTT) valódi kódúton fut és tesztelt, **de csak általam írt mintaátiratokkal**; valódi, külső forrásból származó SRT/VTT-t nem próbáltam. |
+| **Élő platformlekéréssel bizonyított** | YouTube oEmbed metaadat (1 videó, 2026-11-20); TikTok oEmbed (cím és szerző nélkül). **Élő átirat: nincs** (a YouTube blokkolta a felhő-IP-t; nem kerültem meg). |
+| **Még nem ellenőrzött** | Valódi modell minősége (magyar kérdés–angol átirat, A/B különbség, korlátozás-megőrzés), hosszú átiratok, PostgreSQL, Docker Compose, a weboldal böngészőben, valódi Apify, kereső, beszédfelismerés, vizuális elemzés, a prompt-injekció elleni védelem valódi modell ellen. |
+
+A környezet izoláltságáról és a függőségek pontos verzióiról: `docs/ENVIRONMENT.md`.
+
+
 "Tesztelve" = a `video_research/tests` offline tesztkészletben (hamis hálózattal) lefut. "Élő próba" = valódi hálózati hívás ebben a munkamenetben.
 
 ## Platformonként
@@ -27,7 +39,8 @@ Az „1–2% hasznos tartalom” célkép, **nem mért arány és nem kvóta**: 
 
 ## Információkinyerés
 - **Modell nélküli extraktív alapút** (`extractive.py`): a kérdés kulcsszavaihoz (első 6 karakter) illő szegmenseket választja ki szó szerint. Nem fordít, nem összefoglal, **nyelvfüggő**: magyar kérdéssel angol átiratban csak a közös szavakra talál. A kategória csak `warning`/`recommendation`/`claim`.
-- **Nyelvi modell**: az `LLMClient` felület kész (strukturált JSON, Pydantic-validálás, programozott idézetellenőrzés, egy javítási kísérlet, külön szemantikai lépés), de **valódi adapter nincs**. Ok: a repo `CLAUDE.md`-je és `config/guard_policy.json`-ja tiltja a harmadik szolgáltatót (az `anthropic` importot minden PR-en hibának veszi). A szabályt nem módosítottam. Döntés kell: jóváhagyott szabályváltás után `anthropic_provider.py`, vagy a már engedélyezett Gemini illesztése (éles hívás itt nem indítható).
+- **Nyelvi modell**: az `LLMClient` felület mögött a projektben már engedélyezett **Gemini-adapter** áll (`llm_gemini.py`, hamis átvitellel tesztelt; a modellnév `VR_GEMINI_MODEL`, nincs beégetett alapérték; kulcs: `GEMINI_API_KEY` környezeti változó). Az `anthropic` adapter továbbra sincs (a `guard_policy.json` tiltja). A kulcsszavas módszer külön, `NEM AI-elemzés` jelzésű baseline (`analysis_method = keyword_baseline`).
+- **Tengelyek leképezése** (nincs párhuzamos állapotrendszer, a mezők levezetettek): `report_bucket` = `disposition` (keep/lead; a kihagyottak `FilterEntry`-k) · `source_support_status` = a `SourceReference.semantic_check` összegzése (`supported_by_passage` / `quote_found_support_unchecked` / `support_doubtful` / `unsupported`) · `verification_status` = mindig `not_externally_verified` (az `externally_verified` fenntartott, soha nem keletkezik, és a modell nem állíthatja be) · `source_refs` = `source_references` (szegmensek, időbélyeg, idézet, idézet nyelve) · besorolási indok = `classification_reason` (megtartott: `why_relevant`; nyom: `lead_reasons`). Az `evidence_status` (`source_claim` / `repeated_across_sources` / `unsupported`) **az eredet/ismétlődés tengelye marad**: nem helyettesíti a fentieket, és nem igazolás.
 - Az idézetellenőrzés és a státuszok (`source_claim`, `repeated_across_sources`, `unsupported`) tesztelve; `verified` nincs.
 
 ## Eltérések a megadott javaslattól

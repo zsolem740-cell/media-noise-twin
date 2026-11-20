@@ -24,6 +24,16 @@ class JobRequest(BaseModel):
     known_information: list[str] = Field(default=[], max_length=20)      # a felhasználó által már rögzített információ (ismétlése nem megtartandó)
 
 
+class ImportBody(BaseModel):
+    question: str = Field(min_length=3, max_length=4000)
+    transcript_text: str = Field(min_length=1, max_length=400_000)
+    format: str                                   # text | srt | vtt (explicit, nincs találgatás)
+    language: str = "hu"
+    title: str | None = Field(default=None, max_length=200)
+    video_url: str | None = Field(default=None, max_length=2048)     # opcionális; az átirat–videó egyezést NEM ellenőrizzük
+    known_information: list[str] = Field(default=[], max_length=20)
+
+
 class FeedbackBody(BaseModel):
     label: FeedbackLabel
     note: str | None = Field(default=None, max_length=500)
@@ -79,6 +89,21 @@ def create_app(store: Store, settings: Settings, registry: AdapterRegistry | Non
         if not created:
             response.status_code = 200
         return {"job_id": job.id, "status": job.status.value, "created": created}
+
+    @api.post("/jobs/import", status_code=202, dependencies=[Depends(auth)])
+    def import_transcript(body: ImportBody, response: Response, idempotency_key: str | None = Header(default=None)) -> dict:
+        """Explicit felhasználói átiratimport (text/srt/vtt). Eredet: user_provided_transcript. Platformhívás nincs; a videó–átirat egyezés nem ellenőrzött."""
+        from .importer import ImportError_, import_job
+        try:
+            jid, created = import_job(store, settings, question=body.question, transcript_text=body.transcript_text, fmt=body.format, language=body.language,
+                                      title=body.title, video_url=body.video_url, known_information=[k.strip()[:300] for k in body.known_information if k.strip()],
+                                      idempotency_key=idempotency_key)
+        except ImportError_ as exc:
+            raise HTTPException(422, str(exc))
+        if not created:
+            response.status_code = 200
+        return {"job_id": jid, "status": store.get_job(jid).status.value, "created": created,
+                "note": "Az átirat felhasználó által megadott; a megadott videólinkhez tartozását a rendszer nem ellenőrzi."}
 
     @api.post("/jobs/plan", dependencies=[Depends(auth)])
     def plan_preview(body: JobRequest) -> dict:

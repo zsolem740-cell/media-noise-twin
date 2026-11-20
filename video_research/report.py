@@ -23,21 +23,31 @@ def fmt_ts(t: float | None) -> str:
 
 
 NO_RESULT = "Nem találtam a feltételeknek megfelelő információt."
-REASON_HU = {"irrelevant": "nem releváns", "not_concrete": "nem elég konkrét", "unverified_quote": "nem ellenőrizhető idézet (nem alátámasztott)",
+REASON_HU = {"irrelevant": "nem releváns", "not_concrete": "nem elég konkrét", "unverified_quote": "nem ellenőrizhető idézet (nem alátámasztott)", "suspected_injection": "utasításnak látszó forrásszöveg (injection gyanú)",
              "already_known": "már rögzített információ", "duplicate_source_attached": "ismétlés, új forrás csatolva", "malformed": "hibás javaslat"}
 FB_HU = {"useful": "hasznos", "not_relevant": "nem releváns", "already_known": "már ismert", "extracted_wrong": "hibásan kinyert", "needs_check": "további ellenőrzést igényel"}
 
 
 def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource], findings: list[Finding], transcripts: list[Transcript],
                  problems: list[str], stats, *, provider_runs: list[dict], stop_reason: str | None, filter_log: list[FilterEntry],
-                 segments_total: int, videos_processed: int) -> ResearchReport:
+                 segments_total: int, videos_processed: int, llm=None) -> ResearchReport:
     tmap = {t.video_source_id: t for t in transcripts}
     limits: list[str] = []
     if any(v.is_fixture for v in videos):
         limits.append("FIGYELEM: TESZT-FIXTURE adatok szerepelnek a jelentésben, nem valódi videók.")
     limits.append("A rendszer külső (független forrásos) ellenőrzést nem végzett: az állítások a videók tartalmát tükrözik, nem igazolt tények.")
-    limits.append("Ellentmondás-észlelés ebben a verzióban nem történik; a `contradictions` mező üres, ez NEM jelenti, hogy nincs ellentmondás.")
+    limits.append("Ellentmondás-észlelés korlátozott: csak az azonos verzióra vonatkozó, támogató és ellenpéldaként jelölt tételpárokat jelzi; az üres `contradictions` NEM jelenti, hogy nincs ellentmondás, és a rendszer nem dönti el, melyik igaz.")
     limits.append("Vizuális elemzés ebben a verzióban nincs: a csak képen látható információkat (felirat a képen, kijelzők, ábrák) a rendszer nem vizsgálja.")
+    kind = getattr(llm, "kind", "none")
+    method = "ai_semantic" if kind == "ai" else "keyword_baseline" if kind == "baseline" else "unknown"
+    if method == "keyword_baseline":
+        limits.append("NEM AI-ELEMZÉS: a kinyerés kulcsszavas baseline; nem érti a kérdést, nyelvfüggő, nem fordít.")
+    elif method == "ai_semantic":
+        limits.append("AI-elemzés: a modell kimenetét programozott idézetellenőrzés szűrte, de a megfogalmazás jelentésbeli helyessége nem garantált.")
+    if any(t.origin.value == "user_provided_transcript" for t in transcripts):
+        limits.append("Felhasználó által megadott átirat: a megadott videólink és az átirat egyezését a rendszer nem ellenőrizte; ez az eredet nem bizonyít platformintegrációt.")
+    if any(t.language.lower() != "hu" for t in transcripts):
+        limits.append("Nem magyar átirat: a megállapítások magyar szövege tartalmi összefoglalás/fordítás, NEM szó szerinti forrásidézet; az idézet az eredeti nyelven szerepel.")
     limits.append("Az idézetek programozottan ellenőrzöttek az átiratban; ez nem bizonyítja az állítás igazságát. Az állítás és az idézet jelentésbeli kapcsolatának ellenőrzése heurisztikus, nem tévedhetetlen.")
     unsup = [e for e in filter_log if e.reason_code == SkipReason.unverified_quote]
     if unsup:
@@ -51,7 +61,7 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
         limits.append(f"{len(unknown)} szolgáltatói futás költsége nem ismert; a rögzített költség alsó becslés.")
     if stop_reason:
         limits.append({"cancelled": "A feladatot megszakították; a részeredmények megmaradtak.", "runtime_limit": "A futásidő-keret lejárt; részeredmény.",
-                       "cost_budget": "A szolgáltatói költségkeret kimerült; részeredmény.", "unavailable": "Szolgáltatás nem volt elérhető; részeredmény."}.get(stop_reason, stop_reason))
+                       "cost_budget": "A szolgáltatói költségkeret kimerült; részeredmény.", "unavailable": "Szolgáltatás nem volt elérhető; részeredmény.", "llm_quota": "A modellszolgáltató kvótája kimerült; a futás megállt, részeredmény."}.get(stop_reason, stop_reason))
     limits += problems
     missing = []
     for v in videos:
@@ -67,7 +77,7 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
                 for f in findings if f.evidence_status == EvidenceStatus.repeated_across_sources]
     sources = [{"video_source_id": v.id, "platform": v.platform.value, "url": v.canonical_url, "title": v.title, "creator": v.creator,
                 "provider": v.provider, "provider_run_id": v.provider_run_id, "access_status": v.access_status.value,
-                "transcript_origin": tmap[v.id].origin.value if v.id in tmap else None, "transcript_language": tmap[v.id].language if v.id in tmap else None,
+                "transcript_origin": tmap[v.id].origin.value if v.id in tmap else None, "transcript_link_status": v.transcript_link_status, "transcript_language": tmap[v.id].language if v.id in tmap else None,
                 "auto_generated": tmap[v.id].auto_generated if v.id in tmap else None, "fixture": v.is_fixture} for v in videos]
     by_reason: dict[str, int] = {}
     for e in filter_log:
@@ -78,8 +88,14 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
     no_result = NO_RESULT if videos_processed > 0 and not findings else None
     summary = (f"{videos_processed} videó feldolgozva ({len(videos)} azonosított): {len(keep)} megtartandó információ, {len(leads)} ellenőrizendő nyom, "
                f"{sum(by_reason.values())} kihagyott/ismétlésként csatolt részlet. Kérdés: {plan.question.splitlines()[0]}")
-    return ResearchReport(summary=summary, findings=findings, repeated_mentions=repeated, contradictions=[], missing_information=missing,
-                          source_list=sources, coverage_limitations=limits, no_result_note=no_result, filter_log=filter_log, filter_stats=stats_d,
+    contradictions = []
+    for i, a in enumerate(findings):
+        for b in findings[i + 1:]:
+            if a.version and a.version == b.version and a.category == b.category and {a.stance.value, b.stance.value} == {"supports", "counterexample"}:
+                contradictions.append({"finding_ids": [a.id, b.id], "note": f"ellentmondó állítások ugyanarra a verzióra ({a.version}); a rendszer nem döntötte el, melyik igaz"})
+    return ResearchReport(summary=summary, findings=findings, repeated_mentions=repeated, contradictions=contradictions, missing_information=missing,
+                          source_list=sources, coverage_limitations=limits, no_result_note=no_result, analysis_method=method,
+                          analysis_model=({"provider": llm.provider, "model": llm.model} if method == "ai_semantic" else {}), filter_log=filter_log, filter_stats=stats_d,
                           unsupported=[{"statement_hu": e.snippet, "reason": e.reason_hu} for e in unsup])
 
 
@@ -109,6 +125,9 @@ def to_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] | None
     out = ["# Kutatási jelentés", ""]
     if any("FIXTURE" in l for l in r.coverage_limitations):
         out += ["> **⚠ TESZT-FIXTURE adatok, nem valódi videók.**", ""]
+    banner = {"keyword_baseline": "> **NEM AI-elemzés:** kulcsszavas baseline.", "ai_semantic": f"> AI-elemzés ({r.analysis_model.get('provider')}, {r.analysis_model.get('model')}); programozott idézetellenőrzéssel, jelentésbeli helyesség nem garantált."}.get(r.analysis_method)
+    if banner:
+        out += [banner, ""]
     out += [f"**Kérdés:** {job.request.splitlines()[0]}", "", f"**Állapot:** {job.status.value} · {r.summary.split(' Kérdés:')[0]}", ""]
     if r.no_result_note:
         out += [f"**{r.no_result_note}**", ""]
@@ -120,7 +139,8 @@ def to_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] | None
             ref = f.source_references[0]
             extra = " · ".join(x for x in [f"feltétel: {f.condition}" if f.condition else "", f"verzió: {f.version}" if f.version else "",
                                            "ellenpélda" if f.stance.value == "counterexample" else ""] if x)
-            out.append(f"- **{f.statement_hu}** [{f.category.value}] — _{STATUS_HU[f.evidence_status]}_{(' · ' + extra) if extra else ''}{_fb(fb, f.id)}")
+            tr = " · _magyar tartalmi összefoglalás, nem idézet_" if f.statement_is_translation else ""
+            out.append(f"- **{f.statement_hu}** [{f.category.value}] — _{STATUS_HU[f.evidence_status]}_{tr}{(' · ' + extra) if extra else ''}{_fb(fb, f.id)}")
             out.append(f"  - forrás: {_ref_line(r, ref)}" + (f" (+{len(f.source_references) - 1} további forrás)" if len(f.source_references) > 1 else "") + f" · azonosító: {f.id}")
         out.append("")
     if leads:
@@ -136,7 +156,7 @@ def to_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] | None
     out.append("")
     if r.missing_information:
         out += ["## Hiányok"] + [f"- {m}" for m in r.missing_information] + [""]
-    key = [l for l in r.coverage_limitations if l.startswith(("FIGYELEM", "A rendszer külső", "Vizuális", "A feladatot", "A futásidő", "A szolgáltatói költségkeret", "Szolgáltatás nem"))]
+    key = [l for l in r.coverage_limitations if l.startswith(("FIGYELEM", "NEM AI", "AI-elemzés", "Felhasználó által", "Nem magyar", "A rendszer külső", "Vizuális", "A feladatot", "A futásidő", "A szolgáltatói költségkeret", "Szolgáltatás nem", "A modellszolgáltató"))]
     out += ["## Fő korlátok"] + [f"- {l}" for l in key] + ["- Teljes bizonyíték (idézetek, szegmensek, időbélyegek) és szűrési napló: külön nézet.", ""]
     return "\n".join(out)
 
@@ -146,14 +166,17 @@ def evidence_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] 
     out = ["# Részletes bizonyítékok", ""]
     for f in r.findings:
         out.append(f"## {f.statement_hu}")
-        out.append(f"- azonosító: {f.id} · kategória: {f.category.value} · besorolás: {f.disposition.value} · relevancia: {f.relevance.value} · konkrét: {f.concrete}"
-                   f" · alátámasztottság: {f.evidence_status.value}{_fb(fb, f.id)}")
+        out.append(f"- azonosító: {f.id} · kategória: {f.category.value} · report_bucket: {f.report_bucket} · relevancia: {f.relevance.value} · konkrét: {f.concrete}")
+        out.append(f"- source_support_status: {f.source_support_status} · verification_status: {f.verification_status} · ismétlődés/eredet (evidence_status): {f.evidence_status.value}{_fb(fb, f.id)}")
+        out.append(f"- besorolási indok: {f.classification_reason}")
+        if f.statement_is_translation:
+            out.append("- a fenti állítás a forrás magyar tartalmi összefoglalása/fordítása; az idézet az eredeti nyelven szerepel")
         if f.condition or f.version or f.stance.value != "supports":
             out.append(f"- feltétel: {f.condition or '–'} · verzió: {f.version or '–'} · álláspont: {f.stance.value}")
         if f.lead_reasons:
             out.append(f"- ellenőrzendő, mert: {'; '.join(f.lead_reasons)}")
         for ref in f.source_references:
-            out.append(f"- „{ref.supporting_quote}” — {_ref_line(r, ref)}; szegmensek: {', '.join(ref.transcript_segment_ids)}; jelentés-ellenőrzés: {ref.semantic_check} (az idézet megléte nem bizonyítja az állítás igazságát)")
+            out.append(f"- idézet [{ref.quote_language or '?'}]: „{ref.supporting_quote}” — {_ref_line(r, ref)}; szegmensek: {', '.join(ref.transcript_segment_ids)}; jelentés-ellenőrzés: {ref.semantic_check} (az idézet megléte nem bizonyítja az állítás igazságát)")
         out += [f"- korlát: {l}" for l in f.limitations]
         if f.related_ids:
             out.append(f"- kapcsolódó (eltérő feltétel/verzió/ellenpélda): {', '.join(f.related_ids)}")
@@ -181,9 +204,11 @@ def short_json(r: ResearchReport, feedback: list[dict] | None = None) -> dict:
 
     def item(f: Finding) -> dict:
         return {"id": f.id, "category": f.category.value, "statement_hu": f.statement_hu, "evidence_status": f.evidence_status.value,
+                "report_bucket": f.report_bucket, "source_support_status": f.source_support_status, "verification_status": f.verification_status,
+                "classification_reason": f.classification_reason, "statement_is_translation": f.statement_is_translation,
                 "condition": f.condition, "version": f.version, "stance": f.stance.value, "lead_reasons": f.lead_reasons, "feedback": fb.get(f.id),
                 "sources": [{"url": _src(r, x.video_source_id).get("url"), "title": _src(r, x.video_source_id).get("title"), "timestamp": x.timestamp} for x in f.source_references]}
-    return {"summary": r.summary, "no_result_note": r.no_result_note,
+    return {"summary": r.summary, "no_result_note": r.no_result_note, "analysis_method": r.analysis_method, "analysis_model": r.analysis_model,
             "keep": [item(f) for f in r.findings if f.disposition == Disposition.keep],
             "leads": [item(f) for f in r.findings if f.disposition == Disposition.lead],
             "skipped_by_reason": r.filter_stats.get("skipped_by_reason", {}), "missing_information": r.missing_information}

@@ -9,11 +9,21 @@ from .adapters.fixture import FixtureAdapter
 from .adapters.tiktok import TikTokAdapter
 from .adapters.youtube import YouTubeAdapter
 from .extractive import ExtractiveBaselineLLM
+from .llm import NullLLM
+from .llm_gemini import build_gemini
 from .config import load_settings
 from .db import Store, make_engine, migrate
 from .pipeline import Pipeline
 from .worker import Worker
 import os
+
+
+def build_llm(settings):
+    if settings.llm_provider == "gemini":
+        return build_gemini(settings.gemini_model, settings.gemini_api_key.reveal() if settings.gemini_api_key else None)
+    if settings.llm_provider == "baseline":
+        return ExtractiveBaselineLLM()
+    return NullLLM()
 
 
 def build(settings):
@@ -46,7 +56,7 @@ def main(argv: list[str]) -> int:
     elif cmd == "purge":
         print(f"törölt feladatok: {store.purge_expired(s.data_retention_days)}")
     elif cmd == "worker":
-        Worker(store, Pipeline(store, s, registry, ExtractiveBaselineLLM(), semantic=False), s).loop()
+        Worker(store, Pipeline(store, s, registry, build_llm(s), semantic=s.llm_provider == "gemini"), s).loop()
     elif cmd == "api":
         import uvicorn
         from .api import create_app

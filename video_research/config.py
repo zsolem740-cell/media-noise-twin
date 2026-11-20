@@ -53,9 +53,16 @@ class Settings:
     backoff_max_seconds: float = 30.0
     max_transcript_chars: int = 200_000
     data_retention_days: int = 90
+    llm_provider: str = "baseline"           # baseline (kulcsszavas, NEM AI) | gemini | none
+    gemini_model: str | None = None          # kötelező gemini esetén; nincs beégetett alapérték
+    gemini_api_key: SecretStr | None = None  # GEMINI_API_KEY környezeti változó; soha nem kerül naplóba/kimenetbe
     allow_cloud_transcription: bool = False      # a felhős beszédfelismerés külön engedély; rejtett váltás nincs (jelenleg nincs ilyen útvonal)
 
     def validate(self) -> None:
+        if self.llm_provider not in ("baseline", "gemini", "none"):
+            raise ValueError("VR_LLM_PROVIDER értéke baseline, gemini vagy none lehet")
+        if self.llm_provider == "gemini" and not self.gemini_model:
+            raise ValueError("VR_LLM_PROVIDER=gemini esetén a VR_GEMINI_MODEL kötelező (nincs beégetett modellnév)")
         if self.mode not in ("dev", "production"):
             raise ValueError("VR_MODE értéke dev vagy production lehet")
         if self.limits.max_videos > HARD_TRIAL_MAX_VIDEOS and os.environ.get("VR_ALLOW_MORE_THAN_TRIAL") != "1":
@@ -91,6 +98,9 @@ def load_settings(env: dict | None = None) -> Settings:
         actors=actors,
         lease_seconds=int(e.get("VR_LEASE_SECONDS", 60)),
         data_retention_days=int(e.get("DATA_RETENTION_DAYS", 90)),
+        llm_provider=e.get("VR_LLM_PROVIDER", "baseline"),
+        gemini_model=e.get("VR_GEMINI_MODEL") or None,
+        gemini_api_key=SecretStr(e["GEMINI_API_KEY"]) if e.get("GEMINI_API_KEY") else None,
         allow_cloud_transcription=e.get("ALLOW_CLOUD_TRANSCRIPTION", "false").lower() == "true",
     )
     s.validate()

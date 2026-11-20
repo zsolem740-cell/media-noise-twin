@@ -12,7 +12,7 @@ from .config import Settings
 from .db import Store
 from .executor import CostBudgetExhausted, Executor, JobStopped, UncertainRun
 from .extraction import ExtractionStats, TokenBudgetExceeded, extract_findings, semantic_check
-from .llm import LLMClient, LLMUnavailable
+from .llm import LLMClient, LLMQuotaExhausted, LLMRejected, LLMTransient, LLMUnavailable, RetryingLLM
 from .merge import merge_findings
 from .models import (AccessStatus, FilterEntry, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
 from .planner import build_plan
@@ -35,8 +35,9 @@ class Pipeline:
         self.store.set_status(jid, JobStatus.planning)
         plan = build_plan(job.request, self.settings, self.registry, llm=self.llm, requested_limits=job.limits,
                           requested_platforms=[p.value for p in job.platforms] or None,
-                          known_information=json.loads(self.store.get_field(jid, "known_information") or "[]"))
-        if not plan.platforms or (not plan.direct_urls and not plan.search_queries):
+                          known_information=json.loads(self.store.get_field(jid, "known_information") or "[]"),
+                          imported_sources=len(self.store.videos(jid)))
+        if (not plan.platforms and not plan.imported_sources) or (not plan.direct_urls and not plan.search_queries and not plan.imported_sources):
             self.store.set_status(jid, JobStatus.failed, error="A kérésből nem készíthető érvényes terv (nincs engedélyezett platform vagy kereshető kifejezés/link).")
             return
         self.store.set_status(jid, JobStatus.awaiting_approval, plan=plan.model_dump_json(), estimated_cost=plan.estimated_cost_usd)
@@ -58,6 +59,8 @@ class Pipeline:
 
         self.store.set_status(jid, JobStatus.running)
         ex = Executor(self.store, self.settings, check, self.sleep, self.poll_interval)
+        self._llm = RetryingLLM(self.llm, max_retries=self.settings.max_retries, base=self.settings.backoff_base_seconds,
+                                cap=self.settings.backoff_max_seconds, sleep=self.sleep, should_stop=lambda: ex._stopping())
         stats = ExtractionStats()
         stats.tokens = self.store.get_field(jid, "llm_tokens_used") or 0
         problems: list[str] = []
@@ -77,6 +80,9 @@ class Pipeline:
             stop_reason = "cost_budget"
         except UncertainRun as exc:
             problems.append(str(exc))
+        except LLMQuotaExhausted as exc:
+            problems.append(f"A modellszolgáltató kvótája kimerült: {exc}. A futás megállt; a kész videók megmaradtak, folytatás a kvóta visszaállása után (szolgáltatóváltás nincs).")
+            stop_reason = "llm_quota"
         except (ProviderNotConfigured, LLMUnavailable) as exc:
             problems.append(f"Szolgáltatás nem elérhető: {exc}")
             stop_reason = "unavailable"
@@ -230,10 +236,14 @@ class Pipeline:
             before, n0 = stats.tokens, len(stats.skipped)
             self.store.set_step(jid, name, StepStatus.running)
             try:
-                found = extract_findings(self.llm, jid, plan, v, t, remaining, stats)
+                found = extract_findings(self._llm, jid, plan, v, t, remaining, stats)
                 if self.semantic:
                     for f in found:
-                        semantic_check(self.llm, f, stats)
+                        semantic_check(self._llm, f, stats)
+            except (LLMRejected, LLMTransient) as exc:
+                self.store.set_step(jid, name, StepStatus.failed, {"error": str(exc)})
+                problems.append(f"{v.canonical_url}: a modellkérés sikertelen, a videó kimaradt: {exc}")
+                continue
             except TokenBudgetExceeded as exc:
                 self.store.set_step(jid, name, StepStatus.skipped, {"reason": "token_budget"})
                 problems.append(f"{v.canonical_url}: {exc}")
@@ -270,7 +280,8 @@ class Pipeline:
         job = self.store.get_job(jid)
         report = build_report(job, plan, videos, findings, self.store.transcripts(jid), problems + ex.notes, stats,
                               provider_runs=self.store.provider_runs(jid), stop_reason=stop_reason,
-                              filter_log=skipped + merge_log, segments_total=segments, videos_processed=len(ok))
+                              filter_log=skipped + merge_log, segments_total=segments, videos_processed=len(ok),
+                              llm=self.llm)
         if stop_reason == "cancelled":
             status = JobStatus.cancelled
         elif not ok:

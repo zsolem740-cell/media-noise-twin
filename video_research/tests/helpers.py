@@ -8,6 +8,7 @@ SEG = re.compile(r"^\[(?P<id>[^\]]+)\] (?P<text>.+)$", re.M)
 
 
 class ScriptedLLM:
+    provider, model, kind = "scripted-fake", "fake-model", "ai"
     """A kért átiratból szó szerinti idézetet emel ki (jó eset) + egy kitalált idézetet (amit a rendszernek el kell utasítania)."""
     def __init__(self, semantic="consistent", tokens=100, fail_after=None):
         self.calls, self.prompts, self.semantic, self.tokens, self.fail_after = 0, [], semantic, tokens, fail_after

@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 
 class JobStatus(str, Enum):
@@ -24,6 +24,7 @@ TERMINAL_STATUSES = {JobStatus.completed, JobStatus.partially_completed, JobStat
 class Platform(str, Enum):
     youtube = "youtube"
     tiktok = "tiktok"
+    manual = "manual"            # felhasználói átiratimport link nélkül: nem platformintegráció
 
 
 class AccessStatus(str, Enum):
@@ -36,6 +37,7 @@ class AccessStatus(str, Enum):
 class TranscriptOrigin(str, Enum):
     platform_caption = "platform_caption"
     speech_to_text = "speech_to_text"
+    user_provided_transcript = "user_provided_transcript"      # explicit felhasználói import; nem igazolja az átirat–videó egyezést
 
 
 class EvidenceStatus(str, Enum):
@@ -53,6 +55,11 @@ class FindingCategory(str, Enum):
     recommendation = "recommendation"
     claim = "claim"
     warning = "warning"
+    step = "step"                        # konkrét lépés
+    prerequisite = "prerequisite"        # előfeltétel
+    cost = "cost"                        # elhangzott költség
+    experience = "experience"            # egyedi tapasztalat
+    limitation = "limitation"            # hiba, korlát
     other = "other"
 
 
@@ -80,6 +87,7 @@ class SkipReason(str, Enum):
     already_known = "already_known"                      # a felhasználó által megadott, már rögzített információ
     duplicate_source_attached = "duplicate_source_attached"   # ismétlés: az új forrás a meglévő megállapításhoz csatolva
     malformed = "malformed"
+    suspected_injection = "suspected_injection"          # a forrásszöveg utasításnak látszó részlete: nem információ
 
 
 class FeedbackLabel(str, Enum):
@@ -124,6 +132,7 @@ class ResearchPlan(BaseModel):
     search_queries: list[str] = []
     direct_urls: list[str] = []
     focus_categories: list[FindingCategory] = list(FindingCategory)
+    imported_sources: int = 0                  # felhasználói átiratimport: a videó–átirat egyezést nem ellenőrizzük
     known_information: list[str] = []          # a felhasználó által már rögzített információ: ennek puszta ismétlése nem kerül a megtartandók közé
     plan_hash: str = ""
     limits: Limits
@@ -177,6 +186,7 @@ class VideoSource(BaseModel):
     access_status: AccessStatus = AccessStatus.ok
     raw_metadata_reference: str | None = None
     is_fixture: bool = False
+    transcript_link_status: str = "not_applicable"   # user_asserted_unverified: a felhasználó állítja, hogy az átirat ehhez a videóhoz tartozik; nem ellenőriztük
 
 
 class SourceReference(BaseModel):
@@ -185,6 +195,7 @@ class SourceReference(BaseModel):
     supporting_quote: str
     timestamp: float | None = None
     semantic_check: str = "not_checked"      # not_checked | consistent | doubtful: heurisztikus, nem tévedhetetlen
+    quote_language: str | None = None        # az idézet NYELVE (az átirat nyelve): az idézet mindig az eredeti nyelvű szöveg
 
 
 class Finding(BaseModel):
@@ -205,6 +216,59 @@ class Finding(BaseModel):
     stance: Stance = Stance.supports
     version: str | None = None
     related_ids: list[str] = []
+    why_relevant: str | None = None          # rövid, magyar besorolási indok a kérdéshez viszonyítva (megtartott tételnél)
+    statement_is_translation: bool = False   # a statement_hu az eredeti nyelvű forrás magyar tartalmi összefoglalása/fordítása, NEM idézet
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def report_bucket(self) -> str:
+        """keep | lead (a kihagyott részletek nem Finding, hanem FilterEntry: report_bucket = skipped)."""
+        return self.disposition.value
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source_support_status(self) -> str:
+        checks = [r.semantic_check for r in self.source_references]
+        if not self.source_references:
+            return "unsupported"
+        if "doubtful" in checks:
+            return "support_doubtful"
+        if checks and all(c == "consistent" for c in checks):
+            return "supported_by_passage"
+        return "quote_found_support_unchecked"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def verification_status(self) -> str:
+        return "not_externally_verified"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def source_refs(self) -> list[dict]:
+        return [{"video_source_id": r.video_source_id, "segment_ids": r.transcript_segment_ids, "timestamp": r.timestamp,
+                 "quote": r.supporting_quote, "quote_language": r.quote_language} for r in self.source_references]
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def classification_reason(self) -> str:
+        if self.disposition == Disposition.lead:
+            return "; ".join(self.lead_reasons) or "ellenőrzés javasolt"
+        return self.why_relevant or "releváns, konkrét, programozottan igazolt idézettel"
+
+
+# ---- Leképezés a megbeszélt tengelyekre (levezetett nézetek, nem külön tárolt állapot) ----
+class SourceSupport(str, Enum):
+    """source_support_status: a hivatkozott forrásrészlet és az állítás viszonya. NEM az igazság és NEM az ismétlődés."""
+    supported_by_passage = "supported_by_passage"                  # az idézet megvan, és a külön (heurisztikus) szemantikai ellenőrzés egyezőnek ítélte
+    quote_found_support_unchecked = "quote_found_support_unchecked"  # az idézet programozottan megvan; a jelentésbeli egyezést nem ellenőriztük
+    support_doubtful = "support_doubtful"                          # az idézet megvan, de a szemantikai ellenőrzés kétesnek ítélte
+    unsupported = "unsupported"                                    # nincs ellenőrizhető idézet (soha nem megtartott tétel)
+
+
+class VerificationStatus(str, Enum):
+    """verification_status: FÜGGETLEN KÜLSŐ ellenőrzés. Az 1. verzió nem végez ilyet: az érték mindig not_externally_verified."""
+    not_externally_verified = "not_externally_verified"
+    externally_verified = "externally_verified"                    # fenntartva; ez a kód soha nem állítja elő
 
 
 class FilterEntry(BaseModel):
@@ -229,6 +293,8 @@ class ResearchReport(BaseModel):
     no_result_note: str | None = None        # pl. „Nem találtam a feltételeknek megfelelő információt.”
     filter_log: list[FilterEntry] = []
     filter_stats: dict = {}
+    analysis_method: str = "unknown"         # ai_semantic | keyword_baseline | none: a jelentés megmondja, mi állította elő
+    analysis_model: dict = {}                # {"provider":…, "model":…}; baseline esetén üres
     unsupported: list[dict] = []             # elutasított, nem alátámasztott javaslatok (állítás + ok); nem megállapítások
 
 
