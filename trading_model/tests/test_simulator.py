@@ -10,6 +10,7 @@ import datetime
 import decimal
 import importlib.util
 import json
+import random
 import sys
 import tempfile
 from decimal import Decimal as Dc
@@ -96,6 +97,7 @@ def check_identities(res):
             total += delta
             cash = fl["cash_after"]
             qty += sigma * fl["quantity"]
+            assert fl["quantity"] > 0 and fl["quantity"] % u == 0                                              # minden teljesítés az egység többszöröse
             assert qty >= 0 and qty % u == 0                                                                  # B
             assert cash >= 0
         for m in res["marks"]:                                                                                # C
@@ -366,10 +368,13 @@ def test_decimal_rules(sim=SIM):
     before = decimal.getcontext().prec
     ctx = sim.make_context()
     assert (ctx.prec, ctx.rounding) == (60, decimal.ROUND_HALF_EVEN) and ctx.traps[decimal.Inexact] and ctx.traps[decimal.InvalidOperation]
-    long_rate = "0." + "1" * 58                                                                                  # 58 jegyű arány: a szorzat nem fér 60 jegybe, nem kerekíthet csendben
+    with pytest.raises(sim.SimulationError) as err0:                                                            # a túl hosszú ábrázolás indulás előtt blokkolódik
+        sim.simulate(daily([(105, 105)] * 4), by_len({1: "LONG"}), params(fee_rate="0." + "1" * 58))
+    assert err0.value.reason == "param_range"
+    wide = "0.12345678901234567890"                                                                             # 20 jegy: a határon belül, de a futás közbeni szorzat nem fér 60 jegybe
     with pytest.raises(sim.SimulationError) as err:
-        sim.simulate(daily([(105, 105)] * 4), by_len({1: "LONG"}), params(fee_rate=long_rate))
-    assert err.value.reason == "decimal_precision"
+        sim.simulate(daily([(123.45678901234567, 123.45678901234567)] * 4), by_len({1: "LONG"}), params(fee_rate=wide, slippage=wide, unit=wide))
+    assert err.value.reason == "decimal_precision"                                                              # adatfüggő pontossági hiba az előzetes ellenőrzés után is keletkezhet, nem kerekít csendben
     assert decimal.getcontext().prec == before                                                                  # a globális kontextus változatlan
     res = sim.simulate(daily([(105, 105)] * 4), by_len({1: "LONG"}), params())
     assert decimal.getcontext().prec == before
@@ -441,6 +446,321 @@ def test_identities_cash_and_sizing_hold_on_generated_series(sim=SIM):
 
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Felülvizsgálat utáni javítások: regressziós próbák (a reprodukált hibák) és a hiányzó tesztek
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+def hand_bars(spec):
+    """Közvetlenül épített sávok (a load_series ellenőrzése nélkül). spec: [(zárás napja, nyitó, záró, available_at napja vagy None)]."""
+    return tuple(D.Bar(BASE + datetime.timedelta(days=t), o, max(o, c), min(o, c), c, 1, BASE + datetime.timedelta(days=t if a is None else a)) for t, o, c, a in spec)
+
+
+def hand_series(spec, **kw):
+    f = {"symbol": "SYN-T", "timeframe": "1d", "synthetic": True, "capture_id": "hand"}
+    f.update(kw)
+    return D.Series(f["symbol"], f["timeframe"], f["synthetic"], f["capture_id"], spec if isinstance(spec, tuple) and (not spec or isinstance(spec[0], D.Bar)) else hand_bars(spec))
+
+
+GOOD3 = [(1, 100, 100, None), (2, 100, 100, None), (3, 100, 100, None)]
+
+
+def _tamper_strategy(mapping):
+    def strategy(view):
+        c = decimal.getcontext()
+        c.prec = 3
+        c.traps[decimal.Inexact] = False
+        decimal.setcontext(decimal.Context(prec=2))
+        return mapping.get(len(view))
+    return strategy
+
+
+def test_regression_a_a_strategy_cannot_change_the_engine_decimal_context(sim=SIM):
+    s = daily([(100, 100)] * 5)
+    prm = params(fee_rate="0.001", slippage="0.01")
+    before = decimal.getcontext().prec
+    base = sim.simulate(s, by_len({1: "LONG"}), prm)
+    tampered = sim.simulate(s, _tamper_strategy({1: "LONG"}), prm)
+    assert tampered == base                                                                                    # a stratégia kontextus-módosítása nem változtat a motor számításán
+    assert (base["fills"][0]["quantity"], base["fills"][0]["price"]) == (Dc(9), Dc("101.00"))
+    assert decimal.getcontext().prec == before
+
+
+def test_regression_a_the_strategy_runs_in_its_own_default_context(sim=SIM):
+    seen = []
+
+    def strategy(view):
+        c = decimal.getcontext()
+        seen.append((c.prec, c.rounding, bool(c.traps[decimal.Inexact]), bool(c.traps[decimal.DivisionByZero]), bool(c.traps[decimal.InvalidOperation])))
+        return None
+    with decimal.localcontext() as caller:
+        caller.prec = 5                                                                                       # a hívó kontextusa sem számít
+        sim.simulate(daily([(100, 100)] * 3), strategy, params())
+    assert set(seen) == {(28, decimal.ROUND_HALF_EVEN, False, True, True)}
+
+
+def test_regression_b_a_strategy_may_divide_decimals_without_a_motor_precision_error(sim=SIM):
+    def strategy(view):
+        mean = sum(b.close for b in view) / len(view)                                                           # Decimal / int: nem pontos (301/3)
+        return "LONG" if len(view) == 3 and mean < 101 else None
+    res = sim.simulate(daily([(100, 100), (100, 100), (101, 101), (101, 101), (101, 101)]), strategy, params())
+    assert len(res["orders"]) == 1 and res["orders"][0]["side"] == "BUY"
+
+
+def test_regression_c_a_strategy_error_is_not_a_motor_precision_error(sim=SIM):
+    errors = (lambda: Dc(1) / Dc(0), lambda: 1 / 0, lambda: int("x"), lambda: Dc("abc"))
+    for boom in errors:
+        with pytest.raises(sim.SimulationError) as err:
+            sim.simulate(daily([(100, 100)] * 3), lambda v: boom(), params())
+        assert err.value.reason == "strategy_error" and err.value.__cause__ is not None, boom
+    # a motor saját pontossági hibája továbbra is decimal_precision (lásd test_decimal_rules)
+
+
+class _EvilStr(str):
+    def __eq__(self, other):
+        return True
+
+    __hash__ = str.__hash__
+
+
+def test_regression_d_a_str_subclass_target_is_rejected(sim=SIM):
+    with pytest.raises(sim.SimulationError) as err:
+        sim.simulate(daily([(100, 100)] * 3), lambda v: _EvilStr("BUY"), params())
+    assert err.value.reason == "strategy_target"
+
+
+def test_regression_e_a_directly_built_series_is_validated_at_the_entry_point(sim=SIM):
+    naive = datetime.datetime(2026, 1, 1)
+    cases = {
+        "lookahead": hand_series([(1, 100, 100, None), (2, 100, 100, 1.5), (3, 100, 100, None)]),
+        "ures": hand_series(()),
+        "idokeret": hand_series(GOOD3, timeframe="2d"),
+        "nan_nyito": hand_series([(1, float("nan"), 100, None), (2, 100, 100, None), (3, 100, 100, None)]),
+        "nulla_nyito": hand_series([(1, 100, 100, None), (2, 0, 100, None), (3, 100, 100, None)]),
+        "negativ_nyito": hand_series([(1, 100, 100, None), (2, -5, 100, None), (3, 100, 100, None)]),
+        "vegtelen_nyito": hand_series([(1, 100, 100, None), (2, float("inf"), 100, None), (3, 100, 100, None)]),
+        "naiv_ido": hand_series((D.Bar(naive, 100, 100, 100, 100, 1, naive),)),
+        "azonos_idobelyeg": hand_series([(1, 100, 100, None), (1, 100, 100, None), (3, 100, 100, None)]),
+        "nem_novekvo": hand_series([(1, 100, 100, None), (3, 100, 100, None), (2, 100, 100, None)]),
+        "decimal_ar": hand_series((D.Bar(BASE + ONE_DAY, Dc(100), Dc(100), Dc(100), Dc(100), 1, BASE + ONE_DAY),)),
+        "rossz_szimbolum": hand_series(GOOD3, symbol="syn t"),
+        "nem_logikai_synthetic": hand_series(GOOD3, synthetic=1),
+        "nem_series": {"bars": []},
+    }
+    for name, ser in cases.items():
+        calls = []
+        with pytest.raises(sim.SimulationError) as err:
+            sim.simulate(ser, lambda v: calls.append(1), params())
+        assert err.value.reason == "input_contract" and calls == [], name
+        assert err.value.field, name                                                                          # dokumentált, azonosítható hibahely
+    sim.simulate(hand_series(GOOD3), by_len({}), params())                                                    # a hibátlan közvetlen Series érvényes
+
+
+def test_regression_f_oversized_parameters_are_rejected_before_the_run_starts(sim=SIM):
+    for key, value in (("fixed_fee", "0." + "1" * 70), ("fee_rate", "0." + "1" * 70), ("initial_cash", "1" * 61), ("unit", "1" * 21), ("slippage", "0." + "1" * 21),
+                       ("fixed_fee", "1E+31"), ("fee_rate", "1E-31"), ("initial_cash", 10 ** 25)):
+        calls = []
+        with pytest.raises(sim.SimulationError) as err:
+            sim.simulate(daily([(100, 100)] * 3), lambda v: calls.append(1), params(**{key: value}))
+        assert (err.value.reason, err.value.field) == ("param_range", key) and calls == [], (key, value)
+    for key, value in (("fixed_fee", "0.12345678901234567890"), ("fee_rate", "1E+30"), ("fixed_fee", "1E-30"), ("initial_cash", "12345678901234567890")):      # a határon belüli ábrázolás érvényes
+        sim.simulate(daily([(100, 100)] * 3), by_len({}), params(**{key: value}))
+
+
+def test_regression_g_mixed_and_unknown_parameter_keys_are_rejected_deterministically(sim=SIM):
+    base = params()
+    outcomes = set()
+    for prm in ({**base, 1: 1, "x": 2}, {"x": 2, 1: 1, **base}, {**base, "x": 2, None: 3}, {**base, (1,): 0}):
+        with pytest.raises(sim.SimulationError) as err:
+            sim.simulate(daily([(100, 100)] * 3), by_len({}), prm)
+        assert err.value.reason == "param_unknown"
+        outcomes.add((err.value.reason, err.value.field))
+    with pytest.raises(sim.SimulationError) as e1:
+        sim.simulate(daily([(100, 100)] * 3), by_len({}), {**base, "zzz": 1, "aaa": 2})
+    with pytest.raises(sim.SimulationError) as e2:
+        sim.simulate(daily([(100, 100)] * 3), by_len({}), {**base, "aaa": 2, "zzz": 1})
+    assert (e1.value.reason, e1.value.field) == (e2.value.reason, e2.value.field) == ("param_unknown", "aaa")        # a rendezés nem a beszúrási sorrendtől függ
+
+
+def test_regression_h_parameter_parsing_does_not_depend_on_the_callers_decimal_context(sim=SIM):
+    with decimal.localcontext() as ctx:
+        ctx.traps[decimal.InvalidOperation] = False                                                            # a hívó kontextusában az "abc" NaN-ná válna
+        with pytest.raises(sim.SimulationError) as err:
+            sim.simulate(daily([(100, 100)] * 3), by_len({}), params(initial_cash="abc"))
+    assert err.value.reason == "param_type"
+    with decimal.localcontext() as ctx:
+        ctx.prec = 2
+        res = sim.simulate(daily([(100, 100)] * 3), by_len({}), params(initial_cash="1234.5678"))
+    assert res["final"]["cash"] == Dc("1234.5678")
+
+
+def test_regression_i_non_ascii_digits_and_negative_zero(sim=SIM):
+    with pytest.raises(sim.SimulationError) as err:
+        sim.simulate(daily([(100, 100)] * 3), by_len({}), params(unit="１"))                                    # teljes szélességű számjegy
+    assert err.value.reason == "param_type"
+    res = sim.simulate(daily([(100, 100)] * 4), by_len({1: "LONG"}), params(fee_rate="-0", fixed_fee="-0", slippage="-0"))
+    out = sim.to_jsonable(res)
+    assert out["fills"][0]["fee"] == "0" and out["fills"][0]["slippage_cost"] == "0"                           # nincs "-0" a kimenetben
+    assert not any(v.is_signed() for v in res["params"].values())
+
+
+# ---- a felülvizsgálat által jelzett hiányzó tesztek (ezek a javítás előtt is átmennek: a kódot nem, a tesztlefedettséget hiányolták) ----
+
+def test_a_sell_with_exactly_zero_net_proceeds_is_filled_and_leaves_zero_cash(sim=SIM):
+    s = daily([(10, 10), (10, 10), (10, 10), (10, 10), (5, 5), (1, 1)])
+    res = sim.simulate(s, by_len({1: "LONG", 4: "FLAT"}), params(initial_cash="110", fixed_fee="10"))
+    buy, sell = res["fills"]
+    assert (buy["quantity"], buy["cash_after"]) == (Dc(10), Dc(0))                                           # 100 // 10 = 10 db, terhelés 100 + 10 = 110
+    assert (sell["side"], sell["notional"], sell["fee"], sell["cash_after"]) == ("SELL", Dc(10), Dc(10), Dc(0))    # bevétel 10 - 10 = 0: nem negatív, teljesül
+    assert [(o["state"], o["reason"]) for o in res["orders"]] == [("FILLED", None), ("FILLED", None)] and res["problems"] == []
+    assert (res["final"]["cash"], res["final"]["quantity"]) == (Dc(0), Dc(0))
+    check_identities(res)
+
+
+def test_a_rejected_sell_clears_the_pending_state_so_the_next_decision_can_create_a_new_order(sim=SIM):
+    s = daily([(10, 10)] * 8)
+    res = sim.simulate(s, by_len({1: "LONG", 4: "FLAT", 5: "FLAT", 6: "FLAT", 7: "FLAT"}), params(initial_cash="100", fixed_fee="60"))
+    assert [(o["order_id"], o["side"], o["state"], o["reason"], day_of(o["created_at"])) for o in res["orders"]] == [
+        ("O1", "BUY", "FILLED", None, 1), ("O2", "SELL", "REJECTED", "fee_exceeds_cash", 4), ("O3", "SELL", "REJECTED", "fee_exceeds_cash", 5),
+        ("O4", "SELL", "REJECTED", "fee_exceeds_cash", 6), ("O5", "SELL", "EXPIRED", "end_of_data", 7)]       # minden elutasítás után a következő döntés új megbízást hoz
+    assert [d["action"] for d in res["decisions"]][3:7] == ["order", "order", "order", "expired"] and res["final"]["quantity"] == 4
+    assert [p["reason"] for p in res["problems"]] == ["fee_exceeds_cash"] * 3                                  # a lejárat nem elutasítás: nem kerül a probléma-listába
+
+
+def test_a_pending_sell_is_unchanged_by_an_opposite_target(sim=SIM):
+    s = daily([(99 + k, 100 + k) for k in range(1, 9)], avail={3: 5.5, 4: 5.8})
+    res = sim.simulate(s, by_len({1: "LONG", 3: "FLAT", 5: "LONG"}), params())
+    assert [(o["order_id"], o["side"], o["state"], o["reason"]) for o in res["orders"]] == [("O1", "BUY", "FILLED", None), ("O2", "SELL", "FILLED", None),
+                                                                                         ("O3", "BUY", "REJECTED", "opposite_while_pending")]
+    assert res["orders"][1]["eligible_bar"] == 6 and res["orders"][2]["eligible_bar"] is None                  # az eredeti függő eladás szándéka nem változott
+    assert fills_of(res) == [(2, "BUY", Dc(9), Dc(102)), (6, "SELL", Dc(9), Dc(106))]                         # 1000 // 102 = 9 (918), készpénz 82; eladás 9 * 106 = 954
+    assert (res["final"]["quantity"], res["final"]["cash"], [p["reason"] for p in res["problems"]]) == (Dc(0), Dc(1036), ["opposite_while_pending"])
+    check_identities(res)
+
+
+def test_non_monotone_availability_uses_the_prefix_maximum_by_hand(sim=SIM):
+    s = daily([(99 + k, 100 + k) for k in range(1, 9)], avail={2: 6})                                          # a 2. sáv késik (6. nap), a 3. sáv időben érkezik (3. nap)
+    seen = []
+    res = sim.simulate(s, lambda v: (seen.append(len(v)), "LONG" if len(v) >= 2 else None)[1], params())
+    assert [day_of(d["time"]) for d in res["decisions"]] == [1, 6, 7, 8] and seen == [1, 6, 7, 8]              # a 3. sáv sem látszik a 6. napig (előtag-szabály)
+    assert [(day_of(o["created_at"]), o["eligible_bar"] + 1) for o in res["orders"]] == [(6, 8)]               # o_7 = 6. nap nem > 6, o_8 = 7. nap igen
+    assert fills_of(res) == [(7, "BUY", Dc(9), Dc(107))] and res["final"]["value"] == Dc(1009)                # 1000 // 107 = 9, készpénz 37, 37 + 9 * 108
+    check_identities(res)
+
+
+def _independent_expected_decisions(series):
+    from itertools import accumulate
+    astar = list(accumulate((b.available_at for b in series.bars), max))
+    return [(t, sum(1 for a in astar if a <= t)) for t in sorted(set(astar))]
+
+
+def check_fill_rule(res, series):
+    """A döntési idők, a nézet hossza, a legkorábbi megengedett nyitó és a teljesítés ideje/referenciaára, a szimulátor kódjától függetlenül (lineáris keresés) újraszámolva."""
+    dur = datetime.timedelta(seconds=D.TIMEFRAMES[series.timeframe])
+    bars = series.bars
+    opens = [b.timestamp - dur for b in bars]
+    assert [(d["time"], d["view_len"]) for d in res["decisions"]] == _independent_expected_decisions(series)
+    assert [m["time"] for m in res["marks"] if m["kind"] == "close"] == [b.timestamp for b in bars]
+    assert [(m["bar_index"], m["ref"]) for m in res["marks"] if m["kind"] == "close"] == [(i, Dc(str(b.close))) for i, b in enumerate(bars)]
+    for o in res["orders"]:
+        later = [j for j, t in enumerate(opens) if t > o["created_at"]]                                         # az összes szigorúan későbbi nyitó
+        if o["state"] == "EXPIRED":
+            assert not later and o["eligible_bar"] is None
+        elif o["reason"] == "opposite_while_pending":
+            assert o["eligible_bar"] is None
+        else:
+            assert o["eligible_bar"] == later[0], o                                                              # a legkorábbi megengedett nyitó
+    by_id = {o["order_id"]: o for o in res["orders"]}
+    for fl in res["fills"]:
+        j = by_id[fl["order_id"]]["eligible_bar"]
+        assert (fl["bar_index"], fl["time"]) == (j, opens[j]) and fl["open"] == Dc(str(bars[j].open))
+        assert all(opens[k] <= by_id[fl["order_id"]]["created_at"] for k in range(j))                          # korábbi nyitó nem volt megengedett
+    for pr in res["problems"]:
+        if pr["reason"] in ("insufficient_cash", "fee_exceeds_cash"):
+            assert pr["time"] == opens[by_id[pr["order_id"]]["eligible_bar"]]
+
+
+def random_availability_series(seed, n=40):
+    rng = random.Random(seed)
+    cap = S.make_capture(seed, n)
+    kept = [b for i, b in enumerate(cap["bars"]) if i == 0 or rng.random() > 0.15]                              # véletlen kereskedési szünetek (kihagyott sávok)
+    for b in kept:
+        ts = datetime.datetime.strptime(b["timestamp"], "%Y-%m-%dT%H:%M:%SZ")
+        b["available_at"] = (ts + datetime.timedelta(days=rng.choice([0, 0, 0, 0.25, 1, 2.5, 6]))).strftime("%Y-%m-%dT%H:%M:%SZ")    # nem monoton elérhetőség
+    cap["bars"] = kept
+    return load(cap)
+
+
+def test_rules_hold_on_random_non_monotone_availability_and_pauses(sim=SIM):
+    runs = nonmono = pauses = 0
+    for seed in range(14):
+        series = random_availability_series(seed)
+        avail = [b.available_at for b in series.bars]
+        nonmono += any(avail[i] < avail[i - 1] for i in range(1, len(avail)))
+        dur = datetime.timedelta(seconds=D.TIMEFRAMES[series.timeframe])
+        pauses += any(series.bars[i].timestamp - dur > series.bars[i - 1].timestamp for i in range(1, len(series.bars)))
+        for prm in (_COMBOS[0], _COMBOS[3]):
+            for strat in _STRATEGIES:
+                res = sim.simulate(series, strat, prm)
+                check_identities(res)
+                check_fill_rule(res, series)
+                runs += 1
+    assert runs == 14 * 2 * 3 and nonmono >= 10 and pauses >= 10                                                # a véletlen minták ténylegesen nem monotonok és szüneteket tartalmaznak
+
+
+def test_the_sizing_guard_catches_an_injected_oversizing_fault(sim=SIM):
+    """Célzott hibainjektálás egy eldobható másolaton: a helyes aritmetikát nem gyengítjük, a védelem akkor is megfogja a hibás méretezést."""
+    src = Path(sim.__file__).read_text(encoding="utf-8")
+    faulty_src = src.replace("(size_price * (1 + r) * u)", "(size_price * u)")                                    # a díjarány kimarad a méretből
+    assert faulty_src != src
+    with tempfile.TemporaryDirectory() as tmp:
+        faulty = load_source("faulty_sizing", faulty_src, tmp)
+        try:
+            with pytest.raises(faulty.SimulationError) as err:
+                faulty.simulate(daily([(100, 100)] * 4), by_len({1: "LONG"}), params(fee_rate="0.05"))
+            assert err.value.reason == "sizing_violation"
+            unguarded_src = faulty_src.replace("if notional + fee > cash:", "if False:")                         # a védelem nélkül ugyanez a hiba negatív készpénzt adna
+            assert unguarded_src != faulty_src
+            unguarded = load_source("unguarded_sizing", unguarded_src, tmp)
+            try:
+                res = unguarded.simulate(daily([(100, 100)] * 4), by_len({1: "LONG"}), params(fee_rate="0.05"))
+                assert res["final"]["cash"] == Dc(-50)                                                         # 1000 - 10 * 100 * 1,05
+            finally:
+                sys.modules.pop(unguarded.__name__, None)
+        finally:
+            sys.modules.pop(faulty.__name__, None)
+
+
+EQUIVALENT_MUTANTS = {
+    # a `cash - f <= 0` előzetes ág viselkedésileg egyenértékű: negatív számlálónál a `//` nulla felé csonkít, így q <= 0 < u, tehát a vétel úgyis insufficient_cash
+    "negativ_szamlalo_elozetes_ag": [("if avail <= 0:", "if False:")],
+}
+
+
+def test_equivalent_mutants_change_no_result(sim=SIM):
+    series = [daily([(1, 1)] * 5), daily([(100, 100)] * 5), daily([(5, 5), (5, 5), (3, 3), (4, 4), (4, 4)]), random_availability_series(3)]
+    cases = [params(initial_cash="1", fixed_fee="2"), params(initial_cash="2", fixed_fee="2"), params(initial_cash="2.5", fixed_fee="2"), params(initial_cash="0.5", fixed_fee="0.5"),
+             params(), _COMBOS[0], _COMBOS[3]]
+    with tempfile.TemporaryDirectory() as tmp:
+        for name, reps in EQUIVALENT_MUTANTS.items():
+            mutant = load_mutant(name, reps, tmp, base=Path(sim.__file__))
+            try:
+                for ser in series:
+                    for prm in cases:
+                        for strat in (by_len({1: "LONG", 3: "FLAT"}), lambda v: "LONG"):
+                            assert sim.simulate(ser, strat, prm) == mutant.simulate(ser, strat, prm), (name, prm)
+            finally:
+                sys.modules.pop(mutant.__name__, None)
+
+
+def test_the_symbol_rule_matches_the_data_contract(sim=SIM):
+    assert sim._SYMBOL.pattern == D._SYMBOL.pattern and sim._SYMBOL.flags == D._SYMBOL.flags
+
+
+def test_to_jsonable_handles_tuples_and_nested_values(sim=SIM):
+    out = sim.to_jsonable({"a": (Dc("1.50"), [Dc(2), None, True, "x"]), "t": BASE})
+    assert out == {"a": ["1.50", ["2", None, True, "x"]], "t": "2025-12-31T00:00:00Z"}
+
+
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Célzott mutációs próba: a fenti próbák közül legalább egynek el kell buknia minden szándékos elrontásnál
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -453,6 +773,14 @@ SUITE = (
     test_5a_a_future_price_change_does_not_alter_decisions_and_intents_before_the_data_is_available,
     test_5b_a_changed_fill_price_changes_price_and_quantity_by_the_formula_while_decisions_stay, test_sizing_rounds_down_to_the_unit_and_includes_the_costs,
     test_decimal_rules, test_identities_cash_and_sizing_hold_on_generated_series,
+    test_regression_a_a_strategy_cannot_change_the_engine_decimal_context, test_regression_a_the_strategy_runs_in_its_own_default_context,
+    test_regression_b_a_strategy_may_divide_decimals_without_a_motor_precision_error, test_regression_c_a_strategy_error_is_not_a_motor_precision_error,
+    test_regression_d_a_str_subclass_target_is_rejected, test_regression_e_a_directly_built_series_is_validated_at_the_entry_point,
+    test_regression_f_oversized_parameters_are_rejected_before_the_run_starts, test_regression_g_mixed_and_unknown_parameter_keys_are_rejected_deterministically,
+    test_regression_h_parameter_parsing_does_not_depend_on_the_callers_decimal_context, test_regression_i_non_ascii_digits_and_negative_zero,
+    test_a_sell_with_exactly_zero_net_proceeds_is_filled_and_leaves_zero_cash, test_a_rejected_sell_clears_the_pending_state_so_the_next_decision_can_create_a_new_order,
+    test_a_pending_sell_is_unchanged_by_an_opposite_target, test_non_monotone_availability_uses_the_prefix_maximum_by_hand,
+    test_rules_hold_on_random_non_monotone_availability_and_pauses, test_the_sizing_guard_catches_an_injected_oversizing_fault,
 )
 
 _BISECT = "j_star = bisect.bisect_right(open_times, time)"
@@ -472,14 +800,33 @@ MUTANTS = {
     "eladasi_csuszas_elojele": [("price = open_ * (1 - s)", "price = open_ * (1 + s)")],
     "jovobeli_sav_latszik": [("m = bisect.bisect_right(astar, time)", "m = n")],
     "eladasi_dij_ellenorzes_nelkul": [("if cash + (notional - fee) < 0:", "if False:")],
+    # a felülvizsgálat utáni javítások ágai
+    "strategia_a_motor_kontextusat_kapja": [("with decimal.localcontext(make_strategy_context()):", "with decimal.localcontext(decimal.getcontext()):")],
+    "strategia_kontextus_izolacio_nelkul": [("with decimal.localcontext(make_strategy_context()):", "if True:")],
+    "strategia_hiba_nyersen_megy_tovabb": [('raise SimulationError("strategy_error", None, type(exc).__name__) from exc', "raise")],
+    "sorozat_ellenorzes_nincs": [("    check_series(series)\n    try:\n        with decimal.localcontext(make_context()):\n            return _run",
+                                  "    try:\n        with decimal.localcontext(make_context()):\n            return _run")],
+    "savok_adatszerzodes_ellenorzese_nincs": [("_clean, problems = check_bar(raw)", "_clean, problems = None, []")],
+    "ures_sorozat_engedett": [("or len(series.bars) == 0:", "or False:")],
+    "novekvo_idobelyeg_nincs_ellenorizve": [("if previous is not None and bar.timestamp <= previous:", "if False:")],
+    "param_kontextus_a_hivotol_fugg": [("with decimal.localcontext(make_context()):\n        out = {key: _parse_param(key, params[key]) for key in PARAMS}",
+                                        "if True:\n        out = {key: _parse_param(key, params[key]) for key in PARAMS}")],
+    "param_jegykorlat_nincs": [("if len(dec.as_tuple().digits) > MAX_DIGITS:", "if False:")],
+    "param_kitevokorlat_nincs": [("if abs(dec.adjusted()) > MAX_EXPONENT:", "if False:")],
+    "negativ_nulla_marad": [("    if dec == 0:\n        return Decimal(0)", "    if False:\n        return Decimal(0)")],
+    "nem_ascii_szamjegy_engedett": [('if not value.isascii() or value != value.strip() or "_" in value:', 'if value != value.strip() or "_" in value:')],
+    "kulcstipus_nincs_ellenorizve": [("odd = sorted({type(k).__name__ for k in params if type(k) is not str})", "odd = []")],
+    "cel_tipus_laza": [("if target is not None and not (type(target) is str and target in TARGETS):", "if target is not None and target not in TARGETS:")],
+    "eladas_nulla_bevetel_elutasitva": [("if cash + (notional - fee) < 0:", "if cash + (notional - fee) <= 0:")],
+    "eladas_elutasitas_utan_fuggo_marad": [('reject(order, "fee_exceeds_cash", time, price)', 'reject(order, "fee_exceeds_cash", time, price); pending = order')],
+    "sizing_ellenorzes_nelkul": [("if notional + fee > cash:", "if False:")],
+    # csak a független teljesítés-szabály ellenőrző (check_fill_rule) fogja meg: a kézi példák nem
+    "teljesites_savindexe_eltolt": [('"time": time, "bar_index": idx, "side"', '"time": time, "bar_index": idx + 1, "side"')],
 }
 
 
-def load_mutant(name, replacements, workdir):
-    source = Path(REAL.__file__).read_text(encoding="utf-8")
-    for old, new in replacements:
-        assert source.count(old) == 1, (name, old)                                                              # a mutáció illesztési pontja pontosan egyszer szerepel
-        source = source.replace(old, new)
+def load_source(name, source, workdir):
+    """Egy módosított forrásszövegből ideiglenes modult tölt be (a tárolón kívüli ideiglenes könyvtárból)."""
     path = Path(workdir) / f"mutant_{name}.py"
     path.write_text(source, encoding="utf-8")
     modname = f"trading_model._mutant_{name}"
@@ -492,6 +839,14 @@ def load_mutant(name, replacements, workdir):
         sys.modules.pop(modname, None)
         raise
     return module
+
+
+def load_mutant(name, replacements, workdir, base=None):
+    source = Path(base if base is not None else REAL.__file__).read_text(encoding="utf-8")
+    for old, new in replacements:
+        assert source.count(old) == 1, (name, old)                                                              # a mutáció illesztési pontja pontosan egyszer szerepel
+        source = source.replace(old, new)
+    return load_source(name, source, workdir)
 
 
 def test_mutants_are_caught(sim=SIM):
