@@ -20,6 +20,7 @@ Ezt neked kell elvégezned, a modul nem telepít. A Cloudflare menüneveit **nem
 - Nyisd meg a fő URL-t telefonon: a fejlécben `v47.12` látszik, a „Gyorsszavazás” a 20 horgonyt kínálja.
 - A `_headers` fájl beállításai (a feed ne gyorsítótárazódjon, a lap ne legyen indexelhető): ellenőrizd böngésző fejlesztői eszközeivel, hogy az `atm_history.json` válasza `Cache-Control: no-store`, és a lapé `X-Robots-Tag: noindex`. Ha nem érvényesül, a szakaszváltás előtt töröld a gyorsítótárat a próbaeszközön, és szólj.
 - Ne hozz létre Git-összekötést, ne adj meg API-kulcsot.
+- **Gépi ellenőrzés kívülről (feltöltés UTÁN, csak olvasás):** `python -m validation.hu_pilot.live.pagecheck <projektnév>.pages.dev --stage 1` (a szakasz száma 1, 2 vagy 4). Megnézi, hogy a cím főcím-e (nem előnézeti), a verzió `v47.12`-e, a feed a szakasz címeit tartalmazza-e sorrendre is, érvényesülnek-e a `_headers` fejlécek, és a kiszolgált `index.html` meg `atm_history.json` bájtra azonos-e a jegyzékkel. Kulcsot nem használ, a címek szövegét nem írja ki. A feltöltés ELŐTTI telepítés-ellenőrt nem helyettesíti.
 
 ## Szavazatok automatikus mentése külön tárolóba (a te telefonodon, egyszer)
 Az alkalmazás beépített felhő-mentése GitHub privát tárolóba ír. Kell hozzá:
