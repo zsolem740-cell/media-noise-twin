@@ -17,7 +17,7 @@
 - Tilos bármilyen súlyozást alkalmazni.
 - Pull Requestet nyitni vagy bármit egyesíteni (merge) csak a felhasználó kifejezett, esetenkénti jóváhagyásával szabad; a jóváhagyás a megnevezett változásra szól, nem általános. Jóváhagyás nélkül tilos. Egyesítés előtt meg kell nézni, mit visz be az ág a célághoz képest (fájlok, törlések), és ha többet, mint amit a felhasználó jóváhagyott, meg kell állni és szólni. Jóváhagyott: 2026-11-16, a Média-Zaj app (public/ és PROJECT_VERSION) v47.11 frissítése a main ágra, külön, csak az appot tartalmazó ágról.
 - Tilos commitolni a results/ mappa tartalmát.
-- Tilos valódi Gemini vagy Groq API-hívást indítani; csak hamis átvitellel tesztelj.
+- Tilos valódi Gemini vagy Groq API-hívást indítani; csak hamis átvitellel tesztelj. Kivétel kizárólag a Geminire (a Groq tiltása változatlan): egy külön, a felhasználó által kifejezetten jóváhagyott, azonosított futás, amelynek jóváhagyása megnevezi a futás azonosítóját és a rögzített modell-, kérés-, token- és időkeretet, és csak ezen a kereten belül. A kivétel nem általános, nem vonatkozik más futásra, nem engedi a fizetős csomagot, a szolgáltató- vagy modellváltást. A szabály módosításának és a futás jóváhagyásának két külön lépésnek kell lennie, egyik sem helyettesíti a másikat.
 
 ## Szerepek és kommunikáció
 - **Claude: építő mérnök.** Kód, tesztek, ágak, ellenőrzés. Minden változás külön ágon, teszttel, és a leírás megmondja, mit nem sikerült kipróbálni. A `main`-be egyesítés csak a felhasználó esetenkénti jóváhagyásával (lásd a tiltásoknál).
