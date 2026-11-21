@@ -360,3 +360,32 @@ def test_fit_with_real_sized_thinking_usage_stays_inside_planned_limits(tmp_path
     api = FakeApi(model_version=MODEL, per_call_tokens=1500)
     s, b = run(tmp_path, api, cases=FIRST, budget=live.Budget(max_requests=10, max_tokens=30_000, max_seconds=600))
     assert s["requests"] == 7 and s["tokens"]["counted_total"] < 30_000 and s["stopped"] is None
+
+
+# ---- tokenszámlálás: a gondolkodási token nem számítódik kétszer ----
+def _usage_raw(p, c, th, tot):
+    u = {"promptTokenCount": p, "candidatesTokenCount": c}
+    if th is not None:
+        u["thoughtsTokenCount"] = th
+    if tot is not None:
+        u["totalTokenCount"] = tot
+    return Raw(200, json.dumps({"candidates": [], "usageMetadata": u, "modelVersion": MODEL}), None, 1)
+
+
+def test_thoughts_are_not_counted_twice_next_to_the_provider_total():
+    b = live.Budget(max_requests=10, max_tokens=10**9, max_seconds=10**6)
+    seq = [_usage_raw(1669, 583, 1582, 3834),          # a szolgáltatói total már TARTALMAZZA a gondolkodást (a valódi futás 1. kérése)
+           _usage_raw(145, 7, 0, 152),
+           _usage_raw(100, 10, 40, None),              # nincs total mező: p+c+th
+           _usage_raw(100, 10, None, 110)]             # nincs gondolkodás mező: total
+    it = iter(seq)
+    bt = live.BudgetedTransport(lambda m, body: next(it), b, MODEL, [], lambda: "x")
+    body = {"generationConfig": {"maxOutputTokens": 10}, "contents": []}
+    for _ in seq:
+        bt(MODEL, body)
+    counted = [e["usage"]["counted"] for e in b.raw]
+    assert counted == [3834, 152, 150, 110]                                            # max(total, p+c+th): soha nem total + thoughts
+    assert b.tokens == sum(counted) == 4246
+    assert b.thoughts == 1582 + 40 and b.prompt == 1669 + 145 + 100 + 100 and b.completion == 583 + 7 + 10 + 10
+    assert b.tokens != 3834 + 1582 + 152 + 150 + 110 + 40                             # az „összeadott" változat más szám lenne: nem ez történik
+    assert all(e["usage"]["counted"] == max(e["usage"]["total_reported"], e["usage"]["prompt"] + e["usage"]["completion"] + e["usage"]["thoughts"]) for e in b.raw)
