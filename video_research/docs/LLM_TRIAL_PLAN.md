@@ -29,3 +29,15 @@ A siker a kézi elvárás (`gold`) ellen mérendő: kimaradt-e elvárt tétel, k
 
 ## Mit mér majd, és mit nem
 Mér: kimarad-e elvárt tétel, kerül-e be téves, helyes-e az idézet, megmarad-e a korlátozás a magyar állításban, különbözik-e A és B a kérdés szerint, magyar kérdés + angol átirat közös kulcsszó nélkül, injekció, reklám, nulla találat. Nem mér: nagy mintán vett pontosságot (9 eset anekdotikus), költséget pénzben, hosszú (több órás) átiratok viselkedését.
+
+
+## Első, kisebb próba (előkészítés, 2026-11-21; jóváhagyásra vár, hívás nem volt)
+- Modell: `gemini-3.6-flash` (tervezett azonosító; ez még **nem** futtatási engedély és **nem** igazolt ingyenesség).
+- Esetek: `A_tools` (magyar kérdés, angol átirat), `G_needle` (egy hasznos részlet sok zajban), `D_irrelevant` (irreleváns, elvárt nulla találat).
+- Javasolt plafon: 6 tényleges kérés (minden retry és javítás beleszámít), 30 000 összes token, 600 s, nincs modell-/szolgáltatóváltás.
+- **Hívás nélküli illeszkedés-vizsgálat (a meglévő vezérlő, hamis átvitel, 1500 token/kérés):** a három eset legalább **7 kérést** igényel még újrapróbálás és javítás nélkül is (A: 1 kinyerés + 3 szemantikai ellenőrzés; G: 1 + 1; D: 1), ezért a **6 kérés nem elég**: a 6. kérés után a `D_irrelevant` nem fut le. Az idő (≈7 × 13 s kérésköz ≈ 1,5 perc) és a token (≈11 ezer hamis értékkel) belefér; a valós gondolkodási tokenszám ismeretlen. A tételszám a valódi modellnél más lehet, ami a szemantikai hívások számát változtatja.
+- A vezérlőnek **nincs részhalmaz-kapcsolója**: a jelenlegi `--live` mind a 14 esetet futtatná; a három esetre szűkítés kódváltoztatás (nem végeztem el). A vizsgálatot egy eldobható szkripttel végeztem, a repó módosítása nélkül.
+- Döntés a tulajdonosé: a kérésplafon emelése (legalább 7, tartalékkal pl. 10), a szemantikai ellenőrzés kikapcsolása (kódváltoztatás kell), vagy a plafon megtartása azzal, hogy a `D_irrelevant` nem fut le. Önállóan nem növeltem.
+
+## Ismert korlát: közös kvótakeret az óránkénti bottal
+A `.github/workflows/gemini-labels.yml` óránként fut (`cron: 17 * * * *`), a `GEMINI_API_KEY` titkot és a `GEMINI_MODEL` változót használja. A Gemini limitjei **projektenként és modellenként** érvényesek, ezért ha a próba kulcsa ugyanahhoz a projekthez tartozik, és a bot ugyanazt a modellt használja, a napi (RPD) és percenkénti keret közös: a próba fogyaszthatja a bot keretét, és a bot a próbáét. A bot napi felhasználását a próba előtt a tulajdonosnak kell figyelembe vennie. A botot nem módosítottam és nem állítottam le. Hogy ugyanaz-e a projekt és a modell, innen nem állapítható meg.
