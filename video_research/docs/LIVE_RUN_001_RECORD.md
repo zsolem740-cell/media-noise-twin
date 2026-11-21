@@ -53,3 +53,19 @@ A felhasználó által biztosított valódi átiratok a meglévő `video_researc
 Egyéb paraméterek: `question` (kutatási kérdés), `language` (`hu` vagy `en`), `title` (opcionális), `video_url` (opcionális YouTube/TikTok-link; **nem** igazolt átirat–videó egyezés), `known_information` (opcionális). Eredet: `user_provided_transcript`. Korlát: 1 átirat / import-feladat; a hatásos hosszkorlát 200 000 karakter (`max_transcript_chars`).
 **Nem támogatott:** docx/json/TTML/ASS és egyéb formátum, beszélőcímkék, több videó egy feladatban. **A parser nem szűri** a duplikált sorokat (a YouTube automatikus VTT-jeiben ilyenek előfordulhatnak).
 **Fontos korlát a következő értékeléshez:** a valódi-modell értékelő (`acceptance/runner.py --live`) az eseteket a lefagyasztott `acceptance/cases.py`-ból olvassa (szegmenslistából épít SRT-t/szöveget); fájlból olvasó esetbetöltő nincs. Valódi átiratos értékeléshez új, verziózott, külön lefagyasztott esetkészlet kell; ezt most nem fejlesztjük.
+
+## 6. Utólagos tartalmi egybevetés: mi kerül havi 5 dollárba? (2026-11-21, emberi/kódolvasásos, modellhívás nélkül)
+Az eredeti eredmény fájljai nem módosultak (a SHA-256 értékek változatlanok); ez kiegészítés, nem javítás.
+
+| | Szöveg |
+|---|---|
+| Eredeti angol forrásmondat (a kérésben elküldve, 2. szegmens) | „You also need the AutoDroid app, **which is free**, plus **a Gemini API key, and that costs about five dollars a month in my case**.” |
+| A modell magyar állítása (nyers kimenet = feldolgozott tétel) | „Szükséges az **ingyenes AutoDroid alkalmazás**, valamint egy **Gemini API-kulcs, amely a forrás tapasztalata szerint nagyjából havi 5 dollárba kerül**.” |
+
+**Megállapítás: a magyar állítás helyesen nevezi meg, minek van költsége.**
+- A „which is free” az AutoDroid alkalmazásra vonatkozik: az állításban „ingyenes AutoDroid alkalmazás” → helyes, a költség nem az alkalmazáshoz kerül.
+- A „that costs about five dollars a month” legtermészetesebb olvasata a közvetlenül előtte álló „Gemini API key”-re vonatkozik; az állítás a költséget a Gemini API-kulcshoz rendeli („amely … kerül”) → helyes. Az „about” → „nagyjából”, az „a month” → „havi”, a „five dollars” → „5 dollár” (az eredeti nem mondja ki, hogy USD).
+- **Maradék pontatlanságok / korlátok (nem hibák, de rögzítendők):**
+  1. A forrásmondat szóhasználata („that” = a kulcs) lazán fogalmaz; a költség valószínűleg a Gemini API **használatának/előfizetésének** díja, nem a kulcs mint tárgy ára. A magyar állítás a forrás szerkezetét követi („kulcs … kerül”), és nem dönti el ezt. Az eredeti szöveg sem mond többet, tehát nincs elveszett vagy hozzátett információ.
+  2. Az „in my case” → „a forrás tapasztalata szerint”: a „forrás” a videó beszélője, és a személyes jelleg megmarad, de a „tapasztalata” enyhén mást sugall (tapasztalat) mint a „saját esetében” (az ő használati körülményei). Kisebb jelentésárnyalat-eltolódás, az állítás nem erősebb a forrásnál.
+- **Az értékelő szabályának korlátja (nem módosítva):** a kézi elvárás szócsoportja a költségnél `[havi/hónap] ÉS [saját/szerző]`. A tényleges állításban a „saját/szerző” szavak nincsenek benne („a forrás tapasztalata szerint” szerepel), ezért ha a modell külön `cost` tételt adott volna ezzel a megfogalmazással, a lexikális szabály a korlátozás elvesztését jelezte volna, noha jelentésben megmaradt. A szócsoportos ellenőrzés tehát lexikális, nem szemantikai; ezt a következő elvárások rögzítésekor figyelembe kell venni (több szinonima, vagy emberi ítélet).
