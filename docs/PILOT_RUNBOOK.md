@@ -59,3 +59,8 @@ A snapshot a `data/`, `mentesek/` és `results/` mappát nem olvassa, a titkokat
 A `results/` nincs gitben, ezért elveszhet. A horgonykör közben már leszavazott lehet, ezért a horgonyokat nem a feedből, hanem a leszavazott exportokból kell rögzíteni:
 `python -m validation.hu_pilot.run select --anchors-from EXPORT...` (mind a 20 címnek azonosan szerepelnie kell az exportokban).
 A mérési és a külföldi címek az aktuális feedből jönnek, a horgonyokat és közel-duplikátumaikat kizárva; a `selection.json` `reselection` mezője rögzíti ezt. Ez csak addig tisztességes, amíg a mérési címeket senki nem látta és a modell nem futott. Ne töröld a `results/` mappát (`git clean` nélkül dolgozz a munkafán).
+
+## Már látott címek kizárása (például próbakör után)
+Ha szavazók már láttak címeket (például a mérési kör címeit próbán), az új kiválasztásból ezeket ki kell zárni:
+`python -m validation.hu_pilot.run select --exclude-from PROBA_EXPORT...`
+A kizárt címek és közel-duplikátumaik sem a horgonyok, sem a mérési címek között nem szerepelnek. A `selection.json` `exclusion` mezője csak a darabszámot és az azonosítók hash-ét rögzíti (cím és szavazó nincs benne). A meglévő `selection.json` és `stage*` fájlok nem íródnak felül: az új kiválasztáshoz a régieket előbb félre kell tenni (nem törölni), vagy másik `results/` helyen kell futtatni. Az exportokból csak az azonosító és a cím kerül felhasználásra, a szavazó betűje és a szavazat nem. A próba exportja nem kerülhet a tárolóba.

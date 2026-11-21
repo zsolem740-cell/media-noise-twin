@@ -1,6 +1,7 @@
 """A magyar pilot parancssora. Modellt és hálózatot nem használ.
 
   python -m validation.hu_pilot.run select --anchors-from EXPORT...   újrakiválasztás: a horgonyok a leszavazott exportokból, a többi a feedből
+  python -m validation.hu_pilot.run select --exclude-from EXPORT...   kiválasztás úgy, hogy a már látott (például próbakör) címek sem a horgonyok, sem a mérési címek között nem szerepelnek
 python -m validation.hu_pilot.run select                  kiválasztás + pilot-feed fájlok + horgony-előnézet (results/)
   python -m validation.hu_pilot.run select-foreign          külföldi nyelvű kör (en, de, sl) a meglévő kiválasztás mellé; a magyar címeket nem érinti
   python -m validation.hu_pilot.run analyze EXPORT...       kappa, egyezés, kapu, harmadik szavazat listája (results/analysis.json, human_reference.csv)
@@ -24,8 +25,8 @@ def _paths(cfg, base=None):
     return rdir, {k: rdir / v for k, v in cfg["files"].items()}
 
 
-def anchors_from_exports(paths, cfg):
-    """A már leszavazott horgonyok (id, cím) a szavazói exportokból. Minden szavazó ugyanazt a horgonykört látta: az azonosítóhoz tartozó cím mindenhol azonos, és pontosan a konfigurált darabszám kell."""
+def _titles_in_exports(paths):
+    """A szavazói exportokban látott (azonosító, cím) párok, első előfordulás sorrendjében. Csak az azonosítót és a címet olvassa: a szavazó betűjét és a szavazatot nem veszi át."""
     rows, order = {}, []
     for p in paths:
         for b in analysis._backups_from_text(Path(p).read_bytes().decode("utf-8")):
@@ -38,12 +39,26 @@ def anchors_from_exports(paths, cfg):
                     raise ValueError(f"az azonosítóhoz két különböző cím tartozik: {v['id']}")
                 if v["id"] not in order:
                     order.append(v["id"])
+    return rows, order
+
+
+def titles_from_exports(paths):
+    """Már látott címek (például a próbakör) kizáráshoz: [{id, title}]. Üres eredmény hiba, mert akkor a kizárás észrevétlenül elmaradna."""
+    rows, order = _titles_in_exports(paths)
+    if not order:
+        raise ValueError("az exportokban nincs egyetlen cím sem: a kizárás nem végezhető el")
+    return [{"id": i, "title": rows[i]} for i in order]
+
+
+def anchors_from_exports(paths, cfg):
+    """A már leszavazott horgonyok (id, cím) a szavazói exportokból. Minden szavazó ugyanazt a horgonykört látta: az azonosítóhoz tartozó cím mindenhol azonos, és pontosan a konfigurált darabszám kell."""
+    rows, order = _titles_in_exports(paths)
     if len(order) != cfg["sizes"]["anchors"]:
         raise ValueError(f"{len(order)} különböző cím van az exportokban, kellene: {cfg['sizes']['anchors']} horgony")
     return [{"id": i, "title": rows[i]} for i in order]
 
 
-def do_select(cfg, feed_path=None, base=None, anchors_from=None):
+def do_select(cfg, feed_path=None, base=None, anchors_from=None, exclude_from=None):
     rdir, f = _paths(cfg, base)
     feed, items = selection.load_feed(feed_path or REPO_ROOT / cfg["feed"])
     override = None
@@ -54,8 +69,9 @@ def do_select(cfg, feed_path=None, base=None, anchors_from=None):
         if f[k].exists():
             raise FileExistsError(f"{f[k].name} már létezik: a kiválasztás nem íródik felül")
     fixed = anchors_from_exports(anchors_from, cfg) if anchors_from else None
-    s = selection.select(items, cfg, override, fixed)
-    fo = selection.select_foreign(items, cfg, [i["title"] for i in s["anchors"] + s["measured"]])
+    excluded = titles_from_exports(exclude_from) if exclude_from else None
+    s = selection.select(items, cfg, override, fixed, excluded)
+    fo =selection.select_foreign(items, cfg, [i["title"] for i in s["anchors"] + s["measured"]])
     sel = {"seed": cfg["seed"], "feed_generated_at": feed.get("generated_at"), "pool": s["pool"], "enriched_pool": s["enriched_pool"], "excluded": s["excluded"],
            "anchor_ids": [i["id"] for i in s["anchors"]], "measured_ids": [i["id"] for i in s["measured"]],
            "measured_random_ids": s["measured_random_ids"], "measured_enriched_ids": s["measured_enriched_ids"], "source_counts": s["source_counts"],
@@ -63,6 +79,9 @@ def do_select(cfg, feed_path=None, base=None, anchors_from=None):
     if fixed:
         sel["reselection"] = {"anchors_fixed_from": "leszavazott exportok", "anchor_ids_sha256": hashlib.sha256("\n".join(a["id"] for a in fixed).encode()).hexdigest(),
                               "note": "újrakiválasztás: a régi selection.json elveszett; a horgonyok a leszavazott címek, a mérési és külföldi címek az aktuális feedből"}
+    if excluded:
+        sel["exclusion"] = {"seen_titles": len(excluded), "ids_sha256": hashlib.sha256("\n".join(sorted(e["id"] for e in excluded)).encode()).hexdigest(),
+                            "note": "a kizárt címeket a szavazók már látták (próbakör); egyik szakaszban sem szerepelnek, azonosítójuk és címük a jegyzékben nincs"}
     feeds.write_json(f["selection"], sel, rdir)
     feeds.write_json(f["stage1"], feeds.build_feed(s["anchors"], "stage1-anchors", feed), rdir)
     feeds.write_json(f["stage2"], feeds.build_feed(s["measured"], "stage2-measured", feed), rdir)
@@ -171,6 +190,8 @@ def main(argv):
         out = do_select(cfg)
     elif cmd == "select" and len(rest) >= 2 and rest[0] == "--anchors-from":
         out = do_select(cfg, anchors_from=rest[1:])
+    elif cmd == "select" and len(rest) >= 2 and rest[0] == "--exclude-from":
+        out = do_select(cfg, exclude_from=rest[1:])
     elif cmd == "select-foreign" and not rest:
         out = do_select_foreign(cfg)
     elif cmd == "analyze" and rest:

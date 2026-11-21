@@ -66,15 +66,25 @@ def eligible(items, cfg):
     return out, reasons
 
 
-def select(items, cfg, anchors_override=None, fixed_anchors=None):
-    """fixed_anchors: már leszavazott horgonyok (id, title) szó szerint, a feedtől függetlenül. A mérési címek ezekből és ezek közel-duplikátumaiból nem választhatók."""
+def _without(pool, rows, f):
+    """A készletből kiveszi azokat, amelyek azonosítója egyezik, vagy a címük a megadott soroké (id, title) vagy közel-duplikátuma."""
+    names = [norm(r["title"]) for r in rows]
+    ids = {r["id"] for r in rows}
+    return [it for it in pool if it["id"] not in ids and not any(norm(it["title"]) == n or jaccard(norm(it["title"]), n) >= f["jaccard_dup"] for n in names)]
+
+
+def select(items, cfg, anchors_override=None, fixed_anchors=None, excluded=None):
+    """fixed_anchors: már leszavazott horgonyok (id, title) szó szerint, a feedtől függetlenül. A mérési címek ezekből és ezek közel-duplikátumaiból nem választhatók.
+    excluded: (id, title) sorok, amelyeket a szavazók már láttak (például próbakör); sem a horgonyok, sem a mérési címek között nem szerepelhetnek, és közel-duplikátumaik sem."""
     sz, f = cfg["sizes"], cfg["filters"]
     pool, reasons = eligible(items, cfg)
-    if fixed_anchors:
-        fn = [norm(a["title"]) for a in fixed_anchors]
-        fid = {a["id"] for a in fixed_anchors}
+    if excluded:
         before = len(pool)
-        pool = [it for it in pool if it["id"] not in fid and not any(norm(it["title"]) == n or jaccard(norm(it["title"]), n) >= f["jaccard_dup"] for n in fn)]
+        pool = _without(pool, excluded, f)
+        reasons = dict(reasons, kizart_lathato_cim=before - len(pool))
+    if fixed_anchors:
+        before = len(pool)
+        pool = _without(pool, fixed_anchors, f)
         reasons = dict(reasons, rogzitett_horgony_duplikatum=before - len(pool))
     rng = random.Random(cfg["seed"])
     cap, used_src = f["source_cap_total"], {}
