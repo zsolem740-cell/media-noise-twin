@@ -31,13 +31,26 @@ A siker a kézi elvárás (`gold`) ellen mérendő: kimaradt-e elvárt tétel, k
 Mér: kimarad-e elvárt tétel, kerül-e be téves, helyes-e az idézet, megmarad-e a korlátozás a magyar állításban, különbözik-e A és B a kérdés szerint, magyar kérdés + angol átirat közös kulcsszó nélkül, injekció, reklám, nulla találat. Nem mér: nagy mintán vett pontosságot (9 eset anekdotikus), költséget pénzben, hosszú (több órás) átiratok viselkedését.
 
 
-## Első, kisebb próba (előkészítés, 2026-11-21; jóváhagyásra vár, hívás nem volt)
-- Modell: `gemini-3.6-flash` (tervezett azonosító; ez még **nem** futtatási engedély és **nem** igazolt ingyenesség).
-- Esetek: `A_tools` (magyar kérdés, angol átirat), `G_needle` (egy hasznos részlet sok zajban), `D_irrelevant` (irreleváns, elvárt nulla találat).
-- Javasolt plafon: 6 tényleges kérés (minden retry és javítás beleszámít), 30 000 összes token, 600 s, nincs modell-/szolgáltatóváltás.
-- **Hívás nélküli illeszkedés-vizsgálat (a meglévő vezérlő, hamis átvitel, 1500 token/kérés):** a három eset legalább **7 kérést** igényel még újrapróbálás és javítás nélkül is (A: 1 kinyerés + 3 szemantikai ellenőrzés; G: 1 + 1; D: 1), ezért a **6 kérés nem elég**: a 6. kérés után a `D_irrelevant` nem fut le. Az idő (≈7 × 13 s kérésköz ≈ 1,5 perc) és a token (≈11 ezer hamis értékkel) belefér; a valós gondolkodási tokenszám ismeretlen. A tételszám a valódi modellnél más lehet, ami a szemantikai hívások számát változtatja.
-- A vezérlőnek **nincs részhalmaz-kapcsolója**: a jelenlegi `--live` mind a 14 esetet futtatná; a három esetre szűkítés kódváltoztatás (nem végeztem el). A vizsgálatot egy eldobható szkripttel végeztem, a repó módosítása nélkül.
-- Döntés a tulajdonosé: a kérésplafon emelése (legalább 7, tartalékkal pl. 10), a szemantikai ellenőrzés kikapcsolása (kódváltoztatás kell), vagy a plafon megtartása azzal, hogy a `D_irrelevant` nem fut le. Önállóan nem növeltem.
+## Első, kisebb próba — frissített, NEM jóváhagyott futási keret (2026-11-21)
+- **Futásazonosító (javasolt, a jóváhagyásnak ezt kell megneveznie):** `LIVE-G36F-3C-001`
+- **Modell:** `gemini-3.6-flash` (tervezett azonosító; nem engedély, nem igazolt ingyenesség). Nincs modell- vagy szolgáltatóváltás: más modellel válaszoló szolgáltató megállítja a futást.
+- **Esetek (explicit `--cases`, csak ezek futnak, ebben a sorrendben):** `A_tools`, `G_needle`, `D_irrelevant`. A szemantikai ellenőrzés **bekapcsolva** marad.
+- **Keret:** legfeljebb **10 tényleges API-kérés** (minden retry és javítás beleszámít), legfeljebb **30 000 összes szolgáltatói token**, legfeljebb **600 s**.
+- **A 10 kérés nem garantál teljes befejezést.** Hívás nélkül mért minimum a három esetre: 7 kérés (3 kinyerés + 4 szemantikai ellenőrzés, hamis átvitellel, a hamisító modell tételszámával). Valódi modellnél a tételszám, a retry és a javítás miatt több is lehet; a maradék 3 kérés tartalék, nem garancia.
+- **Keretkimerülés = részleges állapot, nem hiba elrejtése.** A kész esetek és az ellenőrzött tételek megmaradnak; a ki nem futott esetek (`cases_not_run`), a részlegesek (`cases_partial`) és a ki nem szűrt/ellenőrizetlen tételek (`unchecked_not_results`) külön jelölve vannak. **Az a kinyert tétel, amelynek a szemantikai ellenőrzése elmaradt, nem szerepel a megállapítások között és nem „ellenőrzött eredmény”**; külön listában van, „NEM eredmény” felirattal, és a lefedettség `semantic_check_incomplete` okot mutat.
+- **Pontos indítóparancs** (a tulajdonos a saját környezetében; a `GEMINI_API_KEY` az ő környezetében van; a három `--attest-*` kapcsoló **az ő igazolása**, az ügynök nem állította be):
+  `VR_GEMINI_MODEL=gemini-3.6-flash python -m video_research.acceptance.runner --live --cases A_tools,G_needle,D_irrelevant --run-id LIVE-G36F-3C-001 --max-requests 10 --max-tokens 30000 --max-seconds 600 --attest-free-tier --attest-no-billing --attest-owner-rule-change`
+  Minden paraméter kötelező (nincs alapérték); üres, hibás, ismeretlen, kizárt vagy ismétlődő esetlistára, hiányzó futásazonosítóra/keretre, használt futásazonosítóra, nem tiszta munkafára a program hívás nélkül megáll.
+
+### Mit garantál a keret és mit nem (pontosan)
+| Keret | Kikényszerítés | Szigorú? |
+|---|---|---|
+| Kérésszám | az átvitel-rétegben minden tényleges kérés előtt; az újrapróbálás és a javítás is ott megy át | **Igen**: a 11. kérés nem indulhat (tesztelve) |
+| Idő (600 s) | minden kérés előtt (a 13 s kérésköz várakozása után) | Részben: a már elindított kérés befejeződhet; a túllépés legfeljebb egy kérés időkorlátja (60 s) |
+| Token (30 000) | minden kérés előtt: **konzervatív becsült bemenet** (kérés-törzs karakterszáma/2 + 1, nem tokenizáló) + a kérésben beállított `maxOutputTokens` (kinyerés 4096, szemantikai 50) ≤ maradék; a válasz után a ténylegesen jelentett tokenek (`max(total, prompt+candidates+thoughts)`) számolódnak | **NEM kemény plafon.** Lásd lent. |
+
+A token-plafon azért nem szigorú, mert (1) a valódi bemeneti tokenszámot csak a válaszból tudjuk meg (az előzetes `countTokens` újabb API-kérés volna), a becslés heurisztika; (2) a gondolkodási tokenekre **nem állítottam be korlátot**: a `gemini-3.6-flash`-hoz tartozó gondolkodás-korlát mező nevét nem ellenőriztem és nem találom ki, és azt sem igazoltam, hogy a `maxOutputTokens` a gondolkodási tokeneket is korlátozza erre a modellre; így egy válasz a foglalást ismeretlen mértékben túllépheti; (3) időtúllépett vagy hibás kérés tényleges tokenhasználata ismeretlen (kérésként számolt, tokenként 0); (4) a szolgáltató oldali elszámolás eltérhet a saját számlálótól. Garantált tulajdonság: **új kérés nem indul, ha a már számolt tokenek + a konzervatív foglalás meghaladná a plafont**; az utólagos számlálás önmagában nem plafon, és nem is nevezem annak.
+Ismert kockázat: a szemantikai ellenőrzés kimeneti korlátja 50 token; gondolkodó modellnél ez csonkolást okozhat, ilyenkor az érintett tétel **ellenőrizetlen** marad (nem elfogadott). Nem módosítottam (a prompt/paraméter lefagyasztott; módosítás új verziózott futás).
 
 ## Ismert korlát: közös kvótakeret az óránkénti bottal
 A `.github/workflows/gemini-labels.yml` óránként fut (`cron: 17 * * * *`), a `GEMINI_API_KEY` titkot és a `GEMINI_MODEL` változót használja. A Gemini limitjei **projektenként és modellenként** érvényesek, ezért ha a próba kulcsa ugyanahhoz a projekthez tartozik, és a bot ugyanazt a modellt használja, a napi (RPD) és percenkénti keret közös: a próba fogyaszthatja a bot keretét, és a bot a próbáét. A bot napi felhasználását a próba előtt a tulajdonosnak kell figyelembe vennie. A botot nem módosítottam és nem állítottam le. Hogy ugyanaz-e a projekt és a modell, innen nem állapítható meg.

@@ -12,7 +12,7 @@ from .config import Settings
 from .db import Store
 from .executor import CostBudgetExhausted, Executor, JobStopped, UncertainRun
 from .extraction import ExtractionStats, TokenBudgetExceeded, extract_findings, semantic_check
-from .llm import LLMClient, LLMQuotaExhausted, LLMRejected, LLMTransient, LLMUnavailable, RetryingLLM
+from .llm import LLMClient, LLMQuotaExhausted, LLMRejected, LLMRunStopped, LLMTransient, LLMUnavailable, RetryingLLM
 from .merge import merge_findings
 from .models import (AccessStatus, FilterEntry, SkipReason, JobStatus, Platform, ResearchPlan, StepStatus, Transcript, TranscriptSegment, VideoSource)
 from .planner import build_plan
@@ -83,6 +83,9 @@ class Pipeline:
         except LLMQuotaExhausted as exc:
             problems.append(f"A modellszolgáltató kvótája kimerült: {exc}. A futás megállt; a kész videók megmaradtak, folytatás a kvóta visszaállása után (szolgáltatóváltás nincs).")
             stop_reason = "llm_quota"
+        except LLMRunStopped as exc:
+            problems.append(f"A futtatási szabály/keret megállította a futást ({exc.kind}): {exc.reason}")
+            stop_reason = "run_stopped"
         except (ProviderNotConfigured, LLMUnavailable) as exc:
             problems.append(f"Szolgáltatás nem elérhető: {exc}")
             stop_reason = "unavailable"
@@ -240,10 +243,21 @@ class Pipeline:
             self.store.set_step(jid, name, StepStatus.running)
             try:
                 found = extract_findings(self._llm, jid, plan, v, t, remaining, stats)
+                unchecked, stop_exc = [], None
                 if self.semantic:
                     kept = []
-                    for f in found:
-                        if semantic_check(self._llm, f, stats):        # kétes jelentésbeli egyezés = kinyerési hiba: nem nyom, kihagyjuk és naplózzuk
+                    for i, f in enumerate(found):
+                        try:
+                            doubtful = semantic_check(self._llm, f, stats)
+                        except LLMUnavailable as exc:                  # kvóta/futtatási keret: ez és a hátralévő tételek ellenőrizetlenek maradnak
+                            unchecked += found[i:]
+                            stop_exc = exc
+                            break
+                        except (LLMRejected, LLMTransient) as exc:      # az egyedi ellenőrzés sikertelen: a tétel ellenőrizetlen, nem sikeres eredmény
+                            unchecked.append(f)
+                            problems.append(f"{v.canonical_url}: egy tétel szemantikai ellenőrzése sikertelen ({exc}), a tétel ellenőrizetlen")
+                            continue
+                        if doubtful:                                   # kétes jelentésbeli egyezés = kinyerési hiba: nem nyom, kihagyjuk és naplózzuk
                             stats.skipped.append(FilterEntry(video_source_id=v.id, segment_ids=f.source_references[0].transcript_segment_ids,
                                                              snippet=f.source_references[0].supporting_quote[:160], reason_code=SkipReason.extraction_unreliable,
                                                              reason_hu="az idézet és az állítás jelentésbeli egyezése kétes: megbízhatatlan kinyerés, nem publikáljuk (hibakezelés, nem nyom)"))
@@ -258,8 +272,17 @@ class Pipeline:
                 self.store.set_step(jid, name, StepStatus.skipped, {"reason": "token_budget"})
                 problems.append(f"{v.canonical_url}: {exc}")
                 continue
-            self.store.save_findings(jid, v.id, found)
+            self.store.save_findings(jid, v.id, found)                      # csak a szemantikailag ELLENŐRZÖTT tételek kerülnek a megállapítások közé
             self.store.add_usage(jid, tokens=stats.tokens - before)
+            if unchecked:
+                self.store.set_step(jid, name, StepStatus.failed, {
+                    "stage": "semantic_check", "checked": len(found), "segments": len(t.segments), "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]],
+                    "known_matches": stats.known_matches[k0:], "reason": str(stop_exc) if stop_exc else "az ellenőrző kérés sikertelen",
+                    "unchecked": [{"statement_hu": f.statement_hu, "category": f.category.value, "video_source_id": v.id, "quote": f.source_references[0].supporting_quote,
+                                   "segment_ids": f.source_references[0].transcript_segment_ids} for f in unchecked]})
+                if stop_exc is not None:
+                    raise stop_exc
+                continue
             self.store.set_step(jid, name, StepStatus.done, {"findings": len(found), "segments": len(t.segments),
                                                              "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]],
                                                              "known_matches": stats.known_matches[k0:]})
@@ -272,7 +295,7 @@ class Pipeline:
         dropped = collect[1].get("dropped_by_max_videos", 0) if collect else 0
         if dropped:
             hit.add("max_videos")
-        stop_map = {"runtime_limit": "timeout_seconds", "cost_budget": "max_cost_usd", "llm_quota": "llm_quota", "cancelled": "cancelled", "unavailable": "service_unavailable"}
+        stop_map = {"run_stopped": "run_budget", "runtime_limit": "timeout_seconds", "cost_budget": "max_cost_usd", "llm_quota": "llm_quota", "cancelled": "cancelled", "unavailable": "service_unavailable"}
         if stop_reason in stop_map and stop_reason != "cancelled":
             hit.add(stop_map[stop_reason])
         not_done = []
@@ -284,6 +307,10 @@ class Pipeline:
                 reason = "max_total_minutes"
             elif ex_ and ex_[0] == StepStatus.skipped and ex_[1].get("reason") == "token_budget":
                 reason = "max_llm_tokens"
+            elif ex_ and ex_[0] == StepStatus.failed and ex_[1].get("stage") == "semantic_check":
+                reason = "semantic_check_incomplete"
+                if stop_reason == "run_stopped":
+                    hit.add("run_budget")
             elif v.access_status == AccessStatus.no_transcript:
                 reason = "no_transcript"
             elif any(x and x[0] in (StepStatus.failed, StepStatus.uncertain) for x in (me, tr, ex_)):
@@ -327,15 +354,26 @@ class Pipeline:
                 if (m["known"], m["quote"]) not in kseen:
                     kseen.add((m["known"], m["quote"]))
                     known.append(m)
+        unchecked_items = []
+        for v in videos:
+            st = steps.get(f"ex:{v.id}")
+            if st and st[0] == StepStatus.failed and st[1].get("stage") == "semantic_check":
+                unchecked_items += st[1].get("unchecked", [])
+                for raw in st[1].get("skipped", []):
+                    e = FilterEntry.model_validate(raw)
+                    k = (e.video_source_id, e.snippet, e.reason_code)
+                    if k not in seen:
+                        seen.add(k)
+                        skipped.append(e)
         coverage = self._coverage(videos, steps, ok, stop_reason)
         job = self.store.get_job(jid)
         report = build_report(job, plan, videos, findings, self.store.transcripts(jid), problems + ex.notes, stats,
                               provider_runs=self.store.provider_runs(jid), stop_reason=stop_reason,
                               filter_log=skipped + merge_log, segments_total=segments, videos_processed=len(ok),
-                              llm=self.llm, coverage=coverage, known_matches=known)
+                              llm=self.llm, coverage=coverage, known_matches=known, unchecked=unchecked_items)
         if stop_reason == "cancelled":
             status = JobStatus.cancelled
-        elif not ok:
+        elif not ok and not findings and not unchecked_items:
             status = JobStatus.failed
         elif len(ok) < len(videos) or problems or stop_reason:
             status = JobStatus.partially_completed

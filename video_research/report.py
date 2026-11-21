@@ -30,7 +30,7 @@ FB_HU = {"useful": "hasznos", "not_relevant": "nem releváns", "already_known": 
 
 def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource], findings: list[Finding], transcripts: list[Transcript],
                  problems: list[str], stats, *, provider_runs: list[dict], stop_reason: str | None, filter_log: list[FilterEntry],
-                 segments_total: int, videos_processed: int, llm=None, coverage: dict | None = None, known_matches: list[dict] | None = None) -> ResearchReport:
+                 segments_total: int, videos_processed: int, llm=None, coverage: dict | None = None, known_matches: list[dict] | None = None, unchecked: list[dict] | None = None) -> ResearchReport:
     tmap = {t.video_source_id: t for t in transcripts}
     limits: list[str] = []
     if any(v.is_fixture for v in videos):
@@ -61,13 +61,15 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
         limits.append(f"{len(unknown)} szolgáltatói futás költsége nem ismert; a rögzített költség alsó becslés.")
     if stop_reason:
         limits.append({"cancelled": "A feladatot megszakították; a részeredmények megmaradtak.", "runtime_limit": "A futásidő-keret lejárt; részeredmény.",
-                       "cost_budget": "A szolgáltatói költségkeret kimerült; részeredmény.", "unavailable": "Szolgáltatás nem volt elérhető; részeredmény.", "llm_quota": "A modellszolgáltató kvótája kimerült; a futás megállt, részeredmény."}.get(stop_reason, stop_reason))
+                       "cost_budget": "A szolgáltatói költségkeret kimerült; részeredmény.", "unavailable": "Szolgáltatás nem volt elérhető; részeredmény.", "llm_quota": "A modellszolgáltató kvótája kimerült; a futás megállt, részeredmény.", "run_stopped": "A futtatási szabály vagy keret megállította a futást; részeredmény."}.get(stop_reason, stop_reason))
     cov = coverage or {}
     if cov and not cov.get("complete", True):
         hit = ", ".join(cov.get("limits_hit", [])) or "hiba/hiányzó átirat"
         limits.append(f"HIÁNYOS LEFEDETTSÉG: {cov['videos_processed']}/{cov['videos_identified']} videó feldolgozva (ok: {hit}). Ez erőforráskeret vagy hiba miatti hiány, NEM tartalmi kvóta: a ki nem dolgozott videókban lehetett releváns információ.")
     if known_matches:
         limits.append(f"{len(known_matches)} részlet a felhasználó ismert információját ismétli: nem került a fő jelentésbe, és nem tekintendő független megerősítésnek (ugyanazt az állítást ismételheti; az ismert információ sem ellenőrzött igazság).")
+    if unchecked:
+        limits.append(f"{len(unchecked)} kinyert tétel szemantikai ellenőrzése elmaradt (keret vagy hiba): ezek NEM ellenőrzött eredmények, nem szerepelnek a megállapítások között.")
     limits += problems
     missing = []
     for v in videos:
@@ -100,7 +102,7 @@ def build_report(job: ResearchJob, plan: ResearchPlan, videos: list[VideoSource]
             if a.version and a.version == b.version and a.category == b.category and {a.stance.value, b.stance.value} == {"supports", "counterexample"}:
                 contradictions.append({"finding_ids": [a.id, b.id], "note": f"ellentmondó állítások ugyanarra a verzióra ({a.version}); a rendszer nem döntötte el, melyik igaz"})
     return ResearchReport(summary=summary, findings=findings, repeated_mentions=repeated, contradictions=contradictions, missing_information=missing,
-                          source_list=sources, coverage_limitations=limits, coverage=cov, known_information_matches=known_matches or [], no_result_note=no_result, analysis_method=method,
+                          source_list=sources, coverage_limitations=limits, coverage=cov, unchecked_findings=unchecked or [], known_information_matches=known_matches or [], no_result_note=no_result, analysis_method=method,
                           analysis_model=({"provider": llm.provider, "model": llm.model} if method == "ai_semantic" else {}), filter_log=filter_log, filter_stats=stats_d,
                           unsupported=[{"statement_hu": e.snippet, "reason": e.reason_hu} for e in unsup])
 
@@ -165,6 +167,8 @@ def to_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] | None
     if cov:
         out += ["## Lefedettség", f"{cov.get('videos_processed', 0)}/{cov.get('videos_identified', 0)} videó feldolgozva" + ("." if cov.get("complete") else
                 f" — HIÁNYOS ({', '.join(cov.get('limits_hit', [])) or 'hiba vagy hiányzó átirat'}). Ez erőforráskeret miatti hiány, nem tartalmi kvóta; a ki nem dolgozott részekben lehetett releváns információ."), ""]
+    if r.unchecked_findings:
+        out += ["## Szemantikailag nem ellenőrzött kinyert tételek (NEM eredmény)", f"{len(r.unchecked_findings)} tétel ellenőrzése elmaradt; részletek a bizonyítékok között.", ""]
     if r.known_information_matches:
         out += [f"Ismert információt ismétlő részlet: {len(r.known_information_matches)} (nem került a fő jelentésbe; nem független megerősítés; részletek: bizonyítékok).", ""]
     if r.missing_information:
@@ -199,6 +203,8 @@ def evidence_markdown(r: ResearchReport, job: ResearchJob, feedback: list[dict] 
         out.append("")
     if not r.findings:
         out.append(r.no_result_note or "Nincs megtartott megállapítás.")
+    if r.unchecked_findings:
+        out += ["## Szemantikailag nem ellenőrzött kinyert tételek (NEM eredmény, NEM megállapítás)"] + [f"- {u['statement_hu']} ← „{u['quote']}” (szegm.: {', '.join(u['segment_ids'])})" for u in r.unchecked_findings] + [""]
     if r.known_information_matches:
         out += ["## Ismert információt ismétlő források (nem független megerősítés)"] + [f"- ismert: „{m['known']}” ← „{m['quote']}” ({_src(r, m['video_source_id']).get('url')}, szegm.: {', '.join(m['segment_ids'])})" for m in r.known_information_matches] + [""]
     if r.coverage:
@@ -232,7 +238,7 @@ def short_json(r: ResearchReport, feedback: list[dict] | None = None) -> dict:
             "keep": [item(f) for f in r.findings if f.disposition == Disposition.keep],
             "leads": [item(f) for f in r.findings if f.disposition == Disposition.lead],
             "skipped_by_reason": r.filter_stats.get("skipped_by_reason", {}), "missing_information": r.missing_information,
-            "coverage": r.coverage, "known_information_repeats": len(r.known_information_matches)}
+            "coverage": r.coverage, "unchecked_not_results": len(r.unchecked_findings), "known_information_repeats": len(r.known_information_matches)}
 
 
 def to_csv(r: ResearchReport) -> str:

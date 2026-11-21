@@ -295,6 +295,7 @@ class ResearchReport(BaseModel):
     missing_information: list[str]
     source_list: list[dict]
     coverage_limitations: list[str]
+    unchecked_findings: list[dict] = []      # kinyert, de a szemantikai ellenőrzésen NEM átesett tételek (keret/hiba miatt): nem eredmény, nem megállapítás
     coverage: dict = {}                      # erőforráskorlátok miatti lefedettség (nem tartalmi kvóta): lásd report.build_report
     known_information_matches: list[dict] = []   # a felhasználó ismert információihoz talált újabb források (nem növelik a fő jelentést, nem független megerősítés)
     no_result_note: str | None = None        # pl. „Nem találtam a feltételeknek megfelelő információt.”

@@ -13,6 +13,14 @@ class LLMUnavailable(Exception):
     """Nincs beállított vagy elérhető modell."""
 
 
+class LLMRunStopped(LLMUnavailable):
+    """A futtatási vezérlő (keret, technikai/integritási szabály) megállította a futást: a kész eredmények megmaradnak, a hátralévő lépések jelölve maradnak el."""
+
+    def __init__(self, reason: str, kind: str = "limit"):
+        super().__init__(reason)
+        self.reason, self.kind = reason, kind
+
+
 class LLMQuotaExhausted(LLMUnavailable):
     """Napi kvóta vagy számlázási korlát: a futás megáll, a kész eredmények megmaradnak; nincs szolgáltatóváltás és nincs fizetős csomagra váltás."""
 
