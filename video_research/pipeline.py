@@ -243,7 +243,7 @@ class Pipeline:
             self.store.set_step(jid, name, StepStatus.running)
             try:
                 found = extract_findings(self._llm, jid, plan, v, t, remaining, stats)
-                unchecked, stop_exc = [], None
+                unchecked, stop_exc, ureason = [], None, {}
                 if self.semantic:
                     kept = []
                     for i, f in enumerate(found):
@@ -251,10 +251,12 @@ class Pipeline:
                             doubtful = semantic_check(self._llm, f, stats)
                         except LLMUnavailable as exc:                  # kvóta/futtatási keret: ez és a hátralévő tételek ellenőrizetlenek maradnak
                             unchecked += found[i:]
+                            ureason.update({x.id: "run_stopped_or_quota" for x in found[i:]})
                             stop_exc = exc
                             break
                         except (LLMRejected, LLMTransient) as exc:      # az egyedi ellenőrzés sikertelen: a tétel ellenőrizetlen, nem sikeres eredmény
                             unchecked.append(f)
+                            ureason[f.id] = str(exc).split(":", 1)[0] if isinstance(exc, LLMRejected) else "transient"      # truncated | empty | invalid | blocked | fatal | transient: NEM tartalmi elutasítás
                             problems.append(f"{v.canonical_url}: egy tétel szemantikai ellenőrzése sikertelen ({exc}), a tétel ellenőrizetlen")
                             continue
                         if doubtful:                                   # kétes jelentésbeli egyezés = kinyerési hiba: nem nyom, kihagyjuk és naplózzuk
@@ -279,7 +281,7 @@ class Pipeline:
                     "stage": "semantic_check", "checked": len(found), "segments": len(t.segments), "skipped": [e.model_dump(mode="json") for e in stats.skipped[n0:]],
                     "known_matches": stats.known_matches[k0:], "reason": str(stop_exc) if stop_exc else "az ellenőrző kérés sikertelen",
                     "unchecked": [{"statement_hu": f.statement_hu, "category": f.category.value, "video_source_id": v.id, "quote": f.source_references[0].supporting_quote,
-                                   "segment_ids": f.source_references[0].transcript_segment_ids} for f in unchecked]})
+                                   "segment_ids": f.source_references[0].transcript_segment_ids, "check_failure": ureason.get(f.id, "unknown")} for f in unchecked]})
                 if stop_exc is not None:
                     raise stop_exc
                 continue

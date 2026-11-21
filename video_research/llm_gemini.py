@@ -28,11 +28,13 @@ class GeminiLLM:
     provider = "gemini"
     kind = "ai"
 
-    def __init__(self, model: str, transport: Transport, temperature: float = 0.0, min_interval_s: float = 0.0,
+    def __init__(self, model: str, transport: Transport, temperature: float = 0.0, min_interval_s: float = 0.0, thinking_levels: dict[str, str] | None = None,
                  sleep: Callable[[float], None] = time.sleep, clock: Callable[[], float] = time.monotonic):
         if not isinstance(model, str) or not model.strip():
             raise LLMUnavailable("A Gemini modellneve nincs beállítva (VR_GEMINI_MODEL): nincs beégetett alapérték.")
         self.model, self._transport, self.temperature = model.strip(), transport, temperature
+        # schema_name -> thinkingConfig.thinkingLevel (dokumentált enum: MINIMAL|LOW|MEDIUM|HIGH|XHIGH; gemini-3.6-flash: minimal/low/medium/high). Alapból NINCS beállítva (a modell alapértéke).
+        self.thinking_levels = dict(thinking_levels or {})
         self.min_interval_s, self._sleep, self._clock, self._last = float(min_interval_s), sleep, clock, None     # kérések közti minimális idő (ingyenes szint percenkénti korlátja)
         self.calls: list[dict] = []              # kérésenként: szolgáltató, modell, kimenetel, tokenek (kulcs/szöveg nélkül)
 
@@ -52,6 +54,9 @@ class GeminiLLM:
             if wait > 0:
                 self._sleep(wait)
         self._last = self._clock()
+        level = self.thinking_levels.get(schema_name)
+        if level:
+            body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": level}
         try:
             raw = self._transport(self.model, body)
         except TransportTimeout:
@@ -86,9 +91,10 @@ class GeminiLLM:
         return LLMResult(data, tokens)
 
 
-def build_gemini(model: str | None, api_key: str | None, timeout_s: float = 60.0, base_url: str | None = None, min_interval_s: float = 13.0) -> GeminiLLM:
+def build_gemini(model: str | None, api_key: str | None, timeout_s: float = 60.0, base_url: str | None = None, min_interval_s: float = 13.0,
+                 thinking_levels: dict[str, str] | None = None) -> GeminiLLM:
     """Valódi átvitellel összerakott adapter (a kulcsot csak a HttpTransport tartja). Hívni csak a felhasználó saját, jóváhagyott futásához szabad."""
     from validation.hu_pilot.live.transport import HttpTransport
     if not api_key:
         raise LLMUnavailable("GEMINI_API_KEY nincs beállítva a környezetben.")
-    return GeminiLLM(model or "", HttpTransport("gemini", api_key, timeout_s, base_url), min_interval_s=min_interval_s)   # 13 s: a projekt pilot-konfigurációjának értéke (min_interval_s)
+    return GeminiLLM(model or "", HttpTransport("gemini", api_key, timeout_s, base_url), min_interval_s=min_interval_s, thinking_levels=thinking_levels)   # 13 s: a projekt pilot-konfigurációjának értéke (min_interval_s)

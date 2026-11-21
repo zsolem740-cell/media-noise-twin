@@ -29,6 +29,13 @@ from . import runner as RUNNER_MOD
 from .cases import CASES
 
 ROOT = Path(__file__).resolve().parents[2]
+CONFIG_VERSION = "gen-cfg-2"      # 1: semantic maxOutputTokens=50, nincs thinkingConfig (elvetve: csonkolást/üres választ okozhat); 2: semantic 512 + thinkingLevel MINIMAL
+THINKING_LEVELS = {"semantic": "MINIMAL"}                                      # csak a rövid, strukturált ellenőrzésre; a kinyerés a modell alapértelmezett gondolkodásán marad
+GENERATION_CONFIG = {
+    "endpoint": "generateContent (REST, v1beta)", "temperature": 0.0, "responseMimeType": "application/json",
+    "extraction": {"maxOutputTokens": EX.MAX_OUT_TOKENS, "thinkingConfig": "nincs beállítva (modell-alapérték; a dokumentáció szerint gemini-3.6-flash: medium)"},
+    "semantic": {"maxOutputTokens": EX.SEMANTIC_MAX_TOKENS, "thinkingConfig": {"thinkingLevel": THINKING_LEVELS["semantic"]}},
+}
 EXCLUDED = {"B_lossy"}                                          # a kiértékelőt próbálja modellhívás nélkül: nem küldhető ki
 
 
@@ -122,6 +129,8 @@ def manifest(model: str, budget_cfg: dict, case_ids: list[str], run_id: str) -> 
             "prompt_version": "sha256:" + hashlib.sha256(prompts.encode()).hexdigest()[:16],
             "hashes": {"cases.py": _sha(Path(CASES_MOD.__file__)), "evaluator(runner.py)": _sha(Path(RUNNER_MOD.__file__)), "extraction.py": _sha(Path(EX.__file__))},
             "run_id": run_id, "cases": list(case_ids), "semantic_check_enabled": True, "budget": budget_cfg,
+            "config_version": CONFIG_VERSION, "generation_config": GENERATION_CONFIG,
+            "generation_config_sha256": hashlib.sha256(json.dumps(GENERATION_CONFIG, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
             "started_utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 
 
@@ -167,7 +176,9 @@ def _classify(exc: Exception) -> tuple[str, str]:
         return "quota", str(exc)
     if isinstance(exc, LLMRejected):
         head = str(exc).split(":", 1)[0]
-        return ("content", str(exc)) if head in ("blocked", "truncated", "empty", "invalid") else ("technical", str(exc))
+        if head in ("truncated", "empty"):                           # válaszkeret-/konfigurációs probléma: NEM tartalmi elutasítás, NEM sikeres ellenőrzés
+            return "response_limit", str(exc)
+        return ("content", str(exc)) if head in ("blocked", "invalid") else ("technical", str(exc))
     if isinstance(exc, (LLMUnavailable, LLMTransient, ConnectionError, TimeoutError)):
         return "technical", f"{type(exc).__name__}: {exc}"
     return "technical", f"{type(exc).__name__}: {exc}"
@@ -184,7 +195,7 @@ def execute(model: str, transport, budget: Budget, outdir: Path, case_ids: list[
     current = {"id": None}
     secrets = [os.environ.get("GEMINI_API_KEY", "")] + [v for k, v in os.environ.items() if len(v) >= 12 and any(w in k.upper() for w in ("KEY", "TOKEN", "SECRET", "PASSWORD"))]
     bt = BudgetedTransport(transport, budget, model, secrets, lambda: current["id"])
-    llm = GeminiLLM(model, bt, min_interval_s=min_interval_s, sleep=sleep, clock=clock)
+    llm = GeminiLLM(model, bt, min_interval_s=min_interval_s, thinking_levels=THINKING_LEVELS, sleep=sleep, clock=clock)
     results, stopped = [], None
     for case in selected:
         current["id"] = case["id"]

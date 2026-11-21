@@ -277,3 +277,86 @@ def test_conservative_input_estimate_reserves_more_than_one_token_per_three_char
     # 3000 karakter: //3 → ~1000 + 4000 = 5000 még beleférne; konzervatívan //2 → ~1500 + 4000 > 5000: megáll
     with pytest.raises(live.RunStopped):
         bt(MODEL, body)
+
+
+# ---- szemantikai válaszkeret: kimeneti maximum + gondolkodási szint; csonkolt/üres válasz kezelése ----
+def _resp(obj=None, finish="STOP", parts=None, tokens=600, candidates=True):
+    p = parts if parts is not None else ([{"text": json.dumps(obj)}] if obj is not None else [])
+    d = {"usageMetadata": {"promptTokenCount": 300, "candidatesTokenCount": 20, "thoughtsTokenCount": tokens - 320, "totalTokenCount": tokens}, "modelVersion": MODEL}
+    if candidates:
+        d["candidates"] = [{"content": {"parts": p}, "finishReason": finish}]
+    return Raw(200, json.dumps(d), None, 3)
+
+
+def _run_a(tmp_path, script):
+    api = FakeApi(model_version=MODEL, script=script)
+    s, b = run(tmp_path, api, cases=["A_tools"], budget=live.Budget(max_requests=10, max_tokens=30_000, max_seconds=600))
+    return s, api, next(r for r in s["results"] if r["id"] == "A_tools")
+
+
+def test_generation_settings_semantic_minimal_thinking_and_512_extraction_unchanged(tmp_path):
+    s, api, a = _run_a(tmp_path, {})
+    sem = [b for b in api.calls if "Állítás:" in b["contents"][0]["parts"][0]["text"]]
+    ext = [b for b in api.calls if "Állítás:" not in b["contents"][0]["parts"][0]["text"]]
+    assert sem and ext
+    for b in sem:
+        assert b["generationConfig"]["maxOutputTokens"] == 512 and b["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "MINIMAL"}
+        assert b["generationConfig"]["responseMimeType"] == "application/json" and b["generationConfig"]["temperature"] == 0.0
+    for b in ext:
+        assert b["generationConfig"]["maxOutputTokens"] == 4096 and "thinkingConfig" not in b["generationConfig"]      # a kinyerés beállítása változatlan
+    m = json.loads((tmp_path / "out" / "manifest.json").read_text())
+    assert m["config_version"] == "gen-cfg-2" and m["generation_config"]["semantic"] == {"maxOutputTokens": 512, "thinkingConfig": {"thinkingLevel": "MINIMAL"}}
+    assert re.fullmatch(r"[0-9a-f]{64}", m["generation_config_sha256"]) and m["prompt_version"].startswith("sha256:")
+
+
+@pytest.mark.parametrize("name,raw,reason", [
+    ("MAX_TOKENS", _resp({"verdict": "consistent"}, finish="MAX_TOKENS"), "truncated"),
+    ("MAX_TOKENS csonka JSON", _resp(parts=[{"text": '{"verdi'}], finish="MAX_TOKENS"), "truncated"),
+    ("nincs candidate", _resp(candidates=False), "empty"),
+    ("csak gondolat-rész", _resp(parts=[{"text": "gondolkodom", "thought": True}]), "empty"),
+    ("üres szöveg", _resp(parts=[{"text": "  "}]), "empty"),
+    ("JSON verdikt nélkül", _resp({}), "invalid"),
+    ("ismeretlen verdikt", _resp({"verdict": "talán"}), "invalid"),
+])
+def test_truncated_or_empty_semantic_answer_is_unchecked_not_rejected_and_not_successful(tmp_path, name, raw, reason):
+    s, api, a = _run_a(tmp_path, {2: raw})
+    assert len(a["findings"]) == 2 and len(a["unchecked_not_results"]) == 1                              # 1 tétel ellenőrizetlen, a másik kettő ellenőrzött
+    u = a["unchecked_not_results"][0]
+    assert u["check_failure"] == reason
+    assert u["statement_hu"] not in [f["statement_hu"] for f in a["findings"]]                           # nem sikeres eredmény
+    assert not any(e["reason"] == "extraction_unreliable" for e in a["filter_log"])                      # és nem „kétes”/tartalmi elutasítás
+    assert a["status"] == "partially_completed" and a["partial"] and a["coverage"]["not_processed"][0]["reason"] == "semantic_check_incomplete"
+    assert s["stopped"] is None                                                                          # válaszkeret-probléma: a futás megy tovább, a keret védi
+
+
+def test_a_real_doubtful_verdict_is_still_a_content_judgement_not_unchecked(tmp_path):
+    s, api, a = _run_a(tmp_path, {2: _resp({"verdict": "doubtful"})})
+    assert len(a["findings"]) == 2 and a["unchecked_not_results"] == []
+    assert sum(e["reason"] == "extraction_unreliable" for e in a["filter_log"]) == 1
+
+
+def test_response_limit_failures_are_classified_apart_from_content_and_technical(tmp_path):
+    from video_research.llm import LLMRejected
+    assert live._classify(LLMRejected("truncated: x"))[0] == "response_limit" and live._classify(LLMRejected("empty: x"))[0] == "response_limit"
+    assert live._classify(LLMRejected("blocked: x"))[0] == "content" and live._classify(LLMRejected("fatal: HTTP 400"))[0] == "technical"
+
+
+def test_thinking_level_only_for_configured_schema_and_default_is_none():
+    from video_research.llm_gemini import GeminiLLM
+    seen = []
+    def tr(model, body):
+        seen.append(body)
+        return _resp({"findings": []})
+    g = GeminiLLM(MODEL, tr)                                                                              # alapból nincs thinkingConfig
+    g.complete_json(system="s", user="u", schema_name="semantic", max_tokens=512)
+    h = GeminiLLM(MODEL, tr, thinking_levels={"semantic": "MINIMAL"})
+    h.complete_json(system="s", user="u", schema_name="findings", max_tokens=4096)
+    h.complete_json(system="s", user="u", schema_name="semantic", max_tokens=512)
+    assert "thinkingConfig" not in seen[0]["generationConfig"] and "thinkingConfig" not in seen[1]["generationConfig"]
+    assert seen[2]["generationConfig"]["thinkingConfig"] == {"thinkingLevel": "MINIMAL"}
+
+
+def test_fit_with_real_sized_thinking_usage_stays_inside_planned_limits(tmp_path):
+    api = FakeApi(model_version=MODEL, per_call_tokens=1500)
+    s, b = run(tmp_path, api, cases=FIRST, budget=live.Budget(max_requests=10, max_tokens=30_000, max_seconds=600))
+    assert s["requests"] == 7 and s["tokens"]["counted_total"] < 30_000 and s["stopped"] is None
