@@ -5,8 +5,10 @@ Kimenet:   data/raw/latest.json (minden futásnál felülíródik; a története
 """
 import hashlib
 import json
+import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote_plus, urlparse
@@ -28,6 +30,25 @@ FEED = "https://news.google.com/rss/search?q={q}&hl={hl}&gl={gl}&ceid={ceid}"
 TOP = "https://news.google.com/rss?hl={hl}&gl={gl}&ceid={ceid}"
 STAMP = re.compile(r"(\d{4})\.(\d{2})\.(\d{2})\.\s*(\d{1,2}):(\d{2})")
 NEGATIVE = ("nem várható", "nincs érvényben")
+
+# Időkeret (másodperc). A munkafolyamat feladata 12 percnél megszakad, és ilyenkor az ATM-számítás és az adatmentés
+# is kimarad (lásd 2026-11-19 és 2026-11-21: a Google News 503/429 miatt a lekérések lelassultak). A gyűjtő ezért
+# maga áll meg időben, és a már összegyűjtött elemekkel folytatja. A két érték a 12 perces keretből marad el:
+# a telepítés, a cikkelemzés, az ATM-számítás és a mentés együtt is kényelmesen belefér.
+FEED_BUDGET_S = 360.0    # eddig indít új hírforrás-lekérést
+TOTAL_BUDGET_S = 480.0   # eddig indít bármilyen lekérést (a hivatalos oldalak is)
+
+
+def budget_from_env(name: str, default: float) -> float:
+    """Pozitív, véges szám a környezeti változóból; érvénytelen érték esetén az alapérték."""
+    raw = os.environ.get(name, "").strip()
+    if not raw:
+        return default
+    try:
+        val = float(raw)
+    except ValueError:
+        return default
+    return val if 0 < val < float("inf") else default
 
 
 def item_id(link: str, title: str, source: str) -> str:
@@ -142,11 +163,25 @@ def dedupe(items: list[dict]) -> list[dict]:
     return list(best.values())
 
 
-def collect(cfg: dict, session) -> list[dict]:
+def collect(cfg: dict, session, *, feed_budget: float | None = None, total_budget: float | None = None,
+            clock=time.monotonic, stats: dict | None = None) -> list[dict]:
+    """Összegyűjti a híreket. Az időkeret kimerülése után nem indít új lekérést, az addig kapott elemekkel tér vissza.
+
+    A `stats` szótárba kerül: `skipped_feeds`, `skipped_pages`, `incomplete` (igaz, ha bármi kimaradt az időkeret miatt).
+    """
+    if feed_budget is None:
+        feed_budget = budget_from_env("MEDIA_NOISE_FEED_BUDGET_S", FEED_BUDGET_S)
+    if total_budget is None:
+        total_budget = budget_from_env("MEDIA_NOISE_TOTAL_BUDGET_S", TOTAL_BUDGET_S)
+    start = clock()
+    skipped_feeds = skipped_pages = 0
     seen: dict[str, dict] = {}
     for region in cfg["regions"]:
         before = len(seen)
         for f in feed_urls(region):
+            if clock() - start >= feed_budget:
+                skipped_feeds += 1
+                continue
             try:
                 resp = session.get(f["url"])
                 resp.raise_for_status()
@@ -156,8 +191,13 @@ def collect(cfg: dict, session) -> list[dict]:
             for it in parse_feed(resp.content, region, f["name"]):
                 seen.setdefault(it["id"], it)
         print(f"{region['code']}: {len(seen) - before} új elem")
+    if skipped_feeds:
+        print(f"[WARN] időkeret ({feed_budget:g} s): {skipped_feeds} hírforrás-lekérés kimaradt", file=sys.stderr)
     items = dedupe(list(seen.values()))
     for page in cfg.get("official_pages", []):
+        if clock() - start >= total_budget:
+            skipped_pages += 1
+            continue
         try:
             resp = session.get(page["url"])
             resp.raise_for_status()
@@ -169,6 +209,10 @@ def collect(cfg: dict, session) -> list[dict]:
                 print(f"[WARN] hivatalos oldal nem értelmezhető: {page['url']}", file=sys.stderr)
         except Exception as exc:
             print(f"[WARN] hivatalos oldal {page['url'][:70]}: {exc}", file=sys.stderr)
+    if skipped_pages:
+        print(f"[WARN] időkeret ({total_budget:g} s): {skipped_pages} hivatalos oldal kimaradt", file=sys.stderr)
+    if stats is not None:
+        stats.update(skipped_feeds=skipped_feeds, skipped_pages=skipped_pages, incomplete=bool(skipped_feeds or skipped_pages))
     return items
 
 
@@ -178,9 +222,14 @@ def main() -> int:
         print(f"[WARN] config/user.json hibás, az alapbeállítás érvényes: {status['warning']}", file=sys.stderr)
     elif status["user"]:
         print(f"saját beállítás betöltve: {', '.join(status['applied'])}")
-    items = collect(cfg, make_session())
+    stats: dict = {}
+    items = collect(cfg, make_session(), stats=stats)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     payload = {"fetched_at": to_iso_utc(now_utc()), "count": len(items), "items": items}
+    if stats.get("incomplete"):   # csak időkeret-kimerüléskor kerül bele; a hiánytalan futás kimenete változatlan
+        payload["incomplete"] = True
+        payload["skipped_feeds"] = stats["skipped_feeds"]
+        payload["skipped_pages"] = stats["skipped_pages"]
     OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{len(items)} elem mentve -> {OUT.relative_to(ROOT)}")
     return 0
