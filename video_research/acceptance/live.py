@@ -1,57 +1,237 @@
-"""Opcionális, KÉZI valódi-modell mód: `python -m video_research.acceptance.runner --live --max-calls N [--no-semantic]`.
+"""Egyszeri, KORLÁTOZOTT valódi-modell értékelési futás vezérlője: `python -m video_research.acceptance.runner --live ...`.
 
-Csak a felhasználó saját gépén, saját kulccsal és jóváhagyással futtatandó (a repó CLAUDE.md-je az ügynöknek tiltja az éles hívást, ezért ezt az ügynök NEM futtatta).
-Előfeltétel: GEMINI_API_KEY és VR_GEMINI_MODEL környezeti változó (a kulcs nem kerül kimenetre). A futás előtt kiírja a tervet (hívásszám, becsült tokenek),
-és gépelt megerősítést kér; a hívások száma kemény korláttal védett. A pénzbeli költséget nem becsüljük (árat nem találunk ki): tokenszám × a saját csomagod ára."""
+A repó CLAUDE.md-je az ügynöknek tiltja a valódi Gemini-hívást; ezt a modult csak a tulajdonos kifejezett jóváhagyása után, a keret és az igazolások megadásával szabad futtatni.
+Kemény korlátok (átvitel-szinten, MINDEN tényleges hálózati kérésre, az újrapróbálásokat és javító hívásokat is beleértve):
+  * legfeljebb --max-requests kérés (alap 45), legfeljebb --max-tokens összes szolgáltatói token (alap 220000, a jelentett gondolkodási tokenekkel), legfeljebb --max-seconds futásidő (alap 1200);
+  * minden kérés ELŐTT: maradék-keret ellenőrzés (becsült bemenet + maxOutputTokens ≤ maradék token), különben a futás megáll;
+  * nincs modell- vagy szolgáltatóváltás (a visszaadott modellverzió eltérése megállítja a futást); kvótakimerülés, hitelesítési/technikai hiba megállítja a futást;
+  * a kérés törzse csak a rendszerprompt + a kézzel írt eset kérdése és átirata: ha a törzsben a kulcs vagy bármely (nem triviális) környezeti változó értéke szerepelne, a futás megáll;
+  * a futás előtt lefagyasztott jegyzék (commit SHA, prompt-/eset-/kiértékelő-hash, modellazonosító, keretek); a futás végén a hash-eket újraellenőrizzük: eltérés = érvénytelen futás;
+  * nyers modellkimenet és feldolgozott eredmény külön fájlban, titkok nélkül (results/ mappa: a repóba nem kerül).
+"""
 from __future__ import annotations
 
+import hashlib
+import inspect
+import json
 import os
+import subprocess
 import sys
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
-from ..extraction import SYSTEM, build_user_prompt
-from ..llm import LLMUnavailable
-from ..llm_gemini import build_gemini
-from ..llm import estimate_tokens
+from .. import extraction as EX
+from ..llm import LLMQuotaExhausted, LLMRejected, LLMTransient, LLMUnavailable, estimate_tokens
+from ..llm_gemini import GeminiLLM
+from . import cases as CASES_MOD
+from . import runner as RUNNER_MOD
 from .cases import CASES
-from .runner import evaluate, render, run_case
+
+ROOT = Path(__file__).resolve().parents[2]
+STARTERS = ["A_tools", "G_needle", "D_irrelevant"]            # magyar kérdés + angol átirat · egy részlet sok zajban · irreleváns, elvárt nulla találat
+EXCLUDED = {"B_lossy"}                                          # a kiértékelőt próbálja modellhívás nélkül: nem küldhető ki
 
 
-class Capped:
-    def __init__(self, inner, max_calls):
-        self.inner, self.max_calls, self.n = inner, max_calls, 0
-        self.provider, self.model, self.kind = inner.provider, inner.model, inner.kind
+class RunStopped(Exception):
+    def __init__(self, reason: str, kind: str = "limit"):
+        super().__init__(reason)
+        self.reason, self.kind = reason, kind                   # kind: limit | technical | quota | integrity
 
-    def complete_json(self, **kw):
-        if self.n >= self.max_calls:
-            raise LLMUnavailable("elérted a --max-calls korlátot: a futás megáll")
-        self.n += 1
-        return self.inner.complete_json(**kw)
+
+class Budget:
+    def __init__(self, max_requests=45, max_tokens=220_000, max_seconds=1200, clock=time.monotonic):
+        self.max_requests, self.max_tokens, self.max_seconds, self.clock = max_requests, max_tokens, max_seconds, clock
+        self.t0 = clock()
+        self.requests = self.tokens = self.prompt = self.completion = self.thoughts = 0
+        self.errors: list[dict] = []
+        self.raw: list[dict] = []
+        self.stop: tuple[str, str] | None = None     # az első kényszerű megállás oka (kind, reason)
+
+    def elapsed(self) -> float:
+        return self.clock() - self.t0
+
+    def precheck(self, est_input: int, max_out: int) -> None:
+        if self.requests >= self.max_requests:
+            raise RunStopped(f"elérted a {self.max_requests} kérés keretet", "limit")
+        if self.elapsed() >= self.max_seconds:
+            raise RunStopped(f"lejárt a {self.max_seconds} s futásidő-keret", "limit")
+        if self.tokens + est_input + max_out > self.max_tokens:
+            raise RunStopped(f"a következő kérés (becsült bemenet {est_input} + max kimenet {max_out}) nem fér a maradék tokenkeretbe ({self.max_tokens - self.tokens})", "limit")
+
+
+class BudgetedTransport:
+    """Átvitel-burkoló: minden tényleges kérés számolva, keret-ellenőrizve és nyersen naplózva; a modell nem vált."""
+
+    def __init__(self, inner, budget: Budget, model: str, secrets: list[str], case_id_ref):
+        self.inner, self.b, self.model, self.secrets, self.case_ref = inner, budget, model, [s for s in secrets if s], case_id_ref
+
+    def __call__(self, model, body):
+        try:
+            return self._call(model, body)
+        except RunStopped as rs:
+            self.b.stop = self.b.stop or (rs.kind, rs.reason)
+            raise
+
+    def _call(self, model, body):
+        text = json.dumps(body, ensure_ascii=False)
+        if model != self.model:
+            raise RunStopped("modellváltás kísérlete: tiltott", "integrity")
+        if any(s in text for s in self.secrets):
+            raise RunStopped("a kérés törzse titkot vagy környezeti változó értékét tartalmazná: megállítva, nem küldjük ki", "integrity")
+        max_out = int(body.get("generationConfig", {}).get("maxOutputTokens", 4096))
+        self.b.precheck(estimate_tokens(text), max_out)
+        self.b.requests += 1
+        entry = {"n": self.b.requests, "case": self.case_ref(), "t": round(self.b.elapsed(), 2), "request_chars": len(text), "request_body": body}
+        try:
+            raw = self.inner(model, body)
+        except Exception as exc:                                  # időtúllépés/hálózat: a kérés elment, számoljuk
+            entry["transport_error"] = type(exc).__name__
+            self.b.raw.append(entry)
+            self.b.errors.append({"n": entry["n"], "type": type(exc).__name__})
+            raise
+        entry.update({"status": raw.status, "response_text": raw.text, "latency_ms": raw.latency_ms})
+        try:
+            d = json.loads(raw.text)
+        except ValueError:
+            d = {}
+        u = d.get("usageMetadata") or {} if isinstance(d, dict) else {}
+        p, c, th, tot = (int(u.get(k) or 0) for k in ("promptTokenCount", "candidatesTokenCount", "thoughtsTokenCount", "totalTokenCount"))
+        used = max(tot, p + c + th)                               # a gondolkodási tokeneket mindenképp beszámítjuk
+        self.b.prompt, self.b.completion, self.b.thoughts, self.b.tokens = self.b.prompt + p, self.b.completion + c, self.b.thoughts + th, self.b.tokens + used
+        entry["usage"] = {"prompt": p, "completion": c, "thoughts": th, "total_reported": tot, "counted": used}
+        if raw.status != 200:
+            self.b.errors.append({"n": entry["n"], "status": raw.status, "message": str((d.get("error") or {}).get("message", ""))[:200] if isinstance(d, dict) else ""})
+        mv = d.get("modelVersion") if isinstance(d, dict) else None
+        entry["model_returned"] = mv
+        self.b.raw.append(entry)
+        if mv and not str(mv).startswith(self.model):
+            raise RunStopped(f"a szolgáltató más modellel válaszolt ({mv}) a kértnél ({self.model}): megállítva", "integrity")
+        if self.b.tokens > self.b.max_tokens:
+            raise RunStopped("az összes token meghaladta a keretet", "limit")
+        if raw.status in (401, 403):
+            raise RunStopped(f"hitelesítési vagy jogosultsági hiba (HTTP {raw.status}): technikai hiba, megállítva", "technical")
+        return raw
+
+
+def _sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def manifest(model: str, budget_cfg: dict, prompt_extra: str = "") -> dict:
+    dirty = subprocess.run(["git", "status", "--porcelain", "--", "video_research", "validation", "scripts", "config", "CLAUDE.md"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    sha = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip()
+    prompts = EX.SYSTEM + inspect.getsource(EX.semantic_check) + inspect.getsource(EX.extract_findings)
+    return {"commit_sha": sha, "working_tree_clean": not dirty, "dirty_files": dirty.splitlines()[:10], "model_id": model,
+            "prompt_version": "sha256:" + hashlib.sha256(prompts.encode()).hexdigest()[:16],
+            "hashes": {"cases.py": _sha(Path(CASES_MOD.__file__)), "evaluator(runner.py)": _sha(Path(RUNNER_MOD.__file__)), "extraction.py": _sha(Path(EX.__file__))},
+            "starter_cases": STARTERS, "cases": [c["id"] for c in CASES if c["id"] not in EXCLUDED], "budget": budget_cfg,
+            "started_utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+
+
+def verify_frozen(m: dict) -> list[str]:
+    now = {"cases.py": _sha(Path(CASES_MOD.__file__)), "evaluator(runner.py)": _sha(Path(RUNNER_MOD.__file__)), "extraction.py": _sha(Path(EX.__file__))}
+    return [k for k in now if now[k] != m["hashes"][k]]
+
+
+def ordered_cases() -> list[dict]:
+    live = [c for c in CASES if c["id"] not in EXCLUDED]
+    start = [next(c for c in live if c["id"] == i) for i in STARTERS]
+    return start + [c for c in live if c["id"] not in STARTERS]
+
+
+def _classify(exc: Exception) -> tuple[str, str]:
+    """Technikai/hitelesítési/szabályhiba = megállás; tartalmi (blokkolt, csonka, érvénytelen) = rögzítés és tovább."""
+    if isinstance(exc, RunStopped):
+        return exc.kind, exc.reason
+    if isinstance(exc, LLMQuotaExhausted):
+        return "quota", str(exc)
+    if isinstance(exc, LLMRejected):
+        head = str(exc).split(":", 1)[0]
+        return ("content", str(exc)) if head in ("blocked", "truncated", "empty", "invalid") else ("technical", str(exc))
+    if isinstance(exc, (LLMUnavailable, LLMTransient, ConnectionError, TimeoutError)):
+        return "technical", f"{type(exc).__name__}: {exc}"
+    return "technical", f"{type(exc).__name__}: {exc}"
+
+
+def execute(model: str, transport, budget: Budget, outdir: Path, run_case_fn=None, clock=time.monotonic, min_interval_s: float = 13.0, sleep=time.sleep) -> dict:
+    """A teljes futás: indító esetek, majd a többi. A `transport` a nyers (valódi vagy hamis) átvitel; a vezérlő köréje rakja a keretet."""
+    run_case_fn = run_case_fn or RUNNER_MOD.run_case
+    m = manifest(model, {"max_requests": budget.max_requests, "max_tokens": budget.max_tokens, "max_seconds": budget.max_seconds})
+    outdir.mkdir(parents=True, exist_ok=True)
+    (outdir / "manifest.json").write_text(json.dumps(m, ensure_ascii=False, indent=2), encoding="utf-8")
+    current = {"id": None}
+    secrets = [os.environ.get("GEMINI_API_KEY", "")] + [v for k, v in os.environ.items() if len(v) >= 12 and any(w in k.upper() for w in ("KEY", "TOKEN", "SECRET", "PASSWORD"))]
+    bt = BudgetedTransport(transport, budget, model, secrets, lambda: current["id"])
+    llm = GeminiLLM(model, bt, min_interval_s=min_interval_s, sleep=sleep, clock=clock)
+    results, stopped = [], None
+    for case in ordered_cases():
+        current["id"] = case["id"]
+        if stopped:
+            results.append({"id": case["id"], "ran": False, "reason": f"nem futott: {stopped}"})
+            continue
+        t_before = (budget.requests, budget.tokens)
+        try:
+            res = run_case_fn(case, llm=llm)
+            checks = RUNNER_MOD.evaluate(case, res)
+            job_err = res["store"].get_field(res["jid"], "error") or ""
+            entry = {"id": case["id"], "ran": True, "starter": case["id"] in STARTERS, "status": res["job"].status.value, "checks": checks, "job_error": job_err[:400],
+                     "findings": [{"bucket": f.report_bucket, "kind": f.category.value, "statement_hu": f.statement_hu, "quote": f.source_references[0].supporting_quote,
+                                   "refs": [{"role": r.role, "segments": r.transcript_segment_ids, "timestamp": r.timestamp} for r in f.source_references],
+                                   "verification_question": f.verification_question, "extends_known": f.extends_known} for f in res["report"].findings],
+                     "filter_log": [{"reason": e.reason_code.value, "snippet": e.snippet} for e in res["report"].filter_log], "no_result_note": res["report"].no_result_note,
+                     "requests_used": budget.requests - t_before[0], "tokens_used": budget.tokens - t_before[1]}
+            if budget.stop:                                       # a vezérlő megállította (keret/technikai/integritás), a csővezeték csak hibaként látta
+                stopped = f"{budget.stop[0]}: {budget.stop[1]}"
+                entry["stopped"] = stopped
+            elif "kvótája kimerült" in job_err:
+                stopped = "quota: a modellszolgáltató kvótája kimerült"
+                entry["stopped"] = stopped
+            results.append(entry)
+        except Exception as exc:                                  # RunStopped vagy váratlan
+            kind, why = budget.stop if budget.stop else _classify(exc)      # a vezérlő megállási oka az elsődleges (a csővezeték csak mellékes hibát lát)
+            results.append({"id": case["id"], "ran": True, "starter": case["id"] in STARTERS, "error_kind": kind, "error": why})
+            if kind in ("technical", "quota", "integrity", "limit"):
+                stopped = f"{kind}: {why}"
+        # a futás közbeni bármely technikai kerethiba (a vezérlő RunStopped-ja a csővezetéken belül elnyelődhet): a kérés-/token-/időkeret külön is megállít
+        if stopped is None:
+            try:
+                budget.precheck(0, 0)
+            except RunStopped as rs:
+                stopped = f"{rs.kind}: {rs.reason}"
+    changed = verify_frozen(m)
+    summary = {"manifest": m, "frozen_files_changed_during_run": changed, "valid_run": not changed, "stopped": stopped,
+               "requests": budget.requests, "tokens": {"counted_total": budget.tokens, "prompt": budget.prompt, "completion": budget.completion, "thoughts": budget.thoughts},
+               "runtime_s": round(budget.elapsed(), 1), "provider_errors": budget.errors, "results": results}
+    (outdir / "raw_model_io.json").write_text(json.dumps(budget.raw, ensure_ascii=False, indent=1), encoding="utf-8")      # nyers kérés/válasz, titok nélkül
+    (outdir / "processed_results.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    return summary
 
 
 def main_live(argv: list[str]) -> int:
     key, model = os.environ.get("GEMINI_API_KEY"), os.environ.get("VR_GEMINI_MODEL")
     if not key or not model:
-        print("Hiányzik a GEMINI_API_KEY vagy a VR_GEMINI_MODEL környezeti változó. Nem indul hívás.")
+        print("Hiányzik a GEMINI_API_KEY vagy a VR_GEMINI_MODEL. Nem indul hívás.")
         return 2
-    if "--max-calls" not in argv:
-        print("Kötelező a --max-calls N korlát.")
+    need = ["--attest-free-tier", "--attest-no-billing", "--attest-owner-rule-change"]
+    missing = [n for n in need if n not in argv]
+    if missing:
+        print("Az igazolások hiányoznak (" + ", ".join(missing) + "). A futás csak igazoltan ingyenes projekt/modell és a tulajdonosi szabálymódosítás után indulhat. Nem indul hívás.")
         return 2
-    max_calls = int(argv[argv.index("--max-calls") + 1])
-    semantic = "--no-semantic" not in argv
-    live_cases = [c for c in CASES if c["id"] not in ("B_lossy",)]            # a B_lossy a kiértékelőt próbálja, modellhívás nélkül értelmetlen
-    est_calls = len(live_cases) * (2 if semantic else 1)                      # kinyerés + (legalább) egy szemantikai hívás esetenként; több tétel több hívás
-    est_tokens = sum(estimate_tokens(SYSTEM + "x" * 200 + "\n".join(c["segments"])) + 800 for c in live_cases)
-    print(f"TERV: {len(live_cases)} eset, legalább ~{est_calls} hívás (a szemantikai ellenőrzés tételenként újabb hívás), becsült bemenet ≈ {est_tokens} token + kimenet. "
-          f"Modell: {model}. Kemény hívásplafon: {max_calls}. Ár: a saját csomagod szerint (itt nem becsülünk árat).")
+    def arg(name, default):
+        return type(default)(argv[argv.index(name) + 1]) if name in argv else default
+    budget = Budget(arg("--max-requests", 45), arg("--max-tokens", 220_000), arg("--max-seconds", 1200))
+    m = manifest(model, {"max_requests": budget.max_requests, "max_tokens": budget.max_tokens, "max_seconds": budget.max_seconds})
+    if not m["working_tree_clean"]:
+        print("A munkafa nem tiszta (nem commitolt változás): a commit SHA nem azonosítaná a kódot. Nem indul hívás.", m["dirty_files"])
+        return 2
+    print(json.dumps(m, ensure_ascii=False, indent=2))
     if input("Gépeld be, hogy IGEN a valódi hívások indításához: ").strip() != "IGEN":
         print("Megszakítva, hívás nem történt.")
         return 1
-    llm = Capped(build_gemini(model, key), max_calls)
-    bad = 0
-    for case in live_cases:
-        res = run_case(case, llm=llm)
-        checks = evaluate(case, res)
-        print(render(case, res, checks))
-        bad += any(v for v in checks.values())
-    print(f"Hívások: {llm.n}; eltérést mutató esetek: {bad}/{len(live_cases)}")
+    from validation.hu_pilot.live.transport import HttpTransport
+    outdir = ROOT / "video_research" / "results" / ("live_" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
+    summary = execute(model, HttpTransport("gemini", key, 60.0), budget, outdir)
+    print(json.dumps({k: summary[k] for k in ("valid_run", "stopped", "requests", "tokens", "runtime_s", "provider_errors")}, ensure_ascii=False, indent=2))
+    print("Részletek:", outdir)
     return 0

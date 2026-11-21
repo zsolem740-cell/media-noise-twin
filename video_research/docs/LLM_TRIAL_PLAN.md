@@ -6,16 +6,23 @@
 - Hálózat: a környezeti szabály már engedi a `generativelanguage.googleapis.com` hosztot (ez a korábbi pilotból származik); új engedély nem kellett.
 - Tehát: a kód kész és hamis átvitellel tesztelt; **valódi hívást csak a felhasználó indíthat, saját kulccsal**, a `CLAUDE.md` tiltásának saját, tudatos feloldásával (ha ezt akarod, azt te döntöd el; én nem oldom fel).
 
-## Javasolt próba (konkrét terv és keret; JÓVÁHAGYÁSRA VÁR)
-- Ellenőrzött előfeltételek: a `guard_policy.json` `allowed_providers` listáján a `gemini` szerepel; a `CLAUDE.md` szerint elsődleges szolgáltató; a hálózati szabály engedi a `generativelanguage.googleapis.com` hosztot; a `GEMINI_API_KEY` környezeti változó be van állítva ebben a környezetben (az értékét nem olvastam és nem használtam). **Engedélyezett szolgáltató, de a valódi hívást a `CLAUDE.md` az ügynöknek tiltja**, ezért nem indítottam.
-- Parancs (a te gépeden vagy a te kifejezett, esetenkénti jóváhagyásoddal): `GEMINI_API_KEY=… VR_GEMINI_MODEL=<a te modelled> python -m video_research.acceptance.runner --live --max-calls 45` (opcionális: `--no-semantic`).
-- Tartalom: **14 elfogadási eset** (a modellhívás nélküli, szándékosan hibás `B_lossy` nélkül), ugyanazok a kézi elvárások, mint a hamisított futásban. Az A és B kérdés ugyanazon az átiraton szerepel.
-- Hívásszám: 14 kinyerés + tételenként 1 szemantikai ellenőrzés (a hamisított futásban 15 tétel) + legfeljebb 1 javítási kísérlet esetenként. **Várható ≈ 29, legfeljebb 43 hívás.** Kemény plafon: `--max-calls 45` (a program megáll, ha eléri).
-- Tokenek (becslés): bemenet ≈ 24 ezer (kinyerés) + ≈ 3 ezer (szemantikai); kimenet hívásonként legfeljebb 4096, jellemzően jóval kevesebb. **Tokenplafon: ≤ 220 ezer összesen** (43 × 4096 ≈ 176 ezer a kimeneti felső korlát + bemenet).
-- Tempó: 13 s minimális kérésköz → kb. 8–10 perc.
-- Költségkeret: **0 USD pénzbeli költség**: az ingyenes szint kvótáján belül; a fizetős csomag a projektben tilos, árat nem becsülök. Kvótakimerüléskor a futás megáll (`LLMQuotaExhausted`), nincs szolgáltatóváltás.
-- Gépelt megerősítés („IGEN”) nélkül nem indul hívás. A kulcs nem kerül kimenetre, naplóba vagy fájlba.
-- **Kérem a kifejezett jóváhagyásodat erre a konkrét tervre és keretre** (és azt, hogy a `CLAUDE.md` „tilos valódi Gemini-hívás” szabályát erre az egy futásra te oldod fel, vagy te futtatod). Addig nincs valódi modellhívás.
+## Jóváhagyott feltételek és az előfeltételek állapota (2026-11-21)
+A tulajdonos egyetlen futást engedélyezett az alábbi keretekkel. **Az indítás két igazolatlan előfeltétel miatt még NEM történt meg; hívás nem volt.**
+
+| Feltétel | Állapot |
+|---|---|
+| Egy teljes futás; 3 indító eset (`A_tools` magyar kérdés + angol átirat; `G_needle` egy részlet sok zajban; `D_irrelevant` irreleváns, nulla találat), majd a többi 11; az indítók beleszámítanak a keretbe | a vezérlő megvalósítva és hamis átvitellel tesztelve (`acceptance/live.py`, `tests/test_live_controller.py`) |
+| ≤ 45 tényleges hálózati kérés (újrapróbálással és javítással) | átvitel-szinten kikényszerítve, minden kérés előtt ellenőrizve |
+| ≤ 220 000 összes token, a jelentett gondolkodási tokenekkel | minden kérés előtt: becsült bemenet + `maxOutputTokens` ≤ maradék; a válaszból `max(total, prompt+candidates+thoughts)` számolódik |
+| ≤ 20 perc | kikényszerítve (a 13 s kérésköz is beleszámít) |
+| Kvótakimerülés, hitelesítési/technikai hiba, modell- vagy szolgáltatóváltás, titok a kérésben: megállás | kikényszerítve; tartalmi hiba (blokkolt, csonka, érvénytelen válasz) rögzítve, a futás megy tovább |
+| Lefagyasztott bemenet: commit SHA, tiszta munkafa, prompt-verzió (hash), eset-, kiértékelő- és kinyerő-hash, modellazonosító | a futás előtt jegyzék, a futás végén újraellenőrzés; eltérés = érvénytelen futás |
+| Nyers modellkimenet és feldolgozott eredmény külön, titok nélkül | `raw_model_io.json` / `processed_results.json` (a `results/` mappa nincs a repóban) |
+| **Igazoltan ingyenes projekt és modell** | **NEM igazolt** (lásd lent): az ügynök ezt nem tudja ellenőrizni → megállás |
+| **Szabályengedély (CLAUDE.md)** | **Tulajdonosi szabálymódosítás szükséges; jóváhagyásra vár** (lásd lent) |
+| **Pontos modellazonosító** | **A felhasználónak kell megadnia** (nincs elfogadott érték a projektben: lásd lent) |
+
+Indítás (csak az összes igazolás és a szabály-jóváhagyás után): `VR_GEMINI_MODEL=<azonosító> python -m video_research.acceptance.runner --live --attest-free-tier --attest-no-billing --attest-owner-rule-change --max-requests 45 --max-tokens 220000 --max-seconds 1200`. A három `--attest-*` kapcsoló **a tulajdonos igazolása**, nem az ügynöké; igazolás nélkül a program nem hív. Nem tiszta munkafával nem indul.
 
 ## A valódi modell elfogadási feltétele (nem a modell önminősítése)
 A siker a kézi elvárás (`gold`) ellen mérendő: kimaradt-e elvárt tétel, került-e be téves, helyes-e az idézet és a forráskapcsolat (létező szegmens, az idézet a szegmens szövege, az időbélyeg a fájlból való), megmarad-e a korlátozás a magyar állításban, minden nyomnak van-e ellenőrzési kérdése. A modell saját `relevance`/`concrete`/`consistent` jelzése csak bemenet a kapukhoz, nem elfogadási feltétel.
