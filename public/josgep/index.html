@@ -425,15 +425,20 @@ function renderSz(){var b=ST.bt;
   +'<label class="fl">Születési hely<input id="b_place" list="plist" autocomplete="off" placeholder="Kezdj gépelni: Szombathely" value="'+esc(b.place)+'"></label><datalist id="plist">'+PLACES.map(function(p){return '<option value="'+p[0]+'">';}).join('')+'</datalist>'
   +'<div class="fg"><label>Szélesség (É +)<input id="b_lat" inputmode="decimal" value="'+esc(b.lat)+'"></label><label>Hosszúság (K +)<input id="b_lon" inputmode="decimal" value="'+esc(b.lon)+'"></label></div>'
   +'<label class="fl">Időzóna<select id="b_tz">'+TZS.map(function(z){return '<option'+(z===b.tz?' selected':'')+'>'+z+'</option>';}).join('')+'</select></label>'
-  +'<div class="row" style="margin-top:10px"><button class="btn" id="b_here">Jelenlegi helyem</button><button class="btn go" id="b_go">Térkép és összesítő</button></div><div class="note" id="b_msg" style="margin-top:6px"></div></div><div id="szres"></div>';
+  +'<label class="ck"><input id="b_del" type="checkbox" checked> Számolás után töröld a beírt adataimat, csak a kész összesítőt tartsd meg</label><div class="row" style="margin-top:10px"><button class="btn" id="b_here">Jelenlegi helyem</button><button class="btn go" id="b_go">Térkép és összesítő</button></div><div class="note" id="b_msg" style="margin-top:6px"></div></div><div id="szres"></div><div id="svl"></div>';
  $('szul').innerHTML=h;
  var rd=function(){b.ln=$('b_ln').value.trim();b.fn=$('b_fn').value.trim();b.date=$('b_date').value;b.time=$('b_time').value||'12:00';b.unk=$('b_unk').checked;b.place=$('b_place').value.trim();b.lat=$('b_lat').value.replace(',','.');b.lon=$('b_lon').value.replace(',','.');b.tz=$('b_tz').value;};
  $('b_unk').onchange=function(){$('b_time').disabled=this.checked;};
  $('b_place').onchange=function(){var v=norm(this.value);for(var i=0;i<PLACES.length;i++)if(norm(PLACES[i][0])===v){$('b_lat').value=PLACES[i][1];$('b_lon').value=PLACES[i][2];$('b_tz').value=PLACES[i][3]||'Europe/Budapest';$('b_msg').textContent='Hely kitöltve: '+PLACES[i][0]+'.';return;}$('b_msg').textContent='Ez a hely nincs a listában. Írd be a szélességet és a hosszúságot (például a térképalkalmazásból), és válaszd ki az időzónát.';};
  $('b_here').onclick=function(){$('b_lat').value=ST.loc.lat.toFixed(4);$('b_lon').value=ST.loc.lon.toFixed(4);$('b_place').value='';$('b_msg').textContent='A jelenlegi helyed koordinátái beírva ('+(ST.loc.src==='GPS'?'GPS':'alapértelmezett Budapest')+'). A GPS-t a fejlécben a hely gombbal kérheted le a többi fülön.';};
- $('b_go').onclick=function(){rd();saveBT();showSz();};
+ $('b_go').onclick=function(){rd();var del=$('b_del').checked,r=showSz();if(!r)return;
+  if(del){var a=getSv();a.unshift({title:r.title,ms:Date.now(),h:r.h,text:r.text});a=a.slice(0,6);
+   if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő elmentve (lent). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
+   else $('b_msg').textContent='Az összesítőt nem sikerült elmenteni (nincs hely), ezért az adataid megmaradtak. Töröld a régi összesítőket.';}
+  else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést.';}};
+ listSv();
  if(b.date)showSz();}
-function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div class="card dark" style="border-color:var(--bad)">'+C.err+'</div>';return;}
+function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div class="card dark" style="border-color:var(--bad)">'+C.err+'</div>';return null;}
  var N=C.N,b=ST.bt,unk=b.unk,S=C.S,Mx=ST.JO.map(function(v){return ARC[v];}),A=answer(Mx,S),sm=summary(C);
  var h='<div class="plate"><div class="row" style="justify-content:space-between"><b class="serif">Születési térkép</b><span class="chip calc">számolás</span></div>'+natalSvg(N)
   +'<div class="note">Az Aszcendens a bal oldalon (9 óránál). A jegyek ellentétes irányban követik egymást, házak: egész jegyes rendszer (a jegy a ház). Zöld vonal: szextil, háromszög; piros: négyzet, szembenállás; arany: együttállás.'+(unk?' Pontos idő nélkül a térkép a Kos 0°-tól indul.':'')+'</div></div>';
@@ -449,9 +454,17 @@ function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div cla
   +'<div class="note">A négy Anya a Gép fülön beállított tárcsaállásból jön, a Nap, a Hold, a jegyek és a horizont pedig a születési időpontból és helyről. Állítsd át a tárcsákat a Gép fülön, ha más kérdésre kérsz választ.</div>'
   +'<details><summary>Szabályok</summary>'+A.L.map(function(r){return '<div class="rule2"><span class="chip '+(r.tag=='src'?'src':'ass')+'">'+r.k+' · '+(r.tag=='src'?'forrás':'feltevés')+'</span> '+r.t+'</div>';}).join('')+'</details></div>';
  h+='<div class="card dark" id="osszes"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">számolás + hagyomány</span></div><div class="sum">'+sm.html+'</div><div class="row" style="margin-top:10px"><button class="btn go" id="s_copy">Másolás</button><button class="btn" id="s_share">Megosztás</button></div><div class="note" id="s_msg" style="margin-top:6px"></div></div>';
- o.innerHTML=h;
- $('s_copy').onclick=function(){var m=$('s_msg');try{navigator.clipboard.writeText(sm.text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült. Jelöld ki és másold a szöveget kézzel.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}};
- $('s_share').onclick=function(){var m=$('s_msg');if(navigator.share){navigator.share({title:'Összesítő',text:sm.text}).catch(function(){});}else m.textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
+ o.innerHTML=h;bindSum(sm.text);
+ return {h:h,text:sm.text,title:((b.ln+' '+b.fn).trim()||'névtelen')+' · '+b.date};}
+function bindSum(text){
+ $('s_copy').onclick=function(){var m=$('s_msg');try{navigator.clipboard.writeText(text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült. Jelöld ki és másold a szöveget kézzel.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}};
+ $('s_share').onclick=function(){var m=$('s_msg');if(navigator.share){navigator.share({title:'Összesítő',text:text}).catch(function(){});}else m.textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
+function getSv(){try{return JSON.parse(localStorage.getItem('tablaSV')||'[]')||[];}catch(e){return [];}}
+function putSv(a){try{localStorage.setItem('tablaSV',JSON.stringify(a));return true;}catch(e){return false;}}
+function listSv(){var a=getSv(),o=$('svl');if(!o)return;if(!a.length){o.innerHTML='';return;}
+ o.innerHTML='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Mentett összesítők</h3><span class="chip src">csak a kész anyag</span></div>'+a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div><div class="m">mentve: '+new Date(x.ms).toLocaleDateString('hu-HU')+'</div></div><div class="row"><button class="btn" data-o="'+i+'">Megnyitás</button><button class="btn" data-x="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'</div>';
+ o.querySelectorAll('button[data-o]').forEach(function(b){b.onclick=function(){var x=getSv()[+b.dataset.o];if(x){$('szres').innerHTML=x.h;bindSum(x.text);$('szres').scrollIntoView();}};});
+ o.querySelectorAll('button[data-x]').forEach(function(b){b.onclick=function(){var a2=getSv();a2.splice(+b.dataset.x,1);putSv(a2);listSv();};});}
 
 var R={gep:renderGep,tarcsa:renderTarcsa,eg:renderEg,hold:renderHold,lanc:renderLanc,szul:renderSz};
 function show(t){ST.tab=t;['gep','tarcsa','eg','hold','lanc','szul'].forEach(function(k){$(k).className='screen'+(k===t?' on':'');});document.querySelector('header').className=t==='szul'?'slim':'';document.querySelectorAll('nav button').forEach(function(b){b.className=b.dataset.t===t?'on':'';b.setAttribute('aria-current',b.dataset.t===t?'page':'false');});R[t]();window.scrollTo(0,0);}
