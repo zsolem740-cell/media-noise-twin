@@ -429,13 +429,32 @@ function qStart(){var T=allT();var txt=($('q_txt')?$('q_txt').value:QS.text).tri
  var bl=blockQ(txt);if(bl==='self'){QS.msg='Úgy hangzik, hogy nehéz időszakban vagy. Ebben a gép nem tud segíteni. Kérlek, beszélj valakivel: Magyarországon a 116-123 (Lelki Elsősegély) éjjel-nappal hívható, veszélyben a 112.';renderQ();return;}
  if(bl==='death'){QS.msg='Élet-halál jellegű kérdésre a gép nem válaszol.';renderQ();return;}
  if(QS.topic<0||QS.topic>=T.length){var c=txt?classify(txt):-1;if(c<0){QS.msg='Válassz témát, vagy írj a kérdésbe olyan szót, amiből a gép be tudja sorolni.';renderQ();return;}QS.topic=c;}
- QS.auto=!!($('q_auto')&&$('q_auto').checked);QS.bits=[];QS.on=true;QS.done=false;QS.msg='';spinStart();setTime(Date.now());renderQ();$('qbox').scrollIntoView();if(QS.auto)qAuto();}
+ QS.auto=!!($('q_auto')&&$('q_auto').checked);QS.bits=[];QS.saved=false;QS.on=true;QS.done=false;QS.msg='';spinStart();setTime(Date.now());renderQ();$('qbox').scrollIntoView();if(QS.auto)qAuto();}
 function updSel(){var e=$('q_sel');if(!e)return;var T=allT(),sel=T[QS.topic];
  e.innerHTML=sel?'Kiválasztva: <b>'+esc(sel.n)+'</b> · '+sel.h+'. ház · '+sel.p+(sel.c?' · saját téma <button class="btn" id="q_del" style="min-height:30px;padding:2px 10px">törlés</button>':''):'';
  document.querySelectorAll('#qbox button[data-q]').forEach(function(b){b.className=(+b.dataset.q===QS.topic)?'on':'';});
  var d=$('q_del');if(d)d.onclick=function(){var a=getCT();a.splice(QS.topic-12,1);try{localStorage.setItem('tablaQT',JSON.stringify(a));}catch(x){}QS.topic=-1;renderQ();};}
 function qPrompt(){var A=ST.lastA,T=allT()[QS.topic];if(!A)return '';var c=A.c;
  return 'Értelmezd magyarul, tömören a geomantikus jósgép válaszát. Különítsd el, mi a forrás (Al-Mawṣilī tábla), mi a mi számolásunk és mi a feltevés. Ne találj ki új szabályt, és ne dönts a figurákról.\n\nKérdés: '+(QS.text||'(nincs szöveg)')+'\nTéma: '+(T?T.n+', '+T.h+'. ház, '+T.p:'-')+'\nAnyák: '+ST.JO.map(function(o){return lat(ARC[o]);}).join(', ')+'\nEredmény: '+lat(A.R)+' — „'+A.lr[3]+'”\nBíró: '+lat(A.Jv)+' — „'+A.lj[3]+'”\nPontszám: '+A.score+' ('+A.verdict+')\nSzabályok:\n'+A.L.map(function(r){return '- '+r.k+' ('+(r.tag==='src'?'forrás':'feltevés')+'): '+r.t.replace(/<[^>]+>/g,'')+(r.s!==undefined?' ['+r.s+']':'');}).join('\n');}
+function qSumm(){var A=ST.lastA,T=allT()[QS.topic];if(!A)return null;
+ var strip=function(s){return String(s).replace(/<[^>]+>/g,'');},sg=function(n){return (n>0?'+':'')+n;};
+ var src=A.L.filter(function(r){return r.tag==='src';}),ass=A.L.filter(function(r){return r.tag!=='src';});
+ var S=[
+  ['Kérdés',['Kérdés: '+(QS.text||'(nincs szöveg)'),'Téma: '+(T?T.n+' ('+T.h+'. ház, '+T.p+')':'-'),'Pörgetés: '+(QS.auto?'gépi véletlen':'a te megállításaid'),'Időpont és hely: '+fmt(ST.ms).replace('T',' ')+' ('+ST.loc.lat.toFixed(2)+'°, '+ST.loc.lon.toFixed(2)+'°)']],
+  ['A gép válasza',['Anyák: '+ST.JO.map(function(o){return lat(ARC[o]);}).join(', '),'Eredmény: '+lat(A.R)+' — „'+A.lr[3]+'”','Bíró: '+lat(A.Jv)+' — „'+A.lj[3]+'”','Pontszám: '+sg(A.score)+', ítélet: '+A.verdict]],
+  ['Forrás (Al-Mawṣilī tábla)',src.map(function(r){return strip(r.t);})],
+  ['A mi számolásunk',['A lánc (Lányok, Unokák, Tanúk, Bíró, Eredmény) a négy Anyából számolt. A tábla a figurák sorrendjét és jelzéseit adja.']],
+  ['Feltevések (a pontozás)',ass.map(function(r){return r.k+': '+strip(r.t)+(r.s!==undefined?' ['+sg(r.s)+']':'');})],
+  ['Rövid olvasat',['A tábla szerint az Eredmény '+lat(A.R)+': „'+A.lr[3]+'”, a Bíró '+lat(A.Jv)+': „'+A.lj[3]+'”. A mi feltevéseink összesen '+sg(A.score)+' pontot adnak ('+A.verdict+'). A pontszám a mi szabályainkból jön, nem a táblából.']],
+  ['Fontos',['Ez nem előrejelzés, és nem tanács egészségi, pénzügyi vagy jogi döntésekhez.']]];
+ var text=S.map(function(s){return s[0].toUpperCase()+'\n'+s[1].join('\n');}).join('\n\n');
+ var html=S.map(function(s){return '<h3>'+esc(s[0])+'</h3>'+s[1].map(function(l){return '<p>'+esc(l)+'</p>';}).join('');}).join('');
+ return {text:text,html:html,title:fmt(Date.now()).replace('T',' ')+' · '+(T?T.n:'-')+' · '+lat(A.R)};}
+function getQL(){try{return JSON.parse(localStorage.getItem('tablaQL')||'[]')||[];}catch(e){return [];}}
+function putQL(a){try{localStorage.setItem('tablaQL',JSON.stringify(a));return true;}catch(e){return false;}}
+function qSaveLog(sm){var a=getQL();a.unshift({ms:Date.now(),title:sm.title,h:sm.html,text:sm.text});return putQL(a.slice(0,30));}
+function qLogHtml(){var a=getQL();if(!a.length)return '';return '<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdésnapló</h3><span class="chip src">csak a kész anyag</span></div>'+a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div></div><div class="row"><button class="btn" data-qo="'+i+'">Megnyitás</button><button class="btn" data-qx="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'<div id="qlv"></div></div>';}
+function qCopy(text,m){try{navigator.clipboard.writeText(text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}}
 function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.querySelector('header').className=QS.on?'slim':'';var T=allT(),h='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdezz a géptől</h3><span class="chip ass">feltevés</span></div>';
  if(QS.on){var n=QS.bits.length,mi=Math.floor(n/4),cur=QS.bits.slice(mi*4),tp=T[QS.topic];
   h+='<div class="note" style="margin:4px 0">Téma: <b>'+esc(tp.n)+'</b> ('+tp.h+'. ház, '+tp.p+')'+(QS.text?' · „'+esc(QS.text)+'”':'')+'</div>'
@@ -453,8 +472,15 @@ function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.query
    +'<div class="note" id="q_sel" style="margin-top:6px"></div>'
    +'<label class="ck"><input id="q_auto" type="checkbox"'+(QS.auto?' checked':'')+'> Automata: a gép pörget és állítja meg a számokat (gépi véletlen, nem az én időzítésem)</label><div class="row" style="margin-top:10px"><button class="btn go" id="q_go">Pörgetés indítása</button></div>'+(QS.msg?'<div class="note" style="margin-top:6px;color:var(--bad)">'+QS.msg+'</div>':'')
    +'<div class="note" style="margin-top:6px">A témához tartozó ház és bolygó a jegyek természetes sorrendjéből jön (1. ház = Kos…). Ez hagyományos asztrológiai megfelelés, a geomantikus táblához nincs köze. Egészségi, pénzügyi és életet érintő kérdésre a gép nem ad tanácsot.</div>';}
- o.innerHTML=h+'</div>';
+ var ex='',sm0=null;
+ if(QS.done&&!QS.on){sm0=qSumm();if(sm0){var sv=true;if(!QS.saved){sv=qSaveLog(sm0);QS.saved=true;}
+  ex+='<div class="card dark" id="qsum"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">forrás + számolás + feltevés</span></div><div class="note" style="margin:4px 0">'+(sv?'Elmentve a Kérdésnaplóba (alul).':'Nem sikerült elmenteni (nincs hely), töröld a régi bejegyzéseket.')+'</div><div class="row" style="margin:8px 0"><button class="btn go" id="qs_cp">Másolás</button><button class="btn" id="qs_sh">Megosztás</button></div><div class="note" id="qs_msg"></div><div class="sum">'+sm0.html+'</div></div>';}}
+ ex+=qLogHtml();
+ o.innerHTML=h+'</div>'+ex;
  var q=function(i){return $(i);};
+ if(sm0){q('qs_cp').onclick=function(){qCopy(sm0.text,q('qs_msg'));};q('qs_sh').onclick=function(){if(navigator.share){navigator.share({title:'Kérdés összesítő',text:sm0.text}).catch(function(){});}else q('qs_msg').textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
+ o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};$('qlv').scrollIntoView();};});
+ o.querySelectorAll('button[data-qx]').forEach(function(b){b.onclick=function(){var a=getQL();a.splice(+b.dataset.qx,1);putQL(a);renderQ();};});
  if(q('q_stop')){q('q_stop').onclick=qStop;}
  if(q('q_go'))q('q_go').onclick=qStart;
  o.querySelectorAll('button[data-q]').forEach(function(b){b.onclick=function(){if(q('q_txt'))QS.text=q('q_txt').value;QS.topic=+b.dataset.q;QS.msg='';renderQ();};});
