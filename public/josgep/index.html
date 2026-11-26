@@ -525,7 +525,7 @@ function summary(C){var N=C.N,b=ST.bt,S=C.S,num=C.num,L=[],nmz=(b.ln+' '+b.fn).t
   hh('Idősáv, a következő 12 hónap');
   if(mo12.length){var bm=mo12.slice().sort(function(a,b){return b[1]-a[1];})[0],wm=mo12.slice().sort(function(a,b){return a[1]-b[1];})[0],ml=function(x){return x[0].getUTCFullYear()+'. '+pad(x[0].getUTCMonth()+1)+'. ('+(x[1]>0?'+':x[1]<0?'−':'')+Math.abs(x[1]).toFixed(1)+')';};
    pp('Hagyományos pontozás szerint a legkedvezőbb hónap: <b>'+ml(bm)+'</b>, a legnehezebb: <b>'+ml(wm)+'</b>. A pontozás a mi feltevésünk, nem előrejelzés.');}
-  main.forEach(function(p){pp('<b>'+fdt(TT.ms0+p.ex*864e5)+'</b> — '+p.tp+' '+p.t[0]+' '+p.np+' ('+toneLbl(p.tone,p.t[3])+'), '+fdt(TT.ms0+p.s*864e5)+' – '+fdt(TT.ms0+p.e*864e5)+'.');});}
+  main.forEach(function(p){pp('<b>'+fdt(TT.ms0+p.ex*864e5)+'</b> — '+p.tp+' '+p.t[0]+' '+p.np+' ('+toneLbl(p.tone,p.t[3])+'), '+fdt(TT.ms0+p.s*864e5)+' – '+fdt(TT.ms0+p.e*864e5));});}
  hh('Számmisztika');
  NUMK.forEach(function(k){var v=num[k[0]];if(v==null)return;pp('<b>'+k[1]+' szám: '+v+'</b> — '+NUMT[v]+'.');});
  hh('A Jós gép válasza a születési égboltra');
