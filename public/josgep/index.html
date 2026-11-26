@@ -103,12 +103,24 @@ header h1{padding-right:50px}
 details.card>summary{font-size:16px;color:var(--brass-hi)}
 .sug{font-size:14.5px;color:var(--parch)}
 .sug p{margin:8px 0}.sug ol,.sug ul{margin:6px 0;padding-left:20px}.sug li{margin:6px 0}
+
+#intro{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 50% 38%,#2a2112 0,#16120c 62%);transition:opacity .6s}
+#intro.out{opacity:0;pointer-events:none}
+#ic{position:absolute;left:0;top:0;width:100%;height:100%}
+#it{position:absolute;left:0;right:0;bottom:7vh;text-align:center;padding:0 24px;pointer-events:none}
+.itt{font-family:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;font-size:34px;line-height:1.1;color:var(--brass-hi);letter-spacing:.02em;opacity:0;animation:itin 1s .9s forwards}
+.its{color:var(--mut);margin-top:8px;opacity:0;animation:itin 1s 1.3s forwards}
+.itn{color:var(--parch);font-size:13.5px;margin-top:14px;min-height:20px;opacity:0;animation:itin 1s 1.9s forwards}
+.itf{color:var(--mut);font-size:12px;margin-top:6px;opacity:0;animation:itin 1s 2.3s forwards}
+.ith{color:var(--brass);font-size:12px;margin-top:16px;opacity:0;animation:itin 1s 3s forwards}
+@keyframes itin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.itt,.its,.itn,.itf,.ith{animation:none;opacity:1}}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
 <radialGradient id="brass" cx=".4" cy=".35" r=".9"><stop offset="0" stop-color="#c3a055"/><stop offset=".6" stop-color="#a08035"/><stop offset="1" stop-color="#7f6226"/></radialGradient>
 <pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#000" stroke-opacity=".09" stroke-width="1"/></pattern></defs></svg>
-<header><button class="btn" id="hlp" aria-label="Útmutató" title="Útmutató">?</button><h1>Al-Mawṣilī jósgép<small>geomantikus tábla, 639 AH (1241–42) · digitális iker</small></h1>
+<div id="intro" hidden><canvas id="ic"></canvas><div id="it"><div class="itt">Al-Mawṣilī<br>jósgép</div><div class="its">639 AH · digitális iker</div><div class="itn" id="itn"></div><div class="itf">Forrás: a tábla · Számolás: mi · Feltevés: jelölve</div><div class="ith">Érints a belépéshez</div></div></div><header><button class="btn" id="hlp" aria-label="Útmutató" title="Útmutató">?</button><h1>Al-Mawṣilī jósgép<small>geomantikus tábla, 639 AH (1241–42) · digitális iker</small></h1>
 <div class="tbar"><button class="btn" id="tm" aria-label="Egy nappal korábban">‹</button><input type="datetime-local" id="ti" aria-label="Időpont (UTC)"><button class="btn" id="tp" aria-label="Egy nappal később">›</button><button class="btn" id="tn">Most</button></div>
 <div class="tbar" style="margin-top:8px"><button class="btn" id="lb" style="flex:1;text-align:left;display:flex;gap:8px;align-items:center"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.4"/></svg> hely</button></div><div class="note" id="lt" style="margin-top:6px"></div></header>
 <main><section id="gep" class="screen on"></section><section id="tarcsa" class="screen"></section><section id="eg" class="screen"></section><section id="hold" class="screen"></section><section id="lanc" class="screen"></section><section id="szul" class="screen"></section><section id="sug" class="screen"></section></main>
@@ -655,5 +667,60 @@ $('hlp').onclick=function(){show('sug');};
 $('lb').onclick=function(){var lt=$('lt');if(!navigator.geolocation){lt.textContent='Ez a böngésző nem ad helyadatot.';return;}lt.textContent='Hely lekérése, engedélyezd a kérést…';
  navigator.geolocation.getCurrentPosition(function(p){ST.loc={lat:p.coords.latitude,lon:p.coords.longitude,src:'GPS',acc:p.coords.accuracy};save();updLoc();R[ST.tab]();},function(e){lt.textContent=(e.code==1?'A helyhozzáférés le van tiltva. Engedélyezd a böngésző beállításaiban (a lakat ikon az címsorban), majd próbáld újra.':'A GPS most nem érhető el, próbáld újra a szabadban.');},{enableHighAccuracy:true,timeout:20000,maximumAge:60000});};
 ST.ms=Date.now();$('ti').value=fmt(ST.ms);updLoc();show('gep');
+
+// ===== nyitóképernyő: forgó égbolt a mai bolygóállásokkal =====
+(function(){
+var el=$('intro');if(!el)return;
+var today=new Date().toISOString().slice(0,10);
+try{if(localStorage.getItem('tablaIN')===today)return;}catch(e){}
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+var S;try{S=sky(Date.now());}catch(e){return;}
+el.hidden=false;
+var cv=$('ic'),cx=cv.getContext('2d'),dpr=Math.min(window.devicePixelRatio||1,2),W,H,CX,CY,R;
+function size(){W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);CX=W/2;CY=H*0.36;R=Math.min(W*0.4,H*0.3);}
+size();
+var GL={"Nap":"☉","Hold":"☽","Merkúr":"☿","Vénusz":"♀","Mars":"♂","Jupiter":"♃","Szaturnusz":"♄","Uránusz":"♅","Neptunusz":"♆","Plútó":"♇"};
+var B=S.b.filter(function(r){return GL[r[0]];});
+var sg=SIGNS[Math.floor(S.a.sun/30)],mg=SIGNS[Math.floor(S.a.moon/30)];
+$('itn').textContent='Az égbolt most: Nap '+sg+' '+Math.floor(S.a.sun%30)+'°, Hold '+mg+' '+Math.floor(S.a.moon%30)+'°';
+var T0=performance.now(),DUR=3000,closed=false;
+function ang(l){return Math.PI-l*Math.PI/180;}
+function ease(t){return 1-Math.pow(1-t,3);}
+function close(){if(closed)return;closed=true;try{localStorage.setItem('tablaIN',today);}catch(e){}el.classList.add('out');setTimeout(function(){el.hidden=true;},650);}
+el.addEventListener('click',close);
+setTimeout(close,5200);
+function frame(now){
+ if(closed)return;
+ var t=(now-T0)/1000,p=Math.min(t/(DUR/1000),1),e=ease(p);
+ cx.clearRect(0,0,W,H);
+ // külső gyűrű: 28 holdház-osztás, lassan forog
+ var rot=t*0.06;
+ cx.save();cx.translate(CX,CY);
+ cx.strokeStyle='rgba(216,184,101,.55)';cx.lineWidth=1.2;cx.beginPath();cx.arc(0,0,R*1.12,0,7);cx.stroke();
+ cx.strokeStyle='rgba(216,184,101,.28)';cx.beginPath();cx.arc(0,0,R*1.02,0,7);cx.stroke();
+ for(var i=0;i<28;i++){var a=rot+i*Math.PI*2/28;cx.beginPath();cx.moveTo(Math.cos(a)*R*1.02,Math.sin(a)*R*1.02);cx.lineTo(Math.cos(a)*R*1.12,Math.sin(a)*R*1.12);cx.strokeStyle='rgba(216,184,101,.5)';cx.stroke();}
+ // 12 jegy-osztás, ellentétes irányban
+ for(var j=0;j<12;j++){var b=-rot*1.6+j*Math.PI/6;cx.beginPath();cx.moveTo(Math.cos(b)*R*0.2,Math.sin(b)*R*0.2);cx.lineTo(Math.cos(b)*R*1.0,Math.sin(b)*R*1.0);cx.strokeStyle='rgba(236,228,208,.07)';cx.stroke();}
+ // pályák és bolygók
+ B.forEach(function(r,i){
+  var orr=R*(0.3+0.07*i),fin=ang(r[1]);
+  var start=fin+(i%2?-1:1)*(Math.PI*2*(2.2+i*0.18));
+  var a=start+(fin-start)*e;
+  cx.strokeStyle='rgba(236,228,208,.10)';cx.lineWidth=1;cx.beginPath();cx.arc(0,0,orr,0,7);cx.stroke();
+  var x=Math.cos(a)*orr,y=-Math.sin(a)*orr;
+  var big=(r[0]==='Nap'||r[0]==='Hold');
+  var g=cx.createRadialGradient(x,y,0,x,y,big?16:11);g.addColorStop(0,big?'rgba(255,224,140,.85)':'rgba(216,184,101,.6)');g.addColorStop(1,'rgba(216,184,101,0)');
+  cx.fillStyle=g;cx.beginPath();cx.arc(x,y,big?16:11,0,7);cx.fill();
+  cx.fillStyle=big?'#fff2c4':'#ece4d0';cx.font=(big?15:13)+'px system-ui,sans-serif';cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillText(GL[r[0]]+'︎',x,y+1);
+ });
+ // közép: a tárcsa ellentétesen forgó pontjai
+ for(var k=0;k<16;k++){var c=-rot*3+k*Math.PI/8,rr=R*0.16;cx.fillStyle=k%2?'rgba(216,184,101,.9)':'rgba(236,228,208,.5)';cx.beginPath();cx.arc(Math.cos(c)*rr,Math.sin(c)*rr,k%2?2.4:1.6,0,7);cx.fill();}
+ cx.restore();
+ requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+addEventListener('resize',size);
+})();
 if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}
 </script></body></html>
