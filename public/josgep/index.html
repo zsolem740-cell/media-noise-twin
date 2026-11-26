@@ -95,6 +95,8 @@ header.slim .tbar,header.slim #lt{display:none}
 .bigbtn{width:100%;min-height:64px;font-size:20px;font-weight:600}
 
 #qbox{scroll-margin-top:80px}
+
+[hidden]{display:none!important}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
@@ -205,6 +207,26 @@ function numer(ln,fn,y,mo,d,yNow){var L=plainTxt(ln+fn),s=0,v=0,c=0;
  L.split('').forEach(function(ch){var n=PY[ch];s+=n;if('aeiou'.indexOf(ch)>=0)v+=n;else c+=n;});
  var has=L.length>0;
  return {expr:has?red(s,true):null,soul:has?red(v,true):null,pers:has?red(c,true):null,life:red(red(y,true)+red(mo,true)+red(d,true),true),bday:red(d,true),year:red(red(d,true)+red(mo,true)+red(yNow,true),true),letters:L.length};}
+
+// ===== idősáv: tranzitok a születési ponthoz =====
+var TP_NAMES=["Mars","Jupiter","Szaturnusz","Uránusz","Neptunusz","Plútó"];
+// tranzit-bolygó × aspektus: hagyományos hangnem (a mi pontozásunk, feltevés)
+var TONE={Mars:{conj:-1,sext:1,tri:1,sq:-2,opp:-2},Jupiter:{conj:2,sext:2,tri:2,sq:1,opp:1},Szaturnusz:{conj:-2,sext:1,tri:1,sq:-2,opp:-2},Uránusz:{conj:0,sext:1,tri:1,sq:-1,opp:-1},Neptunusz:{conj:0,sext:1,tri:1,sq:-1,opp:-1},Plútó:{conj:-1,sext:1,tri:1,sq:-2,opp:-2}};
+function pyear(d,mo,Y){return red(red(d,true)+red(mo,true)+red(Y,true),true);}
+// N: natal(); ms0: kezdet (UTC ms); days: napok száma. Visszaad: {days,sc[],per[]}
+function transits(N,ms0,days){var pts=[],pl={},DAY=864e5;
+ N.P.forEach(function(p){if(p.name==='Hold'&&N.B.unk)return;if(['Nap','Hold','Merkúr','Vénusz','Mars'].indexOf(p.name)>=0)pts.push([p.name,p.lon]);});
+ if(!N.B.unk){pts.push(['Aszcendens',N.asc]);pts.push(['MC',N.mc]);}
+ TP_NAMES.forEach(function(n){PL.forEach(function(p){if(p[0].split(' ')[0]===n)pl[n]=p[1];});});
+ var lon={};TP_NAMES.forEach(function(n){lon[n]=[];for(var k=0;k<days;k++)lon[n].push(plonlat(pl[n],ms0+k*DAY+12*36e5)[0]);});
+ var per=[],sc=[];for(var k=0;k<days;k++)sc.push(0);
+ TP_NAMES.forEach(function(tn){var orb=tn==='Mars'?1:1.5;
+  pts.forEach(function(pt){ASP.forEach(function(t){var cur=null;
+   for(var k=0;k<=days;k++){var o=999;if(k<days){var d=Math.abs(lon[tn][k]-pt[1]);if(d>180)d=360-d;o=Math.abs(d-t[1]);}
+    if(o<=orb){if(!cur)cur={tp:tn,np:pt[0],t:t,s:k,e:k,min:o,ex:k};else{cur.e=k;if(o<cur.min){cur.min=o;cur.ex=k;}}}
+    else if(cur){cur.tone=TONE[tn][t[3]];per.push(cur);for(var q=cur.s;q<=cur.e;q++)sc[q]+=cur.tone;cur=null;}}});});});
+ per.sort(function(a,b){return a.ex-b.ex;});
+ return {days:days,ms0:ms0,sc:sc,per:per};}
 
 // ===== állapot =====
 var ST={ms:Date.now(),JO:[0,3,6,9],RON:{R2:true,R3:true,R4:true,R5:true,R6:true,R7:true},tab:'gep',pos:0,qf:'',first:true,loc:{lat:47.4979,lon:19.0402,src:'alap',acc:0}};
@@ -381,7 +403,7 @@ function spinStart(){QS.cal=calib();QS.t0=performance.now();if(QS.timer)clearInt
 function qFinish(){clearInterval(QS.timer);QS.timer=null;QS.on=false;QS.done=true;var m=[];for(var i=0;i<4;i++){var b=QS.bits.slice(i*4,i*4+4);m.push(b[0]<<3|b[1]<<2|b[2]<<1|b[3]);}
  QS.mothers=m;ST.JO=m.map(function(v){return ARC.indexOf(v);});save();setTime(Date.now());}
 function qStop(){if(!QS.on)return;var d=QS.digit;if(d===9){QS.msg='A 9-es újrapörget (különben a páratlan gyakoribb lenne). Állítsd meg újra.';renderQ();return;}
- QS.msg='';QS.bits.push(d%2);if(QS.bits.length>=16)qFinish();else renderQ();}
+ QS.msg='';QS.bits.push(d%2);if(QS.bits.length>=16)qFinish();else{QS.cal=calib();QS.t0=performance.now();renderQ();}}
 function qStart(){var T=allT();var txt=($('q_txt')?$('q_txt').value:QS.text).trim();QS.text=txt;
  var bl=blockQ(txt);if(bl==='self'){QS.msg='Úgy hangzik, hogy nehéz időszakban vagy. Ebben a gép nem tud segíteni. Kérlek, beszélj valakivel: Magyarországon a 116-123 (Lelki Elsősegély) éjjel-nappal hívható, veszélyben a 112.';renderQ();return;}
  if(bl==='death'){QS.msg='Élet-halál jellegű kérdésre a gép nem válaszol.';renderQ();return;}
@@ -446,7 +468,8 @@ function calcBirth(){var b=ST.bt,r={};
  if(Math.abs(lat)>66)return {err:'A 66° feletti szélességeken az aszcendens nem számolható egyértelműen.'};
  var ms;try{ms=localToMs(y,mo,d,h,mi,b.tz);}catch(e){return {err:'Ismeretlen időzóna.'};}
  var L={lat:lat,lon:lon},S=sky(ms,L),N=natal({ms:ms,unk:!!b.unk},S);
- return {N:N,S:S,ms:ms,L:L,y:y,mo:mo,d:d,h:h,mi:mi,num:numer(b.ln,b.fn,y,mo,d,new Date().getFullYear())};}
+ var n0=new Date(),ms0=Date.UTC(n0.getFullYear(),n0.getMonth(),n0.getDate()),maxD=Math.max(1,Math.floor((Date.UTC(2050,0,1)-ms0)/864e5)),T=transits(N,ms0,Math.min(horDays(ms0,36,1e9),maxD));
+ return {T:T,N:N,S:S,ms:ms,L:L,y:y,mo:mo,d:d,h:h,mi:mi,num:numer(b.ln,b.fn,y,mo,d,new Date().getFullYear())};}
 var ELC=['#d9826b','#c9a44f','#dfe3e6','#4fb3a1'];
 var ASC_COL={conj:'#d8b865',sext:'#4fb3a1',tri:'#4fb3a1',sq:'#d9826b',opp:'#d9826b'};
 function natalSvg(N){var asc=N.asc,unk=N.B.unk,T=function(l){return 270+asc-l;},xy=function(r,l){var p=pol(r,T(l));return p[0].toFixed(1)+'" y="'+p[1].toFixed(1);};
@@ -490,6 +513,13 @@ function summary(C){var N=C.N,b=ST.bt,S=C.S,num=C.num,L=[],nmz=(b.ln+' '+b.fn).t
  hh('Bolygók');
  N.P.forEach(function(p){pp(placeInfo(p,1).replace(/^(\S+)/,SYM[p.name]+VS+' $1')+(b.unk?'':', '+p.house+'. ház')+(p.retro?', retrográd':'')+'.');});
  if(N.A.length){hh('Legfontosabb kapcsolatok (aspektusok)');N.A.slice(0,6).forEach(function(a){pp(a.a.name+' és '+a.b.name+': '+a.t[0]+' ('+a.orb.toFixed(1)+'° eltérés) — '+APH[a.t[3]]+'.');});}
+ if(C.T){var TT=C.T,dy=horDays(TT.ms0,12,TT.days),mo12=[],dd0=new Date(TT.ms0),yy=dd0.getUTCFullYear(),mm=dd0.getUTCMonth();
+  for(var q=0;q<12;q++){var a0=Math.round((Date.UTC(yy,mm+q,1)-TT.ms0)/864e5),a1=Math.round((Date.UTC(yy,mm+q+1,1)-TT.ms0)/864e5);a0=Math.max(0,a0);a1=Math.min(dy,a1);if(a1<=a0)continue;var sm2=0;for(var i2=a0;i2<a1;i2++)sm2+=TT.sc[i2];mo12.push([new Date(Date.UTC(yy,mm+q,1)),sm2/(a1-a0)]);}
+  var main=TT.per.filter(function(p){return p.tp!=='Mars'&&p.ex<dy;}).sort(function(a,b){return Math.abs(b.tone)-Math.abs(a.tone)||a.min-b.min;}).slice(0,6).sort(function(a,b){return a.ex-b.ex;});
+  hh('Idősáv, a következő 12 hónap');
+  if(mo12.length){var bm=mo12.slice().sort(function(a,b){return b[1]-a[1];})[0],wm=mo12.slice().sort(function(a,b){return a[1]-b[1];})[0],ml=function(x){return x[0].getUTCFullYear()+'. '+pad(x[0].getUTCMonth()+1)+'. ('+(x[1]>0?'+':x[1]<0?'−':'')+Math.abs(x[1]).toFixed(1)+')';};
+   pp('Hagyományos pontozás szerint a legkedvezőbb hónap: <b>'+ml(bm)+'</b>, a legnehezebb: <b>'+ml(wm)+'</b>. A pontozás a mi feltevésünk, nem előrejelzés.');}
+  main.forEach(function(p){pp('<b>'+fdt(TT.ms0+p.ex*864e5)+'</b> — '+p.tp+' '+p.t[0]+' '+p.np+' ('+toneLbl(p.tone,p.t[3])+'), '+fdt(TT.ms0+p.s*864e5)+' – '+fdt(TT.ms0+p.e*864e5)+'.');});}
  hh('Számmisztika');
  NUMK.forEach(function(k){var v=num[k[0]];if(v==null)return;pp('<b>'+k[1]+' szám: '+v+'</b> — '+NUMT[v]+'.');});
  hh('A Jós gép válasza a születési égboltra');
@@ -511,6 +541,7 @@ function renderSz(){var b=ST.bt;
  $('b_unk').onchange=function(){$('b_time').disabled=this.checked;};
  $('b_place').onchange=function(){var v=norm(this.value);for(var i=0;i<PLACES.length;i++)if(norm(PLACES[i][0])===v){$('b_lat').value=PLACES[i][1];$('b_lon').value=PLACES[i][2];$('b_tz').value=PLACES[i][3]||'Europe/Budapest';$('b_msg').textContent='Hely kitöltve: '+PLACES[i][0]+'.';return;}$('b_msg').textContent='Ez a hely nincs a listában. Írd be a szélességet és a hosszúságot (például a térképalkalmazásból), és válaszd ki az időzónát.';};
  $('b_here').onclick=function(){$('b_lat').value=ST.loc.lat.toFixed(4);$('b_lon').value=ST.loc.lon.toFixed(4);$('b_place').value='';$('b_msg').textContent='A jelenlegi helyed koordinátái beírva ('+(ST.loc.src==='GPS'?'GPS':'alapértelmezett Budapest')+'). A GPS-t a fejlécben a hely gombbal kérheted le a többi fülön.';};
+ $('szres').onclick=function(e){var b2=e.target.closest&&e.target.closest('[data-hzb]');if(!b2)return;var m=b2.dataset.hzb;this.querySelectorAll('.hz').forEach(function(x){x.hidden=x.dataset.hz!==m;});this.querySelectorAll('[data-hzb]').forEach(function(x){x.className='btn'+(x.dataset.hzb===m?' go':'');});};
  $('b_go').onclick=function(){rd();var del=$('b_del').checked,r=showSz();if(!r)return;
   if(del){var a=getSv();a.unshift({title:r.title,ms:Date.now(),h:r.h,text:r.text});a=a.slice(0,6);
    if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő elmentve (lent). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
@@ -518,10 +549,50 @@ function renderSz(){var b=ST.bt;
   else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést.';}};
  listSv();
  if(b.date)showSz();}
+// ===== Idősáv: diagram, időszakok, számmisztikai hónapok =====
+var NPT={"Nap":"az alapvető én","Hold":"az érzelmek","Merkúr":"a gondolkodás","Vénusz":"a kapcsolatok és az értékek","Mars":"a cselekvés","Aszcendens":"az egyéniséged, a megjelenésed","MC":"a hivatásod, a célok"};
+function fdt(ms){var d=new Date(ms);return d.getUTCFullYear()+'. '+pad(d.getUTCMonth()+1)+'. '+pad(d.getUTCDate())+'.';}
+function toneLbl(t,k){return t>0?((k==='sq'||k==='opp')?'bőség, de feszült':'támogató'):t<0?'kihívás':'változás';}
+function horDays(ms0,months,maxDays){var d=new Date(ms0),e=Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+months,d.getUTCDate());return Math.min(Math.round((e-ms0)/864e5),maxDays);}
+function tlSvg(T,days,months){var W=360,H=232,x0=32,x1=352,y0=104,hh=84,sc=T.sc.slice(0,days),DAY=864e5;
+ var bins=[];if(months>=36){var d=new Date(T.ms0),y=d.getUTCFullYear(),m=d.getUTCMonth(),k=0;while(k<days){var nx=Date.UTC(y,m+1,1),len=Math.min(days-k,Math.max(1,Math.round((nx-(T.ms0+k*DAY))/DAY)));bins.push([k,len]);k+=len;m++;if(m>11){m=0;y++;}}}
+ else for(var k2=0;k2<days;k2+=7)bins.push([k2,Math.min(7,days-k2)]);
+ var vals=bins.map(function(b){var s=0;for(var i=b[0];i<b[0]+b[1];i++)s+=sc[i];return s/b[1];});
+ var mx=Math.max(3,Math.ceil(Math.max.apply(null,vals.map(Math.abs)))),u=hh/mx,bw=(x1-x0)/bins.length;
+ var g='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Idősáv: a hónapok és hetek hangneme, pozitív felfelé, negatív lefelé">'
+  +'<rect x="0" y="0" width="'+W+'" height="'+H+'" rx="8" fill="#17110a"/>'
+  +[mx,0,-mx].map(function(v){var y=y0-v*u;return '<line x1="'+x0+'" y1="'+y.toFixed(1)+'" x2="'+x1+'" y2="'+y.toFixed(1)+'" stroke="#a8863f" stroke-opacity="'+(v===0?.8:.25)+'"/><text x="'+(x0-4)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end" font-size="9" fill="#a79d86">'+(v>0?'+'+v:v<0?'−'+(-v):'0')+'</text>';}).join('');
+ bins.forEach(function(b,i){var v=vals[i],h=Math.abs(v)*u;if(h<.4)return;g+='<rect x="'+(x0+i*bw+.3).toFixed(1)+'" y="'+(v>0?y0-h:y0).toFixed(1)+'" width="'+Math.max(1,bw-.6).toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+(v>0?'#4fb3a1':'#d9826b')+'" fill-opacity=".85"/>';});
+ var d0=new Date(T.ms0),y=d0.getUTCFullYear(),m=d0.getUTCMonth(),step=months>=36?3:1;
+ for(var j=0;j<=months;j+=1){var t=Date.UTC(y,m+j,1),kx=(t-T.ms0)/DAY;if(kx<0||kx>days)continue;var px=x0+kx/days*(x1-x0);g+='<line x1="'+px.toFixed(1)+'" y1="'+(y0+hh)+'" x2="'+px.toFixed(1)+'" y2="'+(y0+hh+4)+'" stroke="#a79d86"/>';
+  if(((y*12+m+j)%step===0)||months<=3){var dd=new Date(t);g+='<text x="'+px.toFixed(1)+'" y="'+(y0+hh+15)+'" text-anchor="middle" font-size="8.5" fill="#a79d86">'+String(dd.getUTCFullYear()).slice(2)+'.'+pad(dd.getUTCMonth()+1)+'</text>';}}
+ T.per.forEach(function(p){if(p.tp==='Mars'||Math.abs(p.tone)<2||p.ex>=days)return;var px=x0+(p.ex+.5)/days*(x1-x0);g+='<circle cx="'+px.toFixed(1)+'" cy="'+y0+'" r="2.4" fill="'+(p.tone>0?'#4fb3a1':'#d9826b')+'" stroke="#17110a" stroke-width=".8"/>';});
+ g+='<text x="'+x0+'" y="11" font-size="9" fill="#a79d86">hangnem (+ támogató, − kihívás)</text><text x="'+x1+'" y="'+(H-5)+'" text-anchor="end" font-size="8.5" fill="#a79d86">naptári idő</text></svg>';
+ return g;}
+function perLi(T,p){var ex=T.ms0+p.ex*864e5,s=T.ms0+p.s*864e5,e=T.ms0+p.e*864e5,n=p.np;
+ return '<div class="rule2"><b>'+fdt(ex)+'</b> · '+SYM[p.tp]+VS+' '+p.tp+' '+p.t[0]+' '+(SYM[n]?SYM[n]+VS+' ':'')+n+' <span class="chip '+(p.tone>0?'calc':p.tone<0?'ass':'src')+'">'+toneLbl(p.tone,p.t[3])+'</span><br><span class="note">'+fdt(s)+' – '+fdt(e)+' ('+p.min.toFixed(2)+'° a pontostól)</span><br>'+p.tp+' ('+ROLE[p.tp].toLowerCase()+') és a születési '+n+' ('+NPT[n]+'): '+APH[p.t[3]]+'.</div>';}
+function nmHtml(C,T,months){var d=new Date(T.ms0),y=d.getUTCFullYear(),m=d.getUTCMonth(),dd=C.d,mo=C.mo,out=[];
+ if(months>=36){var seen={};for(var j=0;j<months;j++){var t=new Date(Date.UTC(y,m+j,1)),Y=t.getUTCFullYear();if(seen[Y])continue;seen[Y]=1;var py=pyear(dd,mo,Y);out.push('<div class="body" style="grid-template-columns:auto 1fr"><div class="big serif" style="width:36px;text-align:center;color:var(--brass-hi)">'+py+'</div><div><div class="n">'+Y+' · személyes év</div><div class="m">'+NUMT[py]+'</div></div></div>');}}
+ else for(var j2=0;j2<months;j2++){var t2=new Date(Date.UTC(y,m+j2,1)),Y2=t2.getUTCFullYear(),M=t2.getUTCMonth()+1,pm=red(pyear(dd,mo,Y2)+M,true);out.push('<div class="body" style="grid-template-columns:auto 1fr"><div class="big serif" style="width:36px;text-align:center;color:var(--brass-hi)">'+pm+'</div><div><div class="n">'+Y2+'. '+pad(M)+'. · személyes hónap</div><div class="m">'+NUMT[pm]+'</div></div></div>');}
+ return out.join('');}
+function tlHtml(C,months){var T=C.T,days=horDays(T.ms0,months,T.days),per=T.per.filter(function(p){return p.ex<days;}),main=per.filter(function(p){return p.tp!=='Mars';}),mars=per.filter(function(p){return p.tp==='Mars';});
+ return '<div class="hz" data-hz="'+months+'"'+(months===12?'':' hidden')+'>'+tlSvg(T,days,months)
+  +'<div class="note" style="margin-top:6px">Függőleges tengely: a hét (36 hónapnál a hónap) összesített hangneme, vízszintes: naptári idő '+fdt(T.ms0)+'-tól '+fdt(T.ms0+(days-1)*864e5)+'-ig. A pontok a legerősebb kapcsolatok pontos napját mutatják.'+(days<horDays(T.ms0,months,1e9)?' A bolygóhelyek csak 2049 végéig számolhatók, ezért az időtáv rövidebb.':'')+'</div>'
+  +'<h3 style="margin:12px 0 4px">Fő időszakok ('+main.length+')</h3>'+(main.length?main.map(function(p){return perLi(T,p);}).join(''):'<div class="note">Ebben az időtávban nincs lassú bolygó pontos kapcsolata.</div>')
+  +(mars.length?'<details><summary>Gyors, Mars-kapcsolatok ('+mars.length+')</summary>'+mars.map(function(p){return perLi(T,p);}).join('')+'</details>':'')
+  +'<details><summary>Számmisztikai '+(months>=36?'évek':'hónapok')+'</summary>'+nmHtml(C,T,months)+'</details></div>';}
+function tlCard(C){var T=C.T;return '<div class="card dark" id="idosav"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Idősáv</h3><span class="chip calc">tranzitok: számolás</span></div>'
+ +'<div class="row" style="margin:8px 0">'+[3,12,36].map(function(m){return '<button class="btn'+(m===12?' go':'')+'" data-hzb="'+m+'">'+m+' hónap</button>';}).join('')+'</div>'
+ +[3,12,36].map(function(m){return tlHtml(C,m);}).join('')
+ +'<details><summary>Hogyan számolja a hangnemet? (feltevés)</summary><div class="sm" style="color:var(--mut)"><p>A mozgó bolygók (Mars, Jupiter, Szaturnusz, Uránusz, Neptunusz, Plútó) kapcsolatát nézi a születési Nap, Hold, Merkúr, Vénusz, Mars, az Aszcendens és az MC pontjaival. Orb: 1,5° (Marsnál 1°). A pontszám a hagyományos jelleg szerint, mi állítottuk be:</p><p>'
+ +TP_NAMES.map(function(n){var t=TONE[n];return '<b>'+n+'</b>: együttállás '+t.conj+', szextil '+t.sext+', háromszög '+t.tri+', négyzet '+t.sq+', szembenállás '+t.opp;}).join('<br>')
+ +'</p><p>Egy napon az éppen érvényes kapcsolatok pontszáma összeadódik, súlyozás nincs. Ez hagyományos értelmezés, nem előrejelzés.</p></div></details></div>';}
+
 function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div class="card dark" style="border-color:var(--bad)">'+C.err+'</div>';return null;}
  var N=C.N,b=ST.bt,unk=b.unk,S=C.S,Mx=ST.JO.map(function(v){return ARC[v];}),A=answer(Mx,S,true),sm=summary(C);
  var h='<div class="plate"><div class="row" style="justify-content:space-between"><b class="serif">Születési térkép</b><span class="chip calc">számolás</span></div>'+natalSvg(N)
   +'<div class="note">Az Aszcendens a bal oldalon (9 óránál). A jegyek ellentétes irányban követik egymást, házak: egész jegyes rendszer (a jegy a ház). Zöld vonal: szextil, háromszög; piros: négyzet, szembenállás; arany: együttállás.'+(unk?' Pontos idő nélkül a térkép a Kos 0°-tól indul.':'')+'</div></div>';
+ h+=tlCard(C);
  h+='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Helyek</h3><span class="chip calc">számolás</span></div>'
   +N.P.map(function(p){return '<div class="body"><div class="big" style="width:30px;text-align:center">'+SYM[p.name]+VS+'</div><div><div class="n">'+p.name+(p.retro?' <span class="note">retrográd</span>':'')+'</div><div class="m">'+ZS[p.si]+VS+' '+SIGNS[p.si]+' '+dm(p.deg)+(unk?'':' · '+p.house+'. ház')+'</div></div></div>';}).join('')
   +(unk?'':'<div class="body"><div class="big" style="width:30px;text-align:center;font-size:13px">Asc</div><div class="m">'+ZS[N.ascSign]+VS+' '+SIGNS[N.ascSign]+' '+dm(N.asc%30)+' · MC: '+SIGNS[Math.floor(N.mc/30)]+' '+dm(N.mc%30)+'</div></div>')
