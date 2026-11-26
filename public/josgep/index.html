@@ -115,6 +115,7 @@ details.card>summary{font-size:16px;color:var(--brass-hi)}
 .ith{color:var(--brass);font-size:12px;margin-top:16px;opacity:0;animation:itin 1s 3s forwards}
 @keyframes itin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.itt,.its,.itn,.itf,.ith{animation:none;opacity:1}}
+#osszes{scroll-margin-top:12px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
@@ -564,9 +565,10 @@ function renderSz(){var b=ST.bt;
  $('szres').onclick=function(e){var b2=e.target.closest&&e.target.closest('[data-hzb]');if(!b2)return;var m=b2.dataset.hzb;this.querySelectorAll('.hz').forEach(function(x){x.hidden=x.dataset.hz!==m;});this.querySelectorAll('[data-hzb]').forEach(function(x){x.className='btn'+(x.dataset.hzb===m?' go':'');});};
  $('b_go').onclick=function(){rd();var del=$('b_del').checked,r=showSz();if(!r)return;
   if(del){var a=getSv();a.unshift({title:r.title,ms:Date.now(),h:r.h,text:r.text});a=a.slice(0,6);
-   if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő elmentve (lent). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
+   if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő automatikusan elmentve (a Mentett összesítők között, az űrlap alatt). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
    else $('b_msg').textContent='Az összesítőt nem sikerült elmenteni (nincs hely), ezért az adataid megmaradtak. Töröld a régi összesítőket.';}
-  else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést.';}};
+  else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést. Az összesítő tetején a Mentés gombbal elmentheted.';}
+  $('osszes').scrollIntoView();};
  listSv();
  if(b.date)showSz();}
 // ===== Idősáv: diagram, időszakok, számmisztikai hónapok =====
@@ -634,8 +636,11 @@ function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div cla
  h+='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">A Jós gép a születési égbolton</h3><span class="chip ass">feltevés</span></div><div class="row" style="gap:12px;margin:8px 0">'+figSvg(A.R,58)+'<div><div class="serif lat" style="font-size:22px">'+lat(A.R)+'</div><div class="m" style="color:var(--mut)">„'+A.lr[3]+'”</div><div><b>'+(A.score>0?'+':'')+A.score+' · '+A.verdict+'</b></div></div></div>'
   +'<div class="note">A négy Anya a Gép fülön beállított tárcsaállásból jön, a Nap, a Hold, a jegyek és a horizont pedig a születési időpontból és helyről. Állítsd át a tárcsákat a Gép fülön, ha más kérdésre kérsz választ.</div>'
   +'<details><summary>Szabályok</summary>'+A.L.map(function(r){return '<div class="rule2"><span class="chip '+(r.tag=='src'?'src':'ass')+'">'+r.k+' · '+(r.tag=='src'?'forrás':'feltevés')+'</span> '+r.t+'</div>';}).join('')+'</details></div>';
- h+='<div class="card dark" id="osszes"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">számolás + hagyomány</span></div><div class="sum">'+sm.html+'</div><div class="row" style="margin-top:10px"><button class="btn go" id="s_copy">Másolás</button><button class="btn" id="s_share">Megosztás</button></div><div class="note" id="s_msg" style="margin-top:6px"></div></div>';
+ var hs='<div class="card dark" id="osszes"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">számolás + hagyomány</span></div><div class="row" style="margin:8px 0"><button class="btn go" id="s_save">Mentés</button><button class="btn" id="s_copy">Másolás</button><button class="btn" id="s_share">Megosztás</button></div><div class="note" id="s_msg" style="margin-bottom:6px"></div><div class="sum">'+sm.html+'</div></div>';
+ h=hs+h;
  o.innerHTML=h;bindSum(sm.text);
+ var ttl=((b.ln+' '+b.fn).trim()||'névtelen')+' · '+b.date;
+ $('s_save').onclick=function(){var a=getSv();a.unshift({title:ttl,ms:Date.now(),h:h,text:sm.text});a=a.slice(0,6);$('s_msg').textContent=putSv(a)?'Elmentve a Mentett összesítők közé (Születés fül, az űrlap alatt).':'Nem sikerült elmenteni (nincs hely), töröld a régi összesítőket.';listSv();};
  return {h:h,text:sm.text,title:((b.ln+' '+b.fn).trim()||'névtelen')+' · '+b.date};}
 function bindSum(text){
  $('s_copy').onclick=function(){var m=$('s_msg');try{navigator.clipboard.writeText(text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült. Jelöld ki és másold a szöveget kézzel.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}};
@@ -644,7 +649,7 @@ function getSv(){try{return JSON.parse(localStorage.getItem('tablaSV')||'[]')||[
 function putSv(a){try{localStorage.setItem('tablaSV',JSON.stringify(a));return true;}catch(e){return false;}}
 function listSv(){var a=getSv(),o=$('svl');if(!o)return;if(!a.length){o.innerHTML='';return;}
  o.innerHTML='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Mentett összesítők</h3><span class="chip src">csak a kész anyag</span></div>'+a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div><div class="m">mentve: '+new Date(x.ms).toLocaleDateString('hu-HU')+'</div></div><div class="row"><button class="btn" data-o="'+i+'">Megnyitás</button><button class="btn" data-x="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'</div>';
- o.querySelectorAll('button[data-o]').forEach(function(b){b.onclick=function(){var x=getSv()[+b.dataset.o];if(x){$('szres').innerHTML=x.h;bindSum(x.text);$('szres').scrollIntoView();}};});
+ o.querySelectorAll('button[data-o]').forEach(function(b){b.onclick=function(){var x=getSv()[+b.dataset.o];if(x){$('szres').innerHTML=x.h;bindSum(x.text);var sv=$('s_save');if(sv)sv.hidden=true;$('szres').scrollIntoView();}};});
  o.querySelectorAll('button[data-x]').forEach(function(b){b.onclick=function(){var a2=getSv();a2.splice(+b.dataset.x,1);putSv(a2);listSv();};});}
 
 // ===== Útmutató =====
