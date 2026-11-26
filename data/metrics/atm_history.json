@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generated_at": "2026-11-26T02:04:15Z",
+ "generated_at": "2026-11-26T03:13:55Z",
  "model": {
   "formula": "ATM = round(sqrt(G% * S% * (100 - V%)))",
   "scoring": "sqrt_int",
@@ -209,9 +209,9 @@
   }
  },
  "summary": {
-  "n_items": 1734,
-  "atm_mean": 69.9769,
-  "atm_p90": 204.7,
+  "n_items": 1732,
+  "atm_mean": 69.9065,
+  "atm_p90": 205.9,
   "by_region": {
    "AT-1": {
     "n": 244,
@@ -221,9 +221,9 @@
    },
    "HU-NAT": {
     "n": 600,
-    "atm_mean": 55.98,
+    "atm_mean": 56.4133,
     "v_mean": 0.538,
-    "s_mean": 0.032
+    "s_mean": 0.033
    },
    "HU-VA": {
     "n": 199,
@@ -233,15 +233,15 @@
    },
    "INT": {
     "n": 600,
-    "atm_mean": 70.8533,
+    "atm_mean": 70.815,
     "v_mean": 0.606,
-    "s_mean": 0.044
+    "s_mean": 0.045
    },
    "SI-1": {
-    "n": 91,
-    "atm_mean": 82.6264,
-    "v_mean": 0.489,
-    "s_mean": 0.051
+    "n": 89,
+    "atm_mean": 78.8764,
+    "v_mean": 0.484,
+    "s_mean": 0.048
    }
   },
   "top_noise": [
@@ -256,21 +256,27 @@
    "7715e761cab71ec7",
    "2cddccf54d4dabf3"
   ],
-  "bytes": 1552771
+  "bytes": 1550059
  },
  "insights": {
   "trend": {
    "INT": {
-    "now": 70.8533,
+    "now": 70.815,
     "prev": null,
     "delta": null,
     "n": 600
    },
    "HU-NAT": {
-    "now": 55.98,
+    "now": 56.4133,
     "prev": null,
     "delta": null,
     "n": 600
+   },
+   "SI-1": {
+    "now": 134.9,
+    "prev": 44.7222,
+    "delta": 90.1778,
+    "n": 10
    },
    "AT-1": {
     "now": 112.6667,
@@ -283,12 +289,6 @@
     "prev": 110.0645,
     "delta": -11.377,
     "n": 32
-   },
-   "SI-1": {
-    "now": 149.8889,
-    "prev": 44.7222,
-    "delta": 105.1667,
-    "n": 9
    }
   },
   "anomalies": [
@@ -315,14 +315,6 @@
     "region": "HU-NAT",
     "S": 0.417,
     "z": 4.7
-   },
-   {
-    "id": "584c5af9baed6a16",
-    "title": "Hegseth, Pentagon officials floated using wartime law to reappoint Nvidia CEO",
-    "source": "The Washington Post",
-    "region": "INT",
-    "S": 0.385,
-    "z": 4.5
    },
    {
     "id": "a48cee5544b6d583",
@@ -355,13 +347,21 @@
     "region": "INT",
     "S": 0.36,
     "z": 4.2
+   },
+   {
+    "id": "654390f890feaab9",
+    "title": "Szoboszlai először volt a Liverpool csapatkapitánya, gólpasszal ünnepelt a BL-ben",
+    "source": "Telex",
+    "region": "HU-NAT",
+    "S": 0.306,
+    "z": 4.2
    }
   ],
   "bursts": [
    {
     "term": "thanksgiving",
     "recent": 31,
-    "expected": 0.8
+    "expected": 0.9
    },
    {
     "term": "parade",
@@ -369,9 +369,9 @@
     "expected": 0.2
    },
    {
-    "term": "aaron",
-    "recent": 19,
-    "expected": 0.6
+    "term": "macy",
+    "recent": 14,
+    "expected": 0.3
    },
    {
     "term": "world",
@@ -379,24 +379,24 @@
     "expected": 0.7
    },
    {
-    "term": "macy",
-    "recent": 14,
+    "term": "postponed",
+    "recent": 10,
+    "expected": 0.0
+   },
+   {
+    "term": "killed",
+    "recent": 12,
     "expected": 0.3
    },
    {
-    "term": "rodgers",
-    "recent": 17,
-    "expected": 0.5
+    "term": "aaron",
+    "recent": 16,
+    "expected": 0.7
    },
    {
     "term": "fire",
-    "recent": 12,
-    "expected": 0.1
-   },
-   {
-    "term": "fuel",
     "recent": 11,
-    "expected": 0.1
+    "expected": 0.2
    }
   ],
   "sources": [
@@ -414,9 +414,9 @@
    },
    {
     "domain": "espn.com",
-    "n": 5,
-    "mean_S": 0.103,
-    "mean_ATM": 175.0
+    "n": 6,
+    "mean_S": 0.095,
+    "mean_ATM": 169.6667
    },
    {
     "domain": "vol.at",
@@ -444,9 +444,9 @@
    },
    {
     "domain": "nemzetisport.hu",
-    "n": 11,
-    "mean_S": 0.073,
-    "mean_ATM": 145.2727
+    "n": 9,
+    "mean_S": 0.075,
+    "mean_ATM": 146.5556
    },
    {
     "domain": "vaol.hu",
@@ -547,46 +547,17 @@
     ]
    },
    {
-    "label": "Angelina Jolie and Brad Pitt settle legal battle over French winery",
-    "n": 3,
-    "spread": 0.176,
-    "atm": 80.0,
+    "label": "Macy's postpones Thanksgiving parade due to weather",
+    "n": 11,
+    "spread": 0.221,
+    "atm": 86.2727,
     "sources": [
      {
-      "id": "e9bb8cbe0d071660",
-      "domain": "bbc.com",
-      "source": "BBC",
-      "S": 0.176,
-      "title": "Angelina Jolie and Brad Pitt settle legal battle over French winery"
-     },
-     {
-      "id": "c963c37764b8b459",
-      "domain": "pagesix.com",
-      "source": "Page Six",
-      "S": 0.009,
-      "title": "Brad Pitt and Angelina Jolie's years-long legal battle comes to an abrupt — and surprising — end"
-     },
-     {
-      "id": "e94d7b6a3b404dd9",
-      "domain": "bbc.co.uk",
-      "source": "BBC News",
-      "S": 0.0,
-      "title": "Angelina Jolie and Brad Pitt settle legal battle over French winery"
-     }
-    ]
-   },
-   {
-    "label": "Macy’s Thanksgiving Day Parade postponed due to nor’easter — first time ever due to weather",
-    "n": 10,
-    "spread": 0.097,
-    "atm": 77.2,
-    "sources": [
-     {
-      "id": "ba79286f83aae9c0",
-      "domain": "nytimes.com",
-      "source": "The New York Times",
-      "S": 0.097,
-      "title": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm"
+      "id": "6272d00b3bd012d0",
+      "domain": "nypost.com",
+      "source": "New York Post",
+      "S": 0.221,
+      "title": "Macy’s Thanksgiving Day Parade performers left in limbo after NYC festivities postponed"
      },
      {
       "id": "a8bf4eaa6944849a",
@@ -594,6 +565,13 @@
       "source": "Reuters",
       "S": 0.088,
       "title": "PODCAST: Macy's parade postponed, Trump tariffs, Iowa detonation (Updated)"
+     },
+     {
+      "id": "ba79286f83aae9c0",
+      "domain": "nytimes.com",
+      "source": "The New York Times",
+      "S": 0.072,
+      "title": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm"
      },
      {
       "id": "cce9a8dc710b9b36",
@@ -615,49 +593,42 @@
       "source": "NPR",
       "S": 0.047,
       "title": "New balloons will fly for the now-postponed 100th Macy's Thanksgiving Day Parade"
-     },
-     {
-      "id": "7989f9262a149723",
-      "domain": "nbcnews.com",
-      "source": "NBC News",
-      "S": 0.046,
-      "title": "Macy’s Thanksgiving Day Parade is pushed back to Saturday due to weather"
      }
     ]
    },
    {
-    "label": "US officials report encouraging early signs after Army detonates unstable chemicals in Iowa",
-    "n": 9,
-    "spread": 0.097,
-    "atm": 93.8889,
+    "label": "Angelina Jolie and Brad Pitt settle legal battle over French winery",
+    "n": 4,
+    "spread": 0.176,
+    "atm": 104.25,
     "sources": [
      {
-      "id": "8c5730316e60e86a",
-      "domain": "cnn.com",
-      "source": "CNN",
-      "S": 0.097,
-      "title": "Live updates: Army prepares to detonate several tons of lead azide in Iowa"
+      "id": "e9bb8cbe0d071660",
+      "domain": "bbc.com",
+      "source": "BBC",
+      "S": 0.176,
+      "title": "Angelina Jolie and Brad Pitt settle legal battle over French winery"
      },
      {
-      "id": "b3fce653b865300a",
-      "domain": "apnews.com",
-      "source": "AP News",
-      "S": 0.038,
-      "title": "Army calls detonation of bomb chemicals in Iowa a success after earlier fears of a toxic plume"
+      "id": "9a35e76a29265e76",
+      "domain": "theguardian.com",
+      "source": "The Guardian",
+      "S": 0.175,
+      "title": "Brad Pitt and Angelina Jolie settle years-long legal battle over joint French winery"
      },
      {
-      "id": "d24f5a8e72fc9a97",
-      "domain": "pbs.org",
-      "source": "PBS",
-      "S": 0.036,
-      "title": "Live Updates: Army detonates stockpile of lead azide in Iowa"
+      "id": "c963c37764b8b459",
+      "domain": "pagesix.com",
+      "source": "Page Six",
+      "S": 0.009,
+      "title": "Brad Pitt and Angelina Jolie's years-long legal battle comes to an abrupt — and surprising — end"
      },
      {
-      "id": "81fc3d9c770ad046",
-      "domain": "news8000.com",
-      "source": "news8000.com",
+      "id": "e94d7b6a3b404dd9",
+      "domain": "bbc.co.uk",
+      "source": "BBC News",
       "S": 0.0,
-      "title": "US officials report encouraging early signs after Army detonates unstable chemicals in Iowa"
+      "title": "Angelina Jolie and Brad Pitt settle legal battle over French winery"
      }
     ]
    },
@@ -691,74 +662,103 @@
     ]
    },
    {
-    "label": "Donald Trump gets Jensen Huang reinstated as Nvidia CEO: Letters to the Editor — Nov. 26, 2026",
-    "n": 3,
-    "spread": 0.08,
-    "atm": 137.0,
+    "label": "At least 31 killed in fuel tanker fire near Cairo, Egyptian authorities say",
+    "n": 7,
+    "spread": 0.064,
+    "atm": 40.4286,
     "sources": [
      {
-      "id": "c704c3361758a298",
+      "id": "b83c3f51b732e121",
       "domain": "cnn.com",
       "source": "CNN",
-      "S": 0.147,
-      "title": "Trump Floats Pardon for Nvidia CEO Jensen Huang"
+      "S": 0.064,
+      "title": "At least 31 killed in fuel tanker fire in Egypt"
      },
      {
-      "id": "629fe8cf2339cc0b",
-      "domain": "cbsnews.com",
-      "source": "CBS News",
-      "S": 0.086,
-      "title": "Inside Trump's effort to reinstate Jensen Huang as Nvidia's CEO"
+      "id": "1c89623f5cfc1c0f",
+      "domain": "audacy.com",
+      "source": "Audacy",
+      "S": 0.0,
+      "title": "A fire on a major highway surrounding Cairo kills at least 30 people, Egypt’s Health Ministry says"
      },
      {
-      "id": "034196120a120ea3",
-      "domain": "nypost.com",
-      "source": "New York Post",
-      "S": 0.067,
-      "title": "Donald Trump gets Jensen Huang reinstated as Nvidia CEO: Letters to the Editor — Nov. 26, 2026"
+      "id": "bb82e8d217ad902d",
+      "domain": "upi.com",
+      "source": "upi",
+      "S": 0.0,
+      "title": "At least 30 killed, 15 injured in fuel tanker explosion near Cairo"
+     },
+     {
+      "id": "2165fd0b88333b96",
+      "domain": "applevalleynewsnow.com",
+      "source": "AppleValleyNewsNow.com",
+      "S": 0.0,
+      "title": "At least 31 killed in fuel tanker fire near Cairo, Egypt’s Health Ministry says"
+     },
+     {
+      "id": "cbe9baf528dff24b",
+      "domain": "crossroadstoday.com",
+      "source": "crossroadstoday.com",
+      "S": 0.0,
+      "title": "At least 31 killed in fuel tanker fire near Cairo, Egyptian authorities say"
      }
     ]
    },
    {
-    "label": "Colombian police storm supermarket to free 76 held hostage for 17 hours",
-    "n": 5,
-    "spread": 0.076,
-    "atm": 24.8,
+    "label": "Katze mit Zange erschlagen: Anklage im Burgenland eingebracht",
+    "n": 4,
+    "spread": 0.064,
+    "atm": 83.5,
     "sources": [
      {
-      "id": "9c3b29d886ed7489",
+      "id": "1ffa98e621ffb1e2",
+      "domain": "vol.at",
+      "source": "VOL.AT",
+      "S": 0.064,
+      "title": "Katze mit Rohrzange getötet – Anklage im Burgenland"
+     },
+     {
+      "id": "589d335da6ac72a5",
+      "domain": "noen.at",
+      "source": "NÖN.at - Niederösterreichische Nachrichten",
+      "S": 0.056,
+      "title": "Katze mit Rohrzange getötet - Anklage im Burgenland"
+     },
+     {
+      "id": "54568db9dd45991d",
+      "domain": "sn.at",
+      "source": "Salzburger Nachrichten",
+      "S": 0.0,
+      "title": "Katze mit Rohrzange getötet - Anklage im Burgenland"
+     },
+     {
+      "id": "1cd759f0cad1bb59",
+      "domain": "derstandard.at",
+      "source": "Der Standard",
+      "S": 0.0,
+      "title": "Katze mit Zange erschlagen: Anklage im Burgenland eingebracht"
+     }
+    ]
+   },
+   {
+    "label": "Live Updates: Army detonates stockpile of lead azide in Iowa",
+    "n": 3,
+    "spread": 0.061,
+    "atm": 120.6667,
+    "sources": [
+     {
+      "id": "8c5730316e60e86a",
       "domain": "cnn.com",
       "source": "CNN",
-      "S": 0.076,
-      "title": "Authorities free hostages in Colombian supermarket"
+      "S": 0.097,
+      "title": "Live updates: Army prepares to detonate several tons of lead azide in Iowa"
      },
      {
-      "id": "5accc80299a1c261",
-      "domain": "nypost.com",
-      "source": "New York Post",
-      "S": 0.0,
-      "title": "Colombian authorities rescue hostages held at supermarket"
-     },
-     {
-      "id": "29ac82706f2a3ab3",
-      "domain": "upi.com",
-      "source": "upi",
-      "S": 0.0,
-      "title": "Colombia rescues all hostages held at Cartagena supermarket"
-     },
-     {
-      "id": "c13a41d5124f9f33",
-      "domain": "audacy.com",
-      "source": "Audacy",
-      "S": 0.0,
-      "title": "Colombian authorities rescue all hostages held at Cartagena supermarket"
-     },
-     {
-      "id": "c63f2b8e26fb3723",
-      "domain": "bbc.co.uk",
-      "source": "BBC News",
-      "S": 0.0,
-      "title": "Colombian police storm supermarket to free 76 held hostage for 17 hours"
+      "id": "d24f5a8e72fc9a97",
+      "domain": "pbs.org",
+      "source": "PBS",
+      "S": 0.036,
+      "title": "Live Updates: Army detonates stockpile of lead azide in Iowa"
      }
     ]
    }
@@ -766,22 +766,22 @@
  },
  "profiles": {
   "nypost.com": {
-   "n": 5752,
-   "mS": 0.04721853268428389,
-   "M2S": 32.34729430441591,
-   "mA": 61.59753129346308
+   "n": 5769,
+   "mS": 0.04726053042121701,
+   "M2S": 32.46688942277696,
+   "mA": 61.63425203674807
   },
   "cnn.com": {
-   "n": 2405,
-   "mS": 0.07472016632016615,
-   "M2S": 7.670748671933481,
-   "mA": 113.43742203742198
+   "n": 2409,
+   "mS": 0.07474678289746765,
+   "M2S": 7.682699537567465,
+   "mA": 113.4603569946035
   },
   "usnews.com": {
-   "n": 880,
-   "mS": 0.0116159090909091,
-   "M2S": 0.8747841772727272,
-   "mA": 22.175000000000004
+   "n": 882,
+   "mS": 0.011589569160997742,
+   "M2S": 0.8750534240362811,
+   "mA": 22.12471655328799
   },
   "hirnavigator.hu": {
    "n": 868,
@@ -796,10 +796,10 @@
    "mA": 48.22599531615922
   },
   "pagesix.com": {
-   "n": 830,
-   "mS": 0.0464168674698795,
-   "M2S": 6.556383763855413,
-   "mA": 75.70481927710841
+   "n": 831,
+   "mS": 0.046361010830324886,
+   "M2S": 6.558535696750893,
+   "mA": 75.61371841155233
   },
   "index.hu": {
    "n": 780,
@@ -814,10 +814,10 @@
    "mA": 46.76923076923078
   },
   "ndtv.com": {
-   "n": 614,
-   "mS": 0.0632312703583062,
-   "M2S": 1.2405411596091196,
-   "mA": 139.38762214983709
+   "n": 615,
+   "mS": 0.0631788617886179,
+   "M2S": 1.241578325203251,
+   "mA": 139.32357723577232
   },
   "telex.hu": {
    "n": 599,
@@ -826,10 +826,10 @@
    "mA": 46.07846410684475
   },
   "bbc.co.uk": {
-   "n": 551,
-   "mS": 0.022631578947368437,
-   "M2S": 1.4404482105263157,
-   "mA": 31.987295825771277
+   "n": 552,
+   "mS": 0.022590579710144942,
+   "M2S": 1.4409594710144926,
+   "mA": 31.929347826086907
   },
   "hirstart.hu": {
    "n": 474,
@@ -838,22 +838,22 @@
    "mA": 32.76793248945149
   },
   "vietnam.vn": {
-   "n": 431,
-   "mS": 0.008243619489559168,
-   "M2S": 0.36600141995359603,
-   "mA": 17.69837587006962
+   "n": 432,
+   "mS": 0.00822453703703704,
+   "M2S": 0.36606921990740715,
+   "mA": 17.65740740740742
   },
   "nytimes.com": {
-   "n": 415,
-   "mS": 0.05426987951807226,
-   "M2S": 2.2493277734939756,
-   "mA": 80.04578313253008
+   "n": 416,
+   "mS": 0.05417548076923074,
+   "M2S": 2.250866189903846,
+   "mA": 79.99999999999996
   },
   "theguardian.com": {
-   "n": 402,
-   "mS": 0.026087064676616912,
-   "M2S": 1.0991039527363184,
-   "mA": 39.34079601990048
+   "n": 403,
+   "mS": 0.02645657568238213,
+   "M2S": 1.1212239900744416,
+   "mA": 39.68238213399502
   },
   "globalhir.hu": {
    "n": 315,
@@ -874,10 +874,10 @@
    "mA": 41.765342960288784
   },
   "24.hu": {
-   "n": 256,
-   "mS": 0.02876562500000001,
-   "M2S": 1.0565399375000006,
-   "mA": 41.48828125000005
+   "n": 257,
+   "mS": 0.028747081712062268,
+   "M2S": 1.0565625603112847,
+   "mA": 41.60700389105063
   },
   "upi.com": {
    "n": 247,
@@ -940,10 +940,10 @@
    "mA": 116.70050761421315
   },
   "reuters.com": {
-   "n": 195,
-   "mS": 0.05780512820512818,
-   "M2S": 0.9116005948717946,
-   "mA": 82.70256410256414
+   "n": 196,
+   "mS": 0.05777551020408161,
+   "M2S": 0.9116341224489792,
+   "mA": 82.77040816326534
   },
   "burgenland.orf.at": {
    "n": 194,
@@ -1000,10 +1000,10 @@
    "mA": 121.30921052631575
   },
   "audacy.com": {
-   "n": 150,
-   "mS": 0.009566666666666668,
-   "M2S": 0.15420283333333326,
-   "mA": 17.14666666666667
+   "n": 152,
+   "mS": 0.009440789473684213,
+   "M2S": 0.1543834671052631,
+   "mA": 16.92105263157895
   },
   "444.hu": {
    "n": 140,
@@ -1042,10 +1042,10 @@
    "mA": 137.36974789915973
   },
   "espn.com": {
-   "n": 118,
-   "mS": 0.08345762711864409,
-   "M2S": 0.454867288135593,
-   "mA": 158.65254237288136
+   "n": 119,
+   "mS": 0.08324369747899162,
+   "M2S": 0.455509932773109,
+   "mA": 158.52100840336135
   },
   "foxnews.com": {
    "n": 116,
@@ -1102,10 +1102,10 @@
    "mA": 27.49484536082474
   },
   "aljazeera.com": {
-   "n": 95,
-   "mS": 0.038863157894736836,
-   "M2S": 0.3394292210526315,
-   "mA": 91.57894736842107
+   "n": 96,
+   "mS": 0.03868749999999999,
+   "M2S": 0.33971062499999993,
+   "mA": 91.46875000000001
   },
   "news.sky.com": {
    "n": 93,
@@ -1192,16 +1192,16 @@
    "mA": 26.202702702702698
   },
   "thehill.com": {
-   "n": 73,
-   "mS": 0.051342465753424674,
-   "M2S": 0.30930243835616444,
-   "mA": 105.47945205479452
+   "n": 74,
+   "mS": 0.05082432432432434,
+   "M2S": 0.31075271621621625,
+   "mA": 104.82432432432432
   },
   "abcnews.com": {
-   "n": 73,
-   "mS": 0.04972602739726027,
-   "M2S": 0.10913052054794524,
-   "mA": 120.91780821917808
+   "n": 74,
+   "mS": 0.04945945945945946,
+   "M2S": 0.10951437837837841,
+   "mA": 120.62162162162163
   },
   "azuzlet.hu": {
    "n": 72,
@@ -1246,10 +1246,10 @@
    "mA": 90.32352941176472
   },
   "hu.euronews.com": {
-   "n": 66,
-   "mS": 0.021939393939393943,
-   "M2S": 0.1673637575757576,
-   "mA": 33.651515151515156
+   "n": 67,
+   "mS": 0.023164179104477614,
+   "M2S": 0.17399719402985078,
+   "mA": 35.56716417910448
   },
   "notebookcheck-hu.com": {
    "n": 65,
@@ -1264,10 +1264,10 @@
    "mA": 5.218749999999999
   },
   "nbcsports.com": {
-   "n": 63,
-   "mS": 0.07977777777777773,
-   "M2S": 0.4155548888888889,
-   "mA": 152.47619047619054
+   "n": 64,
+   "mS": 0.07903124999999994,
+   "M2S": 0.4178019375,
+   "mA": 151.67187500000006
   },
   "sunshine.hu": {
    "n": 62,
@@ -1371,23 +1371,23 @@
    "M2S": 0.042162408163265296,
    "mA": 167.91836734693882
   },
+  "deadline.com": {
+   "n": 49,
+   "mS": 0.05244897959183674,
+   "M2S": 0.23725612244897956,
+   "mA": 94.91836734693875
+  },
+  "us.cnn.com": {
+   "n": 49,
+   "mS": 0.07018367346938777,
+   "M2S": 0.09542734693877553,
+   "mA": 109.46938775510202
+  },
   "m4sport.hu": {
    "n": 48,
    "mS": 0.07645833333333335,
    "M2S": 0.4992139166666667,
    "mA": 129.24999999999994
-  },
-  "deadline.com": {
-   "n": 48,
-   "mS": 0.05041666666666667,
-   "M2S": 0.22754166666666664,
-   "mA": 92.27083333333331
-  },
-  "us.cnn.com": {
-   "n": 48,
-   "mS": 0.07072916666666668,
-   "M2S": 0.09472747916666668,
-   "mA": 109.95833333333331
   },
   "kontroll.hu": {
    "n": 47,
@@ -1875,6 +1875,12 @@
    "M2S": 0.0,
    "mA": 182.14285714285714
   },
+  "vadhajtasok.hu": {
+   "n": 21,
+   "mS": 0.026000000000000002,
+   "M2S": 0.06551200000000001,
+   "mA": 49.047619047619044
+  },
   "mmafighting.com": {
    "n": 20,
    "mS": 0.16575,
@@ -1886,12 +1892,6 @@
    "mS": 0.0098,
    "M2S": 0.017287200000000003,
    "mA": 18.2
-  },
-  "vadhajtasok.hu": {
-   "n": 20,
-   "mS": 0.01895,
-   "M2S": 0.04463695000000001,
-   "mA": 37.15
   },
   "engadget.com": {
    "n": 20,
@@ -1928,6 +1928,12 @@
    "mS": 0.015055555555555556,
    "M2S": 0.03462494444444443,
    "mA": 28.444444444444443
+  },
+  "bleacherreport.com": {
+   "n": 18,
+   "mS": 0.10749999999999998,
+   "M2S": 0.21017449999999993,
+   "mA": 165.77777777777783
   },
   "promotions.hu": {
    "n": 17,
@@ -1976,12 +1982,6 @@
    "mS": 0.026882352941176472,
    "M2S": 0.04374976470588235,
    "mA": 55.05882352941177
-  },
-  "bleacherreport.com": {
-   "n": 17,
-   "mS": 0.1118235294117647,
-   "M2S": 0.20445447058823524,
-   "mA": 169.70588235294122
   },
   "journalgazette.net": {
    "n": 17,
@@ -2097,6 +2097,12 @@
    "M2S": 0.169772,
    "mA": 220.85714285714283
   },
+  "tv-spored.siol.net": {
+   "n": 14,
+   "mS": 0.0,
+   "M2S": 0.0,
+   "mA": 0.0
+  },
   "egerszegihirek.hu": {
    "n": 13,
    "mS": 0.008,
@@ -2108,12 +2114,6 @@
    "mS": 0.08676923076923078,
    "M2S": 0.046276307692307686,
    "mA": 197.53846153846152
-  },
-  "tv-spored.siol.net": {
-   "n": 13,
-   "mS": 0.0,
-   "M2S": 0.0,
-   "mA": 0.0
   },
   "goal.com": {
    "n": 13,
@@ -2168,6 +2168,12 @@
    "mS": 0.11191666666666668,
    "M2S": 0.06652691666666669,
    "mA": 217.25
+  },
+  "esemenymenedzser.hu": {
+   "n": 12,
+   "mS": 0.0,
+   "M2S": 0.0,
+   "mA": 0.0
   },
   "hu.ign.com": {
    "n": 11,
@@ -2234,12 +2240,6 @@
    "mS": 0.023200000000000002,
    "M2S": 0.026731600000000005,
    "mA": 38.900000000000006
-  },
-  "esemenymenedzser.hu": {
-   "n": 10,
-   "mS": 0.0,
-   "M2S": 0.0,
-   "mA": 0.0
   },
   "prohardver.hu": {
    "n": 10,
@@ -2568,6 +2568,547 @@
  },
  "items": [
   {
+   "id": "ae558f7fef7e430b",
+   "region": "INT",
+   "title": "FedEx cargo plane veers off runway at Miami International Airport as FAA issues groundstop",
+   "summary": "A FedEx cargo plane skidded off the tarmac at Miami International Airport Wednesday night, forcing the Federal Aviation Authority to issue a ground stop on Thanksgiving Eve.",
+   "link": "https://nypost.com/2026/11/25/us-news/fedex-cargo-plane-veers-off-runway-at-miami-international-airport-as-faa-issues-groundstop/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T03:12:24Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.025,
+   "S": 0.025,
+   "G": 0.6,
+   "ATM": 73
+  },
+  {
+   "id": "584c5af9baed6a16",
+   "region": "INT",
+   "title": "Hegseth, Pentagon officials floated using wartime law to reappoint Nvidia CEO",
+   "summary": "Hegseth, Pentagon officials floated using wartime law to reappoint Nvidia CEO The Washington Post See more headlines & perspectives on Google News",
+   "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQcDJ0UmNqUTc2UWNoaVh0STB6ZHRZTnV6WGVPX2Q0VDhmRWU4Wk5hV2lZMTZOZUV4ZEwzOVBnVmVtbnB0eXlpekIyMVF5cG91WmVxLTNIeWx1MzhLN3czOHFLbFRuVTdYRUIwdk4zMTlfcEtLb2J3Y1lQM0l1OTREU2p5UzBxaXI5aExoOGlyUVctZlJZcllacVRzTU9zVXlNaVVMNThZRE85NWdlaEo2WUJKd3FtTVBRZ00xU0l0V2tMLTRiLUE?oc=5",
+   "source": "The Washington Post",
+   "source_domain": "washingtonpost.com",
+   "published": "2026-11-26T03:05:57Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.694,
+   "S0": 0.057,
+   "S": 0.057,
+   "G": 0.6,
+   "ATM": 106,
+   "lat": 41.442,
+   "lng": -99.334
+  },
+  {
+   "id": "67f5bacf97749b1d",
+   "region": "INT",
+   "title": "California music festival claims Walmart is ripping them off in carnival-like lawsuit over merch",
+   "summary": "The lawsuit claims the retail giant has been selling products for a decade without a license.",
+   "link": "https://nypost.com/2026/11/25/us-news/coachella-sues-walmart-over-alleged-sale-of-unauthorized-festival-merchandise/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T03:04:30Z",
+   "body": {
+    "ok": true,
+    "len": 860,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.417
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.025,
+   "G": 0.6,
+   "ATM": 73,
+   "lat": 35.441,
+   "lng": -120.9
+  },
+  {
+   "id": "7698802d071e462a",
+   "region": "INT",
+   "title": "Rangers outclassed by Sabres from start to finish in ugly road loss",
+   "summary": "One shift is all it took for it all to go wrong for the Rangers.",
+   "link": "https://nypost.com/2026/11/25/sports/rangers-outclassed-by-sabres-from-start-to-finish/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T03:03:06Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.444
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.017,
+   "G": 0.6,
+   "ATM": 60
+  },
+  {
+   "id": "7940036035fa9a8e",
+   "region": "INT",
+   "title": "US announces new tariffs on host of countries including China",
+   "summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
+   "link": "https://www.bbc.co.uk/news/articles/c893r9ke5p97o?at_medium=RSS&at_campaign=rss",
+   "source": "BBC News",
+   "source_domain": "bbc.co.uk",
+   "published": "2026-11-26T03:01:40Z",
+   "V0": 0.7,
+   "V": 0.716,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 37.119,
+   "lng": 105.921
+  },
+  {
+   "id": "2bbf390dfe77795b",
+   "region": "HU-NAT",
+   "title": "Csíkszéki fődíjasa is van a Virágos Magyarország idei versenyének",
+   "summary": "Csíkszéki fődíjasa is van a Virágos Magyarország idei versenyének Székelyhon",
+   "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxQY1drQW1tQ3RxVGRGMHVYMzdTeFlaeTZSek94aUxZUzhoUXoxYUd4dzRTbGwtYVRzZ3RKeFJILUs5OFEwRXVjY2c0WDNNaHBBMU12ajB1YjcwOE9BbG5LLWd1UjdGMlptRWRVRVhhdzBkUWg1Nk1YajF4cG5BdEpEbTJSdlNPZDRGZGp2WWFZUmQ5akllTnMya1JjeHNmdXRsUkdYaHFXZUU?oc=5",
+   "source": "Székelyhon",
+   "source_domain": "szekelyhon.ro",
+   "published": "2026-11-26T02:59:33Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 46.76,
+   "lng": 19.684
+  },
+  {
+   "id": "149431010e77e7ac",
+   "region": "INT",
+   "title": "Rams safety ejected after huge hit on Packers’ Christian Watson",
+   "summary": "The Rams, who have had issues at defensive back, will have bigger worries in the second half of Wednesday night’s game against the Packers. Rams safety Kam Kinchens was ejected for an illegal hit on Packers wide receiver Christian Watson, leaving him lying on the ground for an extended time. Rams safety Kam Kinchens ejected...",
+   "link": "https://nypost.com/2026/11/25/sports/rams-kam-kinchens-ejected-illegal-hit-packers-receiver/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:58:06Z",
+   "body": {
+    "ok": true,
+    "len": 1184,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.875
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "fa664f91b1c83c25",
+   "region": "INT",
+   "title": "Fan killed after being shot in the face at NJ high school Thanksgiving football game",
+   "summary": "A spectator was shot and killed at a New Jersey high school during a varsity football game Wednesday night, officials said.",
+   "link": "https://nypost.com/2026/11/25/us-news/fan-killed-after-being-shot-in-the-face-at-teaneck-high-school-thanksgiving-football-game-in-nj/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:49:44Z",
+   "body": {
+    "ok": true,
+    "len": 693,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.9
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "9b90fb56d298e183",
+   "region": "INT",
+   "title": "Indonesian Rescuers Resume Search for 13 People Trapped Inside Illegal Mine After 13 Confirmed Dead",
+   "summary": "Indonesian Rescuers Resume Search for 13 People Trapped Inside Illegal Mine After 13 Confirmed Dead U.S. News & World Report",
+   "link": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxQM2RYUHgwZERmbDF1THBubm8xR2JmSGVObXJ0LWRVUXY3akRsNzdFVVQtUzlPRnFEa1ZpZ1RQLURJVXZ3a2w1MEFJNGl5TkRvR3RILWZNRUhkNnRvaFdCQVl6czF4bWk3YnZTdE1MMk1SallZbXk0LWh3SUJTLUtYbzFBa0xVd0VzRGE3eWpOMXF5LXo4VHZIcnJxWEZrYVBybDNTdEh2XzdrUjM4bkl6akkzbDZidEg0bnY3V2p6dUwyOUl3LUlPdHowRFQxbzZILWttd19GNE5QVjcwdnNoSEgyeEx2WnY0?oc=5",
+   "source": "U.S. News & World Report",
+   "source_domain": "usnews.com",
+   "published": "2026-11-26T02:48:45Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.475,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "63c4a0ee41513a4e",
+   "region": "SI-1",
+   "title": "Soočenje lokalne volitve 2026: Občina Lendava",
+   "summary": "Soočenje lokalne volitve 2026: Občina Lendava Siol.net",
+   "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPcm9MbnFreTFWbnNjN0FuNFJEMjk2cF9GZDlKS1poUkR5R2ZRSld4Nlpfal9ERjlFbkFSTlR1bC1ZekZka1ZpbEk1ZWlNSUpCTkJFQ3lsdUEtakZ0Q1RONW5TXzhOUktDQWc1ODVjRU5zRjJtNG1XRXpPenFELVJfc0J6OGp2OXFfSmFXcVNLRzVIclEwQzZYZ1l2R2ZuMzI5ZVBORUZPNnJSVTIzaU5rNTFCcDhEWkU1YUdERg?oc=5",
+   "source": "Siol.net",
+   "source_domain": "tv-spored.siol.net",
+   "published": "2026-11-26T02:34:30Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.8,
+   "ATM": 0,
+   "lat": 46.537,
+   "lng": 16.61
+  },
+  {
+   "id": "1c6abd316e9e3514",
+   "region": "INT",
+   "title": "World News Live Updates: UN sacked Palestinian staff on basis of unproven Israeli allegations, tribunal rules",
+   "summary": "World News Live Updates: UN sacked Palestinian staff on basis of unproven Israeli allegations, tribunal rules The Indian Express",
+   "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxNZEhBX0lVWUVDeERWSUl3RW1pVTlGM3BubXJ3ZzhYU0RLUEZ0NEdLb0ZuQWExZ1ZNZ2lPdHVMMFgtNGdvazY4LUxwWkNoMXhST0VXaDMtaVlsenRrbnpabGN1a0JMdnFGZjZiaXp2d1BTMUxuV0NwcWk1cjZrX2JUamxuWDJkSy1ITG5oUldmakdhajNyeG5vVWJJaktKMmVsc1BWQjMyTEV0dVlMNjF5Sk44YmhUd3FKTHRDYktlYm9vaXNUX0hhc3pYU1lpd9IB1AFBVV95cUxPdkpRdV9oNTZScjdwYW1RZ2JOR2UyWWtmYTlMZmQ4MjVXVVlhb3NiWlpsNEZZRVl2cjRlejR0cVpvMGs2ZUpSWU1tTEZxbDZ5Q184RWs0Q2RsSU1lcG9xc0M0ODlKeFprLWFhTFEtZXJmLTg3dUxzUjZNSmpYWGpwZDk1QnVWNlUzelNSZTlfdURQdGt0ODVFSzl5MU5FeDlEYlUzaHQtNDJoSnVrdnJOUFUzdTV6RnBONmRoTlFTcG90R1dHYXQzNUNqdzB5cGU2YmFvUQ?oc=5",
+   "source": "The Indian Express",
+   "source_domain": "indianexpress.com",
+   "published": "2026-11-26T02:34:08Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "e9f0e6d467a61ce1",
+   "region": "INT",
+   "title": "YouTube star and Silicon Valley elite race along deadly PCH as cities look to curb accidents on infamous road",
+   "summary": "The YouTube megastar got stuck playing by the rules of the road.",
+   "link": "https://nypost.com/2026/11/25/us-news/mrbeast-races-tech-ceo-in-150k-flying-car-over-californias-pacific-coast-highway/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:34:08Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 1,
+    "ov": 0.286
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.032,
+   "S": 0.111,
+   "G": 0.6,
+   "ATM": 141
+  },
+  {
+   "id": "c16ffe36dafcea43",
+   "region": "INT",
+   "title": "Jensen Huang is back, and so is the slop in our floating paradise",
+   "summary": "The Jensen scandal is the gift that keeps on giving: sex, espionage and the fate of the world’s economy.",
+   "link": "https://nypost.com/2026/11/25/opinion/jensen-huang-is-back-and-so-is-the-slop-in-floating-utopia/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:32:40Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 1,
+    "ex": 0,
+    "ov": 0.333
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.167,
+   "S": 0.243,
+   "G": 0.6,
+   "ATM": 208
+  },
+  {
+   "id": "ba79286f83aae9c0",
+   "region": "INT",
+   "title": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm",
+   "summary": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm The New York Times Macy's Thanksgiving Day Parade postponed to Saturday as severe storm nears NYC ABC7 New York Massachusetts dancers scrambling to extend stay in NYC after Macy's Thanksgiving Day Parade postponed CBS News Thanksgiving weather live updates: Travel disruption expected as storms and flooding forecast CNN The Macy’s Thanksgiving Day parade is postponed due to a storm. It’s not the first time weather has made its mark. Yahoo",
+   "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNaVZHYnZSbkwwSnZWekxkalE1algzbkVPTlY1bWF2dkd6dzcwRDdwUDNSZGtsa3hLQ2t3STV1RHVKdXgyNEFhckthRDkzdnl2amZZZk93NmVfVXhVSTJXN2xLYkQzZWRYYnEyM1psQ2pzSC1mWm9LZml1dENlZlVibW8wUHloVlloTEctcQ?oc=5",
+   "source": "The New York Times",
+   "source_domain": "nytimes.com",
+   "published": "2026-11-26T02:32:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.692,
+   "S0": 0.072,
+   "S": 0.072,
+   "G": 0.6,
+   "ATM": 114
+  },
+  {
+   "id": "1f47f0e8aa9df419",
+   "region": "INT",
+   "title": "World has six consecutive days 2C above preindustrial levels for first time",
+   "summary": "World has six consecutive days 2C above preindustrial levels for first time The Guardian",
+   "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPR0p3bVRkTGZLb0pMa3lYVjR0VFdtSld3VmRVN0FTa0FpT2MtMDRLUXBIYmpRc0NGRktDTEp4bVcxQnY3amZMbC0tdVdnVkcwU3JpaUlKenBaMlY3MXU5Z3lfcUF2Q0owa1RGdEFXbU1Rb1pRdmRpb3ZQNGNSZnJmS1hFdHRZeUNGRzdnN1lhb0gySS0tTjdNcVNoQk8yTGIyNi0xRmVNTmQtemxFSUY1enVqUHR0LVp0N1lV?oc=5",
+   "source": "The Guardian",
+   "source_domain": "theguardian.com",
+   "published": "2026-11-26T02:30:00Z",
+   "V0": 0.7,
+   "V": 0.713,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "acb0f5583b532a1f",
+   "region": "INT",
+   "title": "Give thanks to Lincoln — and Sarah Josepha Hale — for our day to give thanks",
+   "summary": "Sarah Josepha Hale, prior to and in the middle of the Civil War, wrote editorials and sent letters to governors and presidents in which she argued that making Thanksgiving a shared and national holiday would help bring the divided nation together.",
+   "link": "https://nypost.com/2026/11/25/opinion/give-thanks-to-lincoln-and-sarah-josepha-hale-for-our-day-to-give-thanks/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:25:42Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.833
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "5b7178a5a4808a40",
+   "region": "INT",
+   "title": "The Aaron Rodgers ultimatum that sent the Steelers into chaos",
+   "summary": "It all started with a Tuesday meeting between the coach and QB, who won a Super Bowl together in 2011 with the Packers.",
+   "link": "https://nypost.com/2026/11/25/sports/the-aaron-rodgers-ultimatum-that-sent-the-steelers-into-chaos/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:25:22Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.625
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.167,
+   "S": 0.167,
+   "G": 0.6,
+   "ATM": 175
+  },
+  {
+   "id": "1389a51414d798f5",
+   "region": "INT",
+   "title": "Blake Corum receives a heartwarming birthday surprise from his family moments before Thanksgiving Eve game",
+   "summary": "The Los Angeles Rams and Green Bay Packers are about to play in the first-ever Thanksgiving Eve game, and the calendar just happened to have it land on Blake Corum’s birthday. While Corum took the field at SoFi Stadium for pregame warmups, the Rams running back had a moment he’ll never forget. Blake Corum running...",
+   "link": "https://nypost.com/2026/11/25/sports/blake-corums-family-surpsie-him-with-custom-birthday-sweaters/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:24:30Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.75
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "6272d00b3bd012d0",
+   "region": "INT",
+   "title": "Macy’s Thanksgiving Day Parade performers left in limbo after NYC festivities postponed",
+   "summary": "“Everyone's a little in shock that this happened. Nobody had this on their bingo card,” said Barry Houser, director of the Marching Illini.",
+   "link": "https://nypost.com/2026/11/25/us-news/macys-thanksgiving-day-parade-performers-left-in-limbo-after-nyc-festivities-postponed/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:24:13Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 1,
+    "ex": 0,
+    "ov": 1.0
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.194,
+   "S": 0.221,
+   "G": 0.6,
+   "ATM": 199
+  },
+  {
+   "id": "ac970d1ce80324de",
+   "region": "INT",
+   "title": "Violent anti-Israel NYC agitators clash with counterprotesters, cops at Jewish deli’s ‘Zionist real estate’ event",
+   "summary": "The violence erupted as protesters gathered to oppose an Israeli real estate event hosted by brokerage firm CapitIL at Essen New York Deli in Midwood, Brooklyn.",
+   "link": "https://nypost.com/2026/11/25/us-news/anti-israel-nyc-agitators-clash-with-counterprotesters-at-jewish-delis-zionist-real-estate-event/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:23:13Z",
+   "body": {
+    "ok": true,
+    "len": 906,
+    "kw": 1,
+    "ex": 0,
+    "ov": 0.857
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.024,
+   "S": 0.05,
+   "G": 0.6,
+   "ATM": 95,
+   "lat": 31.085,
+   "lng": 35.767
+  },
+  {
+   "id": "d3c8bb02a1c9f0d5",
+   "region": "INT",
+   "title": "Myles Garrett won’t be ‘100%’ for remainder of season",
+   "summary": "Myles Garrett is back to playing football in a Rams uniform for the third game in a row, but there is concern about what his long-term health will look like. “It is unrealistic to think he will be 100% or even 90% this season,” NFL insider Tom Pelissero reported. “There is no looking back —...",
+   "link": "https://nypost.com/2026/11/25/sports/rams-myles-garrett-health-update/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:17:05Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.75
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.019,
+   "S": 0.019,
+   "G": 0.6,
+   "ATM": 60
+  },
+  {
+   "id": "b5dd248e9f51bc2a",
+   "region": "INT",
+   "title": "Abdul Carter demanding more from himself after breakout may be key to Giants ‘super challenging’ Colts task",
+   "summary": "After a 12-pressure breakout game, Giants outside linebacker Abdul Carter aims to keep his momentum going against new Colts starter Anthony Richardson.",
+   "link": "https://nypost.com/2026/11/25/sports/abdul-carter-demanding-more-may-be-key-to-giants-colts-task/",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-26T02:16:10Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.538
+   },
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "7b708de9854bf480",
+   "region": "INT",
+   "title": "Duran Duran’s Andy Taylor looked happy while greeting fans in last public sighting before his death",
+   "summary": "The musician died from prostate cancer on Monday. He was 65.",
+   "link": "https://pagesix.com/2026/11/25/celebrity-news/duran-durans-andy-taylor-looked-happy-while-greeting-fans-in-last-public-sighting-before-his-death/",
+   "source": "New York Post",
+   "source_domain": "pagesix.com",
+   "published": "2026-11-26T02:16:06Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.846
+   },
+   "V0": 0.45,
+   "V": 0.448,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "9cde7b8014dd1b81",
+   "region": "INT",
+   "title": "As foreign troops withdraw from Somalia, could al-Shabab take over?",
+   "summary": "Somalia relies heavily on foreign funding and military support for its very survival.",
+   "link": "https://www.bbc.co.uk/news/articles/ck62y23z58yeo?at_medium=RSS&at_campaign=rss",
+   "source": "BBC News",
+   "source_domain": "bbc.co.uk",
+   "published": "2026-11-26T02:06:10Z",
+   "body": {
+    "ok": true,
+    "len": 1200,
+    "kw": 0,
+    "ex": 0,
+    "ov": 0.667
+   },
+   "V0": 0.7,
+   "V": 0.716,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
+   "id": "feacdcc70081e2a9",
+   "region": "INT",
+   "title": "The measures the Trump admin. took to support Jensen Huang return to Nvidia draw scrutiny",
+   "summary": "The measures the Trump admin. took to support Jensen Huang return to Nvidia draw scrutiny CNN",
+   "link": "https://news.google.com/rss/articles/CBMidEFVX3lxTE5VUGt3RGlMNUpiWW9UNUZpWl9OTzRzSUtsb0F4TzY4TkVQNU5qODQxdU1LMkpMVGhDVjVGX2stR0Uwam5WRmQ0WElnTVBVQVZUUVZ2NXVzMnBYNnZiSnB4YVlaQTZ0V3NBNlpZYUx0d040dkRV?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-26T01:59:10Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.675,
+   "S0": 0.031,
+   "S": 0.031,
+   "G": 0.6,
+   "ATM": 76
+  },
+  {
    "id": "5724eda7785a5448",
    "region": "INT",
    "title": "Packers vs. Rams live updates, inactives, where to watch: Micah Parsons makes season debut as Jordan Love, Matthew Stafford open Week 12 on Thanksgiving Eve",
@@ -2654,7 +3195,7 @@
    "id": "2121981f457962b5",
    "region": "INT",
    "title": "US attorney Bill Essayli scores legal win in battle to fight off disqualification from prosecutions",
-   "summary": "California’s top federal prosecutor Bill Essayli has won another temporary reprieve in his fight to keep his job, with a federal appeals court putting a judge’s order to disqualify him on ice while the US Supreme Court weighs a similar legal battle in Nevada. The Ninth Circuit Court of Appeals granted the Trump administration’s request...",
+   "summary": "Los Angeles’ top federal prosecutor Bill Essayli has won another temporary reprieve in his fight to keep his job, with a federal appeals court putting a judge’s order to disqualify him on ice while the US Supreme Court weighs a similar legal battle in Nevada. The Ninth Circuit Court of Appeals granted the Trump administration’s...",
    "link": "https://nypost.com/2026/11/25/us-news/ninth-circuit-keeps-order-disqualifying-california-prosecutor-bill-essayli-on-hold/",
    "source": "New York Post",
    "source_domain": "nypost.com",
@@ -2672,6 +3213,46 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "218262cfee074d43",
+   "region": "INT",
+   "title": "American Airlines Flight Makes Emergency Landing After Passenger Attempts To Open Door Mid-Air",
+   "summary": "American Airlines Flight Makes Emergency Landing After Passenger Attempts To Open Door Mid-Air NDTV",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxNZHVOcXdMOERuMDBrRjl1OFI1MU9IVGlhbXd4UzNOUm14aV9LZ2QtN1V4dVhrSDVLQ1RfYllMclUtdGZmd1VUSEphQ2l5OFJsVEl1MG1HcUVwZmhEZWE4bi1wdnVHdDlMNzhsYm1RUkJTWDNRQ19JekIxdVBXNngySFZOQmxhNV90LXkwYi10STA0MzRTRGNXaDdLSHFoVExOX1VoaXdIOGRZcEEyZTdpd0RNTXp1Q0ZyTjNhdUdHbDR5NmxBUzRScXJKNHZLRmtR0gHYAUFVX3lxTE1oS2o1LTRMbW9UeHNLQnV0ZHUtSXRvV3FNbVhZWXFoMThmb0dvc3dwcDdLTjJ6cWZtQ3VUQWxXOXBoWk5OTUJ2RWNZb1haWVFsVzBwWkNLZHNyZVN3a3lPZFhmQW1fb2txZ3ROeFZsX183eHJ4cW52cEFCcEFscFRYWTljVGljZ0p0cVotMlhmbGdxX0Rld0ZsVkJudFRpb1pmQmJXNWxOVGRkTDNBTGJ0elBDaVRpdFI3ajFhdTV0Ynpfa3RodGU1MURGM2lNcDdyUkhHeG9KUg?oc=5",
+   "source": "NDTV",
+   "source_domain": "ndtv.com",
+   "published": "2026-11-26T01:46:41Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.435,
+   "S0": 0.031,
+   "S": 0.031,
+   "G": 0.6,
+   "ATM": 100
+  },
+  {
+   "id": "de1d4f92098cd7c2",
+   "region": "INT",
+   "title": "Almost 2,000 migrants arrive on Spain’s Canary Islands in a single day, breaking a record",
+   "summary": "Almost 2,000 migrants arrive on Spain’s Canary Islands in a single day, breaking a record Audacy",
+   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNOVhJTHRiVGNmc1ZfaHFwNFM4X0p2anhuU0xKbnNDRW5HOTc4S2tldE9PZ1VWakhyZHp6Mk42dnNmRDJMVWVneDE2aWtfQVczSzE2NG0xVHpsazJ2SndaRlRpUDRORzN1cGpKdk1iQ3RhLUhSRjI5S3hfbm02WmtzWFhvem9ZLXU2T1NnSzZ6alRFLVV6dFJLRGV0VmpOYkxaWmZyLXZGdHdzcm8?oc=5",
+   "source": "Audacy",
+   "source_domain": "audacy.com",
+   "published": "2026-11-26T01:45:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.473,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 38.98,
+   "lng": -2.362
   },
   {
    "id": "6fbb44a9b6942a46",
@@ -2722,6 +3303,25 @@
    "ATM": 141
   },
   {
+   "id": "89e005ad8b5f2d61",
+   "region": "INT",
+   "title": "Judge blocks Trump’s FCC from targeting ABC stations: ‘This is not a close case’",
+   "summary": "Judge blocks Trump’s FCC from targeting ABC stations: ‘This is not a close case’ CNN",
+   "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQOVd6SmZMLUpRRjdUcmpPeWVwRGRIbV85M3lxREZ4cmtwMzFKSy12RWVHcWFHQ1Q0Y2Y5aG1fME9kbkZ6eFRMdE0yUm1QMWEwZEJ1VExhWS1kVlRPakU0Q1F4dlh6WE81MnUyQnpUd1pweGFOZ25RMDgzMkRFUC02Vkk3aVlKTV9jdXNBd3Rn?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-26T01:37:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.675,
+   "S0": 0.167,
+   "S": 0.167,
+   "G": 0.6,
+   "ATM": 181
+  },
+  {
    "id": "2729c73bf2365172",
    "region": "INT",
    "title": "My Thanksgiving blessing — finding my father, at last",
@@ -2766,27 +3366,6 @@
    "S": 0.029,
    "G": 0.6,
    "ATM": 73
-  },
-  {
-   "id": "584c5af9baed6a16",
-   "region": "INT",
-   "title": "Hegseth, Pentagon officials floated using wartime law to reappoint Nvidia CEO",
-   "summary": "Hegseth, Pentagon officials floated using wartime law to reappoint Nvidia CEO The Washington Post The Frantic White House Push to Get Jensen Huang Back WSJ Why Nvidia is the quintessential Trump scandal CNN Why Nvidia's 'Jensen put' failed to stop the AI trade meltdown Yahoo Finance Jensen Huang says he doesn't believe in succession planning. Nvidia's board has a job to do. Business Insider",
-   "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQcDJ0UmNqUTc2UWNoaVh0STB6ZHRZTnV6WGVPX2Q0VDhmRWU4Wk5hV2lZMTZOZUV4ZEwzOVBnVmVtbnB0eXlpekIyMVF5cG91WmVxLTNIeWx1MzhLN3czOHFLbFRuVTdYRUIwdk4zMTlfcEtLb2J3Y1lQM0l1OTREU2p5UzBxaXI5aExoOGlyUVctZlJZcllacVRzTU9zVXlNaVVMNThZRE85NWdlaEo2WUJKd3FtTVBRZ00xU0l0V2tMLTRiLUE?oc=5",
-   "source": "The Washington Post",
-   "source_domain": "washingtonpost.com",
-   "published": "2026-11-26T01:35:57Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.696,
-   "S0": 0.385,
-   "S": 0.385,
-   "G": 0.6,
-   "ATM": 265,
-   "lat": 41.442,
-   "lng": -99.334
   },
   {
    "id": "89abc9efd491e15d",
@@ -2879,25 +3458,6 @@
    "ATM": 73
   },
   {
-   "id": "ba79286f83aae9c0",
-   "region": "INT",
-   "title": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm",
-   "summary": "Live Updates: Macy’s Thanksgiving Day Parade Postponed as NYC Faces Storm The New York Times Macy's Thanksgiving Day Parade postponed to Saturday as severe storm nears NYC ABC7 New York Which NBC stars are hosting the postponed Macy's Thanksgiving Parade? USA Today Macy's postpones Thanksgiving parade due to weather BBC Macy's Parade 2026 balloon inflation: Where to watch on air and in person on Wednesday NBC New York",
-   "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNaVZHYnZSbkwwSnZWekxkalE1algzbkVPTlY1bWF2dkd6dzcwRDdwUDNSZGtsa3hLQ2t3STV1RHVKdXgyNEFhckthRDkzdnl2amZZZk93NmVfVXhVSTJXN2xLYkQzZWRYYnEyM1psQ2pzSC1mWm9LZml1dENlZlVibW8wUHloVlloTEctcQ?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-11-26T01:23:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.692,
-   "S0": 0.097,
-   "S": 0.097,
-   "G": 0.6,
-   "ATM": 136
-  },
-  {
    "id": "dbf1f5ff4074c9ed",
    "region": "INT",
    "title": "California warns of flooding as king tides peak over Thanksgiving",
@@ -2942,24 +3502,6 @@
    "ATM": 0,
    "lat": 27.729,
    "lng": 28.764
-  },
-  {
-   "id": "7940036035fa9a8e",
-   "region": "INT",
-   "title": "US announces new tariffs on host of countries including China",
-   "summary": "The new levies would hit many of America's biggest trading partners, including China and the EU.",
-   "link": "https://www.bbc.co.uk/news/articles/c893r9ke5p97o?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-11-26T01:20:14Z",
-   "V0": 0.7,
-   "V": 0.716,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0,
-   "lat": 37.119,
-   "lng": 105.921
   },
   {
    "id": "edb9bdff61d3402c",
@@ -3027,6 +3569,27 @@
    "ATM": 0
   },
   {
+   "id": "34f4917b7b0c3093",
+   "region": "INT",
+   "title": "North Korea's Kim Vows to Build More Nuclear Weapons After Ignoring Trump's Overture",
+   "summary": "North Korea's Kim Vows to Build More Nuclear Weapons After Ignoring Trump's Overture U.S. News & World Report",
+   "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxNdWU5N2prY0VWdmV0RXNtYTlmSl8zWXYtcE52eUNRRmZwdTlIQUg1RnU2RFdEV3Jqd0l2UDBsMmJfUXFzX2hLZHhiRkJVaUdScEplaTVhc1VyT2ZVWmcyZmN3T1dtMnBXNGU0eUllSjdVMWg0YTcxT0U5T2JUVlNIZmdZQ1gtNkMyUDV1dFp0VzhtR1dOeHNPNEtLMUtXUGd4S2ZIY3NXQ3NSMXhxNkNmYjNBQnpkdHcxYjdrMDdJcVJlOEJpZUdVLU9xcjdhd3NiS0E?oc=5",
+   "source": "U.S. News & World Report",
+   "source_domain": "usnews.com",
+   "published": "2026-11-26T01:12:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.475,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 42.046,
+   "lng": 127.207
+  },
+  {
    "id": "1f8c6914d0b9740f",
    "region": "INT",
    "title": "David Bailey proving Jets right as he closes in on rookie sack record",
@@ -3048,6 +3611,25 @@
    "S": 0.017,
    "G": 0.6,
    "ATM": 60
+  },
+  {
+   "id": "7f4fabfb667e12b4",
+   "region": "INT",
+   "title": "Andy Taylor, Duran Duran’s ‘Live-Wire’ Guitarist, Dies at 65",
+   "summary": "Andy Taylor, Duran Duran’s ‘Live-Wire’ Guitarist, Dies at 65 The New York Times Andy Taylor 1961–2026 duranduran.com Tribute: Duran Duran’s Andy Taylor Was the Wildest of the Wild Boys Rolling Stone Andy Taylor’s Wife Says He ‘Never Gave Up’ After Cancer Diagnosis People.com Andy Taylor, original guitarist for Duran Duran, dies at 65 CNN",
+   "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNcVg0M1E0cFY2T29Ca0EtWkdTZ2VDRjVBdERVOVlVVXVvQUcwLXlFWEdjWjMybEViLTY5Wk5Bak9JVkZTeGZrTlpxajM2OEZ6aW1PcE9jcF9nY2pYY3FoQzNtSi1BM1pTYTd0RnI4Vm5CaUszQUxzUDN2TDZXM3dxbV84T1RNUQ?oc=5",
+   "source": "The New York Times",
+   "source_domain": "nytimes.com",
+   "published": "2026-11-26T01:09:57Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.692,
+   "S0": 0.015,
+   "S": 0.015,
+   "G": 0.6,
+   "ATM": 61
   },
   {
    "id": "395d115866d72271",
@@ -3156,7 +3738,7 @@
    "id": "ff4b92e9cb9d6af0",
    "region": "INT",
    "title": "US announces new tariffs on host of countries including China",
-   "summary": "US announces new tariffs on host of countries including China BBC Trump Administration Unveils New Tariffs for China, EU and More, Citing Unfair Practices The New York Times Vietnam says it is working with US to complete trade deal as soon as possible Reuters EU ‘strongly rejects’ rationale behind Trump’s tariffs The Hill Trump's new tariffs would put rates right back where they were before the Supreme Court stepped in Yahoo Finance",
+   "summary": "US announces new tariffs on host of countries including China BBC Trump Administration Unveils New Tariffs for China, EU and More, Citing Unfair Practices The New York Times US to cap India tariff at 17% if trade deal is reached, USTR says Reuters Trump Wants More Tariffs. How Are They Affecting the Economy? Bloomberg U.S. proposes new tariffs on 14 trading partners, including China and the EU CNBC",
    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5IQkloM185eWdfMGhXTkZBYmdEWHM2cy1CQjNpODYzQTRRV0V1VzU4akFoUkdsLTJucFZKTlF2MlZtMTgxMV9xZTRoZjdnTjdkRmMtTnd3Y3pZV28?oc=5",
    "source": "BBC",
    "source_domain": "bbc.com",
@@ -3166,10 +3748,10 @@
    },
    "V0": 0.7,
    "V": 0.686,
-   "S0": 0.012,
-   "S": 0.012,
+   "S0": 0.041,
+   "S": 0.041,
    "G": 0.6,
-   "ATM": 43,
+   "ATM": 86,
    "lat": 37.35,
    "lng": 104.648
   },
@@ -3228,7 +3810,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.424,
+   "V": 0.425,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -3281,6 +3863,82 @@
    "ATM": 127
   },
   {
+   "id": "c87b935240fa34b7",
+   "region": "INT",
+   "title": "Mike McCarthy's 'Ice Cream Sandwich' Assistant Detailed in NFL Rumors After Aaron Rodgers' Comments",
+   "summary": "Mike McCarthy's 'Ice Cream Sandwich' Assistant Detailed in NFL Rumors After Aaron Rodgers' Comments Bleacher Report Sources: Mike McCarthy has Steelers' full support after Aaron Rodgers interview ESPN Mike McCarthy ice cream sandwich assistant becomes most famous man in Pittsburgh Yahoo Sports Former Saints QB says Sean Payton shares one of Mike McCarthy's habits Saints Wire Fehoko Reveals Steelers Player's Claim About McCarthy's Assistant cwibc.co.id",
+   "link": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOQjUtQ252REIzSHdUWHM5M0s3aHl5N1ZxLXhxTnFOUGlMM1JKUXk2dFVtb2UySjFRS21VNlZCbHBPM0FDbmZYbGxROEVhMUY2SGU2WWJnZkFXbC00ZnNMUC00UEEwaVdmRTk5Y0ZNNUJVeEJtbmx5RWhyNmdOMTA3ZjFob1JiU29sS1lhamVfVWIwX21UZ2JLcjBuLVBSUkJFR2pINS04T2tHcmJsQ28zRmR5U1hfb2ozVEgzNHdIbEdpd3lFNjFPdmJ6cEk2S3AxMkVF?oc=5",
+   "source": "Bleacher Report",
+   "source_domain": "bleacherreport.com",
+   "published": "2026-11-26T00:35:57Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.034,
+   "S": 0.034,
+   "G": 0.6,
+   "ATM": 99
+  },
+  {
+   "id": "024defad2b6c539c",
+   "region": "INT",
+   "title": "Rams vs. Packers: Week 12 NFL game highlights",
+   "summary": "Rams vs. Packers: Week 12 NFL game highlights ESPN Packers vs. Rams | How to watch, stream & listen | Week 12 Green Bay Packers – packers.com What channel is Rams-Packers game tonight live? How to watch NFL Thanksgiving Eve game today The Oklahoman Micah Parsons gets first sack of season, Packers and Rams tied 13-13 at halftime Yahoo Sports Packers vs. Rams live score updates: Green Bay ties it on FG in NFL Thanksgiving Eve game - The Athletic The New York Times",
+   "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNcGIzTGRUQXpwS3JVM3JVd2NzaHNLNGZ3VjVjQUJKaDM3Zl9hd3ZUcnVLMUlYRDF3Qm1Ma1EyTS1Gbm10OXpkTXdBcDR5Y0ZGTk4yRlNtLU1weW10ZlJWQ1hoVkVyQUhrOE1vbWhrbVZpcDZTQ2l2NWJ1c3pkMVd2b2lLZXNsN25lbkJ5Yw?oc=5",
+   "source": "ESPN",
+   "source_domain": "espn.com",
+   "published": "2026-11-26T00:35:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.425,
+   "S0": 0.058,
+   "S": 0.058,
+   "G": 0.6,
+   "ATM": 143
+  },
+  {
+   "id": "9aa43d1d59519bdc",
+   "region": "INT",
+   "title": "Netanyahu says corruption trial ‘must end’ as court suggests dropping case",
+   "summary": "Netanyahu says corruption trial ‘must end’ as court suggests dropping case Al Jazeera Israeli judges recommend dropping most serious charges against Netanyahu BBC Judges in Israel Suggest Dropping Key Corruption Case Against Netanyahu The New York Times Netanyahu gets major legal boost as court casts doubt on corruption case CNN Netanyahu after judges urge dropping most charges against him: This trial must end immediately. Fabricated allegations tore Israel apart The Times of Israel",
+   "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNTzdLYVlFNVdkbElWa1dXLWVMcmE1WjlmaEhDQjQ4YVQyRXJ2T1BFdHVyNlA4NUd3RFpIemRlYVlsSVhkbnV5TzFOSnJTM0RQb3U1TkZlTzdVS1VuSWM4UUt3SG03bVEyT2FjbzhzUDlvMi1uSFNHZVA5aVl2NWtEXzFqakR1WEpuQzNhSkt3cGE3ZV9nMXJoSE5ZVWxMWE9CZGlXRE50WVhjaTJaV2NsQ1N0SHTSAboBQVVfeXFMTVcwcXpDcU5vbExPbkktNU5qQkRTOERtODF5bmZYTUZ3UmhnRUh4NTA1VW5wa295cC11RXV5WWdZa0lvYlB4cW9iY20zcXUzV210NFhKa3U3SFB0NWowTGprWnlyWVprS1BxLTFXcC1OdFN6TTkzT1lxNE45U0JYdkt1VVNfclgtNzhBOUtUanIxMWR0Q2pPbHFYTk5iVG1HbzZRYmxSSEczbGF1czdCak1kWmVHaU5FY3Zn?oc=5",
+   "source": "Al Jazeera",
+   "source_domain": "aljazeera.com",
+   "published": "2026-11-26T00:33:45Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.453,
+   "S0": 0.022,
+   "S": 0.022,
+   "G": 0.6,
+   "ATM": 81
+  },
+  {
+   "id": "433549ce50d31690",
+   "region": "INT",
+   "title": "Family launches foundation in honor of 24-year-old who died running NYC marathon",
+   "summary": "Family launches foundation in honor of 24-year-old who died running NYC marathon CNN",
+   "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPQXFMSUVuV1hKSTkyVW5Ud2QwcGRtcnBGZXEzQW16UE5rdjNuVUhwdkE1ajRLOXJCSUEtOWpwMGFaZHZ1M2lVZUlIWXI0ektGMWpXQUc3cmNxcjUzemltdGNwdDVBY2t2TVdCWndYcHNGam9aN1F5YzNIZTdUalZBUTR2UkhRUFpSUGxEWE5OYkhZVEhKLVRrMXBuVVI0Nm8?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-26T00:32:43Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.675,
+   "S0": 0.109,
+   "S": 0.109,
+   "G": 0.6,
+   "ATM": 145
+  },
+  {
    "id": "4892eba79ec35ff1",
    "region": "INT",
    "title": "Beverly Hills plastic surgeon branded ‘magician’ reveals more of his tricks with other stunning facelift transformations",
@@ -3298,6 +3956,63 @@
    "S": 0.167,
    "G": 0.6,
    "ATM": 175
+  },
+  {
+   "id": "deb2f489adf215ae",
+   "region": "INT",
+   "title": "Report: G.M. Omar Khan called Aaron Rodgers directly to inform him of the benching",
+   "summary": "Report: G.M. Omar Khan called Aaron Rodgers directly to inform him of the benching NBC Sports Sources corroborate Aaron Rodgers' allegations about Steelers HC Mike McCarthy ESPN Super Bowl champion, Steelers teammate of Aaron Rodgers shows support for quarterback after dramatic fallout Fox News Only 1 NFL team makes sense for Aaron Rodgers, and even it comes with a caveat Yahoo Sports Aaron Rodgers’ former teammates criticize interview on Pat McAfee Show: ‘It’s despicable’ The New York Times",
+   "link": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxNOC04elIwX3J6bFF6RmdXWUFmRy1RMjNmMlpTb3diQWhmaEU2Z2NjcHAyY3VxdlZJSzFyTDBwaUJvMlFwdzRMdXJxcTk0dDBEOTJJd0FVQjVNU3FTWktIYWJWN3EyZ0dtTjVDaVVMdzhLU3RDcjNOVXdXOFo2VEk2d3JINjBmSEFFSkFTMUh0TFFHV2RaemVvYnlMRDNYYnBuVUZRNk9rNUtpN19kVGphaXJxV3otckIwZE9OMjEyb09lLTNhelJXY01nMDVSc19rRl9ZYXpJZFF1QQ?oc=5",
+   "source": "NBC Sports",
+   "source_domain": "nbcsports.com",
+   "published": "2026-11-26T00:30:22Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.43,
+   "S0": 0.032,
+   "S": 0.032,
+   "G": 0.6,
+   "ATM": 101
+  },
+  {
+   "id": "c70c76bfba03a4c9",
+   "region": "INT",
+   "title": "Judge Sides With ABC In First Amendment Lawsuit Against FCC, Puts Halt On Early License Renewal Proceeding",
+   "summary": "Judge Sides With ABC In First Amendment Lawsuit Against FCC, Puts Halt On Early License Renewal Proceeding Deadline Judge blocks Trump’s FCC from targeting ABC stations: ‘This is not a close case’ CNN Judge temporarily blocks FCC from reviewing ABC's licenses after network alleged retaliation by Trump CBS News ‘Not a close case:’ Judge blocks review of ABC’s broadcast licenses Politico Judge Says FCC Must Stop ABC License Review WSJ",
+   "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQM2ZSeFVWWU5heWNGZnBpdGZOYmNZa0pWNVg0VTdweEhsY1AtVVR5elp5U20wX3U1TkNOTTVUZ1hLYVdnUHNoTDQtVmJaTk4wOWNCZW1xSmhoSTZEV2pKUWVhNlFOSU5oQmlRTUhSVXo4QnUzem9vaXdwX2xZZVhEdldsUDU?oc=5",
+   "source": "Deadline",
+   "source_domain": "deadline.com",
+   "published": "2026-11-26T00:30:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.447,
+   "S0": 0.15,
+   "S": 0.15,
+   "G": 0.6,
+   "ATM": 222
+  },
+  {
+   "id": "6c3d8b36876846ff",
+   "region": "INT",
+   "title": "English Reds into World Cup semis",
+   "summary": "English Reds into World Cup semis Manchester United",
+   "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQSXNaZG1udldPaGFrcEItZ3pqVVd6cjlNaDJSd3drTUFTSl9jd2hYMTZ6c1dwdFNaRlE5QlJhWWt4TEQ1X2Y5bGktZTNzV1NkY1F5MDBGanBnRFpQQmF1Y1VCU2hiM2J5dTVtV2RqWmRmMnkydDFzSDZodlRYT1M2YU05RlowSy1pS0w4ZGthQjZrRWZzdDJudFI0SQ?oc=5",
+   "source": "Manchester United",
+   "source_domain": "manutd.com",
+   "published": "2026-11-26T00:29:10Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
   },
   {
    "id": "4b9f6849979f870e",
@@ -3631,6 +4346,25 @@
    "ATM": 152
   },
   {
+   "id": "771dd40df9de4270",
+   "region": "INT",
+   "title": "Bay Area weather live updates: King tides, coastal flood warning",
+   "summary": "Bay Area weather live updates: King tides, coastal flood warning NBC Bay Area Public advised to avoid Pacifica beaches after portion of pier collapses NBC Bay Area California braces for potential Thanksgiving flooding as storms threaten US coasts BBC Pier collapses, seawalls breached, homes flooded as big waves, historic high tides hit California Yahoo Live updates: Massive waves, extreme tides pummel California coast SFGATE",
+   "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPSVA4MkUxTmlMa3ZhR19JWkVoTWNyVGg1dFItbEpxUjczN09BZXN1ZlhZaVRvY0dMWmhURTlMamRlWkJ0bXJuRjRtX3B4cE1PYk9UQTRNMnQ0c2NJeEFfOVRuWXVvdkNxSUxneVF6OXRXbF9yWklwaDY5VTFWSFloR240bG5ia2djMzBwY2xzOEM1WllVZV9FTmVWaW5Xbzdv?oc=5",
+   "source": "NBC Bay Area",
+   "source_domain": "nbcbayarea.com",
+   "published": "2026-11-26T00:15:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.048,
+   "S": 0.048,
+   "G": 0.6,
+   "ATM": 128
+  },
+  {
    "id": "855e9f4409291c5b",
    "region": "INT",
    "title": "Tom Thibodeau’s NBA return could come soon — and Karl-Anthony Towns is all for it",
@@ -3713,6 +4447,25 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "b988d087be3c1aba",
+   "region": "INT",
+   "title": "Mamdani on rescheduling Macy’s Thanksgiving Day Parade: Safety is top priority",
+   "summary": "Mamdani on rescheduling Macy’s Thanksgiving Day Parade: Safety is top priority CNN",
+   "link": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOcFd2dlE3R1kxQXFTbF8wc1RSMnJnR3ZfdEp6cEJ1MXZJQjNDbUR6SGZUUzlJTjVEcE5qU0J6LVFkeE5GYnpBcUpsTTh5Mk1WWXRPZGNUUTlFZnJud0p0b0o5Q2gwN0t1VURnZXJvS0dWOFhieXNreHdwcndkU3VTMWUzYVI4VVJjd1RuUjdVeUQzbnowbzU1QlZyTUo5eXd4?oc=5",
+   "source": "CNN",
+   "source_domain": "us.cnn.com",
+   "published": "2026-11-26T00:07:00Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.687,
+   "S0": 0.044,
+   "S": 0.044,
+   "G": 0.6,
+   "ATM": 86
   },
   {
    "id": "78fbd3f5b3fbf837",
@@ -3820,22 +4573,6 @@
    },
    "V0": 0.7,
    "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "1f47f0e8aa9df419",
-   "region": "INT",
-   "title": "World has six consecutive days 2C above preindustrial levels for first time",
-   "summary": "World has six consecutive days 2C above preindustrial levels for first time The Guardian",
-   "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxPR0p3bVRkTGZLb0pMa3lYVjR0VFdtSld3VmRVN0FTa0FpT2MtMDRLUXBIYmpRc0NGRktDTEp4bVcxQnY3amZMbC0tdVdnVkcwU3JpaUlKenBaMlY3MXU5Z3lfcUF2Q0owa1RGdEFXbU1Rb1pRdmRpb3ZQNGNSZnJmS1hFdHRZeUNGRzdnN1lhb0gySS0tTjdNcVNoQk8yTGIyNi0xRmVNTmQtemxFSUY1enVqUHR0LVp0N1lV?oc=5",
-   "source": "The Guardian",
-   "source_domain": "theguardian.com",
-   "published": "2026-11-25T23:59:00Z",
-   "V0": 0.7,
-   "V": 0.713,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.6,
@@ -4002,6 +4739,22 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "94b7155dc077a2e1",
+   "region": "INT",
+   "title": "NDTV Live TV, Live English News Channel, Free Live Streaming Online, Watch Live News",
+   "summary": "NDTV Live TV, Live English News Channel, Free Live Streaming Online, Watch Live News NDTV",
+   "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9wMFg1cl9HcGJBVWJMdFVkc3VWN1VzVkFqTzVtMTg4TjhudHF2V1NnN2NaVVJ5VWl2WU1NWkJLeUdQQUw1TlBYdWJ4R3M?oc=5",
+   "source": "NDTV",
+   "source_domain": "ndtv.com",
+   "published": "2026-11-25T23:51:20Z",
+   "V0": 0.45,
+   "V": 0.435,
+   "S0": 0.093,
+   "S": 0.093,
+   "G": 0.6,
+   "ATM": 174
   },
   {
    "id": "1f14731150d0d747",
@@ -4248,7 +5001,7 @@
   {
    "id": "b13fbd07613136eb",
    "region": "INT",
-   "title": "A renovation to upgrade these Hong Kong homes ended in an inferno that killed 168",
+   "title": "A renovation was meant to improve these Hong Kong homes - it ended in a blaze that killed 168",
    "summary": "A year after one of Hong Kong's deadliest fires, families left behind are still waiting for justice.",
    "link": "https://www.bbc.co.uk/news/articles/cqx2wrkyrdn8o?at_medium=RSS&at_campaign=rss",
    "source": "BBC News",
@@ -4539,22 +5292,6 @@
    "lng": -121.582
   },
   {
-   "id": "94b7155dc077a2e1",
-   "region": "INT",
-   "title": "NDTV Live TV, Live English News Channel, Free Live Streaming Online, Watch Live News",
-   "summary": "NDTV Live TV, Live English News Channel, Free Live Streaming Online, Watch Live News NDTV",
-   "link": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9wMFg1cl9HcGJBVWJMdFVkc3VWN1VzVkFqTzVtMTg4TjhudHF2V1NnN2NaVVJ5VWl2WU1NWkJLeUdQQUw1TlBYdWJ4R3M?oc=5",
-   "source": "NDTV",
-   "source_domain": "ndtv.com",
-   "published": "2026-11-25T23:12:12Z",
-   "V0": 0.45,
-   "V": 0.435,
-   "S0": 0.093,
-   "S": 0.093,
-   "G": 0.6,
-   "ATM": 174
-  },
-  {
    "id": "fcf9e977ed9b78aa",
    "region": "HU-NAT",
    "title": "Japán whisky- és burgerest a Szpot.-ban",
@@ -4806,6 +5543,22 @@
    "lng": 16.39
   },
   {
+   "id": "43f826f06d38aef5",
+   "region": "INT",
+   "title": "EXCLUSIVE: Billionaire Boehly signs US-backed share swap deal to buy Lukoil global assets",
+   "summary": "EXCLUSIVE: Billionaire Boehly signs US-backed share swap deal to buy Lukoil global assets Reuters Russian oil firm Lukoil’s overseas assets sold to investors led by US billionaire Todd Boehly CNN Investors led by U.S. billionaire Todd Boehly to buy Lukoil's oil and gas assets outside Russia, sources say CNBC Lukoil to Sell Foreign Assets, but Not to Kushner and Witkoff Associates The New York Times Dodgers Owner Todd Boehly Clinches Deal for Overseas Assets of Russia’s Lukoil WSJ",
+   "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQM05VWXNudnhTWW1BY2VFUHpZRzdNSjU4TG1Ob3NYZTRKM0tNUWNGQmxyNEp6NW0yTEJWaTZabF9UNW9CUUZTclBhaGpnQmZ6WVRZTVhqS3dpOTBsZEtaOGZnMzFPQlR5MDRpZThJNmU0cXc5Q0trMDNhdWtxVjV4V1lMYzYyR1RHU0lBNDdWZDlzOWxBN1J1Wm0xWlJkNEVMaVNXUXdQcTRuUHlvczlnMTd1VGRWQQ?oc=5",
+   "source": "Reuters",
+   "source_domain": "reuters.com",
+   "published": "2026-11-25T22:54:57Z",
+   "V0": 0.7,
+   "V": 0.69,
+   "S0": 0.052,
+   "S": 0.052,
+   "G": 0.6,
+   "ATM": 96
+  },
+  {
    "id": "13916331a2d054f7",
    "region": "INT",
    "title": "Trump’s DC renovation account gets mysterious $300M infusion",
@@ -4874,7 +5627,7 @@
    "id": "654390f890feaab9",
    "region": "HU-NAT",
    "title": "Szoboszlai először volt a Liverpool csapatkapitánya, gólpasszal ünnepelt a BL-ben",
-   "summary": "Szoboszlai először volt a Liverpool csapatkapitánya, gólpasszal ünnepelt a BL-ben Telex Szoboszlai gólpasszt adott, Kerkez hasznosan játszott, Isak duplázott: győzött Belgiumban a Liverpool Nemzeti Sport Online ÉLŐ | CLUB BRUGGE – LIVERPOOL | BAJNOKOK LIGÁJA Eurosport Szoboszlai Dominik először vezette csapatkapitányként a Liverpoolt, azonnal gólpasszt is adott Index.hu BL-bejelentkezés: Szoboszlai Dominik formája és a brugge-i hangulat RTL.hu",
+   "summary": "Szoboszlai először volt a Liverpool csapatkapitánya, gólpasszal ünnepelt a BL-ben Telex Szoboszlai gólpasszt adott, Kerkez hasznosan játszott, Isak duplázott: győzött Belgiumban a Liverpool Nemzeti Sport Online Szoboszlai Dominik először vezette csapatkapitányként a Liverpoolt, azonnal gólpasszt is adott Index.hu A csapatkapitány Szoboszlai gólpasszal vette ki részét a Liverpool belgiumi BL-sikeréből M4 Sport Club Brugge-Liverpool: online itt láthatod Szoboszlaiékat! RTL.hu",
    "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNZ2ItUF9DMjl6RGdOWnZpNXVPd0ZoMm8wRmM2QUpsaV9CUjJvWlYtTUR2SXRIblE5ZWJ5eWt4dERKTTB0OFc4VC1rRHpMVS02V3RtLWJySi1fbE1UOENjTkh6Q3VsLWM0dERDNEtNMlRDMFlKeWxUaEkzaTktSlhwdl9WRWExZw?oc=5",
    "source": "Telex",
    "source_domain": "telex.hu",
@@ -4884,10 +5637,10 @@
    },
    "V0": 0.7,
    "V": 0.709,
-   "S0": 0.273,
-   "S": 0.273,
+   "S0": 0.306,
+   "S": 0.306,
    "G": 0.9,
-   "ATM": 265,
+   "ATM": 284,
    "lat": 47.392,
    "lng": 19.098
   },
@@ -5047,6 +5800,22 @@
    "ATM": 0
   },
   {
+   "id": "9a35e76a29265e76",
+   "region": "INT",
+   "title": "Brad Pitt and Angelina Jolie settle years-long legal battle over joint French winery",
+   "summary": "Brad Pitt and Angelina Jolie settle years-long legal battle over joint French winery The Guardian Angelina Jolie and Brad Pitt Settle Lawsuit That Aired Abuse Allegations The New York Times Brad Pitt and Angelina Jolie Settle Bitter Winery Legal Battle in Shocking Move 10 Years After Split People.com Brad Pitt, Angelina Jolie Call It Quits on Years-long Legal Saga, Settle Case That Led to Abuse Claims The Hollywood Reporter Brad Pitt and Angelina Jolie settle legal battle over French winery ABC News - Breaking News, Latest News and Videos",
+   "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxOa0xjWmFVUFFadHNQTkkzQ3ZTN3NzRHdFTXJubjlVMGlXeUxIdGpEa2luTGtZRmltbzZ6ZEEtNmZoaHdYXzlCSWgycHpHdXlqa1RlSnA3Q2R4TEpQRHhRT3R6aHllY3YwZjJXT3E4WWs2azl0Ri1vZkh6cmhUWEVYbFloaHczUXNLZ2JOOWFEUkFMeUVHeWFYOS04WmczMk0?oc=5",
+   "source": "The Guardian",
+   "source_domain": "theguardian.com",
+   "published": "2026-11-25T22:47:00Z",
+   "V0": 0.7,
+   "V": 0.713,
+   "S0": 0.175,
+   "S": 0.175,
+   "G": 0.6,
+   "ATM": 177
+  },
+  {
    "id": "7155ae9ad00d2122",
    "region": "INT",
    "title": "Radiant World creditor Incomlend files to withdraw lawsuit",
@@ -5123,15 +5892,15 @@
    "id": "2cf0db672a4306ff",
    "region": "INT",
    "title": "Major Thanksgiving storm ahead for Northeast, mid-Atlantic",
-   "summary": "Major Thanksgiving storm ahead for Northeast, mid-Atlantic The Weather Channel Thanksgiving Storm Is Expected to Hit East Coast With Heavy Rain and Flooding The New York Times Heavy rain, strong wind gusts coming Thanksgiving Day to Baltimore WBAL-TV Thanksgiving week weather: Potent coastal storms, rain and snow to impact travel NOAA (.gov) N.J. Gov. Mikie Sherrill declares state of emergency ahead of Thanksgiving storm CBS News",
+   "summary": "Major Thanksgiving storm ahead for Northeast, mid-Atlantic The Weather Channel Live updates: Thanksgiving storms target 250M+ with intense winds, heavy rain, flooding FOX Weather Atlantic City officials urge residents in flood-prone areas to evacuate ahead of Thanksgiving storm CBS News Thanksgiving Storm Is Expected to Hit East Coast With Heavy Rain and Flooding The New York Times Strong wind and heavy rain likely for Thanksgiving Day WBAL-TV",
    "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQTzBfTGFNaVdiWlU5UlMwSUpVbXV2OWpxS0Q2UDVnMUlhVmViVjgzOWN2N2ZpZ3R4YUp2cV8yR2Y5V21PNEZPYWYxcHhfbUpHTV85elRwY3hMRjRsWmNBc01SbGxLTHlfQUpmOU9DYVRqbExFX1J5YzM0bk5Sd2hwSjZUVTJiUkNJeUxFeElmWWtRXzh2ckdvdVRoTVRJZmxEeUE?oc=5",
    "source": "The Weather Channel",
    "source_domain": "weather.com",
    "published": "2026-11-25T22:41:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.037,
-   "S": 0.037,
+   "S0": 0.035,
+   "S": 0.035,
    "G": 0.6,
    "ATM": 115
   },
@@ -5205,18 +5974,18 @@
   {
    "id": "ff3bf38e7f108bee",
    "region": "INT",
-   "title": "Europe's Hera mission returns to the chaotic scene of a cosmic smashup",
-   "summary": "Europe's Hera mission returns to the chaotic scene of a cosmic smashup Ars Technica Europe’s Hera Mission Releases Close-Up Images of the Asteroid Hit by a NASA Spacecraft The New York Times NASA hit an asteroid to test planetary defense. Here’s what happened. The Washington Post Hera spacecraft gets 1st up-close look at stadium-sized hole punched in asteroid by NASA DART mission Space Hera mission images from asteroid crash show stadium-sized crater BBC",
+   "title": "European spacecraft finds chaotic scene after asteroid deflection experiment",
+   "summary": "European spacecraft finds chaotic scene after asteroid deflection experiment Ars Technica Europe’s Hera Mission Releases Close-Up Images of the Asteroid Hit by a NASA Spacecraft The New York Times ESA mission reveals stadium-size crater left by first planetary defense test CNN NASA hit an asteroid to test planetary defense. Here’s what happened. The Washington Post Hera spacecraft gets 1st up-close look at stadium-sized hole punched in asteroid by NASA DART mission Space",
    "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxONk94ZjJWUjdZaWlQVDQ1dVQxOW9STUthYmJjMVd6b1BNVU9LQWM1UDJHNE8tZkkydEFtS3hkc0RNeTdJNDl2STQ4LTZxcFROLW5LU0x4R0MzZC1RUVU0T1gtc0gtWGFCYUQ2dHRGWFdjTHUtbG1BNlZXTVJ5VmtpMUJGUEhONVZ1dVhsYmtsdWRaN0ZHaGdxT2VHRTVQS1ZZZVI5Zlg4bG5ZU2Nr?oc=5",
    "source": "Ars Technica",
    "source_domain": "arstechnica.com",
    "published": "2026-11-25T22:36:45Z",
    "V0": 0.45,
    "V": 0.449,
-   "S0": 0.058,
-   "S": 0.058,
+   "S0": 0.068,
+   "S": 0.068,
    "G": 0.6,
-   "ATM": 141
+   "ATM": 152
   },
   {
    "id": "b8fe55e23313c061",
@@ -5240,24 +6009,6 @@
    "lng": 16.681
   },
   {
-   "id": "e509340c000c96af",
-   "region": "INT",
-   "title": "Blindsided by lead-based explosives in Iowa, White House now searching for accountability, sources say",
-   "summary": "Blindsided by lead-based explosives in Iowa, White House now searching for accountability, sources say CBS News The government says Iowa detonation results exceeded expectations. Now what? CNN KCCI Investigates: As officials wait for more data, Middletown resident says blast was 'a big one' KCCI US Army releases post-detonation maps of potential lead dust exposure WQAD Vance blames Obama for toxic lead threat in Iowa The Hill",
-   "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNVFQ3dllVOHBrWnZnenhkWWQ1M3QySmUwRDVCOXBwZjQzQ2dKTGdYQXlLYXBLUFF0MmtndFl4QmxvdzlQZ2Z5cWtDZEFZUjhYRW1McjZmOEh6cWNGdmdDb2tHOGdsN01OM3hBTXdBVjQwajRYRklDQmNhRUZNbTZ0V3E0bE9HTmxoMUVyMTdlS1dSUQ?oc=5",
-   "source": "CBS News",
-   "source_domain": "cbsnews.com",
-   "published": "2026-11-25T22:35:25Z",
-   "V0": 0.7,
-   "V": 0.69,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.6,
-   "ATM": 106,
-   "lat": 40.326,
-   "lng": -99.58
-  },
-  {
    "id": "578c596265e9fbd3",
    "region": "INT",
    "title": "This student makes connections in his sports investment firm co-op",
@@ -5275,6 +6026,22 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "41684a13a4d3b738",
+   "region": "INT",
+   "title": "Airports face delays amid Thanksgiving travel frenzy",
+   "summary": "Airports face delays amid Thanksgiving travel frenzy CNN",
+   "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxONUpWaTV3SVhBRE04SkE1OHJ0OENndk9OOTIteXZLSXhPdG85QThZZlBjeGhNUklfU25zZEFCQ1pOa1c0UVd5MlFBVDVMR2Z0MWV0NF85aFl0RDNDWlVydGRZUHNDVUFyQjIydjk1UE5xQ1FxMHVHZzdZNFA1bThZT1lGZWItUktNQk1XZzVIcWdZSUdESlhIMHR6VmVPX3l5QW1FeUtNaw?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-25T22:34:07Z",
+   "V0": 0.7,
+   "V": 0.675,
+   "S0": 0.056,
+   "S": 0.056,
+   "G": 0.6,
+   "ATM": 107
   },
   {
    "id": "be52a9c202cf8aad",
@@ -5321,6 +6088,24 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "c95c057fbaf1c25d",
+   "region": "HU-NAT",
+   "title": "Happy Wonderland 2026: november 27-től újra itt a tél legnagyobb kalandja a Városligetben",
+   "summary": "Happy Wonderland 2026: november 27-től újra itt a tél legnagyobb kalandja a Városligetben BudAPPest.hu",
+   "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOTUFaVld2Z2h6dWE5bjcwdlltSENlcnpTeUtyTWl2SndCSy1ESnlFbEFiNFhLMzNRSHRkUVZ4NkFBOXhyTzAzd2t0RXIzR1Q4Rmw5MG5SdTZTLVpUN0pzSTB4NWlDb2tWVXVLR092bVlnMDBBbWdXNmdWMDcyMFNTM3ZmdG05MEg3VVJtdnhFN3pmbUFSWHdDRzlVNGEtSnhoOHRxamdQTng5dktGQlJYMldBcW5XdmRDY0hKRHhIdldxN0xnN0tsOA?oc=5",
+   "source": "BudAPPest.hu",
+   "source_domain": "budappest.hu",
+   "published": "2026-11-25T22:31:58Z",
+   "V0": 0.45,
+   "V": 0.461,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.131,
+   "lng": 19.428
   },
   {
    "id": "db992b0f3e30ad2f",
@@ -5374,7 +6159,7 @@
    "id": "36b3d91bc9eb4df3",
    "region": "INT",
    "title": "'Dancing With the Stars' crowns mirror ball winner: Finale recap and latest updates",
-   "summary": "'Dancing With the Stars' crowns mirror ball winner: Finale recap and latest updates Yahoo Footage Shows Ezra Frech’s Original Dance Move He Missed During ‘DWTS’ Finale Freestyle People.com Ezra Frech on his 'Dancing with the Stars' finale mishap: 'I kind of blacked out' Good Morning America Ezra Frech on ‘DWTS’ Win & Moment His Prosthetic Leg Fell Off in Freestyle (Exclusive) Extra ‘Dancing With the Stars’ Season 35 Finale Attracts 9.2 Million Viewers Variety",
+   "summary": "'Dancing With the Stars' crowns mirror ball winner: Finale recap and latest updates Yahoo Footage Shows Ezra Frech’s Original Dance Move He Missed During ‘DWTS’ Finale Freestyle People.com What Ezra Frech’s ‘Dancing With the Stars’ victory means for the disability community USA Today Ezra Frech on his 'Dancing with the Stars' finale mishap: 'I kind of blacked out' Good Morning America Ezra Frech on ‘DWTS’ Win & Moment His Prosthetic Leg Fell Off in Freestyle (Exclusive) Extra",
    "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxOb015WDNqeUhsWm1ZTGJBODFPTzJ1VEpOQ3dhUVNubnlIdHNTY3M5c0JSS1paVzJ6RFJReFI1SU1udmYtcjVPZzFoVmJrNGdlM0RzWm51bzdUbmRjZ0Z3SVhtZWF3WE1uZmFNMFI2QWdqNENDRUFxZjk4LU5KeGV1N1A4WTRES1pOaEFXdFVPNnhDWktMWEZwOFFTQlhvV1Q3bklhM3lGb3NzRTJwdksxOWFldUtHOXkwVzN3cHZZSm5lNTJvaTRrMzBJU1BRQ1liT3VKY0d3?oc=5",
    "source": "Yahoo",
    "source_domain": "yahoo.com",
@@ -5384,10 +6169,10 @@
    },
    "V0": 0.45,
    "V": 0.451,
-   "S0": 0.021,
-   "S": 0.021,
+   "S0": 0.03,
+   "S": 0.03,
    "G": 0.6,
-   "ATM": 81
+   "ATM": 99
   },
   {
    "id": "d0cb0fe8f04b55c5",
@@ -5549,7 +6334,7 @@
    "source_domain": "transcripts.cnn.com",
    "published": "2026-11-25T22:24:05Z",
    "V0": 0.7,
-   "V": 0.632,
+   "V": 0.63,
    "S0": 0.25,
    "S": 0.25,
    "G": 0.6,
@@ -5663,17 +6448,17 @@
    "id": "98b1e6a240c54d53",
    "region": "INT",
    "title": "Thirty-one killed in massive fire as fuel tanker crashes on Cairo highway",
-   "summary": "Thirty-one killed in massive fire as fuel tanker crashes on Cairo highway BBC Watch: Cars engulfed in flames after fuel tanker crash on Egypt's Cairo Ring Road; 31 dead, 21 injured The Times of India Road Fire Near Cairo Kills Dozens After Petroleum-Laden Truck Crashes The New York Times Thirty-one killed in fire after vehicle overturns in Egypt Reuters At least 31 killed as fuel tanker crash ignites large fire on Cairo highway The Guardian",
+   "summary": "Thirty-one killed in massive fire as fuel tanker crashes on Cairo highway BBC Fuel tanker crash ignites a massive fire on highway surrounding Cairo, killing at least 30 Los Angeles Times Thirty-one killed in fire after vehicle overturns in Egypt Reuters Road Fire Near Cairo Kills Dozens After Petroleum-Laden Truck Crashes The New York Times At least 30 killed in fuel tanker fire near Cairo, Egypt’s Health Ministry says CNN",
    "link": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9RTzBSOEg2MjJ0S1dLaEs3RFV2YlVUR1hJeUM1Y2RLcEVLYlZ2NmJkTGVkOGw2bUpwWVFkdlhJNkhfUnNjdHZmdTh0MmZfZGxlcUlhMnhCNzlHc3c?oc=5",
    "source": "BBC",
    "source_domain": "bbc.com",
    "published": "2026-11-25T22:18:06Z",
    "V0": 0.7,
    "V": 0.686,
-   "S0": 0.011,
-   "S": 0.011,
+   "S0": 0.023,
+   "S": 0.023,
    "G": 0.6,
-   "ATM": 43,
+   "ATM": 61,
    "lat": 28.019,
    "lng": 32.007
   },
@@ -5879,6 +6664,22 @@
    "ATM": 0
   },
   {
+   "id": "a7f4c95259b405b9",
+   "region": "INT",
+   "title": "Boston lottery winner arrested by ICE a week after $1M prize",
+   "summary": "Boston lottery winner arrested by ICE a week after $1M prize WCVB ICE Arrests Man in Boston Days After He Wins $1 Million Lottery Prize The New York Times Man who won $1 million lottery ticket is detained by ICE, days after he claimed his windfall The Boston Globe ICE arrests man days after he claimed $1 million Massachusetts lottery prize The Hill ICE nabs illegal immigrant $1M Mass Lottery winner in East Boston foot chase Boston Herald",
+   "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxPY3daV2dodndpSGZaSDRzNV9SMndxcnFkaFd4X0gxV2Nib1RDcE9pRDRncGRvdjNKeVhUV0p2TWl2WGx2b3o5djVkUEpHU0xIVE45djFVYUR4MVpBTi1WMjNaWDd6VmxFRXY0SHBHTlVZS3c3azZ0bWVrSzBYSUo3SXowMHdGajIyc1c1SVljZzZmekFDRGYw?oc=5",
+   "source": "WCVB",
+   "source_domain": "wcvb.com",
+   "published": "2026-11-25T22:11:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.081,
+   "S": 0.081,
+   "G": 0.6,
+   "ATM": 162
+  },
+  {
    "id": "80bff27cc29e8423",
    "region": "INT",
    "title": "Six family members killed in Mississippi plane crash pictured and ID’d",
@@ -6002,6 +6803,22 @@
    "S": 0.197,
    "G": 0.6,
    "ATM": 190
+  },
+  {
+   "id": "9c5fb29a6fee599c",
+   "region": "INT",
+   "title": "Exclusive | Rock legend’s son battling secret family chaos before fatal plunge off celeb-packed LA tower: friend",
+   "summary": "Exclusive | Rock legend’s son battling secret family chaos before fatal plunge off celeb-packed LA tower: friend New York Post",
+   "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxOLXBSSVlleWVucElZM3Bqb013Mm9JM1BCWnJ3SVRPd3BQQ1dHbUM5R3ViQUNXRzhCMXNiU2FYc0xoNy12bElXYWFkdThpc1pKS3Z0cUdrTXo3Tm1GWUhqWV9MSnYyQXp3U2hvbWl1Q29UbFpGLTMxOEcxR2lLbVFXQ0ZlZENvaU5ZcnQtM094alFvajNhWDg0V0h3dG9wR3UwUnJOY3B2SQ?oc=5",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-25T22:05:00Z",
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.167,
+   "S": 0.167,
+   "G": 0.6,
+   "ATM": 175
   },
   {
    "id": "d8bbb04f10bb0501",
@@ -6596,6 +7413,22 @@
    "ATM": 88
   },
   {
+   "id": "60d58c94be4a53ea",
+   "region": "INT",
+   "title": "Exclusive | Trump’s Post interview sparks effort to bring back Karoline Leavitt —as ex-press secretary says she’ll ‘always be here for him’",
+   "summary": "Exclusive | Trump’s Post interview sparks effort to bring back Karoline Leavitt —as ex-press secretary says she’ll ‘always be here for him’ New York Post",
+   "link": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxPYWJxSUl1VEEtdWtHcjBUTU1uVmk4VVpoWmdRdEdyNEllYTBNVHpfQ3Jjd3VrSWJsdzNmWWw4Q0lXQ0ZXUXg3VHV1d192ejZXLVdUczRiZUtyeUgtUDBaeF9mcHNWMVpBSG8tZ1RhWjBPcjZ5YXl4bThNOHhaQmNzUllLSm04S29TZV9BcW51VjY3bjdRQ3l1UXllQWhreE16cXJFNDBLbl9DOWV6Mlhhd0dkVFNJQ28tcGJXX21US19wWGlaRW5IMjktcXZXeTZuQ1M1YzlRbWZFbjRJTUVHckczdVVHX3NsN1BYbm1ZQ0o4WU0?oc=5",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-25T21:31:00Z",
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
    "id": "9d42794192bad4f9",
    "region": "INT",
    "title": "Sources corroborate Aaron Rodgers' allegations about Steelers HC Mike McCarthy",
@@ -6654,6 +7487,24 @@
    "S": 0.05,
    "G": 0.6,
    "ATM": 95
+  },
+  {
+   "id": "e509340c000c96af",
+   "region": "INT",
+   "title": "Blindsided by lead-based explosives in Iowa, White House now searching for accountability, sources say",
+   "summary": "Blindsided by lead-based explosives in Iowa, White House now searching for accountability, sources say CBS News US Army releases post-detonation maps of potential lead dust exposure WQAD Shelter-in-place order lifted after Iowa lead azide detonation The Hill U.S. Army says lead azide detonation a success; EPA says no lead found in air KWQC Army detonates lead azide stockpile at Iowa ammunition plant KCRG",
+   "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNVFQ3dllVOHBrWnZnenhkWWQ1M3QySmUwRDVCOXBwZjQzQ2dKTGdYQXlLYXBLUFF0MmtndFl4QmxvdzlQZ2Z5cWtDZEFZUjhYRW1McjZmOEh6cWNGdmdDb2tHOGdsN01OM3hBTXdBVjQwajRYRklDQmNhRUZNbTZ0V3E0bE9HTmxoMUVyMTdlS1dSUQ?oc=5",
+   "source": "CBS News",
+   "source_domain": "cbsnews.com",
+   "published": "2026-11-25T21:27:00Z",
+   "V0": 0.7,
+   "V": 0.69,
+   "S0": 0.06,
+   "S": 0.06,
+   "G": 0.6,
+   "ATM": 106,
+   "lat": 40.326,
+   "lng": -99.58
   },
   {
    "id": "3baeb20e24fe0d41",
@@ -6984,6 +7835,24 @@
    "lng": 31.858
   },
   {
+   "id": "41876a0c22af6148",
+   "region": "INT",
+   "title": "Ukraine tells Putin to ‘stop complaining’ about oil refinery attacks",
+   "summary": "Ukraine tells Putin to ‘stop complaining’ about oil refinery attacks The Hill Ukraine tells Putin to ‘stop complaining’ over oil refinery attacks as Russia promises retaliation CNBC Russian Offensive Campaign Assessment, November 24, 2026 Institute for the Study of War Putin says retaliation ‘inevitable’ after Ukraine hit Russian oil plants Al Jazeera Russian Refinery Runs Drop to Lowest in Decades, Rystad Says Bloomberg",
+   "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQSGdnYnBDUmwzZ0xlMlFHdnY3Tm9EREFvaFlSRmRFcTE2LWdDUnE3Nl9ueFcta1M4WDQzWXllb0xyQnNJbHZIQXlUN2FOMzNPT0FqcWdmUEhFZV9TTHhGTV9vd1h1RHpBYW1Jek83U2NMODgxWllJaDMyMTlMd053SUJSYlJQZmpYUXE1eXFR0gGTAUFVX3lxTE03RUV5bFNyZF9MNTBIU1VsdHZpcXRvWkYzWnRpZnJOZGFpT0F1SmwxSXl1NzNSbllDeUh1TU1hNkRQZGdBM2xQUDFKanJLWG1iQ0l2U0JrYTNpTWd0aG1mN2lwMjVzaEJ0OVFzUFhhSmZLSXU2RzR2eDVyMERhOUx3MEp0d0NUWnJkQjlVSWhfVTEyMA?oc=5",
+   "source": "The Hill",
+   "source_domain": "thehill.com",
+   "published": "2026-11-25T21:11:00Z",
+   "V0": 0.45,
+   "V": 0.446,
+   "S0": 0.013,
+   "S": 0.013,
+   "G": 0.6,
+   "ATM": 57,
+   "lat": 48.017,
+   "lng": 30.676
+  },
+  {
    "id": "458900c2a22113fe",
    "region": "INT",
    "title": "Women react to Huang’s reinstatement | CNN Business",
@@ -7129,7 +7998,7 @@
    "id": "005a6b926dbd3961",
    "region": "HU-NAT",
    "title": "Belföld - Magyar Péter férfi nélküli magyar családokat látogatott meg Kárpátalján",
-   "summary": "Belföld - Magyar Péter férfi nélküli magyar családokat látogatott meg Kárpátalján Index.hu A két erős személyiség újraindította a magyar–ukrán kapcsolatokat, és ezt két dolog tette lehetővé | hvg.hu Lemosni a gyalázatot, kiborítani a bilit 444 Túl kell élnünk és reménykedünk – a történelmi találkozó napja Kárpátalján Telex Meglepő ajándékot kapott Magyar Péter Zelenszkijtől, a dédnagyapja is szerepel benne Economx.hu",
+   "summary": "Belföld - Magyar Péter férfi nélküli magyar családokat látogatott meg Kárpátalján Index.hu A két erős személyiség újraindította a magyar–ukrán kapcsolatokat, és ezt két dolog tette lehetővé | hvg.hu Meglepő ajándékot kapott Magyar Péter Zelenszkijtől, a dédnagyapja is szerepel benne Economx.hu Ukrán külügyminiszter: Felgyorsítjuk a kisebbségi nyelvtörvény végrehajtását Telex Belföld - Megérkezett a reakció Magyar Péter röplabdázására Index.hu",
    "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxOQXF1Qm1jeVhZRW5JaXRuTjkwOHk3TlB5YzZiS2g3M2NDRlgwSi13dk5FSU1EYlVGbmFaaGQ3YlVLUEhXVk1ra0dNQXZHRGhsRzJjbDhpd0JXWTNSc2RmM2pzRjhjREM1dnJnMnVxUndRek41dXFybWxqWmtoR3NMYU9jc2tNUjI1R2J0RkNpbFlnbGd4eVZF?oc=5",
    "source": "Index.hu",
    "source_domain": "index.hu",
@@ -7186,6 +8055,22 @@
    "S": 0.0,
    "G": 0.6,
    "ATM": 0
+  },
+  {
+   "id": "4c4a0a20c3e2f8f5",
+   "region": "INT",
+   "title": "Judge upholds NYC rent freeze, marking win for Mamdani and his affordability agenda",
+   "summary": "Judge upholds NYC rent freeze, marking win for Mamdani and his affordability agenda Gothamist Mamdani Wins Against Landlords in Rent Freeze Lawsuit The New York Times Mamdani wins against landlords in New York rent freeze lawsuit: ‘Housing is not a luxury’ The Guardian New York court upholds Mayor Mamdani's rent freeze Reuters How Many 'Ghost Apartments' Are There in New York City? Reason Magazine",
+   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOSk1tcnphSHJoRUhqSGdRdkR4bEl1c2MwTktmMkJ3dlFMWVpXRzh5d3BCdFkxd2RsbnpQaXpJLVVXWWJNV1N1VXdqWm9ZSEZKTzlnYjNoTjNlN05Nc0NpblV3RjE3blVnYlZFS010SUdrNXhQLTUySU1YMWluNUF3M0tVeWxCSGdKTXlHbWFGSndIM2RGTzlwZW5nU0VkVkFScUV1TjZTZk93c016WXc?oc=5",
+   "source": "Gothamist",
+   "source_domain": "gothamist.com",
+   "published": "2026-11-25T21:01:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.023,
+   "S": 0.023,
+   "G": 0.6,
+   "ATM": 81
   },
   {
    "id": "db54b2a08ae92d82",
@@ -7399,6 +8284,24 @@
    "ATM": 0,
    "lat": 47.387,
    "lng": 19.069
+  },
+  {
+   "id": "86c6acfd9c5449ba",
+   "region": "HU-NAT",
+   "title": "Vitézy asszony szerint az előző kormány a felelős a borzalmas vasúti balesetért",
+   "summary": "Vitézy asszony szerint az előző kormány a felelős a borzalmas vasúti balesetért Vadhajtások",
+   "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQdUJVQmJYMEN4Y3dfMFBLTk41eGFpYWtPbV9JSWd5RTc4MXlfZnlrX0N4UzFFajRlY1cwTVJjMGVlSW8zZW5ZVlhnTl9RNGV2Z2o3TjMybEJSR0VLcTlVSGdaaFFtZzRZU2t1dURWYzFRN25WR3FoeVVldzFjbmwtVDd4akRocFJVcUhQUXpEZGVHeTlIM1JERDVfNVBpcktJZ2hFMkI4TWFKT1FTd0ZjUVR4NkpSTFND?oc=5",
+   "source": "Vadhajtások",
+   "source_domain": "vadhajtasok.hu",
+   "published": "2026-11-25T20:54:37Z",
+   "V0": 0.45,
+   "V": 0.458,
+   "S0": 0.167,
+   "S": 0.167,
+   "G": 0.9,
+   "ATM": 287,
+   "lat": 47.179,
+   "lng": 19.505
   },
   {
    "id": "a72452d2952e3b19",
@@ -7790,7 +8693,7 @@
    "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQUlc1cUNRSVVPNEE0OWtqUV9ONUZJazlBYnp2cmJFeVlRazdHNG1Zajd3a1hUUmw1SzcxNmx3SzZaRGUzLXRtS3k2ZjhwbWlEVGJnbENxMGZLSzd5OTNrUDVBaDdKMkZFR09sajAtS2x6UlB6MWE1dUMwSzl1bUVMV2FXbzhkM1J3UndVMXNB?oc=5",
    "source": "WBASKET",
    "source_domain": "wbasket.hu",
-   "published": "2026-11-25T20:37:30Z",
+   "published": "2026-11-25T20:37:31Z",
    "body": {
     "ok": false
    },
@@ -8218,7 +9121,7 @@
    "id": "5de420ea9af53d4c",
    "region": "HU-NAT",
    "title": "Vitézy szerint olyan öreg kocsi is volt a mezőkövesdi vonatbalesetnél, ami el tud indulni nyitott ajtóval",
-   "summary": "Vitézy szerint olyan öreg kocsi is volt a mezőkövesdi vonatbalesetnél, ami el tud indulni nyitott ajtóval Telex Olyan súlyosan megsérült egy utas egy InterCity-járaton, hogy Vitézy Dávid is megszólalt Portfolio.hu Itthon: Kiesett egy utas az InterCityből, Mezőkövesdnél leállt a vonatközlekedés | hvg.hu 300 méteren át vonszolta a vonat a fiatal nőt Mezőkövesden, az életéért küzdenek RTL.hu Mindkét lábát elvesztette az InterCity által vonszolt egyetemista, édesanyja szerint valamennyi csontja eltört a lányának 24.hu",
+   "summary": "Vitézy szerint olyan öreg kocsi is volt a mezőkövesdi vonatbalesetnél, ami el tud indulni nyitott ajtóval Telex Belföld - Vitézy Dávid megszólalt az egész országot megrázó vonatbalesetről Index.hu Olyan súlyosan megsérült egy utas egy InterCity-járaton, hogy Vitézy Dávid is megszólalt Portfolio.hu Itthon: Kiesett egy utas az InterCityből, Mezőkövesdnél leállt a vonatközlekedés | hvg.hu 300 méteren át vonszolta a vonat a fiatal nőt Mezőkövesden, az életéért küzdenek RTL.hu",
    "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOa0VwWUN4a2o3d295cGdmNnRvcE5RUHJHVF9jTnN1dmRkWUt5Q05oVWRIU1hLamJQYkZBYkdncnVCb0RXcTlndGlWb0NGa1pPQTFPWWYxbHBVQlp2M2tsdU41UUhMQ2FIX0NyM0NFaVdGaUg3MkJGbGhYdzJxeThNb040TG5xWF83aDVHaG1sUGFnWjVPTFlHRHJqdw?oc=5",
    "source": "Telex",
    "source_domain": "telex.hu",
@@ -8850,6 +9753,24 @@
    "lng": -97.451
   },
   {
+   "id": "67bd7b71e892a6b1",
+   "region": "HU-NAT",
+   "title": "Egy hét kultúra 2026/48.",
+   "summary": "Egy hét kultúra 2026/48. magyarnarancs.hu",
+   "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1ILTFiVGd1VXAwRy1PN2NVM0JUN3J3ZXYyUy1OaUlTRHB5UVJCSUw0aHBqUEY0dkY0d0t6NWc0UEt5WUNnelBXc21WS2oxQUx4YWJReml0aGlpVEduR2tLMkhfbnE2eGh5U180WUt3VkxLUWM?oc=5",
+   "source": "magyarnarancs.hu",
+   "source_domain": "magyarnarancs.hu",
+   "published": "2026-11-25T19:55:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.311,
+   "lng": 19.305
+  },
+  {
    "id": "e2a9e3e393e8a46a",
    "region": "INT",
    "title": "Jensen Huang broke Nvidia’s code of conduct, and his employees may not forget it",
@@ -9404,6 +10325,24 @@
    "ATM": 0,
    "lat": 26.878,
    "lng": 33.184
+  },
+  {
+   "id": "3cc5e9cf8b628df2",
+   "region": "INT",
+   "title": "Fuel tanker crash ignites a massive fire on a highway surrounding Cairo, killing at least 31 people",
+   "summary": "Fuel tanker crash ignites a massive fire on a highway surrounding Cairo, killing at least 31 people Audacy",
+   "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxNNWFEYnhZS0VIRjJab09DaDkzNlNVNnA0WDh0ZTUwV3kwa3I4R3lOczlPQldnLWxjWGNNSkNYZnh4WG0tYUhlUGJtUmtuX2JSbUlhRGt5Y1B0eTZLU0lPaTVDTkxVOHhXbFBTVVRmek1MMmszM0R2VTkzcDRXOGY3Vk0wdDVDWUVjbHlVWnJocDBwLVBKRjM5aFUtZ3Q0VkZ4UFRuQi1R?oc=5",
+   "source": "Audacy",
+   "source_domain": "audacy.com",
+   "published": "2026-11-25T19:33:00Z",
+   "V0": 0.45,
+   "V": 0.473,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0,
+   "lat": 25.358,
+   "lng": 30.236
   },
   {
    "id": "60d810364bb44707",
@@ -10019,6 +10958,42 @@
    "lng": 31.127
   },
   {
+   "id": "d009227d1c4a4aa1",
+   "region": "HU-NAT",
+   "title": "Nemzetközi macskakiállítás Budapesten – adventi hétvége a cicák jegyében",
+   "summary": "Nemzetközi macskakiállítás Budapesten – adventi hétvége a cicák jegyében Esemény Menedzser",
+   "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQVTlEbTJfSWo5ajhoVWhyQ2lMMmY3NmpsMHB4Y053b3ZuS1h4bkh4NkYtamVkYldWb1ptMndoUjNMTGU4X1pOZF9pV29qQTNxeFIwMDZleUV3YkE5S3F1N2FydHhKOFh4czRtQkFLOXNzYXA1aVBYczJEOEdENDBUME5zOWVKcDUwSW04NEY3MHFvczFaTENET21WWGEtTkM1Mk5YeWtxNzdOMzdVc3Q2M1hGbw?oc=5",
+   "source": "Esemény Menedzser",
+   "source_domain": "esemenymenedzser.hu",
+   "published": "2026-11-25T19:13:56Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.562,
+   "lng": 19.114
+  },
+  {
+   "id": "9f5b86fd8ae90028",
+   "region": "HU-NAT",
+   "title": "Az idő eleganciája – Nemzetközi Órabörze és Ékszervásár a Lurdy Házban",
+   "summary": "Az idő eleganciája – Nemzetközi Órabörze és Ékszervásár a Lurdy Házban Esemény Menedzser",
+   "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOX25uOWRXV0hDV0ZubVdtajh4c2Y0TVA2bE53ejVnRGxQVFhlS1NLNDV4MFBnRzBFNjd6UnFfY1g5SFJ6Y1lSMmctQmhDanlpbVZzRGsyaUpfcktIXzZJaGRLbVNrZ3c5bmlWdG02ejRhdFI4MTJKcWtwRC1HaFR5TTNiNFQ5LWdkeVZsMjVNVW1oTnp4dElCUlRvODdZVGJUUFNfZFQyY3R5Y285YThhTQ?oc=5",
+   "source": "Esemény Menedzser",
+   "source_domain": "esemenymenedzser.hu",
+   "published": "2026-11-25T19:13:56Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.086,
+   "lng": 19.148
+  },
+  {
    "id": "0067127928c1a2d0",
    "region": "HU-VA",
    "title": "Már van Szombathelynek adventi koszorúja",
@@ -10038,6 +11013,22 @@
    "ATM": 0,
    "lat": 47.344,
    "lng": 16.448
+  },
+  {
+   "id": "5d511964fa985839",
+   "region": "INT",
+   "title": "6 dead after small plane crashes off Mississippi coast: US Coast Guard",
+   "summary": "6 dead after small plane crashes off Mississippi coast: US Coast Guard ABC News - Breaking News, Latest News and Videos Authorities identify 6 family members killed in Horn Island plane crash after fishing trip NOLA.com Six Florida family members killed in plane crash on way home from fishing trip identified Fox News Remains of 6 people found after plane crashes en route to Fort Myers Gulf Coast News and Weather Two children among six dead after plane crash off Mississippi coast BBC",
+   "link": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQZllRZVRJYXp1eXFMbXhvTlFGdmdyaXFBLXFpRW05aEd3bF9taUQyZVlfZnFDTnRUQUdFcnFCMktfdUp3djg0a2JLSlVVYzBoV3duclNhQ3dQSGNfLXU1RUVXdzhfVlhOSHJ1ZWhkeVF0QktmOGRzZlUyNW5xY2VOX2JGRXdJNGp3bmFxaXV5RVpFMXd0b0hNNEw2Y9IBoAFBVV95cUxOUXFRQVFtdGRzSC1BbHllbnpMT2tXTUtENGVTdTdQc3ZaRkZwRWM4SEpCLTRuQjFtN2swakFNZ0pObVpLay1Cb281NXNnYnhLWS12UWJpdnN4dWIyVEMyczB1MXYxUGJJZTJ1QUYwc09IcTdWN3NOaTMxTHFLbnpwdU9hU0FfT3BxSF9tSVFEUnFGYzc0a2o4OWtQLTRtd3BJ?oc=5",
+   "source": "ABC News - Breaking News, Latest News and Videos",
+   "source_domain": "abcnews.com",
+   "published": "2026-11-25T19:13:30Z",
+   "V0": 0.45,
+   "V": 0.447,
+   "S0": 0.03,
+   "S": 0.03,
+   "G": 0.6,
+   "ATM": 99
   },
   {
    "id": "638baafc25739fe9",
@@ -10120,15 +11111,15 @@
    "id": "d45a07b803496b91",
    "region": "INT",
    "title": "'Enough Phone' is stuffing a bigger battery, more RAM & storage into its small Android phone at no extra cost",
-   "summary": "'Enough Phone' is stuffing a bigger battery, more RAM & storage into its small Android phone at no extra cost 9to5Google Enough Phone gets three spec upgrades with no price increase Mezha.net The tiny $449 enough phone just got a huge battery, storage, and RAM upgrade Android Authority The tiny Enough Phone gets a much-needed specs bump as it nears market release Digital Trends Enough Phone bucks industry trend, offers more RAM and storage for free and proves price hikes are non-essential Stuff",
+   "summary": "'Enough Phone' is stuffing a bigger battery, more RAM & storage into its small Android phone at no extra cost 9to5Google The tiny $449 enough phone just got a huge battery, storage, and RAM upgrade Android Authority The tiny Enough Phone gets a much-needed specs bump as it nears market release Digital Trends Compact Enough Phone gets three upgrades without a price increase Notebookcheck enough phone Now Targets 12GB RAM at the Same Price AndroidPure",
    "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQM000bm1LdE53cTZ6cWFsS0ZmQnZxQkRSWGh3MzZibVEzNFFhLTFHd0IxOXhMQUlMbHRsRHhHbkI3U2lDRWJYdF9acWFnWjI2b3lFc09zMnFncTZGZkE1M1EydlZNeHg3NURrR1JSS2Z3bE9wQlR4VVYxdmNucndSQWFB?oc=5",
    "source": "9to5Google",
    "source_domain": "9to5google.com",
    "published": "2026-11-25T19:10:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.037,
-   "S": 0.037,
+   "S0": 0.043,
+   "S": 0.043,
    "G": 0.6,
    "ATM": 115
   },
@@ -10439,8 +11430,8 @@
   {
    "id": "b05ce479083d9b22",
    "region": "INT",
-   "title": "Gordon Ramsay to take the lead in revival of BBC's flagship motoring program Top Gear",
-   "summary": "Gordon Ramsay to take the lead in revival of BBC's flagship motoring program Top Gear WRAL",
+   "title": "Gordon Ramsay to take the lead in revival of BBC's flagship motoring program 'Top Gear'",
+   "summary": "Gordon Ramsay to take the lead in revival of BBC's flagship motoring program 'Top Gear' WRAL",
    "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPWTdKRlluR05LUHdUX0J0WmY4eGdOVXpXTEZzQ3hNX2RxMHZoVFpadlhFMGxkODY1OURkdTdUaENFOGdXeVVnZGZ2QWxkMi1XRHhhTm1GUWtEQUtiOTRzN2JXSHNzb3Aza2VhcDBDS1RrcmE4NDg2UHVyVEU5eTAwX21rQnJiN1FMYXh3TjFiUUZUOUZhRE9sZ0FpY01RN1NRLTBsWVI3TE9XZlBfRTY0T2FJRjlXT1psS1dFWg?oc=5",
    "source": "WRAL",
    "source_domain": "wral.com",
@@ -10451,6 +11442,27 @@
    "S": 0.1,
    "G": 0.6,
    "ATM": 183
+  },
+  {
+   "id": "32172ba62efe3fce",
+   "region": "HU-NAT",
+   "title": "Karácsony Gergely teljesen megszüntetné az Airbnb-kiadást Budapesten",
+   "summary": "Karácsony Gergely teljesen megszüntetné az Airbnb-kiadást Budapesten Telex",
+   "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOdU8tWENTb0FnUEt4a3d5bFdXc3dBOHJXa0huaXFZOWRWV3IyMmhTVHQ2ZkZpbnJSbVhqLXZ0bllvbHFKSUJuWUhXRFZHT1ZSSUhwVzl0NkRad2pzMENfZEdtbE81R0F0aHdjS2h1VDhkeEctNTZEQXJaQXg1RjFadDFwMTF0Q3psV0taYVc1U0ZvaUhDSy02UnpaWmdBZm5XT0Nn?oc=5",
+   "source": "Telex",
+   "source_domain": "telex.hu",
+   "published": "2026-11-25T18:55:51Z",
+   "body": {
+    "ok": false
+   },
+   "V0": 0.7,
+   "V": 0.709,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.468,
+   "lng": 19.152
   },
   {
    "id": "70fcafd73059f323",
@@ -10549,7 +11561,7 @@
    "id": "f800fad696ad7258",
    "region": "HU-NAT",
    "title": "Megszólalt JD Vance: elnöki kegyelem nélkül folytathatja Jensen Huang",
-   "summary": "Megszólalt JD Vance: elnöki kegyelem nélkül folytathatja Jensen Huang Portfolio.hu Az Nvidia-vezér visszahelyezése még trumpi mércével is súlyos botrány lehet Telex Megint elromlott a hangulat, újra estek a tőzsdék Portfolio.hu Financial Times: akár 15 millió dollárt is kereshetett Donald Trump az Nvidia-vezér visszatérésével Index.hu Kínai kémbotrány ide vagy oda, visszatért: egyetlen emberen múlik az AI-forradalom sorsa? Forbes Magyarország",
+   "summary": "Megszólalt JD Vance: elnöki kegyelem nélkül folytathatja Jensen Huang Portfolio.hu Financial Times: akár 15 millió dollárt is kereshetett Donald Trump az Nvidia-vezér visszatérésével Index.hu Megint elromlott a hangulat, újra estek a tőzsdék Portfolio.hu Az Nvidia-vezér visszahelyezése még trumpi mércével is súlyos botrány lehet Telex Megbánta a felmondást az Nvidia mérnöke, aki Jensen Huang lemondása után hagyta ott a céget | hvg.hu",
    "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOTUhsQWZhNVBLM2NLaFlZS0tYTUNSOVRYSXBHQnhXVFM1S2tZMEh6Z3F3TGhnVlFzZGRKeW40WkI5amVEUUEyS1F3SmNGWDRXMVVSLVF5dUwtRUVQb1RnTUpvTC1lbWpIMWxaejlnZ1RFdzJ1VUV2OVEtWU9qVHFoRmg0dGRtM1gyeV9yNFp2ZE90bHlZd1Q5eHJBUmRxb1hIcnBvR3Y2Zm1yVUpPODhVb0RUODVSMXczZlHSAb8BQVVfeXFMT2ZWYkNESm9YRDc1dUhBeWk5cVdQUGwyUi0zQmNhWk9QX01fUmZxbzBISGthOEI1VW9WOGNVV0RvTUtQUnlsVkpDMDZWb2NxQXpTejA2YjdiVVRSM2FpWW92V0ozNHNSeDFDX2MzMEF2NGVZR0NCNFZJZlpRNHkzcUt1dm0wVjZjZHpBNk5nX3I1aGNVTzZSN2daYXF5cmVsTG85Qk9lRFAxdmJyOFVnZ3JiUFFqTG4wbzhZbDN1ZW8?oc=5",
    "source": "Portfolio.hu",
    "source_domain": "portfolio.hu",
@@ -10642,22 +11654,6 @@
    "ATM": 0
   },
   {
-   "id": "4c4a0a20c3e2f8f5",
-   "region": "INT",
-   "title": "Judge upholds NYC rent freeze, marking win for Mamdani and his affordability agenda",
-   "summary": "Judge upholds NYC rent freeze, marking win for Mamdani and his affordability agenda Gothamist Mamdani Wins Against Landlords in Rent Freeze Lawsuit The New York Times Mamdani wins against landlords in New York rent freeze lawsuit: ‘Housing is not a luxury’ The Guardian Judge Clears New York City Rent Freeze Backed by Mayor Mamdani Bloomberg How Many 'Ghost Apartments' Are There in New York City? Reason Magazine",
-   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxOSk1tcnphSHJoRUhqSGdRdkR4bEl1c2MwTktmMkJ3dlFMWVpXRzh5d3BCdFkxd2RsbnpQaXpJLVVXWWJNV1N1VXdqWm9ZSEZKTzlnYjNoTjNlN05Nc0NpblV3RjE3blVnYlZFS010SUdrNXhQLTUySU1YMWluNUF3M0tVeWxCSGdKTXlHbWFGSndIM2RGTzlwZW5nU0VkVkFScUV1TjZTZk93c016WXc?oc=5",
-   "source": "Gothamist",
-   "source_domain": "gothamist.com",
-   "published": "2026-11-25T18:49:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.023,
-   "S": 0.023,
-   "G": 0.6,
-   "ATM": 81
-  },
-  {
    "id": "4ae579d4110ad7a9",
    "region": "AT-1",
    "title": "Burgenland heute vom 25.11.2026",
@@ -10692,27 +11688,6 @@
    "ATM": 150,
    "lat": 47.274,
    "lng": 16.352
-  },
-  {
-   "id": "32172ba62efe3fce",
-   "region": "HU-NAT",
-   "title": "Karácsony Gergely teljesen megszüntetné az Airbnb-kiadást Budapesten",
-   "summary": "Karácsony Gergely teljesen megszüntetné az Airbnb-kiadást Budapesten Telex Zéró toleranciát hirdetett Karácsony Gergely az Airbnb-vel szemben Budapesten Turizmus.com Ingatlan: Karácsony Gergely egész Budapesten megszüntetné az Airbnb-t | hvg.hu Drasztikus javaslat érkezett: éjfélkor bezáratnák a budapesti szórakozóhelyeket, szigor jöhet a bulinegyedben Pénzcentrum Olyasmi történik a lakásokkal a Várban, amire senki sem számított Portfolio.hu",
-   "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOdU8tWENTb0FnUEt4a3d5bFdXc3dBOHJXa0huaXFZOWRWV3IyMmhTVHQ2ZkZpbnJSbVhqLXZ0bllvbHFKSUJuWUhXRFZHT1ZSSUhwVzl0NkRad2pzMENfZEdtbE81R0F0aHdjS2h1VDhkeEctNTZEQXJaQXg1RjFadDFwMTF0Q3psV0taYVc1U0ZvaUhDSy02UnpaWmdBZm5XT0Nn?oc=5",
-   "source": "Telex",
-   "source_domain": "telex.hu",
-   "published": "2026-11-25T18:45:15Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.709,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.468,
-   "lng": 19.152
   },
   {
    "id": "87ce288a8b833e45",
@@ -11006,7 +11981,7 @@
    "source_domain": "on.orf.at",
    "published": "2026-11-25T18:34:39Z",
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -11494,6 +12469,22 @@
    "lng": 106.17
   },
   {
+   "id": "d34446bef041ec7d",
+   "region": "INT",
+   "title": "Exclusive | Sick Kentucky mom accused of incest has been abusing, neglecting children for over a decade: court docs",
+   "summary": "Exclusive | Sick Kentucky mom accused of incest has been abusing, neglecting children for over a decade: court docs New York Post",
+   "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxNNGp0NkVFTTZWQWU0V2ZXYWdyYmEzWlkybXdzMnJDRF9RWDZyTG9KQkJHYk9QazE0TVVoNjZaY1MtRTRSNDVhMDlCSWtkbVVWWnJjMW9QNFdJd3BGYll6eU1RVllXVWRwQVQ5MW5na0FyTmJMX21KSWhtZC1IcHRIN1RxRFRqdE0xeE1mblU0WnFXOV9uRTBaZWJiWjJFM3EzYmZiQThVUE9UMHBfbDN5b1ZLaTg?oc=5",
+   "source": "New York Post",
+   "source_domain": "nypost.com",
+   "published": "2026-11-25T18:18:00Z",
+   "V0": 0.7,
+   "V": 0.697,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.6,
+   "ATM": 0
+  },
+  {
    "id": "f0c731d78c5ae8a5",
    "region": "HU-NAT",
    "title": "Csődvédelmet kért a Szatmári Konzervgyár",
@@ -11950,17 +12941,17 @@
    "id": "159384631d204748",
    "region": "INT",
    "title": "Federal judge denies SEC’s request to stop LSU from interfering in expulsion vote",
-   "summary": "Federal judge denies SEC’s request to stop LSU from interfering in expulsion vote AL.com Judge denies SEC's request for TRO against LSU in Dec. 3 vote ESPN LSU wins round in court as SEC pushes to expel Tigers from conference wwltv.com LSU could lose millions of dollars, historic rivalries if SEC votes to expel school WBRZ How did LSU and the SEC get here? A timeline of the Tigers’ antagonistic recent history - The Athletic The New York Times",
+   "summary": "Federal judge denies SEC’s request to stop LSU from interfering in expulsion vote AL.com Judge denies SEC's request for TRO against LSU in Dec. 3 vote ESPN LSU could lose millions of dollars, historic rivalries if SEC votes to expel school WBRZ LSU wins round in court as SEC pushes to expel Tigers from conference wwltv.com Inside the SEC's unprecedented LSU expulsion vote: What's at stake and what comes next? CBS Sports",
    "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOR2REQUZWcUs3bG1tWjFnMGJGaEhoMlBpN0ExZlJqS3dpWkttbGNrcDBGX010aS03RklEZ2NrREpJM2dfY1h4MFBFYmtuYkM3d1Z0SlRwSVVTa1FTSXE5NnI1SkR0eW9KTHpWWTZNRFFURlZzQ1lpQkhQZWJtUjR3Y2hZMjVTYk5mNU80NFFCY0ZKTVlZci1kMGVYajFCdTVOQlVEUU5UcUxtRDRXalR3NXRwdDJHX28?oc=5",
    "source": "AL.com",
    "source_domain": "al.com",
    "published": "2026-11-25T17:58:00Z",
    "V0": 0.45,
    "V": 0.45,
-   "S0": 0.16,
-   "S": 0.16,
+   "S0": 0.183,
+   "S": 0.183,
    "G": 0.6,
-   "ATM": 230
+   "ATM": 244
   },
   {
    "id": "a4adbfacdc7f3078",
@@ -12374,6 +13365,22 @@
    "lng": 19.079
   },
   {
+   "id": "09497957c19b9cb2",
+   "region": "INT",
+   "title": "Measles surging is ‘a different kind of heartbreak’",
+   "summary": "Measles surging is ‘a different kind of heartbreak’ CNN",
+   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQcUlKdzExTGVLcmxScU9Kc2pRQTl2WDhpeVA5RWwyQVZUQU91TmFzRk5uZnV5MVhNb3hnd2JZM2V3UlBpLWVWMmpFci04T0d2WmttdlF2SnBldTJ0dzRIeUVhTVVlYWlKTFk1NnRSazhWaUFqVjFLT3pMX0xldlFQb0gwd3gzNksxWHR3VGs5R0E3TkpFN1c5NExEaWMxNEZ5aWhQRFVoWElHcFk?oc=5",
+   "source": "CNN",
+   "source_domain": "cnn.com",
+   "published": "2026-11-25T17:38:14Z",
+   "V0": 0.7,
+   "V": 0.675,
+   "S0": 0.076,
+   "S": 0.076,
+   "G": 0.6,
+   "ATM": 124
+  },
+  {
    "id": "dee6ef71cc80eef8",
    "region": "HU-NAT",
    "title": "Kritikus szakaszához érkeztek az EU-s tárgyalások, bejelentést tett Magyar Péter",
@@ -12700,22 +13707,6 @@
    "ATM": 0,
    "lat": 47.425,
    "lng": 19.212
-  },
-  {
-   "id": "09497957c19b9cb2",
-   "region": "INT",
-   "title": "Measles surging is ‘a different kind of heartbreak’",
-   "summary": "Measles surging is ‘a different kind of heartbreak’ CNN",
-   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQcUlKdzExTGVLcmxScU9Kc2pRQTl2WDhpeVA5RWwyQVZUQU91TmFzRk5uZnV5MVhNb3hnd2JZM2V3UlBpLWVWMmpFci04T0d2WmttdlF2SnBldTJ0dzRIeUVhTVVlYWlKTFk1NnRSazhWaUFqVjFLT3pMX0xldlFQb0gwd3gzNksxWHR3VGs5R0E3TkpFN1c5NExEaWMxNEZ5aWhQRFVoWElHcFk?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T17:29:46Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.076,
-   "S": 0.076,
-   "G": 0.6,
-   "ATM": 124
   },
   {
    "id": "0b36d415069ac087",
@@ -15579,11 +16570,11 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.424,
+   "V": 0.425,
    "S0": 0.03,
    "S": 0.03,
    "G": 0.9,
-   "ATM": 125,
+   "ATM": 124,
    "lat": 34.917,
    "lng": 103.694
   },
@@ -15626,6 +16617,22 @@
    "S": 0.044,
    "G": 0.6,
    "ATM": 88
+  },
+  {
+   "id": "e3df7f0745299494",
+   "region": "INT",
+   "title": "Meet the Nirps*: The young people not in relationships and having less sex than their parents did in the 90s",
+   "summary": "Meet the Nirps*: The young people not in relationships and having less sex than their parents did in the 90s The Independent Young Britons’ sex lives have fallen off a cliff, major survey shows CNN Brits are having less sex, but watching a lot of porn, survey finds CBS News No sex please, we’re Gen Z: Third of young people are virgins The Telegraph",
+   "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxObk1LWTdqTzJmYmwxR1R3eEgtWW5sSHBPSEJyOEQ4OVJnVXo1R1dTb3haX1otb0JiRFhaOUxKN2tuTHlrSmljYU13M3l0VW0yb3hTN0U0enF4aXNpdFZiUnNEUUlHWEh2a3ZvMkJac0NPckYxOVdMcEJ3ZUFCWHhJeWstUzQxekcxb0ZrMFZPUnBTeUozamw1dkxrakhrTW05d0RnWQ?oc=5",
+   "source": "The Independent",
+   "source_domain": "independent.co.uk",
+   "published": "2026-11-25T15:55:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.023,
+   "S": 0.023,
+   "G": 0.6,
+   "ATM": 81
   },
   {
    "id": "dc1ca7faac12566c",
@@ -16508,24 +17515,6 @@
    "lng": 19.517
   },
   {
-   "id": "c95c057fbaf1c25d",
-   "region": "HU-NAT",
-   "title": "Happy Wonderland 2026: november 27-től újra itt a tél legnagyobb kalandja a Városligetben",
-   "summary": "Happy Wonderland 2026: november 27-től újra itt a tél legnagyobb kalandja a Városligetben BudAPPest.hu",
-   "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOTUFaVld2Z2h6dWE5bjcwdlltSENlcnpTeUtyTWl2SndCSy1ESnlFbEFiNFhLMzNRSHRkUVZ4NkFBOXhyTzAzd2t0RXIzR1Q4Rmw5MG5SdTZTLVpUN0pzSTB4NWlDb2tWVXVLR092bVlnMDBBbWdXNmdWMDcyMFNTM3ZmdG05MEg3VVJtdnhFN3pmbUFSWHdDRzlVNGEtSnhoOHRxamdQTng5dktGQlJYMldBcW5XdmRDY0hKRHhIdldxN0xnN0tsOA?oc=5",
-   "source": "BudAPPest.hu",
-   "source_domain": "budappest.hu",
-   "published": "2026-11-25T15:09:31Z",
-   "V0": 0.45,
-   "V": 0.461,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.131,
-   "lng": 19.428
-  },
-  {
    "id": "490744b7655e2e91",
    "region": "HU-NAT",
    "title": "„Szakmailag érthetetlen ez a fejlemény” – megtartaná a kormány Kósa Lajos ötletét a névkérelmezésben",
@@ -17249,6 +18238,24 @@
    "ATM": 0
   },
   {
+   "id": "0122e58b7ea4ab85",
+   "region": "HU-NAT",
+   "title": "A BBC megszerezte a titkos orosz adatokat: legalább 490 ezer katona halt meg Ukrajnában",
+   "summary": "A BBC megszerezte a titkos orosz adatokat: legalább 490 ezer katona halt meg Ukrajnában 24.hu Kirívó veszteségeket szenvedtek az oroszok, teljesülhet Kijev egyik legfontosabb kérése – Háborús híreink kedden Portfolio.hu Rosstat-kiszivárogtatás: legkevesebb 490 ezer orosz katona halt meg Ukrajnában Euronews.com Külföld - Kiszivárgott a Kreml sötét titka, belülről omlik össze Putyin hadserege Index.hu Világ: Egy ezrednyi orosz katona lett öngyilkos a fronton a háború kezdete óta | hvg.hu",
+   "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNOGNnazljWW5WV3ZyZERTUEN6N0VUV092NGp0cld2bGJ1cUVYWnZnQ3R5WDFVNFo5aHpySER2VHZoZkxCVHZQUG1WY282OFVxUjRWV2dfOHgyaW1XX1EtNnpQZklUY1RobTRWWHhGVXEzQUJaeEptelJsZ0xsZ2ctekIxZHhwQ0FoOFFudkJVd0RfaGFWd050Q3BxZVAxVkhGQ0R4LW5CZ2RqckRUUmpiOUJEX2cyd0laeFZzaA?oc=5",
+   "source": "24.hu",
+   "source_domain": "24.hu",
+   "published": "2026-11-25T14:51:00Z",
+   "V0": 0.7,
+   "V": 0.711,
+   "S0": 0.024,
+   "S": 0.024,
+   "G": 0.9,
+   "ATM": 72,
+   "lat": 47.612,
+   "lng": 29.44
+  },
+  {
    "id": "4f4e86b30a2035f5",
    "region": "HU-NAT",
    "title": "Élet+Stílus: Sebestyén Balázs otthagyja a Nyerő Párost",
@@ -17570,6 +18577,24 @@
    "ATM": 98,
    "lat": 39.945,
    "lng": -4.453
+  },
+  {
+   "id": "93970776ebbcbbbe",
+   "region": "HU-NAT",
+   "title": "USA új vámokat javasol 14 nagy kereskedelmi partnerre, köztük az EU-ra",
+   "summary": "USA új vámokat javasol 14 nagy kereskedelmi partnerre, köztük az EU-ra Euronews.com",
+   "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxPNGtJM0RuMmpyZ0lDQzhWc0I2VHd1WW1MTFZYVGVZb2tmRHk0TWJ6a1RPTWpJWVhuQk9TMnlSQ2ZJNlV4VzJzbHF1OEF4bm05c2U5N3JNUm5fSV8zVDJxWmdkV29jc2Q0cWJaZlpWUzZBajZydTlhNmlfVk43NHZ2ZFkzcWZQZ1pwbU9uWXM3c0g5U1I1c3RjZVFJWGcteWhUcWN2OXB4NA?oc=5",
+   "source": "Euronews.com",
+   "source_domain": "hu.euronews.com",
+   "published": "2026-11-25T14:43:25Z",
+   "V0": 0.7,
+   "V": 0.712,
+   "S0": 0.104,
+   "S": 0.104,
+   "G": 0.9,
+   "ATM": 162,
+   "lat": 37.911,
+   "lng": -100.237
   },
   {
    "id": "90aa0dfadb3ff668",
@@ -18064,6 +19089,24 @@
    "lng": 19.031
   },
   {
+   "id": "cd186a0c9d617f18",
+   "region": "HU-NAT",
+   "title": "Országjáró mesterkurzusokkal segíti a fiatal zenészeket a Fesztivál Akadémia Budapest",
+   "summary": "Országjáró mesterkurzusokkal segíti a fiatal zenészeket a Fesztivál Akadémia Budapest szekszárdi hírek",
+   "link": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOV2F4TVVXeXRaX1ZwUUl3YWJCLWJBdWgtQWdUZ1NoTXRVc1luYWNPR0d0QnJXcE92bGZyMlp2VnBUSFg1bHFvN0QtM2hRR0VXRVFobWJVbTJVZFp6cXktSlNJVzROWmpzTjhzcVVXOGRxdjl2WHI0ek0ya2l4TlVtNzY0ZmlYcXkzSW9WT1pVYU13YVduR0ZHa2R5blFLc0tCSUNtaWJFWFFFTHR4LVVqZzJyYw?oc=5",
+   "source": "szekszárdi hírek",
+   "source_domain": "szekszardihirek.hu",
+   "published": "2026-11-25T14:26:08Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.472,
+   "lng": 19.135
+  },
+  {
    "id": "691d4afb1fa83ccc",
    "region": "HU-NAT",
    "title": "Mikor indulhat végre a személyszállítás a Budapest–Belgrád vasútvonalon? Sokan kérdeztétek, ezért őszintén elmondom: ma még senki nem tudja pontosan megmondani. Mindent elkövet a kínai szállító és a megrendelő is, hogy sikerüljön a nyitott kérdések",
@@ -18182,72 +19225,6 @@
    "ATM": 57
   },
   {
-   "id": "e5e06dde153652f8",
-   "region": "INT",
-   "title": "Fed's preferred gauge of inflation climbs ahead of possible rate hike",
-   "summary": "Fed's preferred gauge of inflation climbs ahead of possible rate hike ABC News - Breaking News, Latest News and Videos Fed’s preferred inflation gauge accelerated to 3.8% in October, raising the 2027 stakes for the central bank CNBC Another Hot Inflation Reading Keeps Fed on Track to Raise Rates Again The New York Times Nasdaq, S&P 500 end down, but well off lows as investors buy bargains Reuters US inflation hits highest since May after prices climb 3.8% over the last year The Guardian",
-   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQbFd6dlZlV25JVlBjcjRXWWdYUTdqd2ZBeG1WbGI3Z1dGRjhwN0pCWEJteUN2YVBvSHFXbHl2M3VPcS05WU9TTWlQaVpZS3BVTTV1Sk1kVTNDSXQyOWlMLUJOT1ViUnhGUnM0Qkhxc3BGUlFMeUU2aHVBYy1SQTJPNVZDZUJwWkdhLUVUdWZNREdxaHI2R1BROTZlbTliVHZCVFdUWGMzaU02UdIBrwFBVV95cUxPWE1jU1l6LVdTcGhmTWp6aUROSnFNX0tsQVF2Q0FRam85VGs4SS1CNlg3VUpSRF95Y0Z1cnRzdGtGOWM0YWJLUTNhRElWVTNaQzdjVHA3TzYyN25yOTlyMV9qZzhzLTRZNHlDMFF4emdVQU9UbGZnWnktMC1tNTFQUURsN1NxRW05TUhyNW1odXcwbWI0T2xnYXlkdXkyaXNpS0VXMGlVZDVHcGNpamkw?oc=5",
-   "source": "ABC News - Breaking News, Latest News and Videos",
-   "source_domain": "abcnews.com",
-   "published": "2026-11-25T14:23:39Z",
-   "V0": 0.45,
-   "V": 0.447,
-   "S0": 0.021,
-   "S": 0.021,
-   "G": 0.6,
-   "ATM": 81
-  },
-  {
-   "id": "ed151e661c230a3f",
-   "region": "INT",
-   "title": "Spain’s 'MAGA movement': Why this far-right party could play kingmaker in Spain’s government",
-   "summary": "Spain’s 'MAGA movement': Why this far-right party could play kingmaker in Spain’s government CNN",
-   "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxObGVYTU9iNjVmZEt2dzVyNUdhbWo0b1BkRk42amRoSXBNZEFZOHJqNnZXa3BUTjdPQnI5NnZsTU9mdHNPYm15NVhIUi1YcmgxbEZLY3cwdjlRSzdOVXlqNmxXOHhkWjFheTVXMnhtS2R0aElqSE5rWGRuNERhanFNOFFvb1ZnVTBqMmM4LXln?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:22:16Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.093,
-   "S": 0.093,
-   "G": 0.6,
-   "ATM": 131,
-   "lat": 40.527,
-   "lng": -1.536
-  },
-  {
-   "id": "2a80787196c29e7b",
-   "region": "INT",
-   "title": "Another Hot Inflation Reading Keeps Fed on Track to Raise Rates Again",
-   "summary": "Another Hot Inflation Reading Keeps Fed on Track to Raise Rates Again The New York Times Fed’s preferred inflation gauge accelerated to 3.8% in October, raising the 2027 stakes for the central bank CNBC Inflation remains stubbornly high, despite a drop in gas prices PBS Fed's favored inflation gauge heats up, solidifying a rate hike in December, with more likely next year Yahoo Finance Fed policymakers at odds over causes of high inflation Reuters",
-   "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNVmt0OG9famdFX2l1SjBPc1A0aWZYc3Aza2tac0ZTYWk0bWplX2xRWVBUdjh3ZEtOQ1RQbFdhaUc0Wl8zZkpKaGV5c3Q1R3AxZHF0VjBqZ0RicnRRNVZ6X2RfYmNQUnBtTXBfbmNQUWRuZXpVcXFGa2pyRXhJZmhIWUxjXzc5cm1RTG1HSm1n?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-11-25T14:21:56Z",
-   "V0": 0.7,
-   "V": 0.692,
-   "S0": 0.023,
-   "S": 0.023,
-   "G": 0.6,
-   "ATM": 61
-  },
-  {
-   "id": "3a7e1f3e2e02e2e6",
-   "region": "INT",
-   "title": "6 killed, including 2 children, in Mississippi plane crash. What we know",
-   "summary": "6 killed, including 2 children, in Mississippi plane crash. What we know USA Today Small Plane Crashes Off Mississippi Coast, Killing 6 The New York Times Mississippi plane crash victims were members of a Florida family returning from a fishing trip NBC News 6 relatives on a fishing trip were killed after their plane crashed near Mississippi’s Horn Island CNN Remains of 6 people found after plane crashes en route to Fort Myers Gulf Coast News and Weather",
-   "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNODcyQmFKOTlaUlMxTDdMdzBmNE1QejB4Q1lZTnZ4cEF6ZVFfbjFuaFY2eDhzVERVVUl0cFpGYlJ2eHVtUFhlbmUtRlg5blU3SmY2SHlTLWlBcTVlSm52NEFxb2l6UnFVOTIweFl0eXZoMG5yZUZta2tUYW9UTUhDYlJMMDZRX0ltcWZvd080SE1lVHQteUFFdGhJVTMydk9nb0psNg?oc=5",
-   "source": "USA Today",
-   "source_domain": "usatoday.com",
-   "published": "2026-11-25T14:21:17Z",
-   "V0": 0.7,
-   "V": 0.683,
-   "S0": 0.035,
-   "S": 0.035,
-   "G": 0.6,
-   "ATM": 88
-  },
-  {
    "id": "986021e0c23c9a3d",
    "region": "HU-NAT",
    "title": "Szigorítaná a kormány a koncessziókat, összetörné Lázár és Orbán utolsó nagy vasútprivatizációs álmát is",
@@ -18264,88 +19241,6 @@
    "ATM": 0,
    "lat": 47.087,
    "lng": 19.441
-  },
-  {
-   "id": "10a97591b3a35906",
-   "region": "INT",
-   "title": "Todoist confirms 6% of customers’ details were stolen in data breach",
-   "summary": "Todoist confirms 6% of customers’ details were stolen in data breach TechCrunch Use this task management app? Your data might have been stolen Cleveland.com Hackers steal emails and passwords from app used by 50 million people AOL.co.uk Todoist says a hacker stole emails and old SHA1 password hashes for about 6% of its users MLQ.ai Used Todoist for Years? You May Be Involved In a New Data Breach PCMag",
-   "link": "https://news.google.com/rss/articles/CBMiowFBVV95cUxQREVJMUVJSTZLTUdJcWNYZU5fXzVlQ2FKTXJnSmREWVQwWUE5OWpyVGwzZURYYk9tbi1aQ1FRbTBZRXpISWE3aUl3bTNMb21NOUlsRTlfRGpVc1RkQnJMcGtFNE1SMF9ocmdyUUZTRElBU1k2ZVJWSWFmNjJzb0NiZEhfWFZLSjZJUk4wcE03U1dLVURGOUFGYjBoVUFYTEtlSjVr?oc=5",
-   "source": "TechCrunch",
-   "source_domain": "techcrunch.com",
-   "published": "2026-11-25T14:20:28Z",
-   "V0": 0.45,
-   "V": 0.442,
-   "S0": 0.037,
-   "S": 0.037,
-   "G": 0.6,
-   "ATM": 116
-  },
-  {
-   "id": "df6c323454c89bd0",
-   "region": "INT",
-   "title": "Zelensky plays volleyball with Hungarian PM Magya",
-   "summary": "Zelensky plays volleyball with Hungarian PM Magya CNN",
-   "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQRXFFczVldWFObzZSdEVDeVhSZ2hVelNpNDBjUDM2OW1ieDU3X1N2TmxXZzkyZ2U5Y3Z1eXhWeDRVZFg1eWRXbGtYeUNsYWI3czNZRVl5ajVmcktvemN6WXhSTGtxOElTQlJoSnNuNHdpUHpLTzd4VXg3Yk5VLTVQamxBanZsTWs5NFdqZzMtSFE4cTlXcEdPbGRfSkJQdmVRczRhX2xHTjRndUpaREE?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:19:48Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.064,
-   "S": 0.064,
-   "G": 0.6,
-   "ATM": 107
-  },
-  {
-   "id": "9c3b29d886ed7489",
-   "region": "INT",
-   "title": "Authorities free hostages in Colombian supermarket",
-   "summary": "Authorities free hostages in Colombian supermarket CNN",
-   "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxOaVB2XzZVS19XXzVDTkE1ZC1zOExyRFpVZzhtLWF2OGtLcFVwZVF6NUg1NzJEaFdYYU5lLXF0MGFGVTJyUW9YZlVLcUoyd2k5aUc3aWZ0dWhFdExIdk9SZGxscFJ1T1E0RkJWWno5QmxMa045MVhRUzJvR2w5UVVGOTVuVmZ4d29wdGd1dWtlc3dYMUhoR3EyaEQzNlJoWFE?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:19:00Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.076,
-   "S": 0.076,
-   "G": 0.6,
-   "ATM": 124
-  },
-  {
-   "id": "629fe8cf2339cc0b",
-   "region": "INT",
-   "title": "Inside Trump's effort to reinstate Jensen Huang as Nvidia's CEO",
-   "summary": "Inside Trump's effort to reinstate Jensen Huang as Nvidia's CEO CBS News The Frantic White House Push to Get Jensen Huang Back WSJ A look at the investigations involving Nvidia, Jensen Huang and Megaspeed CBS News Jensen Huang Apologizes to Nvidia Employees and Says He Is in Therapy The New York Times Trump just handed Democrats a political gift CNN",
-   "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE4tTWlzV2QtbGYtSlA0QmRDSnZLXzE5TXJqTFI4SXRJZF9hOVhmUERadW8taGZjdFllTDNYRnJIbExsMG1lWTJvYkFwTWN3bGJab19YaVlKcG11dHVBOFBqVFB3V0tIcHRVb0hPMFU1V1B6V1EzU0cyVW9B?oc=5",
-   "source": "CBS News",
-   "source_domain": "cbsnews.com",
-   "published": "2026-11-25T14:19:00Z",
-   "V0": 0.7,
-   "V": 0.69,
-   "S0": 0.086,
-   "S": 0.086,
-   "G": 0.6,
-   "ATM": 129
-  },
-  {
-   "id": "52d0fd964f5904b6",
-   "region": "INT",
-   "title": "Watch: China's Wingless Flying Car Takes Off Without Runway, Completes First Test Flight",
-   "summary": "Watch: China's Wingless Flying Car Takes Off Without Runway, Completes First Test Flight NDTV",
-   "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNQnNlX0xqUDY1ajJzVzlKQWlZWEhkUjRPS3h4UHNIU1owT3BuVndySHFRR0s2TEhWdlNHM2JDOVNMNjZMMW9iQVFlbEF5R3FhTERZZW5zX2V4N21WYXIxWHFLdjlKZjZnVVFOc2dvYTZMa1B5QTZfdUlndnNfLTB0UERaeXoyYV9kVWRjWC1INlItWElqTW5lU1JpMVhULU43aGJLbFVYTkhhbmdOdFp6d3lISnpiNkwxWmsybzNKNzZSaG140gHMAUFVX3lxTFBVVmpYTWtFd0ZZZHMtTnJDWmk0UUV5WG1PckhHNXBsOHppQ2tVMEJvNV83SzAySVdrdDZwZ0FwQlVrRGV5enlaMTNpLWdUMktPanJBbW9BUlZ1LW1sUGlrMml6a3pVMlZIdjNyYlk0WE9ObEc0ZlItRFVGX3lnQXNRS1pTWjg5czZTMzlBbGNuZGgxRzFrYnlYSm1lTWduajVnbDA3MFRQMl9QNk5oekMtNVBvd2Q2YmZRc1FvYzRIclZ6QXdTUFI3ai1heA?oc=5",
-   "source": "NDTV",
-   "source_domain": "ndtv.com",
-   "published": "2026-11-25T14:18:53Z",
-   "V0": 0.45,
-   "V": 0.435,
-   "S0": 0.031,
-   "S": 0.031,
-   "G": 0.6,
-   "ATM": 100,
-   "lat": 35.745,
-   "lng": 101.923
   },
   {
    "id": "773bc6c4a3960fae",
@@ -18366,54 +19261,6 @@
    "lng": 19.264
   },
   {
-   "id": "2c442b120b390c9f",
-   "region": "INT",
-   "title": "Ezra Frech on his 'Dancing with the Stars' finale mishap: 'I kind of blacked out'",
-   "summary": "Ezra Frech on his 'Dancing with the Stars' finale mishap: 'I kind of blacked out' Good Morning America ‘Dancing With The Stars’ Season 35 Finale Scores Series’ Best Performance Among Young Adults In 15 Years Deadline ‘Dancing with the Stars’ Finale Recap: After a Mid-Dance Catastrophe, a New Champion Claims a Historic Win People.com Ezra Frech makes ‘DWTS’ history during finale: ‘I kind of blacked out’ KTLA TV Ratings: ‘Dancing With the Stars’ Records Another Huge Finale The Hollywood Reporter",
-   "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNazBGM1M1RXFUbXhfd0xZdl9WNkZ4UTRwME9obXBpX2JuVzNpT2I1WlVQSDloSjdaYmNoNVlzelF0WkpOSkpvcWNkRy1CN2JtV2lHMTluWXFFc0JSOG9YSzNKdnFKRkV4MFhIOHk5SG1KUEVTSEhhOGJ1Ulp6eWJ5UFdoaWlHVk9KU1Uya0dDbEN5Y2EwOVRrclo5VjY3X1YxRGfSAacBQVVfeXFMUFI5U2VKYU5tNVM5YzVSN3FhU2JWSTh0QlAyYUV4dUF5cmtYYVpjZThFekVEZTNHSTY1VFVSX0x3WEZ1Mk1iNWRacFhzTzNRNGNiaUFQQTRPT0tHOXpBTmk5NWtZbXlteUF6STZXVWRKT2YyaXVQb3ItSWdndjByOUxUcUJjNFR1eGwyNFdmMUdRN0FOb3FHVzlFYXp2N2x5YXk4TFJXVFU?oc=5",
-   "source": "Good Morning America",
-   "source_domain": "goodmorningamerica.com",
-   "published": "2026-11-25T14:17:14Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.02,
-   "S": 0.02,
-   "G": 0.6,
-   "ATM": 81
-  },
-  {
-   "id": "45e59f2e1fa7d0e4",
-   "region": "INT",
-   "title": "Powerful wind gusts threaten Macy’s Thanksgiving Parade",
-   "summary": "Powerful wind gusts threaten Macy’s Thanksgiving Parade CNN",
-   "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPQ0dvOHJHbXJ5RUtGLWVRNWU5WXF3ZjB0RWlkUjVhY0h5dTEyRDROZHdmNjBLTmRNQ1F1NXRQa0N4T1djU1l3ZHEyb0p5c0hIMkQ3b1cwM3I2TXdvOUxrUWRUSzRwaDg3dUhNa1AzcGRxTXdRMmstNjZrRTBKczZvX2FJbkFieEVCZ3c?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:16:52Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.6,
-   "ATM": 107
-  },
-  {
-   "id": "c76523dddb9968fe",
-   "region": "INT",
-   "title": "Libyan naval officers die following Ukrainian drone attack, and other Mideast news",
-   "summary": "Libyan naval officers die following Ukrainian drone attack, and other Mideast news AP News Libyan army vows retaliation after 2 naval officers die of wounds from Ukrainian drone attack AP News Libyan Forces Threaten Retaliation Over Ukraine’s Attack on Russian Ships The New York Times The Ukraine-Russia war is seeping out across Europe and there are two reasons it will get worse CNN Why are Russian warships off Libya, and will Ukraine’s attack change that? Al Jazeera",
-   "link": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxONEtNTlFzQUotcXU1N1VCaXBGY0pYWnlqLWVfQ0F3WVl4YkdGMXBIZzdOczlFaFNnUUdZclhRVVlxNE5yVjhzektQSDh0YmRtaGVGQWk3UmNMbUljUjNmZ3NDMTh2dUhlNDdKMzBydnRGZ09EelN2anNjNTcyWkN5OTZkR25TUllOWjZ5SVhoVDJwZ245Q01lSVozd2dfdjRoRFhYTXo3LWtaaTgwanR2eURrMnY2ZEt5?oc=5",
-   "source": "AP News",
-   "source_domain": "apnews.com",
-   "published": "2026-11-25T14:16:00Z",
-   "V0": 0.7,
-   "V": 0.706,
-   "S0": 0.01,
-   "S": 0.01,
-   "G": 0.6,
-   "ATM": 42
-  },
-  {
    "id": "b1373d996195aa1d",
    "region": "HU-NAT",
    "title": "Megtépázott a szél egy függőhidat a rajta kapaszkodó túrázóval együtt Chilében",
@@ -18430,22 +19277,6 @@
    "ATM": 0,
    "lat": 47.09,
    "lng": 19.633
-  },
-  {
-   "id": "f1375c768eb6e07c",
-   "region": "INT",
-   "title": "Tourist clings for life as fierce gusts violently rock high-altitude suspension bridge (Video)",
-   "summary": "Tourist clings for life as fierce gusts violently rock high-altitude suspension bridge (Video) New York Post",
-   "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQTVV1aDNYU2xoZGc4QlNQcFZzSnVpLV95YXd0UGdibXh5TjNYQmcxYjRMWkdlUXlZY3l1WUR2Y2daVkRuYkU4VzNfNGZ1dGZwQW5VQ2dWVV9rc1h2TEFaWmxQZGZCMWtoVDBDQ2NzbXNzMFZ0NDdMc1h3Mkg1OFpsY1cyRU5qbzhrM2dDX1lrRGJfanYyaExQdUJBY0dHMnRqTUtuMGc1aE1tUTVSNWhubjNn?oc=5",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T14:15:17Z",
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
   },
   {
    "id": "afa7719e6e2ee70d",
@@ -18484,22 +19315,6 @@
    "lng": 19.326
   },
   {
-   "id": "fe1ede15cf019717",
-   "region": "INT",
-   "title": "How American Thanksgiving took root — and evolved — in Liberia",
-   "summary": "How American Thanksgiving took root — and evolved — in Liberia NPR See more headlines & perspectives on Google News",
-   "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxNRjdQZHdYb0hYLXpiX2RNZmR0U1pOWHhPclJKRWJwMWc0Y0djTlRhV2xJc0ZzbzhzaWF6SXd6RnFJMXdpYkkydV82YmtrMlV3YzFfMjRHUDBfUDlQaDc0Zmt3U2hfNGpBQllweTZ1QjVfUGt2OHdMU2RTenFXNnFKLWpneHA0VXpReFE?oc=5",
-   "source": "NPR",
-   "source_domain": "npr.org",
-   "published": "2026-11-25T14:14:34Z",
-   "V0": 0.45,
-   "V": 0.447,
-   "S0": 0.036,
-   "S": 0.036,
-   "G": 0.6,
-   "ATM": 115
-  },
-  {
    "id": "313fc25625677ec2",
    "region": "HU-NAT",
    "title": "Kvíz: Meg tudod mondani, melyik magyar városnak mi a beceneve?",
@@ -18534,38 +19349,6 @@
    "ATM": 407,
    "lat": 46.643,
    "lng": 16.28
-  },
-  {
-   "id": "16f20ee7e3e6c631",
-   "region": "INT",
-   "title": "Libyan army vows retaliation after 2 naval officers die of wounds from Ukrainian drone attack",
-   "summary": "Libyan army vows retaliation after 2 naval officers die of wounds from Ukrainian drone attack Los Angeles Daily News",
-   "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxNY0dORlhaM3JhQWUyZ3dzTVR4T3FsdW5KcFNWRS15Y3BZMHNDNzNPdHJRNGNyU1EwdHJ5SFJmZHJBS3dCeU1nbjl6cGYzS1pSWnFMcTBPMkFEem9UZnpkZnlWRDEtVWViaE9jUmswYUpEaE1lYV81QXFpTnE2RWxZU0t0ZVVTN1dNeEpoRkl1aVE?oc=5",
-   "source": "Los Angeles Daily News",
-   "source_domain": "dailynews.com",
-   "published": "2026-11-25T14:12:46Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "fec57a7518a3b230",
-   "region": "INT",
-   "title": "‘Something behind the scenes’ happened to cause Aaron Rodgers benching: ESPN star",
-   "summary": "‘Something behind the scenes’ happened to cause Aaron Rodgers benching: ESPN star New York Post",
-   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOTUllUzluZjBUTGo2VlZYOF9HTEZNS1hXMWxpSmJtckIxbkY5Sm16eTJyVmY5UDZXemJYejBGNlBEWDA0YkhmS3VDTll5WC1mVEVPc09fUGhCb0cxYllyelVIUXJXQk1mVmZMeG9KbTNzTFNjTTA2b0d1Mmg5ZDdwdUdlYXNXZWRyOXAxcDR0aW1ITHdPXzd3ZlBUYzlmTjZCcWdnbVhvWkxVUQ?oc=5",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T14:10:00Z",
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.067,
-   "S": 0.067,
-   "G": 0.6,
-   "ATM": 112
   },
   {
    "id": "be2c33ee93ddc3bd",
@@ -18625,24 +19408,6 @@
    "lng": 19.465
   },
   {
-   "id": "27aa41ea10e18f9d",
-   "region": "INT",
-   "title": "Israeli strike kills senior Hamas security official and family in Gaza City",
-   "summary": "Mohammed Abu al-Ouf, head of Hamas's internal security service in northern Gaza, was killed with his wife and two teenage daughters, doctors say.",
-   "link": "https://www.bbc.co.uk/news/articles/cmd718zydz9qo?at_medium=RSS&at_campaign=rss",
-   "source": "BBC News",
-   "source_domain": "bbc.co.uk",
-   "published": "2026-11-25T14:06:13Z",
-   "V0": 0.7,
-   "V": 0.716,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0,
-   "lat": 31.304,
-   "lng": 33.643
-  },
-  {
    "id": "7993f2f3bebaf97c",
    "region": "HU-NAT",
    "title": "A külföldieknek kedvez, a magyarok adóját emeli a kormány",
@@ -18652,7 +19417,7 @@
    "source_domain": "origo.hu",
    "published": "2026-11-25T14:05:00Z",
    "V0": 0.7,
-   "V": 0.682,
+   "V": 0.683,
    "S0": 0.064,
    "S": 0.064,
    "G": 0.9,
@@ -18679,24 +19444,6 @@
    "lng": 16.455
   },
   {
-   "id": "7ccbc4c4b207dadb",
-   "region": "INT",
-   "title": "US Proposes Up To 20% Tariffs On 14 Countries Including India, China",
-   "summary": "US Proposes Up To 20% Tariffs On 14 Countries Including India, China NDTV",
-   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQdVVhcVNwRUNCbUJ4ZXhYeDROMFFWOVlValplczJ6eV8zd0g2d2ZLZ1hBTWNjVTNITWctbi1TQmhaRUViSHVhRzRuRHV6c2VPVV9yalJjY0hOQlNNeV9uaUdnQnVGYnZfN0F2VHhJZWhtZGI5V1I4bkFxSXFRQm5iV3J5TEJ1WENzQWs1bThzVTlPdDZzWGVvSTJ6R2RXV1ltWVZpNWd4blZja1nSAbMBQVVfeXFMT1VUT1BfYmN1azI4ZTNUY0RhMWpmZkVZbndfUVFJR0lMRDJNYmxVakdOaVViN2pHckUwY2xWeTFfZVM2WUdKOTgyX2ZqVUdsc29tTmxqYWw1eVp6UzlrTlRwRTVhbkU3VFFSMFRrem5oSUxmVjl2cDJzMjRvUDFJWWRlRDdDRGNfRnpKTnB0NVdpT0lsaXdQd2o0U0g1Z0htcFQzRUJ4SWtOb3BFVFdTaGhLczQ?oc=5",
-   "source": "NDTV",
-   "source_domain": "ndtv.com",
-   "published": "2026-11-25T14:03:01Z",
-   "V0": 0.45,
-   "V": 0.435,
-   "S0": 0.064,
-   "S": 0.064,
-   "G": 0.6,
-   "ATM": 142,
-   "lat": 22.369,
-   "lng": 76.651
-  },
-  {
    "id": "aaa6440324cb4667",
    "region": "HU-NAT",
    "title": "Új expresszbusz indul Budapest és Pécs között – repülőtéri járat is lesz",
@@ -18715,54 +19462,6 @@
    "lng": 19.137
   },
   {
-   "id": "108c51122fd39f46",
-   "region": "INT",
-   "title": "Tech stock selloff deepens as AI fears outweigh Huang’s Nvidia return",
-   "summary": "Tech stock selloff deepens as AI fears outweigh Huang’s Nvidia return CNN",
-   "link": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxPMXQ2NDBKdFVxNFVRMEk3bTdlaHNlalZzcGVHb2ZOeURvZTdpeWRuVHp4UGxpLW1PUVluOW5tRmZ0dXJmb2pBRHNJYTk5TWczbTkzT19Cc3ZVdHlFU0VpWmE4bUtTbEJWZ3RpdUtsUjhOMWQzMlNBM0lsTE90Vng3cTRLazN3aWZkVnhJ?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:02:14Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.044,
-   "S": 0.044,
-   "G": 0.6,
-   "ATM": 88
-  },
-  {
-   "id": "56f14548d85a4e41",
-   "region": "INT",
-   "title": "Tech stocks are volatile as AI fears overshadow Huang’s Nvidia return",
-   "summary": "Tech stocks are volatile as AI fears overshadow Huang’s Nvidia return CNN",
-   "link": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQQ1FuS01WaVlhenhqc2I2M2hUckJlTm9fUjZ3N2ZjSmtTM3pCSkktYzlUM094TkV2NFROMjBseXlla2R3US1xRjh1QktLalI3dmVHZ2dpWGY4UEVXa2lKemFvX2doTXZ3d0FOTkV3NW5aYlZBWk9HZzhUa19aZW1GbWVmWFlvQQ?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T14:02:14Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.044,
-   "S": 0.044,
-   "G": 0.6,
-   "ATM": 88
-  },
-  {
-   "id": "40867839bbe243d6",
-   "region": "INT",
-   "title": "Tech stock sell-off deepens as AI fears outweigh Huang’s Nvidia return",
-   "summary": "Tech stock sell-off deepens as AI fears outweigh Huang’s Nvidia return CNN",
-   "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQTmNfQVhMbkJ2SFQ1WkRta2pqRVYzaDFXSTlxQTMwUWY3aW9helY4ellWaGpnYnE2azNXdXIwUHp5cW1mQU9nU3NmdlpVU0wtR3hkRGpfZGhkMkZTZ1BFUkNpakF4R0V6YnFReVJEVWN4WTQxQjc4dkpJUVZ5ZksyeE9QUGg?oc=5",
-   "source": "CNN",
-   "source_domain": "us.cnn.com",
-   "published": "2026-11-25T14:02:14Z",
-   "V0": 0.7,
-   "V": 0.687,
-   "S0": 0.04,
-   "S": 0.04,
-   "G": 0.6,
-   "ATM": 86
-  },
-  {
    "id": "5c40ed5b220673fe",
    "region": "AT-1",
    "title": "GRÜNE/Paul-Kientzl: „Wir bestimmen die Spielregeln für Rechenzentren im Burgenland“",
@@ -18779,98 +19478,6 @@
    "ATM": 237,
    "lat": 47.643,
    "lng": 16.244
-  },
-  {
-   "id": "867401966aba9d2c",
-   "region": "INT",
-   "title": "Monster wave sends man and dog tumbling into Pacific in terrifying footage",
-   "summary": "Police realized it was the same man they had encountered earlier.",
-   "link": "https://nypost.com/2026/11/25/us-news/king-tide-monster-wave-sweeps-man-and-dog-into-ocean-at-cannon-beach-hours-after-police-warning/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T14:00:00Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 1,
-    "ex": 0,
-    "ov": 0.625
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.167,
-   "S": 0.193,
-   "G": 0.6,
-   "ATM": 185
-  },
-  {
-   "id": "6bf251284fcee45e",
-   "region": "INT",
-   "title": "WA measles situation ‘much worse,’ with five outbreaks so far",
-   "summary": "WA measles situation ‘much worse,’ with five outbreaks so far The Seattle Times Opinion | We Are Watching Pandemic Backlash on Tape Delay The New York Times Back-to-back measles deaths is our new reality; US tally now at 14 Ars Technica Do adults need another measles vaccine? Pittsburgh doctors explain who should consider it TribLIVE.com Democratic senator demands ‘action plan’ to regain measles elimination status The Hill",
-   "link": "https://news.google.com/rss/articles/CBMivAFBVV95cUxOdms1cXJSREoyV04tRHBOS05KczBmMkMtb3NEU0dEcTJkb3BKOEp0a0dHY0IzZF9fUlR1YVp3MkVzdmd4TDd2LXFJeXp2Nld1M3M3bExBdGt6MGIzbWI2X2VsR3VZQzRsYWNyQTBWbHFxbG1CclhFX0FFNWxEeVM4ZXZZQU5QZmFTNEg5UXVVbnlRQVgtelgxSHRJN0diSUN3RmxZOUk5dkdrdVVsYVZmZDE4VTBKUG9LZEIwVw?oc=5",
-   "source": "The Seattle Times",
-   "source_domain": "seattletimes.com",
-   "published": "2026-11-25T14:00:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "95752d9e44e89337",
-   "region": "INT",
-   "title": "Democrat strategist reveals Dems’ plan for one-party rule",
-   "summary": "Democrat strategist and former chief counsel for House Judiciary Democrats, Julian Epstein joins Miranda to explain why his party’s midterm triumph should concern all voters. He says Democrats have become a party of grievance pushed to the far left by social media and the welfare state. He believes moderate Democrats appreciate President Trump closing the...",
-   "link": "https://nypost.com/video/democrat-strategist-reveals-dems-plan-for-one-party-rule/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:59:53Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "bc006c01a06213c9",
-   "region": "INT",
-   "title": "Democrat strategist reveals Dems’ plan for one-party rule (Video)",
-   "summary": "Democrat strategist reveals Dems’ plan for one-party rule (Video) New York Post",
-   "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxPeVlmdWNlYnJ2d255WnJPOE5TbFlnYTN2VkJVMGpRdXI0TW53UDhOZWgwcFNQS19hLUlkSG1GY3FwbEhrRFN0ZmNwZHpnWFBPaktGWWxYWjdtUVF5T0dHM0VTdmJpZ2Yxb3NSUzlIeTlTc0FCVXRKbFFmZ0ZtMUVCTDFxeDdnSXZ5MXc?oc=5",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:59:53Z",
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "a492baff0bcf8113",
-   "region": "INT",
-   "title": "How an Iranian Ally Gained the Upper Hand in Yemen’s War",
-   "summary": "How an Iranian Ally Gained the Upper Hand in Yemen’s War The New York Times",
-   "link": "https://news.google.com/rss/articles/CBMilwFBVV95cUxOaDdOQkIyMWZBYUJGd19raENFUlNZRFhGZ0ctSzRyczJfWFloRVMtRXFlWkR4MVprWV9wS0txVDZfYmJYU2NZR0hhRGV3eTdZZlczSlFmR1VnQko4NGpKa3MzSG5VcENhdGw1cVJHMEdYaTQwVHkxV3I5eUhaUDd1ZHhkWW45elNfRk1XUEdGUTdLWWNqd2tv?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-11-25T13:59:32Z",
-   "V0": 0.7,
-   "V": 0.692,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0,
-   "lat": 16.283,
-   "lng": 48.976
   },
   {
    "id": "23ca750679162d24",
@@ -18892,22 +19499,6 @@
    "ATM": 0,
    "lat": 48.259,
    "lng": 18.7
-  },
-  {
-   "id": "1d769c450196f23a",
-   "region": "INT",
-   "title": "Small Plane Crashes Off Mississippi Coast, Killing 6",
-   "summary": "Small Plane Crashes Off Mississippi Coast, Killing 6 The New York Times Two children among six dead after plane crash off Mississippi coast BBC 6 victims identified after plane headed to Fort Myers crashes off Mississippi coast WINK News - Southwest Florida There are no survivors after a plane with 6 on board crashed near Mississippi’s Horn Island CNN Six killed in plane crash off Mississippi coast near Horn Island The Washington Post",
-   "link": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQckk2ZTdhT2tiUm9fQ1ZsTTF3YTBjRWx5ay0wOTN0ZXh3S1UybEFzbFY5U3VlaHhncmFjX0RJU3V5RHFibVdrUjlHRWN3RnhZeUlsc19ELV9wdU5ramowT3EzaDhPaElsdF9FckYtWll5bVdmTHZTTUdDemJ3NzhtYXRBUk0?oc=5",
-   "source": "The New York Times",
-   "source_domain": "nytimes.com",
-   "published": "2026-11-25T13:59:09Z",
-   "V0": 0.7,
-   "V": 0.692,
-   "S0": 0.035,
-   "S": 0.035,
-   "G": 0.6,
-   "ATM": 86
   },
   {
    "id": "651516eb40991a62",
@@ -18946,50 +19537,6 @@
    "lng": 19.231
   },
   {
-   "id": "1e62ae4f7ed82de7",
-   "region": "INT",
-   "title": "World Jewish Congress, European Commission hold interfaith leadership program in Rome",
-   "summary": "World Jewish Congress, European Commission hold interfaith leadership program in Rome JNS",
-   "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxPUV9EdTlLazBZTjFCZnU2Q1laTF9yWU45dW91QXE4ZVJEWlRrOVZLZDZocEVELXhGMXJoM0VnU0RDWHo5aE1XVTFSdDNGam13QW9hd2RFb0hyRDAxS0dNY3lGUzdYWXdab0JRcmZwM3hVNmlhV0JqeWRZNHpBOFZQdk1yRkMwa09PdGJPeG1qMzFHS05vNldlbW9KQVBKNjlTMXl6VjVCZV9pUEFZdEtBMTNVX2R4dw?oc=5",
-   "source": "JNS",
-   "source_domain": "jns.org",
-   "published": "2026-11-25T13:55:49Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.04,
-   "S": 0.04,
-   "G": 0.6,
-   "ATM": 115,
-   "lat": 40.816,
-   "lng": 14.607
-  },
-  {
-   "id": "f76b44253d72297a",
-   "region": "INT",
-   "title": "Macy’s Thanksgiving Day Parade mulls major change as winds now forecast to hit 60 mph",
-   "summary": "New York City’s Macy’s Thanksgiving Day Parade could start earlier this year to try to save the world-famous balloons from being grounded by winds forecast to hit up to 60 mph. New York City Emergency Management Commissioner Christina Farrell told WABC that one last-minute move the city is considering would be to start the 100th...",
-   "link": "https://nypost.com/2026/11/25/us-news/macys-thanksgiving-day-parade-mulls-major-change-due-to-winds/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:54:20Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 0,
-    "ex": 0,
-    "ov": 0.625
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.014,
-   "S": 0.014,
-   "G": 0.6,
-   "ATM": 42
-  },
-  {
    "id": "844c0dd94948c598",
    "region": "HU-NAT",
    "title": "Belföld - Ügyvédje közölte, milyen feltételekkel jelenne meg a Parlamentben Matolcsy György",
@@ -19026,41 +19573,6 @@
    "lng": 19.235
   },
   {
-   "id": "380e81309e919f73",
-   "region": "INT",
-   "title": "US Army prepares to detonate tons of bomb-making materials",
-   "summary": "US Army prepares to detonate tons of bomb-making materials CNN",
-   "link": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQVHZiaGdMOEVhOGJnUFl3UzJCb2F0MmpaVnh6bW9lQ19KQWNVQWNPd3hKa1dDU1FlSk9BYWRkNmdDWDdBY0pZNk5FLWR5c01CRVVWaENlRm4zN0JPU1pibEVnUWVrMG5oTTFIcTc5eVdHRVQ0SWZSNVVocmlpZ3NaZzltMU42aHpVSW5BRkk3akJnLW44VXFVc2d4YjBhenlMbUE?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T13:53:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.056,
-   "S": 0.056,
-   "G": 0.6,
-   "ATM": 107
-  },
-  {
-   "id": "596bccac2d463dba",
-   "region": "INT",
-   "title": "What to know before using AI agents for Black Friday shopping",
-   "summary": "What to know before using AI agents for Black Friday shopping NPR Here Comes Santa Claude The Atlantic AI tools help brands curb Black Friday deals, from clothes to skincare Reuters Shoppers Are Bringing AI Into Stores — and Workers Aren’t Impressed Bloomberg In Graphic Detail: How shoppers are adopting AI for product research ahead of Black Friday Digiday",
-   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQNDlWaVNLMGhDTHpmeHc1MmJNNDVIcVZ0WVNDUnhyYlZlS3BGR1lGdThQYWppcW5NSkxpbXhscG4tZkttMUJqZmhRNmI2OHNYbjBJSnRjdG1fNXpxelg0dm5kTFJjOVhCQ255VWhNYmkydHpmRnlaRnh0aWFvZHhLVmVfSVBMLVh4Q2tPVUNJUjloT3NJLXFsTExDcGUzbF9TeXRxMDg0dFJJUQ?oc=5",
-   "source": "NPR",
-   "source_domain": "npr.org",
-   "published": "2026-11-25T13:51:56Z",
-   "V0": 0.45,
-   "V": 0.446,
-   "S0": 0.014,
-   "S": 0.014,
-   "G": 0.6,
-   "ATM": 57
-  },
-  {
    "id": "55d247124c9dd5de",
    "region": "HU-NAT",
    "title": "Újabb vámháborúra készül Donald Trump, az Európai Uniót és további 12 országot is célba vett",
@@ -19082,43 +19594,6 @@
    "lng": 5.975
   },
   {
-   "id": "b5595070576a7b71",
-   "region": "INT",
-   "title": "Turkey trot weather: Rain, wind and snow chances by region",
-   "summary": "Turkey trot weather: Rain, wind and snow chances by region The Weather Channel Turkey Trots, ferry service already altered by expected Thanksgiving storm WDEL Towson YMCA cancels Thanksgiving Day Turkey Trot because of weather Baltimore Sun Nor’easter prompts ferry cancellations, campground closures at Delaware State Parks CoastTV The Alexandria Turkey Trot is still on for Thursday, with heavy rain and high wind forecast The Alexandria Brief",
-   "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQYndiWENjN3IxNkdRUHZCRnI5TTEzWDFYdVpYQm9kajN5V2V5bTBuQ2NiaHM5YUQ4Nnh2UHVTSmt4N3BINlRLdXM2aEJ1OThncTR4eFdic1VITk11bEJtMHRoOFRBSlVybXAxaE1NUzRsdnhKY09ZOW1pc2JVWnlsMXJUYjNYRXh1ZWNtUF9zeVh6QVJlYWZ2aDI2VEUzZWZoMGZNS29WUDVNQ3R1UjdkSDA0Q1ZhQ0d6ZVE?oc=5",
-   "source": "The Weather Channel",
-   "source_domain": "weather.com",
-   "published": "2026-11-25T13:51:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.024,
-   "S": 0.024,
-   "G": 0.6,
-   "ATM": 81,
-   "lat": 39.861,
-   "lng": 36.512
-  },
-  {
-   "id": "d7adb98ab922d562",
-   "region": "INT",
-   "title": "Stock market today: Dow, S&P 500, Nasdaq futures fall ahead of inflation data",
-   "summary": "Stock market today: Dow, S&P 500, Nasdaq futures fall ahead of inflation data Yahoo Finance Stock futures tumble as Nvidia leads AI sell-off, data shows inflation picking up: Live updates CNBC World stocks fall as new US tariffs loom, AI rebound fizzles Reuters Stock Market Today: Dow, S&P 500 and Nasdaq set to slump as investors await PCE inflation data; Nvidia stock drops: live updates MarketWatch Stock Market Today: Dow Dives Ahead Of Fed Inflation Data; Nvidia, Anthropic Plunge (Live Coverage) Investor's Business Daily",
-   "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxPUEhyLTdac1NBTVdPT1QyLUJKck4wUUJkNjlXQWFHTG1peDJyeDRqNklFSkVpek9JbmEyQ0gya1R6dGZicmpfbkFIS1BjR3lDeGhFMmpIYU90ajhxZ2lwYW5sLW93TmdZcXR3Q2p3akUxc1JBRVRmbEpVQW5LM3pDaXhNZWx6a0txT19rUTQ3R2xVejJWQkh0TzdSRmlOY0lDa05oNklJOE1fVV9CY1FuRXJMNHJrVG8zQzdTX0pjYmNwanNhd0VJcTVkRQ?oc=5",
-   "source": "Yahoo Finance",
-   "source_domain": "finance.yahoo.com",
-   "published": "2026-11-25T13:50:51Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.424,
-   "S0": 0.021,
-   "S": 0.021,
-   "G": 0.6,
-   "ATM": 83
-  },
-  {
    "id": "121528d208bbb6b6",
    "region": "HU-NAT",
    "title": "Drágábban startol a Watch Fit4",
@@ -19138,24 +19613,6 @@
    "ATM": 0,
    "lat": 47.45,
    "lng": 19.573
-  },
-  {
-   "id": "ec354f5a839ca405",
-   "region": "INT",
-   "title": "King tide West Coast flooding could top California records",
-   "summary": "King tide West Coast flooding could top California records The Weather Channel California’s Tides Are in ‘Uncharted Territory’ as Water Surges Higher The New York Times Bay Area weather live updates: King tides, coastal flood warning NBC Bay Area Record-breaking California tides cause major flooding of roads and businesses The Guardian What are king tides? These exceptionally high tides are increasingly flooding coastal communities KTVU",
-   "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOYkZMRENkSDY5di1WTlZ4SVhMcUdiQXZTR0hyODFINm9RQTNHLThSS2V1eTlQWmIyal9JVE05VG5WcF9tdEc1SUtLbkVOMk1vOFNNSU0tWEo3dl85YTE3bjhmaUxMVW9ueGE0Sk45SXpsUFRiUUdsY2lKTXNzUUVtLTZndlU3WXlia3ZCSzhESVQ4bnp6WTJYTDJB?oc=5",
-   "source": "The Weather Channel",
-   "source_domain": "weather.com",
-   "published": "2026-11-25T13:47:00Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.023,
-   "S": 0.023,
-   "G": 0.6,
-   "ATM": 81,
-   "lat": 38.437,
-   "lng": -119.362
   },
   {
    "id": "e8cfe0e4cfa1e2d2",
@@ -19221,22 +19678,6 @@
    "lng": 19.45
   },
   {
-   "id": "b3329e5c3ffc8ec6",
-   "region": "INT",
-   "title": "US economy grew faster last quarter than initially reported",
-   "summary": "US economy grew faster last quarter than initially reported CNN",
-   "link": "https://news.google.com/rss/articles/CBMid0FVX3lxTE1XYW56QmZPeFdWUWJkZXBlSTV3bzJteUx0cS1zM0l1TTBMTTZBeGJRV3dkQUlWYnN5MDZjbjBUa2RLc3ptRmxaeHYzOURBVGhRTGlpYWFsQ245NHJFNXNDdEhOSFJpTDJicDAyeVRMZlFrMUZXcnVv?oc=5",
-   "source": "CNN",
-   "source_domain": "cnn.com",
-   "published": "2026-11-25T13:44:31Z",
-   "V0": 0.7,
-   "V": 0.675,
-   "S0": 0.049,
-   "S": 0.049,
-   "G": 0.6,
-   "ATM": 98
-  },
-  {
    "id": "959250d6196fab87",
    "region": "HU-NAT",
    "title": "Karácsony száz állást szüntetne meg a Főpolgármesteri Hivatalnál, hogy teljesítse a kormány felé vállalt milliárdos kiadáscsökkentést",
@@ -19274,41 +19715,6 @@
    "ATM": 249,
    "lat": 47.032,
    "lng": 19.339
-  },
-  {
-   "id": "f3089ad075dc5f75",
-   "region": "INT",
-   "title": "Gazans holding huge weddings, bodybuilding contests and opening restaurants while protesters say they’re starving",
-   "summary": "\"Genocide is the attempt to destroy a people. You don't get packed weddings, new restaurants, and a rising birth rate in a population that's being destroyed,\" a source added.",
-   "link": "https://nypost.com/2026/11/25/world-news/gazans-are-holding-huge-weddings-bodybuilding-contests-and-opening-restaurants-while-protestors-say-theyre-starving/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:43:11Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
-   "id": "4daa188c6939f5f6",
-   "region": "INT",
-   "title": "Asian Stocks to Slide as AI Trade Doubts Resurface: Markets Wrap",
-   "summary": "Asian Stocks to Slide as AI Trade Doubts Resurface: Markets Wrap Bloomberg Stock Sell-Off Set to Continue as A.I. Players Fall Again The New York Times Futures sink further into the red as tech worries resurge CNBC Stock Market Today: Tech-Led Slide Continues as Confidence in AI Trade Weakens — Live Updates WSJ Dow Reclaims 50,000 as Inflation and GDP Data Land Before Thanksgiving Yahoo Finance",
-   "link": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPWjE4Zm9DOUxVdmFFaTlaQVJMWHFaVEVGVy1JcTNEcEc3bnhET2xfaGNCdFlpbXkwS210Tkx0d3JVUWVzbzA4amhwWU1FWGxLd2E0YUJBY1lOOUNlVmlwNF83b3Bqc2dqaWVMTzUwSGFfYWNJVDZwXzh5TGp5YUZaTzZoa0dZenZfalhyelF0UUZwbllhOEZIbWNGc1V3OHQxWlhfV3ZoeGdKRURCS3dTVEFSRnk?oc=5",
-   "source": "Bloomberg",
-   "source_domain": "bloomberg.com",
-   "published": "2026-11-25T13:42:05Z",
-   "V0": 0.7,
-   "V": 0.695,
-   "S0": 0.04,
-   "S": 0.04,
-   "G": 0.6,
-   "ATM": 85
   },
   {
    "id": "88d39e450a817a4f",
@@ -19389,29 +19795,6 @@
    "lng": 19.157
   },
   {
-   "id": "7f69cf9c9ceb6fb1",
-   "region": "INT",
-   "title": "The Knicks and their fans have so much to be thankful for this year",
-   "summary": "For Knicks fans under the age of 65, this is the easiest trip ever around the Thanksgiving table.",
-   "link": "https://nypost.com/2026/11/25/sports/knicks-and-their-fans-have-so-much-to-be-thankful-for-this-year/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:40:00Z",
-   "body": {
-    "ok": true,
-    "len": 451,
-    "kw": 0,
-    "ex": 0,
-    "ov": 0.5
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
    "id": "3e6ea7cffbd4bf2e",
    "region": "HU-NAT",
    "title": "Felfelé módosították az amerikai GDP-t, de maradt az infláció",
@@ -19430,6 +19813,24 @@
    "lng": 19.321
   },
   {
+   "id": "da7e110dfa86e0fd",
+   "region": "HU-NAT",
+   "title": "Itthon: Az álláshelyek közel 10 százalékát megszüntetnék a Főpolgármesteri Hivatalnál",
+   "summary": "Itthon: Az álláshelyek közel 10 százalékát megszüntetnék a Főpolgármesteri Hivatalnál | hvg.hu",
+   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxNazZfaWRnUk5XZkFlUGhQcDZGSGhoMzhucGNHZmJ1OGlKTTg0c3pLZGtwVXk0Tlh1Q1ZYbHpsczFySjF6d3Z5RjhCS3dxaTFPWXZPOFNQN01LNWoyVGFLOGRNYm9DOW1ZVzM5QmMtMTJ1QzJKc2dVcm1jaUdKcmgzYVdtSEgwcm1mbnlnUHNDT0thYkJ0TF9IRWM3MVNkTlNCY2Y2bXFTSHBaanMzUGVORFVCZ2wyc1ZlVXp5clhqT080blVlRzZDdW1YcTVzSDJI?oc=5",
+   "source": "| hvg.hu",
+   "source_domain": "hvg.hu",
+   "published": "2026-11-25T13:39:47Z",
+   "V0": 0.7,
+   "V": 0.709,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.437,
+   "lng": 19.331
+  },
+  {
    "id": "dfd13e870fcb767f",
    "region": "HU-NAT",
    "title": "Kultúráról, egészségügyről és oktatásról dönthet rendkívüli ülésen a parlament",
@@ -19446,29 +19847,6 @@
    "ATM": 211,
    "lat": 47.198,
    "lng": 19.366
-  },
-  {
-   "id": "beeb549d1d98e135",
-   "region": "INT",
-   "title": "The interesting Mason Rudolph comments that came right before Aaron Rodgers’ shock benching",
-   "summary": "Mike McCarthy may have tipped his hand more than a week before he moved on from Aaron Rodgers in an absolute stunner.",
-   "link": "https://nypost.com/2026/11/25/sports/the-interesting-mason-rudolph-comments-that-came-right-before-aaron-rodgers-shock-benching/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:38:18Z",
-   "body": {
-    "ok": true,
-    "len": 1200,
-    "kw": 0,
-    "ex": 0,
-    "ov": 0.667
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.167,
-   "S": 0.167,
-   "G": 0.6,
-   "ATM": 175
   },
   {
    "id": "17c940465b4dde86",
@@ -19492,31 +19870,6 @@
    "lng": 19.099
   },
   {
-   "id": "0270992c8d59df7f",
-   "region": "INT",
-   "title": "US proposes new tariffs on 14 trading partners — including China, Japan, EU and India",
-   "summary": "The Trump administration on Wednesday proposed a fresh round of tariffs targeting 14 US trading partners, among them China, Japan, India and the European Union, CNBC reported.",
-   "link": "https://nypost.com/2026/11/25/business/us-proposes-new-tariffs-on-14-trading-partners-including-china-japan-eu-and-india/",
-   "source": "New York Post",
-   "source_domain": "nypost.com",
-   "published": "2026-11-25T13:37:56Z",
-   "body": {
-    "ok": true,
-    "len": 548,
-    "kw": 0,
-    "ex": 0,
-    "ov": 0.875
-   },
-   "V0": 0.7,
-   "V": 0.697,
-   "S0": 0.026,
-   "S": 0.026,
-   "G": 0.6,
-   "ATM": 73,
-   "lat": 36.216,
-   "lng": 106.039
-  },
-  {
    "id": "4b7964d04f3eaf4c",
    "region": "HU-NAT",
    "title": "Ruff Bálint rendkívüli ülés összehívását kezdeményezte",
@@ -19533,6 +19886,24 @@
    "ATM": 211,
    "lat": 47.382,
    "lng": 19.34
+  },
+  {
+   "id": "63e107f43a9cafce",
+   "region": "HU-NAT",
+   "title": "Ukrajna elnöke röplabdázik Magyarország miniszterelnökével.",
+   "summary": "Ukrajna elnöke röplabdázik Magyarország miniszterelnökével. Vietnam.vn",
+   "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPMXFXUm1yQmdWNWIySTdIdjR3RGhRTFEzbngyanctUGVrYnpqTFNHZ0syUTcwNTVreHNtSEs5UTB3dlFDOEVObEJlV3VBTlFjTVpvWEZYRjlDeTBJX2xSNWlEam00ZmhwU3YybEg5elYwa3REbzdrTjhhTF8ySElrUG5FLWllazFQTkxnSA?oc=5",
+   "source": "Vietnam.vn",
+   "source_domain": "vietnam.vn",
+   "published": "2026-11-25T13:35:06Z",
+   "V0": 0.45,
+   "V": 0.477,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 50.626,
+   "lng": 30.054
   },
   {
    "id": "fc1f71bf2fcd928d",
@@ -19631,38 +20002,6 @@
    "lng": 19.658
   },
   {
-   "id": "be879db9843ba977",
-   "region": "INT",
-   "title": "Man, dog swept into surf by king tide after police warning",
-   "summary": "Man, dog swept into surf by king tide after police warning KTLA Cannon Beach visitor and dog swept up in sneaker wave after warning about king tides KGW Oregon man and dog narrowly escape being swept away by high tides as officials urge caution at beaches The Guardian Watch moment powerful king tide sweeps away man and his dog Yahoo Major flooding forces road closures along Oregon coast KPTV",
-   "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQVHYwQW5iMHN2d2p6ZDlXQXY3bzhOYUZZSkpEOHI4QzNMTDJ2bVdvdWlweTNUMmoxTUJjbU9tQTVBdElpLU50QkJrMTdSbzE1N05TYWQ3OVQ1cEJabVh5czRwdUxVOWtFSVVkZ3lVdDNfWTFzOXV4Wm83SGdFak1lTGdORdIBiAFBVV95cUxPRGllUndZUG5lSndTOTdMdDUzTTk1TDlqMC1yTVZiRFFRNW5KVFNhRkxPQVJlcE5TVm9tWnpvbXU1UDFFVmZRRHFlb3F3UFNwbGxCc04yX085ekpkX2FfS3VQWmdxYjhmdThWeWd5RGcwYTVCTnRraUJIemdsMnZIak1YbmtPRGk0?oc=5",
-   "source": "KTLA",
-   "source_domain": "ktla.com",
-   "published": "2026-11-25T13:32:45Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.034,
-   "S": 0.034,
-   "G": 0.6,
-   "ATM": 99
-  },
-  {
-   "id": "08066ef05dc87e4d",
-   "region": "INT",
-   "title": "Israeli Strike Kills Hamas Official, His Wife and Children",
-   "summary": "Israeli Strike Kills Hamas Official, His Wife and Children U.S. News & World Report",
-   "link": "https://news.google.com/rss/articles/CBMisAFBVV95cUxPN2VWTVl0cTVMcmdJOEVYOHhOMTZUZ2pNNVhNT2t3NklqTGVXNEdQY2p2LWlZeEYwZDhMR2ZsQWx0c0tUWDFSQ3F2ZEFMM25Bc3FQLXRhaGN6UFJvdm1UYVE5UjhkZlJFTnJaUHg0WjA4ZnF0TkJzVEhRSlhLNzAzbEJwdHNLMFE5NU9qazFsZlVxWll5am5tT2hCMjRwblFTaWowa1VoRk1TcVA5YTZ6Zg?oc=5",
-   "source": "U.S. News & World Report",
-   "source_domain": "usnews.com",
-   "published": "2026-11-25T13:32:14Z",
-   "V0": 0.45,
-   "V": 0.475,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.6,
-   "ATM": 0
-  },
-  {
    "id": "fc0a7378715b5a2e",
    "region": "HU-NAT",
    "title": "Karácsony száz állást szüntetne meg a Főpolgármesteri Hivatalnál, hogy teljesítse a kormány felé vállalt milliárdos kiadáscsökkentést",
@@ -19682,38 +20021,6 @@
    "ATM": 0,
    "lat": 47.067,
    "lng": 19.344
-  },
-  {
-   "id": "e86ee7c27e948ecf",
-   "region": "INT",
-   "title": "Fed’s preferred inflation gauge accelerated to 3.8% in October, likely sealing rate hike",
-   "summary": "Fed’s preferred inflation gauge accelerated to 3.8% in October, likely sealing rate hike CNBC Inflation Data Due As Fed Fears Worsen Market Volatility Investor's Business Daily Annual US consumer price inflation hits 3.8% – highest level since May The Guardian Fed policymakers at odds over causes of high inflation Reuters Fed's preferred gauge of inflation climbs ahead of possible rate hike ABC News - Breaking News, Latest News and Videos",
-   "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1SREI2WkZTZTJWN0daalVYUlBFRVAtcUNzY3BybGN3dnJCUU1OR2dVRkNXMDRMWmtISWZSSkdNeFNGdm4xc2ZveGtVMmtnUFFqanhXbmhhcktZUWRrM1BpVUE0OU5ZNnNTOENfVDhoTmdWQWxNZGlFbXFR0gF_QVVfeXFMTmFSS3ViODJ4VUhoUF9pUHJwRldEZTlzTHoxRWt3djJQZGJLZ2R4dG9MSk9KaEZtbUp1a1ZwZjNMS0VJbDIyTldzcTlTblFKaWZ5LXJ0UXRMZERRbHNUZDdNYzV5UzVSV0pJYUhoVFh2T1psRElLZFlNUEVnUnBMaw?oc=5",
-   "source": "CNBC",
-   "source_domain": "cnbc.com",
-   "published": "2026-11-25T13:31:45Z",
-   "V0": 0.45,
-   "V": 0.434,
-   "S0": 0.025,
-   "S": 0.025,
-   "G": 0.6,
-   "ATM": 101
-  },
-  {
-   "id": "ddcfde2071c7c1ca",
-   "region": "INT",
-   "title": "RANKED: The Top Crude Oil Producers in 2025 – Visual Capitalist – See How Countries Rank",
-   "summary": "RANKED: The Top Crude Oil Producers in 2025 – Visual Capitalist – See How Countries Rank EnergyNow.com",
-   "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxQc043cHk1ZjIxLWc2RVJUX2p1NnRHMmpRamNpNkVJNTBkNjliR1Z4amtCdkdVUzkzUnBRQ2ZpWFhHdGRUUWtybzFieTY2ek9qazdPaG5Ec0d3akx6a24wMlYzaDdnbjZrbmNVdTdZdXZSYlhGTVFUOHJoTGZhQ1RJR2tyaDNGckF0OWM0QW1ta2lVbnFoOFE?oc=5",
-   "source": "EnergyNow.com",
-   "source_domain": "energynow.com",
-   "published": "2026-11-25T13:30:38Z",
-   "V0": 0.45,
-   "V": 0.45,
-   "S0": 0.064,
-   "S": 0.064,
-   "G": 0.6,
-   "ATM": 141
   },
   {
    "id": "7bf6ed2c802e390e",
@@ -20377,24 +20684,6 @@
    "ATM": 449,
    "lat": 47.223,
    "lng": 16.461
-  },
-  {
-   "id": "da7e110dfa86e0fd",
-   "region": "HU-NAT",
-   "title": "Itthon: Az álláshelyek közel 10 százalékát megszüntetnék a Főpolgármesteri Hivatalnál",
-   "summary": "Itthon: Az álláshelyek közel 10 százalékát megszüntetnék a Főpolgármesteri Hivatalnál | hvg.hu",
-   "link": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxNazZfaWRnUk5XZkFlUGhQcDZGSGhoMzhucGNHZmJ1OGlKTTg0c3pLZGtwVXk0Tlh1Q1ZYbHpsczFySjF6d3Z5RjhCS3dxaTFPWXZPOFNQN01LNWoyVGFLOGRNYm9DOW1ZVzM5QmMtMTJ1QzJKc2dVcm1jaUdKcmgzYVdtSEgwcm1mbnlnUHNDT0thYkJ0TF9IRWM3MVNkTlNCY2Y2bXFTSHBaanMzUGVORFVCZ2wyc1ZlVXp5clhqT080blVlRzZDdW1YcTVzSDJI?oc=5",
-   "source": "| hvg.hu",
-   "source_domain": "hvg.hu",
-   "published": "2026-11-25T12:40:00Z",
-   "V0": 0.7,
-   "V": 0.709,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.437,
-   "lng": 19.331
   },
   {
    "id": "aa7f9ec065a9910e",
@@ -22668,6 +22957,24 @@
    "lng": 18.2
   },
   {
+   "id": "eeb848a69b8defe2",
+   "region": "HU-NAT",
+   "title": "Címke: tanulmányút",
+   "summary": "Címke: tanulmányút Honvédelem.hu",
+   "link": "https://news.google.com/rss/articles/CBMiV0FVX3lxTFB1NTRPd3VvZ2p6UktmWUFOQVJfbVk2UWpZNFE5UDl0bnBLUHBfMzdJVzBZWEtUTGRZN1JHSUszOWRNeml0Mk05b0k2aUhKNmk1WnRONlRBaw?oc=5",
+   "source": "Honvédelem.hu",
+   "source_domain": "honvedelem.hu",
+   "published": "2026-11-25T10:45:00Z",
+   "V0": 0.45,
+   "V": 0.45,
+   "S0": 0.0,
+   "S": 0.0,
+   "G": 0.9,
+   "ATM": 0,
+   "lat": 47.034,
+   "lng": 19.101
+  },
+  {
    "id": "e6410c6e1914f66f",
    "region": "HU-NAT",
    "title": "Magyar Péter a Málenkij Robot Emlékhelynél: A megbékélés nem tévesztendő össze a felejtéssel",
@@ -22968,7 +23275,7 @@
    "source_domain": "blikk.hu",
    "published": "2026-11-25T10:27:56Z",
    "V0": 0.7,
-   "V": 0.691,
+   "V": 0.689,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -23247,17 +23554,17 @@
    "id": "196f3013e5f3824f",
    "region": "HU-NAT",
    "title": "Női kosár Európa-kupa: odahaza nyert a Diósgyőr és a Sopron is",
-   "summary": "Női kosár Európa-kupa: odahaza nyert a Diósgyőr és a Sopron is Nemzeti Sport Online További főcímek és nézőpontok itt: Google Hírek",
+   "summary": "Női kosár Európa-kupa: odahaza nyert a Diósgyőr és a Sopron is Nemzeti Sport Online Magyar Gergely: Szeretnénk a lehető legtovább jutni ebben a versenykiírásban Amíg Élek Én A szünet után nyílt ki az olló Sopronban Hírstart Győzelmével továbbjutott a csoportjából a Sopron Basket az Európa Kupában WBASKET Dupla magyar siker az Európa-kupában: hazai győzelmekkel rájátszásban a Sopron és a DVTK Eurosport",
    "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNTkJ4clV2SnNUcEZ0Y2lxbE81RzBBVzdmS0hDN2lwbGVtcktLNHdTQTBWenRsT0k5VldNUWJPbHplWjc5a3lGbko5c3dHWGl5T1FGS18yclNzMXJIU3lDbGxfczZZczdZQ01OT1NnVFlJTE9kY05JLUhPNHhyN3JhRmR1bzRHTkpRcFFfUUtZUUo1T0d0ZmM3WDBsWUJoV1hsdkVVeg?oc=5",
    "source": "Nemzeti Sport Online",
    "source_domain": "nemzetisport.hu",
    "published": "2026-11-25T10:03:00Z",
    "V0": 0.45,
    "V": 0.438,
-   "S0": 0.0,
-   "S": 0.0,
+   "S0": 0.031,
+   "S": 0.031,
    "G": 0.9,
-   "ATM": 0,
+   "ATM": 123,
    "lat": 47.446,
    "lng": 19.344
   },
@@ -23799,7 +24106,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.424,
+   "V": 0.425,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -24948,7 +25255,7 @@
     "ok": false
    },
    "V0": 0.45,
-   "V": 0.424,
+   "V": 0.425,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -25938,7 +26245,7 @@
    "source_domain": "facebook.com",
    "published": "2026-11-25T07:56:48Z",
    "V0": 0.45,
-   "V": 0.424,
+   "V": 0.425,
    "S0": 0.0,
    "S": 0.0,
    "G": 0.9,
@@ -26838,123 +27145,6 @@
    "lng": 19.164
   },
   {
-   "id": "3de6352254440b1a",
-   "region": "HU-NAT",
-   "title": "Financial Times: akár 15 millió dollárt is kereshetett Donald Trump az Nvidia-vezér visszatérésével",
-   "summary": "Financial Times: akár 15 millió dollárt is kereshetett Donald Trump az Nvidia-vezér visszatérésével Index.hu",
-   "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNdXk1ZlhwS3FEeVI0TGZYdGRlOW1MRGdXdFYwaHZPbFlYeHEtMVl3MUNIY3J0S1BSNmZfSW1kdVNMd1NrYWNHN1lpTTREMmROc3E0dHpGQmRTNHRJdXlEemxlNi1HdEtDQlhNYzhlTjJWSVN0VmhxRFFTVjI2Q3FuUndaTmtGclpHMEFRdno3WTdqM0c0cldyQnhB?oc=5",
-   "source": "Index.hu",
-   "source_domain": "index.hu",
-   "published": "2026-11-25T07:08:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.71,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 46.956,
-   "lng": 19.531
-  },
-  {
-   "id": "c0c6a5a3d516916d",
-   "region": "HU-NAT",
-   "title": "Kétmillió tonna kukorica hiányzik Magyarországon – ukrán importtal enyhítené a válságot a kormány",
-   "summary": "Kétmillió tonna kukorica hiányzik Magyarországon – ukrán importtal enyhítené a válságot a kormány Frisss.hu",
-   "link": "https://news.google.com/rss/articles/CBMixgFBVV95cUxPOHNsZWxhVHY4MXpJa0x3X2JaZlZEck5rMjlsSEhEd1l1aVE1Z1R2TGZfVGlnNmhtY3BZV2R5MWp3cWdhRXd5S3FMY2RlNW1YNFRqT3FQNk5fMWJFdTJvWXZOemxqN3pKVW9BanVzWGNjdW9Zc0FJazJaeVhNZ3VKbVRxbmtuTlFWd1BxSm5PM2VhUHlFdDhMNU13SDFxdlVJYlZLQnFGdjhIMHByRlhTV3NhbGlGV2F1eFk4blg0Ql81RTFQSVE?oc=5",
-   "source": "Frisss.hu",
-   "source_domain": "frisss.hu",
-   "published": "2026-11-25T07:06:25Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.455,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 46.685,
-   "lng": 20.452
-  },
-  {
-   "id": "bb107a9f621e57fa",
-   "region": "HU-NAT",
-   "title": "szekesfehervar-fehervari-advent-karacsony-csodalatosmagyarorzag",
-   "summary": "szekesfehervar-fehervari-advent-karacsony-csodalatosmagyarorzag CsodalatosMagyarorszag.hu",
-   "link": "https://news.google.com/rss/articles/CBMipwJBVV95cUxQMnkyZHpoZjU1c2dMNGhYczFGbzd5aWpMSnpOWGRLdWlGS25mLWprS0czdHNROFdTUVhQdW9uZFo4UHBKMEM4Y2JSQ1lIVVU5YzRqZEkzT1c0ZWFRallWQTVTeUNsdEE3cllqRWhrSU50S1B6ZWJSQUwzNldMU0E0ZGgzWXVHWXloTFNrVTFHNjVaVWdPZl9kWGNxWnBaTWF5S2k0VWNEYTJTeWxGd3Nkc0szY29BSlBfM0x4RTd5RUkwSjlDWlBITzZmamwtT1draXQ0TXJCZVhhSUpjSUdVUV9DMUFXOXpjT1p6MzhFc3Y4anNJTkdIcjV3R000TTlVRk03UTlROUlRM05uenNvVWNTbDh2dlluWUNiUS1FRnBldW9kbnVR?oc=5",
-   "source": "CsodalatosMagyarorszag.hu",
-   "source_domain": "csodalatosmagyarorszag.hu",
-   "published": "2026-11-25T07:06:20Z",
-   "V0": 0.45,
-   "V": 0.465,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.236,
-   "lng": 19.412
-  },
-  {
-   "id": "7827db8c37853b1f",
-   "region": "HU-NAT",
-   "title": "A két erős személyiség újraindította a magyar–ukrán kapcsolatokat, és ezt két dolog tette lehetővé",
-   "summary": "A két erős személyiség újraindította a magyar–ukrán kapcsolatokat, és ezt két dolog tette lehetővé | hvg.hu",
-   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOU3RGQ1FmWWJWZk00eVFDZXlvU2lhZ1hCN0NWdDZKRVFSUWx2T0RVVjRYUy0xdW44YXVBWVVscVloV3lOR3RHNmlKRjJadUtaRVpNcll2ZUNIR1hqLW9ZV2M1WlJLZ0VhVHZ2TmlFTlNZc05oM3pOYm1fYjhGMURCN2RWd2xDckZhenhzQllqZ09tdm5jOTRUTDhvdDRxd2E0Vk1zU3ZWT0tjQQ?oc=5",
-   "source": "| hvg.hu",
-   "source_domain": "hvg.hu",
-   "published": "2026-11-25T07:05:06Z",
-   "V0": 0.7,
-   "V": 0.709,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.126,
-   "lng": 19.503
-  },
-  {
-   "id": "85723cb3aa9065b6",
-   "region": "HU-NAT",
-   "title": "Kimondta Kármán András: a globális minimumadó miatt emeli meg a Tisza-kormány a társasági adó kulcsát",
-   "summary": "Kimondta Kármán András: a globális minimumadó miatt emeli meg a Tisza-kormány a társasági adó kulcsát Világgazdaság",
-   "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxOMXBCaTlEbTJfQm4wYnBMSTJqTE9hTi1KQlBUN2tJc1JhV09jUGFFSmdYRF9mQUswc3FHZFdCSVZLd1VpLW52ZGkta1hfUTlCVDdtSG42N1pLNnJfTzRSSHVRLXRUYWZhbWRPZ1ViOVZUOEp1cldZaGJOM0IzaFpjMmJKZTMxRGhfWkFJcmU1ZWozNEMzTjFDWElQRzN5QW1YMDBjcUxGUE5uUjhK?oc=5",
-   "source": "Világgazdaság",
-   "source_domain": "vg.hu",
-   "published": "2026-11-25T07:03:57Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.464,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.261,
-   "lng": 19.681
-  },
-  {
-   "id": "c71867048ebf77f0",
-   "region": "HU-NAT",
-   "title": "Stabilra javította az eddigi negatívról Budapest és több magyar bank osztályzati kilátását a Moodys",
-   "summary": "Stabilra javította az eddigi negatívról Budapest és több magyar bank osztályzati kilátását a Moodys Hirnavigator",
-   "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQZXZmY0VWNDQ2NGhTRlA5WjMxbktOUUR2aFpOV3QxQUwxeGdBUUFwWWZLYVFIOE1BM2E5UHJuQzdSMjFoZVYwT1hrTVhGYUNuSGdoWWl1ZkVUN1NUUE9JY0ZyNTVzWV9ZUnBCZDlvSGZyNVRkT3k5Rzlrcjlna0dOUXQ0SVJuanRmX3RyQVhfV054TUZkNG0wN25fdEw5SVhqN0ZrandUWE1CckczVUpBdWxNQ3ZLa1R4VEp5X1N0dmxCSkhwT3dleUdHMlFXUGFXUGc?oc=5",
-   "source": "Hirnavigator",
-   "source_domain": "hirnavigator.hu",
-   "published": "2026-11-25T07:03:46Z",
-   "V0": 0.45,
-   "V": 0.473,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.419,
-   "lng": 18.846
-  },
-  {
    "id": "21bad649c3fd9ee7",
    "region": "HU-VA",
    "title": "Bedrogozva, fa karóval támadta meg az áldozatát egy férfi Vasváron",
@@ -26974,81 +27164,6 @@
    "ATM": 126,
    "lat": 47.131,
    "lng": 16.762
-  },
-  {
-   "id": "e99883b3cdb5f395",
-   "region": "HU-NAT",
-   "title": "Iraola szerint a mérkőzés előtti utolsó edzésen dől el Szoboszlai Dominik játéka a Bruges ellen",
-   "summary": "Iraola szerint a mérkőzés előtti utolsó edzésen dől el Szoboszlai Dominik játéka a Bruges ellen Nemzeti Sport Online Szerdai sportműsor: Szoboszlaiék az FC Bruges ellen a BL-ben Nemzeti Sport Online Szoboszlai Dominik először a Liverpool csapatkapitánya tétmérkőzésen M4 Sport ÉLŐ | CLUB BRUGGE – LIVERPOOL | BAJNOKOK LIGÁJA Eurosport Bajnokok Ligája - Szoboszlai Dominikkal még sohasem fordult elő a Liverpoolban, mint a mai BL-meccsen Index.hu",
-   "link": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxNa3RnWGkyelVRNHNneUVTS2dzd3RmRkFHOTNuRDYxSS01UGNzaFNjV3dLOUhqWHJZbDlSeVJEOTN0UzMyTFZHOTJoeXpOVnNoWDNiNzJOQ3ZlS2UxeWhValNScDNkd2Y0UFFqajFLaHZXdzNYRGgxR3UtTWFZdTNtQ0x5b0QwU3FBam83SWtIellmTWxIVE9FbGZfdWNEVkRRY0JIQ2dIbFg0VkhOT3R0Ymlhc1NNWkRidDlMdVFwRUFOUElPOGhyYmhXcTlBUVNBbWU2RFppUXlPLUpuVDFoMA?oc=5",
-   "source": "Nemzeti Sport Online",
-   "source_domain": "nemzetisport.hu",
-   "published": "2026-11-25T07:03:22Z",
-   "V0": 0.45,
-   "V": 0.439,
-   "S0": 0.079,
-   "S": 0.079,
-   "G": 0.9,
-   "ATM": 201,
-   "lat": 47.388,
-   "lng": 19.415
-  },
-  {
-   "id": "baa486daba3f8f2b",
-   "region": "HU-NAT",
-   "title": "Fontos változás jöhet a magyarországi névadásban: ismét a szakmai szervezetek döntenének az engedélyezésről",
-   "summary": "Fontos változás jöhet a magyarországi névadásban: ismét a szakmai szervezetek döntenének az engedélyezésről Pénzcentrum",
-   "link": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxOazNBMGZZV3dBQTM4Mi15Z0FxTW5udlR5bmp6OHVXa1l5VG1XcVN5YTV3N0pob3pSRDdzSWpaaHJlMVNEQ1BVVUp1OHNHWm9nZTBkQzVEUGhqdXlQS1M3LUNoMjVmWFlFckczcWFKTlJ0cERrNnpZbE9GQUd3OEZVcnVWb1hlTlRsSUFPajlLd1BJU01YaTVxWDhUYzdIdjkwanB1SHpJM25wWXFaTHJmcERwd2pPRHo2bEJWRkdDNGd1STA5YVktSGhoV1QwOVlPRF9BbEVncTdvYzcwRmJDN3Vya1hMN1RfM3RyQ1loUEc?oc=5",
-   "source": "Pénzcentrum",
-   "source_domain": "penzcentrum.hu",
-   "published": "2026-11-25T07:03:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.464,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 45.756,
-   "lng": 19.65
-  },
-  {
-   "id": "511a20fc716f2e64",
-   "region": "HU-NAT",
-   "title": "Mourinho: Az öltöző olyan, mint Las Vegas és ami Vegasban történik, ott is marad",
-   "summary": "Mourinho: Az öltöző olyan, mint Las Vegas és ami Vegasban történik, ott is marad Nemzeti Sport Online ÉLŐ | REAL MADRID – PSV | BAJNOKOK LIGÁJA Eurosport Bajnokok Ligája - Kiütötte ellenfelét a Real Madrid a BL-ben, Bellingham gólját sokáig mutogatják majd Index.hu Hátrányból fordított a Real Madrid a BL-ben, egy félidő alatt öt gólt lőttek Telex Mbappé lett a meccs embere, de odaadta Viniciusnak a trófeát 24.hu",
-   "link": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOengxMm9pZk10Vjc4N3pZS29UUkNPWnFSWVh2UjhEbXVzWmxuYnZBVnB1enRGcklUN3VBVTRnbWJYelAzNV9MM0tDTy1YdG4xUnh2UWF1ZGF4SnRXa09iYTZRVnNfWFpsV0hhcU5CaDdDX1B3dmYtZUJ0clBHbDlCV0hMTUxFd0FfZXVoaTNtbjJUN2FLWTFPbUVBVm5TVU1ER1dqTUYwYUhzczRSdlVaazdJOGJiaE1jNHB6cTVrNHZ0VjdVT3EwQw?oc=5",
-   "source": "Nemzeti Sport Online",
-   "source_domain": "nemzetisport.hu",
-   "published": "2026-11-25T07:02:18Z",
-   "V0": 0.45,
-   "V": 0.439,
-   "S0": 0.079,
-   "S": 0.079,
-   "G": 0.9,
-   "ATM": 201,
-   "lat": 47.094,
-   "lng": 19.3
-  },
-  {
-   "id": "bb4341f307f06457",
-   "region": "HU-NAT",
-   "title": "Milyen lehetőségek adódnak ezekből a gazdasági változásokból?",
-   "summary": "Milyen lehetőségek adódnak ezekből a gazdasági változásokból? Vietnam.vn",
-   "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOSUY0NHptVzdXTkZOVTc1ZzdEMHN0a0sxZmM3cmFxWHZYV3NkaVdtLUsybkR5c1BBQjNPYnFtVTgxd0VUYnFucDl6aWhCdThRUWtmRnJoQWpDeUxRdFlSSTI1WndLck5ZczVUcWFoS1hNQ2IwRHpMbzdkWV9KblZtUVFMVnYxOW04?oc=5",
-   "source": "Vietnam.vn",
-   "source_domain": "vietnam.vn",
-   "published": "2026-11-25T07:01:57Z",
-   "V0": 0.45,
-   "V": 0.477,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.9,
-   "ATM": 0,
-   "lat": 47.333,
-   "lng": 19.586
   },
   {
    "id": "dee88bdaecf9fd99",
@@ -27375,7 +27490,7 @@
    "source_domain": "on.orf.at",
    "published": "2026-11-24T18:28:39Z",
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -29130,7 +29245,7 @@
    "source_domain": "on.orf.at",
    "published": "2026-11-23T18:30:39Z",
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -31203,7 +31318,7 @@
    "source_domain": "on.orf.at",
    "published": "2026-11-22T18:38:38Z",
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -33306,7 +33421,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -33342,7 +33457,7 @@
    "source_domain": "on.orf.at",
    "published": "2026-11-20T18:28:05Z",
    "V0": 0.7,
-   "V": 0.672,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -34305,27 +34420,6 @@
    "lng": 16.468
   },
   {
-   "id": "06874dd06411ea09",
-   "region": "SI-1",
-   "title": "Zaprla so se volišča v Lendavi in po Sloveniji, začelo se je štetje glasov. Spremljajmo skupaj!",
-   "summary": "Zaprla so se volišča v Lendavi in po Sloveniji, začelo se je štetje glasov. Spremljajmo skupaj! Lendavainfo",
-   "link": "https://news.google.com/rss/articles/CBMinwFBVV95cUxOT3JZWEozNWdUVjg4WV9WVlh6U2VuVVRyeXEtajg5RVNiZkRvQnc1WEYyeURKU1VqcVU3OUNXQWM3RFFYcnZSUXdIa2YxQlJQcllpdUhudTdkX2g1QVRlamV3cXZudm9mcXNvOXZFVTExT2wweEF1Zjh5UEt6SzhDUG9jQk9iS0pTTFI0SmZDRmNaV3hOUml1UThQN1EzZTA?oc=5",
-   "source": "Lendavainfo",
-   "source_domain": "lendavainfo.com",
-   "published": "2026-11-20T08:00:00Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.45,
-   "V": 0.46,
-   "S0": 0.25,
-   "S": 0.25,
-   "G": 0.8,
-   "ATM": 329,
-   "lat": 46.879,
-   "lng": 16.477
-  },
-  {
    "id": "04a4a852a9829a48",
    "region": "AT-1",
    "title": "Winterwunder Mörbisch: Der Weihnachtszauber am See hat begonnen",
@@ -34920,7 +35014,7 @@
     "ok": false
    },
    "V0": 0.7,
-   "V": 0.669,
+   "V": 0.668,
    "S0": 0.119,
    "S": 0.119,
    "G": 0.85,
@@ -36313,48 +36407,6 @@
    "ATM": 305,
    "lat": 47.252,
    "lng": 16.446
-  },
-  {
-   "id": "9a2d7fbc51ca5786",
-   "region": "SI-1",
-   "title": "FOTO in VIDEO: Učenci Osnovne šole IV Murska Sobota pokazali, kako malo je potrebno za veliko sreče",
-   "summary": "FOTO in VIDEO: Učenci Osnovne šole IV Murska Sobota pokazali, kako malo je potrebno za veliko sreče Sobotainfo.com",
-   "link": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxONFAzZklzQnZXSjJ3eWtOZ3dGd1ZjY21weGxaN1M4TG9JOVhMU2h4RU5pSzgtU3hncGVuTVlaOUpvMzFOVWY5WVptVy1mSEJWa1JDa1RZZ3BNYmVoVTF1NGNKNm84QkwzS3dTdVNUbHlsVUQxQjk0eTlJSTdsXzliM1UxTmlWX1hwTDFsRWY3MGlScERwU0pTTWQ5UndBa2Q2ZVZDdlhUSFM4blpVUGJnMVhaTThYck5BbWotV0gzZ1FfYUthNmJxdkxHdDBNNU1rbHk3NklR?oc=5",
-   "source": "Sobotainfo.com",
-   "source_domain": "sobotainfo.com",
-   "published": "2026-11-19T03:00:51Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.701,
-   "S0": 0.119,
-   "S": 0.119,
-   "G": 0.8,
-   "ATM": 170,
-   "lat": 46.59,
-   "lng": 16.347
-  },
-  {
-   "id": "98e84d1b8e394db2",
-   "region": "SI-1",
-   "title": "Božičkov muzejski vlak bo decembra zapeljal tudi v Prekmurje",
-   "summary": "Božičkov muzejski vlak bo decembra zapeljal tudi v Prekmurje Sobotainfo.com",
-   "link": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQdk9Jam9BU1lZRTRONl84eHNIN1BpZGpCNzVkSzVOaDhDcVBQQzltYWx6cWh3S0F1ZmQ4VjluOFYzdjBFU3BfeEtEZV9fWElIYlJLal94WXhJU1FvblNuT3JCcHZSZEZQSVM3MHRubjEtLV9FZDA0OWVrVUc4UnJnR2c3SGNUMXNoaDRUVndvX3FEdXZ6VFdweXNqLS1kR1QwRFBuQkJlT3pyeDQ?oc=5",
-   "source": "Sobotainfo.com",
-   "source_domain": "sobotainfo.com",
-   "published": "2026-11-19T03:00:40Z",
-   "body": {
-    "ok": false
-   },
-   "V0": 0.7,
-   "V": 0.701,
-   "S0": 0.0,
-   "S": 0.0,
-   "G": 0.8,
-   "ATM": 0,
-   "lat": 46.885,
-   "lng": 16.137
   }
  ],
  "notified": {
@@ -36365,9 +36417,6 @@
    "7d5719e715533528": "2026-11-25T23:35:29Z"
   },
   "terms": {
-   "mets": "2026-11-23T02:55:29Z",
-   "california": "2026-11-23T02:55:29Z",
-   "world": "2026-11-23T02:55:29Z",
    "giants": "2026-11-23T05:21:28Z",
    "belgrád": "2026-11-23T08:14:36Z",
    "tisza": "2026-11-23T08:14:36Z",
@@ -36439,7 +36488,9 @@
    "parade": "2026-11-26T00:36:10Z",
    "macy": "2026-11-26T00:36:10Z",
    "fire": "2026-11-26T00:36:10Z",
-   "fuel": "2026-11-26T02:04:16Z"
+   "fuel": "2026-11-26T02:04:16Z",
+   "postponed": "2026-11-26T03:14:08Z",
+   "killed": "2026-11-26T03:14:08Z"
   },
   "health": {}
  },
@@ -37307,7 +37358,7 @@
     "2026-11-20": 342.55999755859375,
     "2026-11-23": 349.0799865722656,
     "2026-11-24": 354.07000732421875,
-    "2026-11-25": 354.0000915527344
+    "2026-11-25": 355.5799865722656
    },
    "amzn": {
     "2026-06-12": 238.5500030517578,
@@ -37425,7 +37476,7 @@
     "2026-11-20": 246.82000732421875,
     "2026-11-23": 255.38999938964844,
     "2026-11-24": 252.2899932861328,
-    "2026-11-25": 244.6490020751953
+    "2026-11-25": 244.42999267578125
    },
    "ba": {
     "2026-06-12": 219.0500030517578,
@@ -37543,7 +37594,7 @@
     "2026-11-20": 155.88999938964844,
     "2026-11-23": 162.38999938964844,
     "2026-11-24": 163.58999633789062,
-    "2026-11-25": 164.49000549316406
+    "2026-11-25": 164.52999877929688
    },
    "bench_hu": {
     "2026-11-09": 146064.203125,
@@ -37676,7 +37727,7 @@
     "2026-11-20": 6910.39013671875,
     "2026-11-23": 7237.169921875,
     "2026-11-24": 7201.08984375,
-    "2026-11-25": 7154.5
+    "2026-11-25": 7182.77978515625
    },
    "googl": {
     "2026-06-12": 359.67999267578125,
@@ -37794,7 +37845,7 @@
     "2026-11-20": 265.2900085449219,
     "2026-11-23": 282.1000061035156,
     "2026-11-24": 279.04998779296875,
-    "2026-11-25": 271.7049865722656
+    "2026-11-25": 273.1000061035156
    },
    "jpm": {
     "2026-06-12": 320.7200012207031,
@@ -37912,7 +37963,7 @@
     "2026-11-20": 310.5299987792969,
     "2026-11-23": 316.6600036621094,
     "2026-11-24": 317.1000061035156,
-    "2026-11-25": 316.4400939941406
+    "2026-11-25": 316.739990234375
    },
    "meta": {
     "2026-06-12": 566.97998046875,
@@ -38030,7 +38081,7 @@
     "2026-11-20": 560.8400268554688,
     "2026-11-23": 597.5999755859375,
     "2026-11-24": 589.8200073242188,
-    "2026-11-25": 603.4099731445312
+    "2026-11-25": 609.8900146484375
    },
    "mol": {
     "2026-06-12": 3826.0,
@@ -38266,7 +38317,7 @@
     "2026-11-20": 484.5199890136719,
     "2026-11-23": 492.5,
     "2026-11-24": 496.1300048828125,
-    "2026-11-25": 488.635009765625
+    "2026-11-25": 489.92999267578125
    },
    "nvda": {
     "2026-06-12": 205.19000244140625,
@@ -38384,7 +38435,7 @@
     "2026-11-20": 125.52999877929688,
     "2026-11-23": 165.0500030517578,
     "2026-11-24": 155.3800048828125,
-    "2026-11-25": 147.2198944091797
+    "2026-11-25": 149.3000030517578
    },
    "otp": {
     "2026-06-12": 42490.0,
@@ -38737,20 +38788,20 @@
     "2026-11-20": 345.82000732421875,
     "2026-11-23": 385.4599914550781,
     "2026-11-24": 384.67999267578125,
-    "2026-11-25": 379.739990234375
+    "2026-11-25": 380.1400146484375
    }
   },
   "status": {
    "match_now": {
-    "n": 35,
+    "n": 32,
     "top": {
-     "nvda": 26,
+     "nvda": 23,
      "googl": 3,
      "aapl": 3,
      "otp": 2
     }
    },
-   "price_attempt": "2026-11-25T20:38:09Z",
+   "price_attempt": "2026-11-26T03:13:55Z",
    "ok": [
     "aapl",
     "amzn",
