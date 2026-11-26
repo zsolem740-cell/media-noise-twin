@@ -574,15 +574,24 @@ var NPT={"Nap":"az alapvető én","Hold":"az érzelmek","Merkúr":"a gondolkodá
 function fdt(ms){var d=new Date(ms);return d.getUTCFullYear()+'. '+pad(d.getUTCMonth()+1)+'. '+pad(d.getUTCDate())+'.';}
 function toneLbl(t,k){return t>0?((k==='sq'||k==='opp')?'bőség, de feszült':'támogató'):t<0?'kihívás':'változás';}
 function horDays(ms0,months,maxDays){var d=new Date(ms0),e=Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+months,d.getUTCDate());return Math.min(Math.round((e-ms0)/864e5),maxDays);}
+var ASG={conj:'☌',sext:'⚹',sq:'□',tri:'△',opp:'☍'};
+function nsym(n){return SYM[n]?SYM[n]+VS:n==='Aszcendens'?'Asc':n;}
+function pglyph(p){return SYM[p.tp]+VS+ASG[p.t[3]]+nsym(p.np);}
+function wkCause(T,k0,len){return T.per.filter(function(p){return p.tone!==0&&p.s<=k0+len-1&&p.e>=k0;}).sort(function(a,b){return Math.abs(b.tone)-Math.abs(a.tone);});}
+function wkBins(days){var b=[];for(var k=0;k<days;k+=7)b.push([k,Math.min(7,days-k)]);return b;}
+function wkAvg(T,b){var s=0;for(var i=b[0];i<b[0]+b[1];i++)s+=T.sc[i];return s/b[1];}
 function tlSvg(T,days,months){var W=360,H=232,x0=32,x1=352,y0=104,hh=84,sc=T.sc.slice(0,days),DAY=864e5;
  var bins=[];if(months>=36){var d=new Date(T.ms0),y=d.getUTCFullYear(),m=d.getUTCMonth(),k=0;while(k<days){var nx=Date.UTC(y,m+1,1),len=Math.min(days-k,Math.max(1,Math.round((nx-(T.ms0+k*DAY))/DAY)));bins.push([k,len]);k+=len;m++;if(m>11){m=0;y++;}}}
  else for(var k2=0;k2<days;k2+=7)bins.push([k2,Math.min(7,days-k2)]);
  var vals=bins.map(function(b){var s=0;for(var i=b[0];i<b[0]+b[1];i++)s+=sc[i];return s/b[1];});
- var mx=Math.max(3,Math.ceil(Math.max.apply(null,vals.map(Math.abs)))),u=hh/mx,bw=(x1-x0)/bins.length;
+ var mx=Math.max(3,Math.ceil(Math.max.apply(null,vals.map(Math.abs)))),u=hh/(months<36?mx+1:mx),bw=(x1-x0)/bins.length;
  var g='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Idősáv: a hónapok és hetek hangneme, pozitív felfelé, negatív lefelé">'
   +'<rect x="0" y="0" width="'+W+'" height="'+H+'" rx="8" fill="#17110a"/>'
   +[mx,0,-mx].map(function(v){var y=y0-v*u;return '<line x1="'+x0+'" y1="'+y.toFixed(1)+'" x2="'+x1+'" y2="'+y.toFixed(1)+'" stroke="#a8863f" stroke-opacity="'+(v===0?.8:.25)+'"/><text x="'+(x0-4)+'" y="'+(y+3).toFixed(1)+'" text-anchor="end" font-size="9" fill="#a79d86">'+(v>0?'+'+v:v<0?'−'+(-v):'0')+'</text>';}).join('');
  bins.forEach(function(b,i){var v=vals[i],h=Math.abs(v)*u;if(h<.4)return;g+='<rect x="'+(x0+i*bw+.3).toFixed(1)+'" y="'+(v>0?y0-h:y0).toFixed(1)+'" width="'+Math.max(1,bw-.6).toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+(v>0?'#4fb3a1':'#d9826b')+'" fill-opacity=".85"/>';});
+ if(months<36){var idx=vals.map(function(v,i){return i;}).filter(function(i){return Math.abs(vals[i])>=1;}).sort(function(a,b){return Math.abs(vals[b])-Math.abs(vals[a]);}).slice(0,months<=3?3:5);
+  var pick=[];idx.forEach(function(i){if(pick.every(function(j){return Math.abs(j-i)>=4;}))pick.push(i);});pick.forEach(function(i){var v=vals[i],cs=wkCause(T,bins[i][0],bins[i][1]).filter(function(p){return p.tone*v>0;});if(!cs.length)return;var h=Math.abs(v)*u,cxp=x0+(i+.5)*bw,tx=Math.max(x0+14,Math.min(x1-14,cxp)),ty=v>0?y0-h-4:y0+h+10;
+   g+='<text x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="middle" font-size="9.5" fill="'+(v>0?'#7fd1c1':'#eaa28d')+'">'+pglyph(cs[0])+'</text>';});}
  var d0=new Date(T.ms0),y=d0.getUTCFullYear(),m=d0.getUTCMonth(),step=months>=36?3:1;
  for(var j=0;j<=months;j+=1){var t=Date.UTC(y,m+j,1),kx=(t-T.ms0)/DAY;if(kx<0||kx>days)continue;var px=x0+kx/days*(x1-x0);g+='<line x1="'+px.toFixed(1)+'" y1="'+(y0+hh)+'" x2="'+px.toFixed(1)+'" y2="'+(y0+hh+4)+'" stroke="#a79d86"/>';
   if(((y*12+m+j)%step===0)||months<=3){var dd=new Date(t);g+='<text x="'+px.toFixed(1)+'" y="'+(y0+hh+15)+'" text-anchor="middle" font-size="8.5" fill="#a79d86">'+String(dd.getUTCFullYear()).slice(2)+'.'+pad(dd.getUTCMonth()+1)+'</text>';}}
@@ -597,9 +606,10 @@ function nmHtml(C,T,months){var d=new Date(T.ms0),y=d.getUTCFullYear(),m=d.getUT
  return out.join('');}
 function tlHtml(C,months){var T=C.T,days=horDays(T.ms0,months,T.days),per=T.per.filter(function(p){return p.ex<days;}),main=per.filter(function(p){return p.tp!=='Mars';}),mars=per.filter(function(p){return p.tp==='Mars';});
  return '<div class="hz" data-hz="'+months+'"'+(months===12?'':' hidden')+'>'+tlSvg(T,days,months)
-  +'<div class="note" style="margin-top:6px">Függőleges tengely: a hét (36 hónapnál a hónap) összesített hangneme, vízszintes: naptári idő '+fdt(T.ms0)+'-tól '+fdt(T.ms0+(days-1)*864e5)+'-ig. A pontok a legerősebb kapcsolatok pontos napját mutatják.'+(days<horDays(T.ms0,months,1e9)?' A bolygóhelyek csak 2049 végéig számolhatók, ezért az időtáv rövidebb.':'')+'</div>'
+  +'<div class="note" style="margin-top:6px">Függőleges tengely: a hét (36 hónapnál a hónap) összesített hangneme, vízszintes: naptári idő '+fdt(T.ms0)+'-tól '+fdt(T.ms0+(days-1)*864e5)+'-ig. A pontok a legerősebb kapcsolatok pontos napját mutatják, a nagy kilógások felett az ok jele áll.'+(days<horDays(T.ms0,months,1e9)?' A bolygóhelyek csak 2049 végéig számolhatók, ezért az időtáv rövidebb.':'')+'</div>'
   +'<h3 style="margin:12px 0 4px">Fő időszakok ('+main.length+')</h3>'+(main.length?main.map(function(p){return perLi(T,p);}).join(''):'<div class="note">Ebben az időtávban nincs lassú bolygó pontos kapcsolata.</div>')
   +(mars.length?'<details><summary>Gyors, Mars-kapcsolatok ('+mars.length+')</summary>'+mars.map(function(p){return perLi(T,p);}).join('')+'</details>':'')
+  +(months<36?'<details><summary>Heti bontás ('+wkBins(days).length+' hét)</summary>'+wkBins(days).map(function(b){var v=wkAvg(T,b),cs=wkCause(T,b[0],b[1]).slice(0,2);return '<div class="rule2"><b>'+fdt(T.ms0+b[0]*864e5)+' – '+fdt(T.ms0+(b[0]+b[1]-1)*864e5)+'</b> · <span class="chip '+(v>0.05?'calc':v<-0.05?'ass':'src')+'">'+(v>0?'+':v<0?'−':'')+Math.abs(v).toFixed(1)+'</span>'+(cs.length?'<br><span class="note">'+cs.map(function(p){return pglyph(p)+' '+p.tp+' '+p.t[0]+' '+p.np;}).join(' · ')+'</span>':'')+'</div>';}).join('')+'<div class="note" style="margin-top:6px">Jelek: bolygó, kapcsolat (☌ együttállás, ⚹ szextil, □ négyzet, △ háromszög, ☍ szembenállás), születési pont. A heti érték a napi pontok átlaga, a pontozás a mi feltevésünk.</div></details>':'')
   +'<details><summary>Számmisztikai '+(months>=36?'évek':'hónapok')+'</summary>'+nmHtml(C,T,months)+'</details></div>';}
 function tlCard(C){var T=C.T;return '<div class="card dark" id="idosav"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Idősáv</h3><span class="chip calc">tranzitok: számolás</span></div>'
  +'<div class="row" style="margin:8px 0">'+[3,12,36].map(function(m){return '<button class="btn'+(m===12?' go':'')+'" data-hzb="'+m+'">'+m+' hónap</button>';}).join('')+'</div>'
