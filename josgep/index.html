@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16120c"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png">
+<title>Al-Mawṣilī jósgép</title><style>:root{--ground:#16120c;--ground2:#1f1a11;--brass:#a8863f;--brass-hi:#d8b865;--brass-lo:#6a5226;--silver:#dfe3e6;--ink:#17110a;--parch:#ece4d0;--mut:#a79d86;--verd:#4fb3a1;--bad:#d9826b;--line:rgba(236,228,208,.14)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--ground)}
+body{color:var(--parch);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:
+ repeating-linear-gradient(-35deg,rgba(236,228,208,.025) 0 1px,transparent 1px 5px),var(--ground);min-height:100vh;padding-bottom:84px}
+.serif,h1,h2,h3{font-family:"Palatino Linotype","Book Antiqua",Palatino,"Iowan Old Style",Georgia,serif}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(var(--ground) 80%,rgba(22,18,12,0));padding:12px 16px 14px;max-width:560px;margin:auto}
+h1{font-size:19px;font-weight:600;letter-spacing:.01em;margin:0 0 8px;color:var(--brass-hi)}
+h1 small{display:block;font:12.5px system-ui,sans-serif;color:var(--mut);letter-spacing:0;margin-top:1px}
+.tbar{display:flex;gap:8px;align-items:center}
+.tbar input{flex:1;min-width:0;background:var(--ground2);color:var(--parch);border:1px solid var(--line);border-radius:999px;padding:9px 14px;font:inherit;color-scheme:dark}
+.btn{background:var(--ground2);color:var(--parch);border:1px solid var(--line);border-radius:999px;padding:9px 13px;font:inherit;cursor:pointer;min-height:40px}
+.btn:focus-visible,input:focus-visible,summary:focus-visible,nav button:focus-visible{outline:2px solid var(--verd);outline-offset:2px}
+main{max-width:560px;margin:auto;padding:0 16px}
+.screen{display:none}.screen.on{display:block}
+.plate{position:relative;border-radius:16px;background:linear-gradient(158deg,#b6934a,#94742f 55%,#a58437);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(255,236,170,.35),inset 0 -3px 8px rgba(0,0,0,.35),0 8px 22px rgba(0,0,0,.55);padding:14px;margin:14px 0;overflow:hidden}
+.plate::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(-35deg,rgba(0,0,0,.07) 0 1px,transparent 1px 4px);pointer-events:none;border-radius:inherit}
+.plate>*{position:relative;z-index:1}
+.inst{padding:8px;border-radius:50%;margin:10px auto;max-width:372px}
+.inst svg{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{font-size:12.5px;border-radius:999px;padding:1px 9px;border:1px solid currentColor;white-space:nowrap}
+.chip.src{color:#2a2112}.chip.calc{color:#0d4f45;border-style:solid;background:rgba(79,179,161,.28)}.chip.ass{color:#5b2a17;border-style:dashed}
+.dark .chip.src{color:var(--silver)}.dark .chip.calc{color:var(--verd);background:none}.dark .chip.ass{color:var(--bad)}
+.lat{font-family:"Palatino Linotype",Palatino,Georgia,serif;font-style:italic}
+.ans h2{font-size:30px;line-height:1.1;margin:2px 0 4px;font-style:italic;font-weight:500}
+.ans .ind{font-size:17px;margin:0 0 10px}
+.gauge{position:relative;height:30px;margin:6px 0 2px}
+.gauge .bar{position:absolute;left:0;right:0;top:13px;height:4px;border-radius:2px;background:rgba(23,17,10,.75)}
+.gauge .mk{position:absolute;top:5px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--silver);border:2px solid #17110a;box-shadow:0 0 0 3px var(--verd);transition:left .35s cubic-bezier(.2,.8,.2,1)}
+.gauge .t{position:absolute;top:0;width:1px;height:30px;background:rgba(23,17,10,.5)}
+.gl{display:flex;justify-content:space-between;font-size:12.5px;color:#3a2c12}
+.mothers{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:6px 0}
+.mother{text-align:center;font-size:13px}
+.mother b{display:block;font-weight:500}
+.stp{display:flex;justify-content:center;gap:4px;margin-top:4px}
+.stp button{width:30px;height:30px;border-radius:50%;border:1px solid rgba(23,17,10,.5);background:rgba(23,17,10,.15);color:var(--ink);font-size:15px;line-height:1;padding:0;cursor:pointer}
+details{margin:10px 0}
+summary{cursor:pointer;font-weight:600;padding:6px 0;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:#4a3716}details[open]>summary::before{content:"▾ "}
+.rule{margin:9px 0;padding-left:10px;border-left:3px solid rgba(23,17,10,.55);font-size:14px}
+.rule .sc{font-weight:700}
+.tg{display:flex;gap:12px;flex-wrap:wrap;font-size:14px}
+.tg label{display:flex;gap:6px;align-items:center}
+.sm{font-size:13px;color:#3a2c12}
+.dark{color:var(--parch)}
+.card{background:var(--ground2);border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+.card h3{margin:0 0 6px;font-size:16px;color:var(--brass-hi)}
+.body{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.body:last-child{border:0}
+.body .n{font-weight:600}.body .m{font-size:13.5px;color:var(--mut)}
+.f{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;margin:10px 0}
+.f.hit{outline:2px solid var(--verd);outline-offset:4px;border-radius:12px}
+.f .nm{font-size:17px}.f .ar{font-size:13.5px;opacity:.85}.f .ind{font-size:14px;margin-top:2px}
+.q{font-size:14px;margin:18px 0 0;color:var(--brass-hi);font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px}
+.chips button{background:var(--ground2);color:var(--parch);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:14px;min-height:36px}
+.chips button.on{border-color:var(--verd);color:var(--verd)}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;background:rgba(22,18,12,.96);border-top:1px solid var(--line);backdrop-filter:blur(8px)}
+nav div{max-width:560px;margin:auto;display:grid;grid-template-columns:repeat(5,1fr)}
+nav button{background:none;border:0;color:var(--mut);padding:9px 2px 11px;font:inherit;font-size:12.5px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;min-height:56px}
+nav button svg{width:24px;height:24px}
+nav button.on{color:var(--brass-hi)}
+.note{font-size:13px;color:var(--mut)}
+.plate .note{color:#3a2c12}
+.chain{display:grid;grid-template-columns:78px 1fr;gap:8px 10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(23,17,10,.25)}
+.chain:last-child{border:0}
+.chain .fs{display:flex;gap:10px;flex-wrap:wrap}
+.chain .it{text-align:center;font-size:12.5px}
+.sw{height:20px}
+@keyframes sweep{from{transform:rotate(-70deg);opacity:0}to{transform:rotate(0);opacity:1}}
+.first .pl{transform-origin:200px 200px;animation:sweep 1.4s cubic-bezier(.2,.8,.2,1) both}
+.disc{transition:transform .5s cubic-bezier(.2,.8,.2,1);transform-origin:200px 200px}
+@media (prefers-reduced-motion:reduce){.first .pl{animation:none}.disc,.gauge .mk{transition:none}}
+.big{font-size:22px}
+.card .chip.src{color:var(--silver)}.card .chip.calc{color:var(--verd);background:none}.card .chip.ass{color:var(--bad)}
+.tbar input{font-size:14px;padding:9px 12px}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
+<radialGradient id="brass" cx=".4" cy=".35" r=".9"><stop offset="0" stop-color="#c3a055"/><stop offset=".6" stop-color="#a08035"/><stop offset="1" stop-color="#7f6226"/></radialGradient>
+<pattern id="hatch" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#000" stroke-opacity=".09" stroke-width="1"/></pattern></defs></svg>
+<header><h1>Al-Mawṣilī jósgép<small>geomantikus tábla, 639 AH (1241–42) · digitális iker</small></h1>
+<div class="tbar"><button class="btn" id="tm" aria-label="Egy nappal korábban">‹</button><input type="datetime-local" id="ti" aria-label="Időpont (UTC)"><button class="btn" id="tp" aria-label="Egy nappal később">›</button><button class="btn" id="tn">Most</button></div></header>
+<main><section id="gep" class="screen on"></section><section id="tarcsa" class="screen"></section><section id="eg" class="screen"></section><section id="hold" class="screen"></section><section id="lanc" class="screen"></section></main>
+<nav aria-label="Fő menü"><div><button data-t="gep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/></svg><span>Gép</span></button><button data-t="tarcsa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></svg><span>Tárcsa</span></button><button data-t="eg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-25 12 12)"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="8" r="1.4" fill="currentColor"/></svg><span>Égbolt</span></button><button data-t="hold"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M15.5 3.5A9 9 0 1 0 20.5 15 7 7 0 0 1 15.5 3.5z"/></svg><span>Holdházak</span></button><button data-t="lanc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="19" r="2"/><path d="M12 7v5M12 12l-6 5M12 12l6 5"/></svg><span>Lánc</span></button></div></nav>
+<script>var LAT=["Via","Cauda Draconis","Puer","Fortuna Minor","Puella","Amissio","Carcer","Laetitia","Caput Draconis","Conjunctio","Acquisitio","Rubeus","Fortuna Major","Albus","Tristitia","Populus"];
+function lat(v){return LAT[15-v];}
+var DIAL=[[0,"al-jamāʿa"],[15,"ṭarīq"],[12,"nuṣra khārija"],[3,"nuṣra dākhila"],[5,"qabḍ dākhil"],[10,"qabḍ khārij"],[2,"bayāḍ"],[4,"ḥumra"],[8,"al-ḥiyān"],[1,"inkīs"],[7,"ʿataba dākhila"],[14,"ʿataba khārija"],[11,"awrāʿ"],[13,"jawdala"],[6,"ijtimāʿ"],[9,"ʿuqla"]];
+var LD=[
+["Északi téli negyed","al-balda, nyugvás",13,"Vegyes, jó előjel felé hajló"],
+["Északi téli negyed","al-ḥaqʿa, kelés",2,"Növekvően vegyes"],
+["Északi téli negyed","al-ʿawwāʾ, kelés és nyugvás",15,"Vegyes"],
+["Északi téli negyed","al-thurayyā, kelés",3,"Növekvő jó szerencse"],
+["Nyugati őszi negyed","al-simāk, al-ghafr, kelés és nyugvás",9,"Állandó balszerencse"],
+["Nyugati őszi negyed","al-hanʿa, nyugvás",10,"Csökkenő rossz szerencse"],
+["Nyugati őszi negyed","al-zubānā, al-iklīl, kelés",14,"Csökkenő rossz előjel"],
+["Nyugati őszi negyed","al-dabarān, nyugvás",1,"Növekvő rossz szerencse"],
+["Déli nyári negyed","al-balda, kelés",11,"Növekvően vegyes"],
+["Déli nyári negyed","al-ḥaqʿa, nyugvás",4,"Rossz szerencse"],
+["Déli nyári negyed","al-naʿāʾim, kelés",0,"Súlyos szerencsétlenség"],
+["Déli nyári negyed","al-thurayyā, nyugvás",12,"Csökkenő jó szerencse"],
+["Keleti tavaszi negyed","al-dhirāʿ, al-nathra és al-ṭarf",6,"Vegyes, se nem növekvő, se nem csökkenő"],
+["Keleti tavaszi negyed","al-hanʿa, kelés",5,"Növekvő jó szerencse"],
+["Keleti tavaszi negyed","al-zubānā, al-iklīl, nyugvás",7,"Növekvő jó szerencse"],
+["Keleti tavaszi negyed","al-dabarān, kelés",8,"Csökkenő jó szerencse"]];
+function ld(v){for(var i=0;i<LD.length;i++)if(LD[i][2]==v)return LD[i];}
+function dialName(v){for(var i=0;i<DIAL.length;i++)if(DIAL[i][0]==v)return DIAL[i][1];}
+function line(v,k){return (v>>(3-k))&1;} // k=0 felső sor
+var MN=["al-sharaṭān","al-buṭayn","al-thurayyā","al-dabarān","al-ḥaqʿa","al-hanʿa","al-dhirāʿ","al-nathra","al-ṭarf","al-jabha","al-zubra","al-ṣarfa","al-ʿawwāʾ","al-simāk","al-ghafr","al-zubānā","al-iklīl","al-qalb","al-shawla","al-naʿāʾim","al-balda","saʿd al-dhābiḥ","saʿd bulaʿ","saʿd al-suʿūd","saʿd al-akhbiya","al-fargh al-muqaddam","al-fargh al-muʾakhkhar","al-risha"];
+function rad(x){return x*Math.PI/180;}function nm(x){x%=360;return x<0?x+360:x;}
+function astro(ms){var d=(ms-Date.UTC(2000,0,1,12))/864e5;
+ var L=218.316+13.176396*d,Mp=134.963+13.064993*d,D=297.850+12.190749*d,M=357.529+0.985600*d;
+ var moon=nm(L+6.289*Math.sin(rad(Mp))+1.274*Math.sin(rad(2*D-Mp))+0.658*Math.sin(rad(2*D))+0.214*Math.sin(rad(2*Mp))-0.186*Math.sin(rad(M)));
+ var g=357.528+0.9856003*d,sun=nm(280.460+0.9856474*d+1.915*Math.sin(rad(g))+0.020*Math.sin(rad(2*g)));
+ return {moon:moon,sun:sun};}
+function norm(t){return t.replace(/[ʿʾʼ’']/g,'').replace(/ā/g,'a').replace(/ī/g,'i').replace(/ū/g,'u').replace(/ṭ/g,'t').replace(/ḥ/g,'h').replace(/ḍ/g,'d').replace(/ṣ/g,'s').replace(/ẓ/g,'z').replace(/ʾ/g,'');}
+function phaseName(e){var p=[["újhold",0],["növekvő sarló",45],["első negyed",90],["növekvő hold",135],["telihold",180],["fogyó hold",225],["utolsó negyed",270],["fogyó sarló",315]];var i=Math.round(e/45)%8;return p[i][0];}
+
+var PL=[["Merkúr",[0.38709927,0.00000037,0.20563593,0.00001906,7.00497902,-0.00594749,252.25032350,149472.67411175,77.45779628,0.16047689,48.33076593,-0.12534081]],
+["Vénusz",[0.72333566,0.00000390,0.00677672,-0.00004107,3.39467605,-0.00078890,181.97909950,58517.81538729,131.60246718,0.00268329,76.67984255,-0.27769418]],
+["Mars",[1.52371034,0.00001847,0.09339410,0.00007882,1.84969142,-0.00813131,-4.55343205,19140.30268499,-23.94362959,0.44441088,49.55953891,-0.29257343]],
+["Jupiter",[5.20288700,-0.00011607,0.04838624,-0.00013253,1.30439695,-0.00183714,34.39644051,3034.74612775,14.72847983,0.21252668,100.47390909,0.20469106]],
+["Szaturnusz",[9.53667594,-0.00125060,0.05386179,-0.00050991,2.48599187,0.00193609,49.95424423,1222.49362201,92.59887831,-0.41897216,113.66242448,-0.28867794]],
+["Uránusz",[19.18916464,-0.00196176,0.04725744,-0.00004397,0.77263783,-0.00242939,313.23810451,428.48202785,170.95427630,0.40805281,74.01692503,0.04240589]],
+["Neptunusz",[30.06992276,0.00026291,0.00859048,0.00005105,1.77004347,0.00035372,-55.12002969,218.45945325,44.96476227,-0.32241464,131.78422574,-0.00508664]],
+["Plútó (törpebolygó)",[39.48211675,-0.00031596,0.24882730,0.00005170,17.14001206,0.00004818,238.92903833,145.20780515,224.06891629,-0.04062942,110.30393684,-0.01183482]]];
+var EMB=[1.00000261,0.00000562,0.01671123,-0.00004392,-0.00001531,-0.01294668,100.46457166,35999.37244981,102.93768193,0.32327364,0,0];
+var SIGNS=["Kos","Bika","Ikrek","Rák","Oroszlán","Szűz","Mérleg","Skorpió","Nyilas","Bak","Vízöntő","Halak"];
+function helio(el,T){var a=el[0]+el[1]*T,e=el[2]+el[3]*T,I=rad(el[4]+el[5]*T),L=el[6]+el[7]*T,w=el[8]+el[9]*T,N=el[10]+el[11]*T;
+ var om=rad(w-N),M=rad(nm(L-w));if(M>Math.PI)M-=2*Math.PI;var E=M+e*Math.sin(M);for(var i=0;i<12;i++)E=E-(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));
+ var xp=a*(Math.cos(E)-e),yp=a*Math.sqrt(1-e*e)*Math.sin(E),cw=Math.cos(om),sw=Math.sin(om),cN=Math.cos(rad(N)),sN=Math.sin(rad(N)),cI=Math.cos(I),sI=Math.sin(I);
+ return [(cw*cN-sw*sN*cI)*xp+(-sw*cN-cw*sN*cI)*yp,(cw*sN+sw*cN*cI)*xp+(-sw*sN+cw*cN*cI)*yp,(sw*sI)*xp+(cw*sI)*yp];}
+function plon(el,ms){var T=((ms-Date.UTC(2000,0,1,12))/864e5)/36525,p=helio(el,T),e=helio(EMB,T);
+ return nm(Math.atan2(p[1]-e[1],p[0]-e[0])*180/Math.PI+1.3969713*T);}
+function rowsOf(idx){var k2=norm(MN[idx]).replace(/^al-/,'');return LD.filter(function(r){return norm(r[1]).indexOf(k2)>=0;});}
+var ARC=[5,0,10,15,3,6,9,12,1,4,14,11,2,7,8,13];
+var CODING={13:[0,0,1],2:[0,1,0],15:[0,0,0],3:[1,1,1],9:[-1,0,0],10:[-1,-1,1],14:[-1,-1,1],1:[-1,1,-1],11:[0,1,0],4:[-1,0,0],0:[-2,0,0],12:[1,-1,-1],6:[0,0,0],5:[1,1,1],7:[1,1,1],8:[1,-1,-1]}; // kód: [hangnem, tendencia, irány]
+var RON={R2:true,R3:true,R4:true,R5:true};
+function calc(Mx){var Dx=[];for(var k=0;k<4;k++){var v=0;for(var m=0;m<4;m++)v=v*2+line(Mx[m],k);Dx.push(v);}
+ var Nx=[Mx[0]^Mx[1],Mx[2]^Mx[3],Dx[0]^Dx[1],Dx[2]^Dx[3]];var Wx=[Nx[0]^Nx[1],Nx[2]^Nx[3]];var Jx=Wx[0]^Wx[1];return {D:Dx,N:Nx,W:Wx,J:Jx,R:Jx^Mx[0]};}
+
+// ===== állapot =====
+var ST={ms:Date.now(),JO:[0,3,6,9],RON:{R2:true,R3:true,R4:true,R5:true},tab:'gep',pos:0,qf:'',first:true};
+try{var sv=JSON.parse(localStorage.getItem('tablaST')||'null');if(sv){if(sv.JO&&sv.JO.length==4)ST.JO=sv.JO;if(sv.RON)for(var k in sv.RON)ST.RON[k]=sv.RON[k];}}catch(e){}
+function save(){try{localStorage.setItem('tablaST',JSON.stringify({JO:ST.JO,RON:ST.RON}));}catch(e){}}
+var $=function(i){return document.getElementById(i);};
+var SYM={"Nap":"☉","Hold":"☽","Merkúr":"☿","Vénusz":"♀","Mars":"♂","Jupiter":"♃","Szaturnusz":"♄","Uránusz":"♅","Neptunusz":"♆","Plútó":"♇"};
+var ZS=["♈","♉","♊","♋","♌","♍","♎","♏","♐","♑","♒","♓"];
+var VS="︎";
+function mod(a,n){return ((a%n)+n)%n;}
+function sgn(x){return x>0?1:x<0?-1:0;}
+function pol(r,deg){var t=deg*Math.PI/180;return [200+r*Math.sin(t),200-r*Math.cos(t)];}
+function lonTheta(l){return 270-l;}
+// szegecs-figura (SVG csoport)
+function studs(v){var h='';for(var k=0;k<4;k++){var y=(k-1.5)*6.2,one=(v>>(3-k))&1;if(one)h+='<circle cx="0" cy="'+y+'" r="2.4" fill="url(#stud)" stroke="#2b2110" stroke-width=".5"/>';else h+='<circle cx="-3.3" cy="'+y+'" r="2.4" fill="url(#stud)" stroke="#2b2110" stroke-width=".5"/><circle cx="3.3" cy="'+y+'" r="2.4" fill="url(#stud)" stroke="#2b2110" stroke-width=".5"/>';}return h;}
+function figSvg(v,h,hl){var w=Math.round(h*0.62);return '<svg viewBox="-8 -12.4 16 24.8" width="'+w+'" height="'+h+'" style="display:block'+(hl?';filter:drop-shadow(0 0 3px #4fb3a1)':'')+'" aria-hidden="true">'+studs(v)+'</svg>';}
+function ldOf(v){return ld(v);}
+// ===== a Hold, a Nap és a bolygók =====
+function sky(ms){var a=astro(ms),el=nm(a.moon-a.sun),b=[["Nap",a.sun,0],["Hold",a.moon,0]];
+ PL.forEach(function(p){var l=plon(p[1],ms),l1=plon(p[1],ms+864e5);b.push([p[0].split(' ')[0],l,nm(l1-l)>180?1:0]);});
+ return {a:a,el:el,b:b,waxing:el<180,midx:Math.floor(a.moon/(360/28))};}
+// ===== válasz-szabályok =====
+function answer(Mx,S){var c=calc(Mx),R=c.R,Jv=c.J,cr=CODING[R],cj=CODING[Jv],lr=ld(R),lj=ld(Jv),L=[],score=0;
+ var mname=MN[S.midx];var merc=S.b[2];
+ L.push({k:'R1',tag:'src',t:'<b>Forrás.</b> Az Eredmény, <i class="lat">'+lat(R)+'</i>, a nagy tárcsán: „'+lr[3]+'” ('+lr[1]+'). A Bíró, <i class="lat">'+lat(Jv)+'</i>: „'+lj[3]+'”.'});
+ var s1=cr[0]*2+cr[2];score+=s1;L.push({k:'R1p',tag:'ass',t:'<b>A jelzés kódolása.</b> A szöveget hangnemre és irányra bontottuk: hangnem '+(cr[0]>0?'jó':cr[0]<0?'rossz':'vegyes')+', irány '+(cr[2]>0?'javuló':cr[2]<0?'romló':'változatlan')+'.',s:s1});
+ var s2=cj[0];score+=s2;L.push({k:'R1b',tag:'ass',t:'<b>A Bíró hangneme</b> '+(cj[0]>0?'jó':cj[0]<0?'rossz':'vegyes')+'.',s:s2});
+ if(ST.RON.R2){var tr=cr[1],t,sc=0;if(tr===0)t='A jelzésnek nincs növekvő vagy csökkenő iránya, a Hold fázisa nem számít.';else{var ok=(tr>0&&S.waxing)||(tr<0&&!S.waxing);var add=ok?cr[2]:-cr[2];sc=sgn(add);score+=sc;t='A jelzés '+(tr>0?'növekvő':'csökkenő')+', a Hold '+(S.waxing?'növekvő':'fogyó')+' ('+phaseName(S.el)+'): '+(ok?'megerősíti':'ellentmond')+'.';}
+  L.push({k:'R2',tag:'ass',t:'<b>Hold-fázis.</b> '+t,s:sc});}
+ if(ST.RON.R3){var key=norm(mname).replace(/^al-/,'');var hits=[['Eredmény',R],['Bíró',Jv],['1. Tanú',c.W[0]],['2. Tanú',c.W[1]]].filter(function(g){return norm(ld(g[1])[1]).indexOf(key)>=0;});
+  L.push({k:'R3',tag:'ass',t:'<b>Holdház-egyezés.</b> A Hold a(z) '+mname+' holdházban jár. '+(hits.length?'Ez szerepel a következők sorában: '+hits.map(function(h){return h[0];}).join(', ')+'. Figyelemre méltó, pontot nem ad.':'Nem szerepel az Eredmény, a Bíró és a Tanúk sorában.'),s:0});}
+ if(ST.RON.R4){L.push({k:'R4',tag:'ass',t:'<b>Jegyek.</b> A Nap '+SIGNS[Math.floor(S.a.sun/30)]+', a Hold '+SIGNS[Math.floor(S.a.moon/30)]+' jegyben áll. Tájékoztató, pontot nem ad.',s:0});}
+ if(ST.RON.R5){L.push({k:'R5',tag:'ass',t:'<b>Merkúr.</b> '+(merc[2]?'A Merkúr retrográd; a hagyományos csillagjóslás szerint a kérdés körülményei bizonytalanabbak. Pontot nem ad.':'A Merkúr nem retrográd, nincs külön megjegyzés.'),s:0});}
+ var verdict=score>=3?'kedvező':score<=-3?'kedvezőtlen':'vegyes';
+ return {c:c,R:R,Jv:Jv,lr:lr,lj:lj,L:L,score:score,verdict:verdict};}
+// ===== műszer =====
+var RR=[150,122,94,66];var ringRot=[0,0,0,0];
+function instrument(S,first){var h='<svg id="instSvg" viewBox="0 0 400 400" role="img" aria-label="Jós gép: négy csúszóív, az égbolt gyűrűje és a Hold fázisa">';
+ h+='<circle cx="200" cy="200" r="199" fill="url(#brass)" stroke="#2a2112" stroke-width="1.2"/><circle cx="200" cy="200" r="199" fill="url(#hatch)"/>';
+ // égbolt-gyűrű
+ h+='<g class="skyg'+(first?' first':'')+'">';
+ [196,184,168].forEach(function(r){h+='<circle cx="200" cy="200" r="'+r+'" fill="none" stroke="#2a2112" stroke-opacity=".7" stroke-width=".9"/>';});
+ for(var i=0;i<12;i++){var p1=pol(184,lonTheta(i*30)),p2=pol(196,lonTheta(i*30)),pc=pol(190,lonTheta(i*30+15));h+='<line x1="'+p1[0].toFixed(1)+'" y1="'+p1[1].toFixed(1)+'" x2="'+p2[0].toFixed(1)+'" y2="'+p2[1].toFixed(1)+'" stroke="#2a2112" stroke-opacity=".7"/><text x="'+pc[0].toFixed(1)+'" y="'+(pc[1]+3.4).toFixed(1)+'" font-size="9.5" text-anchor="middle" fill="#2a2112">'+ZS[i]+VS+'</text>';}
+ for(var m=0;m<28;m++){var q1=pol(164,lonTheta(m*360/28)),q2=pol(168,lonTheta(m*360/28));h+='<line x1="'+q1[0].toFixed(1)+'" y1="'+q1[1].toFixed(1)+'" x2="'+q2[0].toFixed(1)+'" y2="'+q2[1].toFixed(1)+'" stroke="#2a2112" stroke-width=".8"/>';}
+ var a0=lonTheta(S.midx*360/28),a1=lonTheta((S.midx+1)*360/28);var P0=pol(166,a0),P1=pol(166,a1);
+ h+='<path d="M'+P0[0].toFixed(1)+' '+P0[1].toFixed(1)+' A166 166 0 0 0 '+P1[0].toFixed(1)+' '+P1[1].toFixed(1)+'" stroke="#4fb3a1" stroke-width="5" fill="none" stroke-linecap="round"/>';
+ var bs=S.b.map(function(x,i){return {n:x[0],l:x[1],r:x[2]};}).sort(function(x,y){return x.l-y.l;});var lvl=0,prev=-99;
+ bs.forEach(function(x){lvl=(x.l-prev<8)?(lvl+1)%3:0;prev=x.l;x.lv=lvl;});
+ h+='<g class="pl">';bs.forEach(function(x){var rr=177+(x.lv-1)*0;var pr=[173,177,181][x.lv];var p=pol(pr,lonTheta(x.l));var moon=x.n=='Hold';
+  h+='<g><circle cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="7.2" fill="#17110a" stroke="'+(moon?'#4fb3a1':'#dfe3e6')+'" stroke-width="'+(moon?1.8:.9)+'"/><text x="'+p[0].toFixed(1)+'" y="'+(p[1]+3.6).toFixed(1)+'" font-size="10.5" text-anchor="middle" fill="#f1ead6">'+SYM[x.n]+VS+'</text></g>';});
+ h+='</g></g>';
+ // ívek
+ RR.forEach(function(R,i){h+='<circle cx="200" cy="200" r="'+(R+14)+'" fill="none" stroke="#2a2112" stroke-width=".9" stroke-opacity=".75"/>';});
+ h+='<circle cx="200" cy="200" r="52" fill="none" stroke="#2a2112" stroke-width=".9" stroke-opacity=".75"/>';
+ RR.forEach(function(R,i){h+='<g class="ring" id="ring'+i+'" transform="rotate('+(-ST.JO[i]*22.5)+' 200 200)">';
+  for(var j=0;j<16;j++){var th=j*22.5,p=pol(R,th);h+='<g transform="translate('+p[0].toFixed(1)+' '+p[1].toFixed(1)+') rotate('+th+') scale(.8)">'+studs(ARC[j])+'</g>';
+   var d1=pol(R-14,th+11.25),d2=pol(R+14,th+11.25);h+='<line x1="'+d1[0].toFixed(1)+'" y1="'+d1[1].toFixed(1)+'" x2="'+d2[0].toFixed(1)+'" y2="'+d2[1].toFixed(1)+'" stroke="#2a2112" stroke-opacity=".35" stroke-width=".7"/>';}
+  h+='</g>';});
+ // rögzített elválasztó vonal és jelzők
+ h+='<line x1="200" y1="36" x2="200" y2="'+(200-52)+'" stroke="#4fb3a1" stroke-width="1.6" stroke-dasharray="3 3"/>';
+ RR.forEach(function(R,i){h+='<rect x="184" y="'+(200-R-15)+'" width="32" height="30" rx="7" fill="none" stroke="#4fb3a1" stroke-width="2"/><text x="173" y="'+(200-R+4)+'" font-size="11" fill="#17110a" text-anchor="middle" font-weight="700">'+(i+1)+'</text>';});
+ h+='<path d="M194 28 L206 28 L200 38 Z" fill="#4fb3a1" stroke="#17110a" stroke-width=".8"/>';
+ // Hold-fázis középen
+ var r=34,e=S.el,wax=e<180,ee=wax?e:360-e,k=Math.cos(ee*Math.PI/180),rx=Math.abs(k)*r,sw=ee<90?0:1;
+ h+='<circle cx="200" cy="200" r="'+r+'" fill="#17110a" stroke="#dfe3e6" stroke-width="1"/>';
+ var lit='M200 '+(200-r)+' A'+r+' '+r+' 0 0 1 200 '+(200+r)+' A'+rx.toFixed(2)+' '+r+' 0 0 '+sw+' 200 '+(200-r)+' Z';
+ h+='<path d="'+lit+'" fill="#eadfbf" transform="'+(wax?'':'translate(400 0) scale(-1 1)')+'"/>';
+ return h+'</svg>';}
+function setRing(i,o){var g=$('ring'+i);if(g)g.setAttribute('transform','rotate('+(-o*22.5)+' 200 200)');}
+var drag=null;
+function svgPt(e){var s=$('instSvg'),r=s.getBoundingClientRect();return [(e.clientX-r.left)/r.width*400,(e.clientY-r.top)/r.height*400];}
+function angAt(p){return Math.atan2(p[0]-200,200-p[1])*180/Math.PI;}
+function bindInst(){var s=$('instSvg');
+ s.addEventListener('pointerdown',function(e){var p=svgPt(e),r=Math.hypot(p[0]-200,p[1]-200),i=-1;RR.forEach(function(R,k){if(Math.abs(r-R)<=14)i=k;});if(i<0)return;drag={i:i,a0:angAt(p),o0:ST.JO[i],o:ST.JO[i]};s.setPointerCapture(e.pointerId);e.preventDefault();});
+ s.addEventListener('pointermove',function(e){if(!drag)return;var p=svgPt(e),da=angAt(p)-drag.a0;da=((da+540)%360)-180;drag.o=drag.o0-da/22.5;setRing(drag.i,drag.o);});
+ var up=function(){if(!drag)return;ST.JO[drag.i]=mod(Math.round(drag.o),16);drag=null;save();renderGep();};
+ s.addEventListener('pointerup',up);s.addEventListener('pointercancel',up);}
+// ===== Gép képernyő =====
+function renderGep(){var S=sky(ST.ms);var Mx=ST.JO.map(function(o){return ARC[o];});var A=answer(Mx,S);
+ var h='<div class="plate inst">'+instrument(S,ST.first)+'</div>';
+ h+='<div class="row note" style="justify-content:center;margin:-2px 0 4px">Húzd az íveket körben. A zöld vonalnál látszó figura az Anya.</div>';
+ h+='<div class="mothers">'+Mx.map(function(v,i){return '<div class="plate mother" style="margin:0;padding:8px 2px"><div style="display:flex;justify-content:center">'+figSvg(v,40,true)+'</div><b class="lat">'+lat(v)+'</b><div class="stp"><button aria-label="'+(i+1)+'. ív vissza" data-r="'+i+'" data-d="-1">‹</button><button aria-label="'+(i+1)+'. ív előre" data-r="'+i+'" data-d="1">›</button></div></div>';}).join('')+'</div>';
+ var pct=(Math.max(-6,Math.min(6,A.score))+6)/12*100;
+ h+='<div class="plate ans"><div class="row" style="justify-content:space-between"><span class="sm">Válasz a mi szabályaink szerint</span><span class="chip ass">feltevés</span></div><div class="row" style="gap:14px;margin:6px 0">'+figSvg(A.R,66)+'<div><h2>'+lat(A.R)+'</h2><p class="ind" style="margin:0">„'+A.lr[3]+'”</p></div></div>'
+  +'<div class="gauge"><div class="bar"></div><div class="t" style="left:50%"></div><div class="mk" style="left:'+pct+'%"></div></div><div class="gl"><span>kedvezőtlen</span><b>'+(A.score>0?'+':'')+A.score+' · '+A.verdict+'</b><span>kedvező</span></div></div>';
+ h+='<div class="plate"><details><summary>Hogyan jött ki? Szabályok</summary>'+A.L.map(function(r){return '<div class="rule"><div class="row" style="justify-content:space-between"><span class="chip '+(r.tag=='src'?'src':'ass')+'">'+r.k+' · '+(r.tag=='src'?'forrás':'feltevés')+'</span>'+(r.s!==undefined?'<span class="sc">'+(r.s>0?'+':'')+r.s+'</span>':'')+'</div><div style="margin-top:3px">'+r.t+'</div></div>';}).join('')
+  +'<div class="tg" style="margin-top:10px">'+['R2','R3','R4','R5'].map(function(k){return '<label><input type="checkbox" data-t="'+k+'"'+(ST.RON[k]?' checked':'')+'> '+k+'</label>';}).join('')+'</div></details>'
+  +'<details><summary>Mi biztos, mi nem?</summary><div class="sm"><p><b>Forrás:</b> a 16 figura sorrendje a tárcsán, a nagy tárcsa holdházai és jelzései (Savage-Smith és Smith), az ívek elve.</p><p><b>Saját számolás:</b> a lánc (Lányok, Unokák, Tanúk, Bíró), a Nap, a Hold és a bolygók helye (JPL-elemek, PyEphem-mel összevetve).</p><p><b>Feltevés:</b> az egyenlő holdház-felosztás, a jelzések pontozása, a Hold-fázis és a Merkúr hatása. A készülék ezeket nem írja le. A válasz vizsgálható modell, nem előrejelzés.</p></div></details></div>';
+ $('gep').innerHTML=h;ST.first=false;bindInst();
+ $('gep').querySelectorAll('.stp button').forEach(function(b){b.onclick=function(){var i=+b.dataset.r;ST.JO[i]=mod(ST.JO[i]+(+b.dataset.d),16);save();renderGep();};});
+ $('gep').querySelectorAll('input[data-t]').forEach(function(c){c.onchange=function(){ST.RON[c.dataset.t]=c.checked;save();var o=$('gep').querySelector('details').open;renderGep();$('gep').querySelector('details').open=o;};});}
+// ===== Tárcsa =====
+function renderTarcsa(){var p=ST.pos,h='<div class="plate inst"><svg viewBox="0 0 400 400" width="100%" aria-label="Kis tárcsa 16 szektorral és nyitott ablakkal"><circle cx="200" cy="200" r="199" fill="url(#brass)" stroke="#2a2112"/><circle cx="200" cy="200" r="199" fill="url(#hatch)"/><g class="disc" id="discg" style="transform:rotate('+(-p*360/17)+'deg)">';
+ for(var j=0;j<17;j++){var th=j*360/17,a=pol(120,th),b=pol(190,th+180/17),c=pol(40,th+180/17);var pl=pol(155,th);
+  var d1=pol(80,th-180/17),d2=pol(196,th-180/17);h+='<line x1="'+d1[0].toFixed(1)+'" y1="'+d1[1].toFixed(1)+'" x2="'+d2[0].toFixed(1)+'" y2="'+d2[1].toFixed(1)+'" stroke="#2a2112" stroke-opacity=".6"/>';
+  if(j<16)h+='<g transform="translate('+pl[0].toFixed(1)+' '+pl[1].toFixed(1)+') rotate('+th+') scale(1.5)">'+studs(DIAL[j][0])+'</g>';
+  else h+='<g transform="translate('+pl[0].toFixed(1)+' '+pl[1].toFixed(1)+') rotate('+th+')"><rect x="-9" y="-14" width="18" height="28" rx="4" fill="none" stroke="#2a2112" stroke-dasharray="3 3"/></g>';
+  h+='<g class="tp" data-j="'+j+'"><circle cx="'+pl[0].toFixed(1)+'" cy="'+pl[1].toFixed(1)+'" r="24" fill="transparent"/></g>';}
+ h+='<circle cx="200" cy="200" r="78" fill="#17110a" stroke="#dfe3e6" stroke-width=".8"/></g>';
+ h+='<rect x="172" y="22" width="56" height="86" rx="10" fill="none" stroke="#4fb3a1" stroke-width="2.4"/><path d="M194 12 L206 12 L200 22 Z" fill="#4fb3a1"/>';
+ var cur=p<16?DIAL[p]:null;h+='<text x="200" y="196" text-anchor="middle" font-size="12" fill="#ece4d0">'+(cur?'sorszám':'nyitott')+'</text><text x="200" y="222" text-anchor="middle" font-size="22" fill="#d8b865" font-family="Georgia,serif">'+(p+1)+' / 17</text></svg></div>';
+ h+='<input type="range" id="pr" min="0" max="16" value="'+p+'" aria-label="A mutató állása" style="width:100%;accent-color:#4fb3a1">';
+ h+='<div class="card">'+(cur?'<div class="f" style="margin:0"><div>'+figSvg(cur[0],64)+'</div><div><div class="nm lat big">'+lat(cur[0])+'</div><div class="ar">'+cur[1]+' · kód '+cur[0]+'</div></div></div>':'<h3>Nyitott ablak</h3><div class="note">Ebben az állásban az ablakban egyik figura sem látszik. Mit jelent a 17. állás, a forrás nem mondja meg.</div>')+'</div>';
+ h+='<div class="card note"><span class="chip src">forrás</span> A sorrend a felirat sorrendje az ablaktól az óramutató járásával megegyezően. <span class="chip calc">olvasat</span> A tárcsák leolvasott körsorrendje 16-ból 16 helyen egyezik vele, ha a külső gyűrű a legnagyobb bit.</div>';
+ $('tarcsa').innerHTML=h;$('pr').oninput=function(){ST.pos=+this.value;var g=$('discg');g.style.transform='rotate('+(-ST.pos*360/17)+'deg)';updTarcsa();};
+ $('tarcsa').querySelectorAll('.tp').forEach(function(g){g.onclick=function(){ST.pos=+g.dataset.j;renderTarcsa();};});}
+function updTarcsa(){var x=$('tarcsa').scrollTop;renderTarcsa();}
+// ===== Égbolt =====
+function renderEg(){var S=sky(ST.ms),T=((ST.ms-Date.UTC(2000,0,1,12))/864e5)/36525;var h='<div class="plate"><div class="row" style="justify-content:space-between"><b class="serif">Naprendszer felülnézetből</b><span class="chip calc">számolás</span></div>';
+ var W=400,c=200,R=176,amax=40;function xy(p){var r=Math.sqrt(p[0]*p[0]+p[1]*p[1]),a=Math.atan2(p[1],p[0])+rad(1.3969713*T),rr=Math.sqrt(r/amax)*R;return [c+rr*Math.cos(a),c-rr*Math.sin(a)];}
+ h+='<svg viewBox="0 0 400 400" width="100%" aria-label="A bolygók helyzete a Nap körül"><circle cx="200" cy="200" r="198" fill="#17110a"/>';
+ PL.forEach(function(p){h+='<circle cx="200" cy="200" r="'+(Math.sqrt(p[1][0]/amax)*R).toFixed(1)+'" fill="none" stroke="#a8863f" stroke-opacity=".5" stroke-width=".8"/>';});
+ h+='<circle cx="200" cy="200" r="'+(Math.sqrt(1/amax)*R).toFixed(1)+'" fill="none" stroke="#a8863f" stroke-opacity=".5" stroke-dasharray="2 3"/><circle cx="200" cy="200" r="7" fill="#d8b865"/>';
+ var e=xy(helio(EMB,T));h+='<circle cx="'+e[0].toFixed(1)+'" cy="'+e[1].toFixed(1)+'" r="4.2" fill="#4fb3a1"/><text x="'+(e[0]+7).toFixed(1)+'" y="'+(e[1]-6).toFixed(1)+'" font-size="11" fill="#ece4d0">Föld</text>';
+ PL.forEach(function(p){var q=xy(helio(p[1],T)),n=p[0].split(' ')[0];h+='<circle cx="'+q[0].toFixed(1)+'" cy="'+q[1].toFixed(1)+'" r="3.4" fill="#dfe3e6"/><text x="'+(q[0]+6).toFixed(1)+'" y="'+(q[1]-5).toFixed(1)+'" font-size="10.5" fill="#a79d86">'+n+'</text>';});
+ h+='</svg><div class="note">A távolság gyökskálán van, különben a külső bolygók kiszorítanák a belsőket. A Hold nincs rajta.</div></div>';
+ h+='<div class="card dark"><h3>Égitestek</h3>'+S.b.map(function(x){var idx=Math.floor(x[1]/(360/28)),rows=rowsOf(idx);return '<div class="body"><div class="big" style="width:30px;text-align:center">'+SYM[x[0]]+VS+'</div><div><div class="n">'+x[0]+(x[2]?' <span class="note">retrográd</span>':'')+'</div><div class="m">'+ZS[Math.floor(x[1]/30)]+VS+' '+SIGNS[Math.floor(x[1]/30)]+' '+(x[1]%30).toFixed(0)+'° · '+MN[idx]+'</div>'+(rows.length?'<div class="m" style="margin-top:2px">tárcsán: '+rows.map(function(r){return '<i class="lat">'+lat(r[2])+'</i> ('+r[3]+')';}).join('; ')+'</div>':'')+'</div></div>';}).join('')+'</div>';
+ h+='<div class="note" style="margin:8px 2px">A forrás a bolygókhoz semmit nem rendel. A táblázat csak azt mutatja, hol állnak, és melyik holdházban. A holdházak egyenlő, 12,857°-os felosztása a mi feltevésünk (al-sharaṭān 0° Kosnál).</div>';
+ $('eg').innerHTML=h;}
+// ===== Holdházak =====
+var QN=["Északi téli negyed","Nyugati őszi negyed","Déli nyári negyed","Keleti tavaszi negyed"];
+function renderHold(){var S=sky(ST.ms),key=norm(MN[S.midx]).replace(/^al-/,'');
+ var h='<div class="card dark"><div class="note">A Hold most a(z) <b style="color:var(--verd)">'+MN[S.midx]+'</b> holdházban jár. A tárcsa megfelelő sorai zöld kerettel vannak jelölve.</div><div class="chips" role="group" aria-label="Negyed szűrő"><button data-q="" class="'+(ST.qf===''?'on':'')+'">Mind</button>'+QN.map(function(q){return '<button data-q="'+q+'" class="'+(ST.qf===q?'on':'')+'">'+q.replace(' negyed','')+'</button>';}).join('')+'</div></div>';
+ var cur='';LD.forEach(function(r){if(ST.qf&&r[0]!==ST.qf)return;if(r[0]!==cur){cur=r[0];h+='<div class="q">'+cur+'</div>';}
+  var hit=norm(r[1]).indexOf(key)>=0;h+='<div class="plate" style="margin:8px 0"><div class="f'+(hit?' hit':'')+'" style="margin:0"><div>'+figSvg(r[2],54)+'</div><div><div class="nm lat">'+lat(r[2])+' <span class="ar" style="font-style:normal">· '+dialName(r[2])+'</span></div><div class="ar">'+r[1]+'</div><div class="ind"><b>'+r[3]+'</b></div></div></div></div>';});
+ h+='<div class="note" style="margin:10px 2px">Forrás: Savage-Smith és Smith, 1. táblázat. A tárcsán 14 különböző holdház szerepel (a dhirāʿ, nathra és ṭarf egy tételben), kelés vagy nyugvás szerint, nem a 28 teljes köre. A holdházak átírását a könyv oldalfotójával egyeztettem.</div>';
+ $('hold').innerHTML=h;$('hold').querySelectorAll('.chips button').forEach(function(b){b.onclick=function(){ST.qf=b.dataset.q;renderHold();};});}
+// ===== Lánc =====
+function renderLanc(){var Mx=ST.JO.map(function(o){return ARC[o];}),c=calc(Mx),g=function(a,n){return '<div class="it">'+figSvg(a,44)+'<span class="lat">'+lat(a)+'</span></div>';};
+ var rows=[['Anyák',Mx,'a négy ív adja'],['Lányok',c.D,'az Anyák sorai, átfordítva'],['Unokák',c.N,'I XOR II, III XOR IV, V XOR VI, VII XOR VIII'],['Tanúk',c.W,'IX XOR X, XI XOR XII'],['Bíró',[c.J],'XIII XOR XIV'],['Eredmény',[c.R],'XV XOR I (a mi láncunk, nem a forrás képlete)']];
+ var h='<div class="plate"><div class="row" style="justify-content:space-between"><b class="serif">A lánc</b><span class="chip calc">saját számolás</span></div>'+rows.map(function(r){return '<div class="chain"><div><b>'+r[0]+'</b></div><div><div class="fs">'+r[1].map(g).join('')+'</div><div class="sm">'+r[2]+'</div></div></div>';}).join('')+'</div>';
+ var wt=0;for(var k=0;k<4;k++)wt+=(c.J>>k)&1;
+ h+='<div class="card dark">A Bíró <b class="lat">'+lat(c.J)+'</b> egypontos sorainak száma: '+wt+' → <b style="color:var(--verd)">'+(wt%2?'páratlan (hiba)':'páros ✓')+'</b>. Mind a 65 536 Anya-kombinációra ellenőriztem, a Bíró mindig páros.</div>';
+ h+='<div class="note" style="margin:6px 2px">A 16 hely számozása: Anyák I–IV, Lányok V–VIII, Unokák IX–XII, Tanúk XIII–XIV, Bíró XV, Eredmény XVI. 1 szegecs = 1 bit, 2 szegecs = 0; a felső sor a legnagyobb bit. Az Anyákat a Gép fülön állítod be.</div>';
+ $('lanc').innerHTML=h;}
+// ===== vezérlés =====
+var R={gep:renderGep,tarcsa:renderTarcsa,eg:renderEg,hold:renderHold,lanc:renderLanc};
+function show(t){ST.tab=t;['gep','tarcsa','eg','hold','lanc'].forEach(function(k){$(k).className='screen'+(k===t?' on':'');});document.querySelectorAll('nav button').forEach(function(b){b.className=b.dataset.t===t?'on':'';b.setAttribute('aria-current',b.dataset.t===t?'page':'false');});R[t]();window.scrollTo(0,0);}
+function pad(n){return n<10?'0'+n:''+n;}
+function fmt(ms){var d=new Date(ms);return d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());}
+function setTime(ms){ST.ms=ms;$('ti').value=fmt(ms);R[ST.tab]();}
+document.querySelectorAll('nav button').forEach(function(b){b.onclick=function(){show(b.dataset.t);};});
+$('ti').onchange=function(){var m=Date.parse(this.value+':00Z');if(!isNaN(m))setTime(m);};
+$('tm').onclick=function(){setTime(ST.ms-864e5);};$('tp').onclick=function(){setTime(ST.ms+864e5);};$('tn').onclick=function(){setTime(Date.now());};
+ST.ms=Date.now();$('ti').value=fmt(ST.ms);show('gep');
+if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){navigator.serviceWorker.register('sw.js').catch(function(){});}
+</script></body></html>
