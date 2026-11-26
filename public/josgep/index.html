@@ -7,7 +7,7 @@ html,body{margin:0;background:var(--ground)}
 body{color:var(--parch);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:
  repeating-linear-gradient(-35deg,rgba(236,228,208,.025) 0 1px,transparent 1px 5px),var(--ground);min-height:100vh;padding-bottom:84px}
 .serif,h1,h2,h3{font-family:"Palatino Linotype","Book Antiqua",Palatino,"Iowan Old Style",Georgia,serif}
-header{position:sticky;top:0;z-index:5;background:var(--ground);box-shadow:0 6px 8px -4px var(--ground);padding:12px 16px 14px;max-width:560px;margin:auto}
+header{position:static;z-index:5;background:var(--ground);box-shadow:0 6px 8px -4px var(--ground);padding:12px 16px 14px;max-width:560px;margin:auto}
 h1{font-size:19px;font-weight:600;letter-spacing:.01em;margin:0 0 8px;color:var(--brass-hi)}
 h1 small{display:block;font:12.5px system-ui,sans-serif;color:var(--mut);letter-spacing:0;margin-top:1px}
 .tbar{display:flex;gap:8px;align-items:center}
@@ -115,6 +115,7 @@ details.card>summary{font-size:16px;color:var(--brass-hi)}
 .ith{color:var(--brass);font-size:12px;margin-top:16px;opacity:0;animation:itin 1s 3s forwards}
 @keyframes itin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.itt,.its,.itn,.itf,.ith{animation:none;opacity:1}}
+#osszes{scroll-margin-top:12px}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
@@ -481,7 +482,7 @@ function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp
 function dm(x){var d=Math.floor(x),m=Math.floor((x-d)*60);return d+'°'+pad(m)+'′';}
 function placeInfo(p,s){return s?p.name+' '+ZS[p.si]+VS+' '+SIGNS[p.si]+' '+dm(p.deg):'';}
 function calcBirth(){var b=ST.bt,r={};
- var dp=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b.date||'');if(!dp)return {err:'Add meg a születési dátumot.'};
+ var dp=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b.date||'');if(!dp)return {err:'Add meg a születési dátumot így: 1974.09.11 (év.hónap.nap).'};
  var y=+dp[1],mo=+dp[2],d=+dp[3];if(y<1800||y>2049)return {err:'A bolygóhelyek 1800 és 2049 között számolhatók.'};
  var tp=/^(\d{1,2}):(\d{2})$/.exec(b.unk?'12:00':(b.time||'')),h=tp?+tp[1]:NaN,mi=tp?+tp[2]:NaN;if(isNaN(h))return {err:'Add meg a születési időt, vagy jelöld, hogy nem ismered.'};
  var lat=parseFloat(b.lat),lon=parseFloat(b.lon);if(isNaN(lat)||isNaN(lon))return {err:'Válassz helyet a listából, vagy add meg a szélességet és a hosszúságot.'};
@@ -547,26 +548,29 @@ function summary(C){var N=C.N,b=ST.bt,S=C.S,num=C.num,L=[],nmz=(b.ln+' '+b.fn).t
  hh('Fontos');
  pp('A csillagászati számolás (helyek, aszcendens, MC) ellenőrzött. Az értelmezés hagyományos asztrológiai és számmisztikai szöveg, a Jós gép szabályai részben a mi feltevéseink. Ez nem tudományos előrejelzés, és nem tanács egészségi, pénzügyi vagy jogi döntésekhez.');
  return {html:H.join(''),text:'ÖSSZESÍTŐ — '+nmz+'\n'+T.join('\n')};}
+function normDate(s){s=String(s||'').trim();var m=s.match(/^(\d{4})\D*(\d{1,2})\D*(\d{1,2})\D*$/)||s.match(/^(\d{4})(\d{2})(\d{2})$/);if(!m)return '';var y=+m[1],mo=+m[2],d=+m[3],t=new Date(Date.UTC(y,mo-1,d));if(t.getUTCFullYear()!==y||t.getUTCMonth()!==mo-1||t.getUTCDate()!==d)return '';return y+'-'+pad(mo)+'-'+pad(d);}
+function isoHu(s){return s?String(s).replace(/-/g,'.'):'';}
 function renderSz(){var b=ST.bt;
  var h='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Születési adatok</h3><span class="chip src">helyben marad</span></div><div class="note" style="margin:4px 0 8px">Az adatokat csak ez a telefon tárolja, sehova nem megy el.</div><div class="fg">'
   +'<label>Vezetéknév<input id="b_ln" autocomplete="off" value="'+esc(b.ln)+'"></label><label>Keresztnév<input id="b_fn" autocomplete="off" value="'+esc(b.fn)+'"></label>'
-  +'<label>Dátum<input id="b_date" type="date" value="'+esc(b.date)+'"></label><label>Idő (helyi)<input id="b_time" type="time" value="'+esc(b.time)+'"'+(b.unk?' disabled':'')+'></label></div>'
+  +'<label>Dátum<input id="b_date" type="text" inputmode="numeric" autocomplete="off" placeholder="1974.09.11" maxlength="10" value="'+esc(isoHu(b.date))+'"></label><label>Idő (helyi)<input id="b_time" type="time" value="'+esc(b.time)+'"'+(b.unk?' disabled':'')+'></label></div>'
   +'<label class="ck"><input id="b_unk" type="checkbox"'+(b.unk?' checked':'')+'> A pontos időt nem ismerem (déli 12:00, aszcendens és házak nélkül)</label>'
   +'<label class="fl">Születési hely<input id="b_place" list="plist" autocomplete="off" placeholder="Kezdj gépelni: Szombathely" value="'+esc(b.place)+'"></label><datalist id="plist">'+PLACES.map(function(p){return '<option value="'+p[0]+'">';}).join('')+'</datalist>'
   +'<div class="fg"><label>Szélesség (É +)<input id="b_lat" inputmode="decimal" value="'+esc(b.lat)+'"></label><label>Hosszúság (K +)<input id="b_lon" inputmode="decimal" value="'+esc(b.lon)+'"></label></div>'
   +'<label class="fl">Időzóna<select id="b_tz">'+TZS.map(function(z){return '<option'+(z===b.tz?' selected':'')+'>'+z+'</option>';}).join('')+'</select></label>'
   +'<label class="ck"><input id="b_del" type="checkbox" checked> Számolás után töröld a beírt adataimat, csak a kész összesítőt tartsd meg</label><div class="row" style="margin-top:10px"><button class="btn" id="b_here">Jelenlegi helyem</button><button class="btn go" id="b_go">Térkép és összesítő</button></div><div class="note" id="b_msg" style="margin-top:6px"></div></div><div id="szres"></div><div id="svl"></div>';
  $('szul').innerHTML=h;
- var rd=function(){b.ln=$('b_ln').value.trim();b.fn=$('b_fn').value.trim();b.date=$('b_date').value;b.time=$('b_time').value||'12:00';b.unk=$('b_unk').checked;b.place=$('b_place').value.trim();b.lat=$('b_lat').value.replace(',','.');b.lon=$('b_lon').value.replace(',','.');b.tz=$('b_tz').value;};
+ var rd=function(){b.ln=$('b_ln').value.trim();b.fn=$('b_fn').value.trim();b.date=normDate($('b_date').value);b.time=$('b_time').value||'12:00';b.unk=$('b_unk').checked;b.place=$('b_place').value.trim();b.lat=$('b_lat').value.replace(',','.');b.lon=$('b_lon').value.replace(',','.');b.tz=$('b_tz').value;};
  $('b_unk').onchange=function(){$('b_time').disabled=this.checked;};
  $('b_place').onchange=function(){var v=norm(this.value);for(var i=0;i<PLACES.length;i++)if(norm(PLACES[i][0])===v){$('b_lat').value=PLACES[i][1];$('b_lon').value=PLACES[i][2];$('b_tz').value=PLACES[i][3]||'Europe/Budapest';$('b_msg').textContent='Hely kitöltve: '+PLACES[i][0]+'.';return;}$('b_msg').textContent='Ez a hely nincs a listában. Írd be a szélességet és a hosszúságot (például a térképalkalmazásból), és válaszd ki az időzónát.';};
  $('b_here').onclick=function(){$('b_lat').value=ST.loc.lat.toFixed(4);$('b_lon').value=ST.loc.lon.toFixed(4);$('b_place').value='';$('b_msg').textContent='A jelenlegi helyed koordinátái beírva ('+(ST.loc.src==='GPS'?'GPS':'alapértelmezett Budapest')+'). A GPS-t a fejlécben a hely gombbal kérheted le a többi fülön.';};
  $('szres').onclick=function(e){var b2=e.target.closest&&e.target.closest('[data-hzb]');if(!b2)return;var m=b2.dataset.hzb;this.querySelectorAll('.hz').forEach(function(x){x.hidden=x.dataset.hz!==m;});this.querySelectorAll('[data-hzb]').forEach(function(x){x.className='btn'+(x.dataset.hzb===m?' go':'');});};
  $('b_go').onclick=function(){rd();var del=$('b_del').checked,r=showSz();if(!r)return;
   if(del){var a=getSv();a.unshift({title:r.title,ms:Date.now(),h:r.h,text:r.text});a=a.slice(0,6);
-   if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő elmentve (lent). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
+   if(putSv(a)){for(var k in BTD)if(k!=='tz')b[k]=BTD[k];saveBT();['b_ln','b_fn','b_date','b_place','b_lat','b_lon'].forEach(function(i){$(i).value='';});$('b_time').value='12:00';$('b_time').disabled=false;$('b_unk').checked=false;$('b_msg').textContent='A beírt adataid törölve, az összesítő automatikusan elmentve (a Mentett összesítők között, az űrlap alatt). A mentett anyag a nevet és a születési dátumot tartalmazza.';listSv();}
    else $('b_msg').textContent='Az összesítőt nem sikerült elmenteni (nincs hely), ezért az adataid megmaradtak. Töröld a régi összesítőket.';}
-  else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést.';}};
+  else{saveBT();$('b_msg').textContent='Az adataid megmaradtak a telefonon, mert kikapcsoltad a törlést. Az összesítő tetején a Mentés gombbal elmentheted.';}
+  $('osszes').scrollIntoView();};
  listSv();
  if(b.date)showSz();}
 // ===== Idősáv: diagram, időszakok, számmisztikai hónapok =====
@@ -634,8 +638,12 @@ function showSz(){var C=calcBirth(),o=$('szres');if(C.err){o.innerHTML='<div cla
  h+='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">A Jós gép a születési égbolton</h3><span class="chip ass">feltevés</span></div><div class="row" style="gap:12px;margin:8px 0">'+figSvg(A.R,58)+'<div><div class="serif lat" style="font-size:22px">'+lat(A.R)+'</div><div class="m" style="color:var(--mut)">„'+A.lr[3]+'”</div><div><b>'+(A.score>0?'+':'')+A.score+' · '+A.verdict+'</b></div></div></div>'
   +'<div class="note">A négy Anya a Gép fülön beállított tárcsaállásból jön, a Nap, a Hold, a jegyek és a horizont pedig a születési időpontból és helyről. Állítsd át a tárcsákat a Gép fülön, ha más kérdésre kérsz választ.</div>'
   +'<details><summary>Szabályok</summary>'+A.L.map(function(r){return '<div class="rule2"><span class="chip '+(r.tag=='src'?'src':'ass')+'">'+r.k+' · '+(r.tag=='src'?'forrás':'feltevés')+'</span> '+r.t+'</div>';}).join('')+'</details></div>';
- h+='<div class="card dark" id="osszes"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">számolás + hagyomány</span></div><div class="sum">'+sm.html+'</div><div class="row" style="margin-top:10px"><button class="btn go" id="s_copy">Másolás</button><button class="btn" id="s_share">Megosztás</button></div><div class="note" id="s_msg" style="margin-top:6px"></div></div>';
+ var hs='<div class="card dark" id="osszes"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">számolás + hagyomány</span></div><div class="row" style="margin:8px 0"><button class="btn go" id="s_save">Mentés</button><button class="btn" id="s_copy">Másolás</button><button class="btn" id="s_share">Megosztás</button></div><div class="note" id="s_msg" style="margin-bottom:6px"></div><div class="row" style="margin-bottom:8px;flex-wrap:wrap"><span class="note">Ugrás:</span><button class="btn" data-j="Számmisztika">Számmisztika</button><button class="btn" data-j="Idősáv">Idősáv</button><button class="btn" data-j="A Jós gép">Jós gép</button></div><div class="sum">'+sm.html+'</div></div>';
+ h=hs+h;
  o.innerHTML=h;bindSum(sm.text);
+ o.querySelectorAll('button[data-j]').forEach(function(bt){bt.onclick=function(){var hs=o.querySelectorAll('#osszes .sum h3'),t=bt.dataset.j;for(var i=0;i<hs.length;i++){if(hs[i].textContent.indexOf(t)===0){hs[i].scrollIntoView();return;}}$('s_msg').textContent='Ez a rész nem található az összesítőben.';};});
+ var ttl=((b.ln+' '+b.fn).trim()||'névtelen')+' · '+b.date;
+ $('s_save').onclick=function(){var a=getSv();a.unshift({title:ttl,ms:Date.now(),h:h,text:sm.text});a=a.slice(0,6);$('s_msg').textContent=putSv(a)?'Elmentve a Mentett összesítők közé (Születés fül, az űrlap alatt).':'Nem sikerült elmenteni (nincs hely), töröld a régi összesítőket.';listSv();};
  return {h:h,text:sm.text,title:((b.ln+' '+b.fn).trim()||'névtelen')+' · '+b.date};}
 function bindSum(text){
  $('s_copy').onclick=function(){var m=$('s_msg');try{navigator.clipboard.writeText(text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült. Jelöld ki és másold a szöveget kézzel.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}};
@@ -644,7 +652,7 @@ function getSv(){try{return JSON.parse(localStorage.getItem('tablaSV')||'[]')||[
 function putSv(a){try{localStorage.setItem('tablaSV',JSON.stringify(a));return true;}catch(e){return false;}}
 function listSv(){var a=getSv(),o=$('svl');if(!o)return;if(!a.length){o.innerHTML='';return;}
  o.innerHTML='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Mentett összesítők</h3><span class="chip src">csak a kész anyag</span></div>'+a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div><div class="m">mentve: '+new Date(x.ms).toLocaleDateString('hu-HU')+'</div></div><div class="row"><button class="btn" data-o="'+i+'">Megnyitás</button><button class="btn" data-x="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'</div>';
- o.querySelectorAll('button[data-o]').forEach(function(b){b.onclick=function(){var x=getSv()[+b.dataset.o];if(x){$('szres').innerHTML=x.h;bindSum(x.text);$('szres').scrollIntoView();}};});
+ o.querySelectorAll('button[data-o]').forEach(function(b){b.onclick=function(){var x=getSv()[+b.dataset.o];if(x){$('szres').innerHTML=x.h;bindSum(x.text);var sv=$('s_save');if(sv)sv.hidden=true;$('szres').scrollIntoView();}};});
  o.querySelectorAll('button[data-x]').forEach(function(b){b.onclick=function(){var a2=getSv();a2.splice(+b.dataset.x,1);putSv(a2);listSv();};});}
 
 // ===== Útmutató =====
