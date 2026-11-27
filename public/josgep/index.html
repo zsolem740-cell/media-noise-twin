@@ -116,6 +116,8 @@ details.card>summary{font-size:16px;color:var(--brass-hi)}
 @keyframes itin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.itt,.its,.itn,.itf,.ith{animation:none;opacity:1}}
 #osszes{scroll-margin-top:12px}
+
+.acc{border-collapse:collapse;width:100%;font-size:13px}.acc th,.acc td{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.acc th:first-child,.acc td:first-child{text-align:left}.acc th{color:var(--mut);font-weight:600}.accw{overflow-x:auto}
 </style></head><body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <radialGradient id="stud" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#d3d8dc"/><stop offset="1" stop-color="#7f858a"/></radialGradient>
@@ -364,6 +366,19 @@ function renderTarcsa(){var p=ST.pos,h='<div class="plate inst"><svg viewBox="0 
  $('tarcsa').innerHTML=h;$('pr').oninput=function(){ST.pos=+this.value;var g=$('discg');g.style.transform='rotate('+(-ST.pos*360/17)+'deg)';updTarcsa();};
  $('tarcsa').querySelectorAll('.tp').forEach(function(g){g.onclick=function(){ST.pos=+g.dataset.j;renderTarcsa();};});}
 function updTarcsa(){var x=$('tarcsa').scrollTop;renderTarcsa();}
+var ACC={d:[['1850.01.01',-3786782400000],['1925.03.21',-1413201600000],['1960.07.01',-299851200000],['2000.01.01',946728000000],['2026.11.27',1795780800000],['2050.01.01',2524651200000],['2080.01.01',3471336000000]],r:[[280.80547,141.75795,288.54006,266.22253,81.27926,173.01676,1.89363,22.32777,332.7044,26.91508],[0.37317,320.23296,15.17301,351.77314,58.37945,288.82917,223.69245,351.97888,140.2201,101.41237],[99.63664,181.72633,120.08543,102.06295,38.05415,267.29243,285.5463,138.85456,216.43727,154.13455],[280.37858,223.32763,271.8989,241.5742,327.97114,25.25551,40.39667,314.81789,303.20242,251.46282],[245.25132,105.69158,227.10491,206.20164,150.5962,146.63049,8.09037,63.60164,1.67644,303.48683],[281.26001,25.38275,269.60182,281.87933,228.03199,121.62262,297.63364,170.7231,53.5873,337.5372],[280.97421,24.95663,285.3983,247.29204,216.38092,295.18565,303.52265,300.51483,122.40773,12.16306]],s:[[0.32,0.67,0.95],[4.91,14.85,28.12],[0.32,0.69,1.11],[0.24,0.61,1.52],[0.33,1.36,3.14],[2.38,7.17,10.2],[5.11,11.36,15.97],[0.73,1.97,3.44],[0.38,0.88,1.08],[0.31,0.72,0.88]],mm:0.78,mn:20000,n:1500};
+// ===== Pontossági kártya (az égbolt-számolás mérése) =====
+function accCard(){var NM=["Nap","Hold","Merkúr","Vénusz","Mars","Jupiter","Szaturnusz","Uránusz","Neptunusz","Plútó"],f1=function(x){return String(x.toFixed(1)).replace('.',',');},
+ live=ACC.d.map(function(d,j){var ms=d[1],a=astro(ms);return NM.map(function(n,i){var m=i==0?a.sun:i==1?a.moon:plonlat(PL[i-2][1],ms)[0],e=((m-ACC.r[j][i]+540)%360)-180;return e*60;});});
+ var h='<details class="card dark"><summary>Mennyire pontos az égbolt-számolásunk?</summary><div class="sm">';
+ h+='<p><span class="chip src">forrás</span> Független referencia: a PyEphem 4.2.1 könyvtár (VSOP87- és ELP2000-82-alapú sorok), a Nap, a Hold és a bolygók látszólagos, Földről nézett hosszúsága a dátum ekvinokciumában.</p>';
+ h+='<p><span class="chip calc">számolás</span> Az eltérés: a mi számolásunk mínusz a referencia, ívpercben (1° = 60′). Az első táblázat '+ACC.n+' véletlen időpontból (1900–2060) mért értékeket mutatja. A mintadátumok sorait az app most, élőben számolja ki.</p>';
+ h+='<table class="acc"><tr><th>Égitest</th><th>medián</th><th>95%</th><th>legnagyobb</th></tr>'+NM.map(function(n,i){return '<tr><td>'+n+'</td><td>'+f1(ACC.s[i][0])+'′</td><td>'+f1(ACC.s[i][1])+'′</td><td>'+f1(ACC.s[i][2])+'′</td></tr>';}).join('')+'</table>';
+ h+='<p style="margin-top:10px"><b>Mintadátumok</b> (előjeles eltérés, ′):</p><div class="accw"><table class="acc"><tr><th>Égitest</th>'+ACC.d.map(function(d){return '<th>'+d[0]+'</th>';}).join('')+'</tr>'+NM.map(function(n,i){return '<tr><td>'+n+'</td>'+live.map(function(c){return '<td>'+f1(c[i])+'</td>';}).join('')+'</tr>';}).join('')+'</table></div>';
+ h+='<p><span class="chip ass">feltevés</span> A referenciát tekintjük igaznak (ívmásodperc nagyságrendű pontosság). A referencia látszólagos helyet ad (nutációval, aberrációval), a mi számolásunk nem tartalmazza ezeket, ez a Napnál is ~0,3′ eltérést okoz. A 2080-as sor a bolygópálya-elemek érvényességi tartományán (1800–2050) kívül van.</p>';
+ h+='<p><b>Mit jelent ez?</b> A Nap, a Merkúr, a Vénusz, a Neptunusz és a Plútó legfeljebb ~1,5′ (0,03°) belül van, a Mars és az Uránusz legfeljebb ~3,5′ belül. A Jupiter és a Szaturnusz jellemzően 2–5′-et, legfeljebb 10–16′-et téved. A Hold legfeljebb ~28′-et (0,47°) tér el. A 28 holdház egyenként 12,86° széles, ezért a Hold ~'+String(ACC.mm).replace('.',',')+'%-ban esne más holdházba ('+ACC.mn+' időpontos mintán). Jegyhatárnál a Nap eltérése gyakorlatilag nem számít.</p>';
+ h+='<p class="note">Ez mérés, nem javítás: a számolást nem változtattuk meg. A Hold pontosítása (teljesebb Meeus-sor) külön lépés lenne.</p></div></details>';
+ return h;}
 // ===== Égbolt =====
 function renderEg(){var S=sky(ST.ms),T=((ST.ms-Date.UTC(2000,0,1,12))/864e5)/36525;var h='<div class="plate"><div class="row" style="justify-content:space-between"><b class="serif">Naprendszer felülnézetből</b><span class="chip calc">számolás</span></div>';
  var W=400,c=200,R=176,amax=40;function xy(p){var r=Math.sqrt(p[0]*p[0]+p[1]*p[1]),a=Math.atan2(p[1],p[0])+rad(1.3969713*T),rr=Math.sqrt(r/amax)*R;return [c+rr*Math.cos(a),c-rr*Math.sin(a)];}
@@ -375,6 +390,7 @@ function renderEg(){var S=sky(ST.ms),T=((ST.ms-Date.UTC(2000,0,1,12))/864e5)/365
  h+='</svg><div class="note">A távolság gyökskálán van, különben a külső bolygók kiszorítanák a belsőket. A Hold nincs rajta.</div></div>';
  h+='<div class="card dark"><h3>Égitestek</h3>'+S.b.map(function(x){var idx=Math.floor(x[1]/(360/28)),rows=rowsOf(idx);return '<div class="body"><div class="big" style="width:30px;text-align:center">'+SYM[x[0]]+VS+'</div><div><div class="n">'+x[0]+(x[2]?' <span class="note">retrográd</span>':'')+' <span class="note">· '+(x[3]>=0?'horizont felett '+x[3].toFixed(0)+'°':'horizont alatt '+Math.abs(x[3]).toFixed(0)+'°')+', '+['É','ÉK','K','DK','D','DNy','Ny','ÉNy'][Math.round(x[4]/45)%8]+'</span></div><div class="m">'+ZS[Math.floor(x[1]/30)]+VS+' '+SIGNS[Math.floor(x[1]/30)]+' '+(x[1]%30).toFixed(0)+'° · '+MN[idx]+'</div>'+(rows.length?'<div class="m" style="margin-top:2px">tárcsán: '+rows.map(function(r){return '<i class="lat">'+lat(r[2])+'</i> ('+r[3]+')';}).join('; ')+'</div>':'')+'</div></div>';}).join('')+'</div>';
  h+='<div class="note" style="margin:8px 2px">A forrás a bolygókhoz semmit nem rendel. A táblázat csak azt mutatja, hol állnak, és melyik holdházban. A holdházak egyenlő, 12,857°-os felosztása a mi feltevésünk (al-sharaṭān 0° Kosnál).</div>';
+ h+=accCard();
  $('eg').innerHTML=h;}
 // ===== Holdházak =====
 var QN=["Északi téli negyed","Nyugati őszi negyed","Déli nyári negyed","Keleti tavaszi negyed"];
