@@ -484,8 +484,13 @@ function qSumm(){var A=ST.lastA,T=allT()[QS.topic];if(!A)return null;
  return {text:text,html:html,title:fmt(Date.now()).replace('T',' ')+' · '+(T?T.n:'-')+' · '+lat(A.R)};}
 function getQL(){try{return JSON.parse(localStorage.getItem('tablaQL')||'[]')||[];}catch(e){return [];}}
 function putQL(a){try{localStorage.setItem('tablaQL',JSON.stringify(a));return true;}catch(e){return false;}}
-function qSaveLog(sm){var a=getQL();a.unshift({ms:Date.now(),title:sm.title,h:sm.html,text:sm.text});return putQL(a.slice(0,30));}
-function qLogHtml(){var a=getQL();if(!a.length)return '';return '<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdésnapló</h3><span class="chip src">csak a kész anyag</span></div>'+a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div></div><div class="row"><button class="btn" data-qo="'+i+'">Megnyitás</button><button class="btn" data-qx="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'<div id="qlv"></div></div>';}
+function qSaveLog(sm){var a=getQL(),A=ST.lastA||{};a.unshift({ms:Date.now(),title:sm.title,h:sm.html,text:sm.text,sc:(typeof A.score=='number'?A.score:null)});return putQL(a.slice(0,30));}
+var QRES={y:'bejött',p:'részben jött be',n:'nem jött be'};
+function qTally(a){var c={y:0,p:0,n:0,m:0};a.forEach(function(x){if(x.r&&c[x.r]!==undefined){c[x.r]++;c.m++;}});return c;}
+function qLogHtml(){var a=getQL();if(!a.length)return '';var c=qTally(a);
+ return '<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdésnapló</h3><span class="chip src">csak a kész anyag</span></div>'
+ +(c.m?'<div class="note" style="margin:6px 0">Jelölve: '+c.m+' / '+a.length+'. Bejött: '+c.y+', részben: '+c.p+', nem jött be: '+c.n+'. Ez a te megítélésed: a gép nem látja, és a szabályokon nem változtat. '+(c.m<30?'Ennyi adatból még nem lehet következtetni.':'')+'</div>':'')
+ +a.map(function(x,i){return '<div class="body" style="grid-template-columns:1fr auto"><div><div class="n">'+esc(x.title)+'</div><div class="note">'+(x.r?'<span class="chip">'+QRES[x.r]+'</span>':'még nincs jelölve')+'</div></div><div class="row"><button class="btn" data-qo="'+i+'">Megnyitás</button><button class="btn" data-qx="'+i+'" aria-label="Törlés">Törlés</button></div></div>';}).join('')+'<div id="qlv"></div></div>';}
 function qCopy(text,m){try{navigator.clipboard.writeText(text).then(function(){m.textContent='Vágólapra másolva.';},function(){m.textContent='A másolás nem sikerült.';});}catch(e){m.textContent='A másolás ezen a böngészőn nem érhető el.';}}
 function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.querySelector('header').className=QS.on?'slim':'';var T=allT(),h='<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdezz a géptől</h3><span class="chip ass">feltevés</span></div>';
  if(QS.on){var n=QS.bits.length,mi=Math.floor(n/4),cur=QS.bits.slice(mi*4),tp=T[QS.topic];
@@ -511,7 +516,9 @@ function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.query
  o.innerHTML=h+'</div>'+ex;
  var q=function(i){return $(i);};
  if(sm0){q('qs_cp').onclick=function(){qCopy(sm0.text,q('qs_msg'));};q('qs_sh').onclick=function(){if(navigator.share){navigator.share({title:'Kérdés összesítő',text:sm0.text}).catch(function(){});}else q('qs_msg').textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
- o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};$('qlv').scrollIntoView();};});
+ o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="note" style="margin-top:10px">Mi lett belőle a valóságban? (A te megítélésed, bármikor átírhatod.)</div><div class="chips" id="qv_rs">'+['y','p','n'].map(function(k){return '<button data-qr="'+k+'"'+(x.r===k?' class="on"':'')+'>'+QRES[k]+'</button>';}).join('')+(x.r?'<button data-qr="0">Jelölés törlése</button>':'')+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};
+  $('qv_rs').querySelectorAll('button[data-qr]').forEach(function(rb){rb.onclick=function(){var arr=getQL(),i=+b.dataset.qo;if(!arr[i])return;if(rb.dataset.qr==='0'){delete arr[i].r;delete arr[i].rms;}else{arr[i].r=rb.dataset.qr;arr[i].rms=Date.now();}putQL(arr);renderQ();var nb=document.querySelector('button[data-qo="'+i+'"]');if(nb)nb.click();};});
+  $('qlv').scrollIntoView();};});
  o.querySelectorAll('button[data-qx]').forEach(function(b){b.onclick=function(){var a=getQL();a.splice(+b.dataset.qx,1);putQL(a);renderQ();};});
  if(q('q_stop')){q('q_stop').onclick=qStop;}
  if(q('q_go'))q('q_go').onclick=qStart;
