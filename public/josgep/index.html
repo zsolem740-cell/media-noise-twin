@@ -494,6 +494,26 @@ function qmAll(){var m={};getQM().forEach(function(x){m[x.ms]=x;});getQL().forEa
 function qmSet(ms,sc,r){var a=getQM().filter(function(x){return x.ms!==ms;});if(r)a.unshift({ms:ms,sc:(typeof sc=='number'?sc:null),r:r});putQM(a);}
 function binomP(k,n){var pr=[],c=1,i;for(i=0;i<=n;i++){pr.push(c);c=c*(n-i)/(i+1);}var tot=Math.pow(2,n),obs=pr[k],s=0;for(i=0;i<=n;i++)if(pr[i]<=obs*(1+1e-9))s+=pr[i];return Math.min(1,s/tot);}
 function wilson(k,n){var z=1.96,p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return [Math.max(0,c-h),Math.min(1,c+h)];}
+// ===== Biztonsági mentés és visszatöltés (a napló és a jelölések; név és születési adat nincs benne) =====
+function qBackupObj(){return {app:'josgep',v:1,t:new Date().toISOString(),QL:getQL().map(function(x){return {ms:x.ms,title:x.title,text:x.text,sc:x.sc,r:x.r,rms:x.rms};}),QM:getQM()};}
+function qbBlob(){return new Blob([JSON.stringify(qBackupObj())],{type:'application/json'});}
+function qRestore(txt){var o;try{o=JSON.parse(txt);}catch(e){return 'Ez nem érvényes mentésfájl.';}
+ if(!o||o.app!=='josgep'||!Array.isArray(o.QL)||!Array.isArray(o.QM))return 'Ez nem Jósgép-mentés.';
+ var okr=function(r){return r==='y'||r==='p'||r==='n';},num=function(x){return typeof x=='number'&&isFinite(x);};
+ var ql=getQL(),have={},addL=0,addM=0;ql.forEach(function(x){have[x.ms]=1;});
+ o.QL.slice(0,100).forEach(function(x){if(!x||!num(x.ms)||have[x.ms]||typeof x.text!=='string'||typeof x.title!=='string')return;
+  var tx=x.text.slice(0,6000),e={ms:x.ms,title:x.title.slice(0,200),text:tx,h:'<p>'+esc(tx).replace(/\n/g,'<br>')+'</p>',sc:num(x.sc)?x.sc:null};
+  if(okr(x.r)){e.r=x.r;if(num(x.rms))e.rms=x.rms;}ql.push(e);have[x.ms]=1;addL++;});
+ ql.sort(function(a,b){return b.ms-a.ms;});putQL(ql.slice(0,30));
+ var qm=getQM(),hm={};qm.forEach(function(x){hm[x.ms]=1;});
+ o.QM.slice(0,500).forEach(function(x){if(!x||!num(x.ms)||hm[x.ms]||!okr(x.r))return;qm.push({ms:x.ms,sc:num(x.sc)?x.sc:null,r:x.r});hm[x.ms]=1;addM++;});
+ qm.sort(function(a,b){return b.ms-a.ms;});putQM(qm);
+ return 'Visszatöltve: '+addL+' új naplóbejegyzés, '+addM+' új jelölés. A már meglévőket nem írtam felül.';}
+function qBackupHtml(){return '<details class="card dark"><summary>Biztonsági mentés</summary><div class="sm"><p>A Kérdésnapló és a jelölések csak ebben a telefonban vannak: ha törlöd a böngésző adatait, elvesznek. Innen fájlba mentheted őket, és később visszatöltheted. A fájlban a kérdések összesítője van (a kérdésed szövegével, az időponttal és a hellyel), a gép pontszáma és a jelölések. Név és születési adat nincs benne.</p><div class="row" style="flex-wrap:wrap;gap:8px"><button class="btn" id="qb_dl">Mentés fájlba</button><button class="btn" id="qb_sh">Megosztás</button><label class="btn" for="qb_in" style="cursor:pointer">Visszatöltés fájlból</label><input type="file" id="qb_in" accept=".json,application/json" hidden></div><div class="note" id="qb_msg"></div></div></details>';}
+function qBackupBind(){var dl=$('qb_dl');if(!dl)return;
+ dl.onclick=function(){var u=URL.createObjectURL(qbBlob()),a=document.createElement('a');a.href=u;a.download='josgep-mentes-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},4000);$('qb_msg').textContent='Letöltve (a Letöltések mappába).';};
+ $('qb_sh').onclick=function(){try{var f=new File([qbBlob()],'josgep-mentes.json',{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:'Jósgép mentés'}).catch(function(){});}else $('qb_msg').textContent='A megosztás ezen a böngészőn nem érhető el, használd a Mentés fájlba gombot.';}catch(e){$('qb_msg').textContent='A megosztás nem sikerült, használd a Mentés fájlba gombot.';}};
+ $('qb_in').onchange=function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){var m=qRestore(String(rd.result));renderQ();var d=document.querySelector('#qb_dl');if(d){var det=d.closest('details');if(det)det.open=true;}$('qb_msg').textContent=m;};rd.onerror=function(){$('qb_msg').textContent='A fájl nem olvasható.';};rd.readAsText(f);};}
 function qMeasHtml(){var all=qmAll();if(!all.length)return '';putQM(all);
  var pc=function(x){return String(Math.round(x*100)).replace('.',',')+'%';},dirs=all.filter(function(x){return typeof x.sc=='number'&&x.sc!==0&&(x.r==='y'||x.r==='n');}),
  k=dirs.filter(function(x){return x.r==='y';}).length,n=dirs.length,part=all.filter(function(x){return x.r==='p';}).length,mix=all.filter(function(x){return typeof x.sc=='number'&&x.sc===0&&x.r!=='p';}).length,old=all.filter(function(x){return typeof x.sc!='number'&&x.r!=='p';}).length;
@@ -530,13 +550,14 @@ function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.query
  var ex='',sm0=null;
  if(QS.done&&!QS.on){sm0=qSumm();if(sm0){var sv=true;if(!QS.saved){sv=qSaveLog(sm0);QS.saved=true;}
   ex+='<div class="card dark" id="qsum"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">forrás + számolás + feltevés</span></div><div class="note" style="margin:4px 0">'+(sv?'Elmentve a Kérdésnaplóba (alul).':'Nem sikerült elmenteni (nincs hely), töröld a régi bejegyzéseket.')+'</div><div class="row" style="margin:8px 0"><button class="btn go" id="qs_cp">Másolás</button><button class="btn" id="qs_sh">Megosztás</button></div><div class="note" id="qs_msg"></div><div class="sum">'+sm0.html+'</div></div>';}}
- ex+=qLogHtml()+qMeasHtml();
+ ex+=qLogHtml()+qMeasHtml()+qBackupHtml();
  o.innerHTML=h+'</div>'+ex;
  var q=function(i){return $(i);};
  if(sm0){q('qs_cp').onclick=function(){qCopy(sm0.text,q('qs_msg'));};q('qs_sh').onclick=function(){if(navigator.share){navigator.share({title:'Kérdés összesítő',text:sm0.text}).catch(function(){});}else q('qs_msg').textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
  o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="note" style="margin-top:10px">Mi lett belőle a valóságban? „Bejött” = a gép ítélete (kedvező / kedvezőtlen) szerint lett. A te megítélésed, bármikor átírhatod.</div><div class="chips" id="qv_rs">'+['y','p','n'].map(function(k){return '<button data-qr="'+k+'"'+(x.r===k?' class="on"':'')+'>'+QRES[k]+'</button>';}).join('')+(x.r?'<button data-qr="0">Jelölés törlése</button>':'')+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};
   $('qv_rs').querySelectorAll('button[data-qr]').forEach(function(rb){rb.onclick=function(){var arr=getQL(),i=+b.dataset.qo;if(!arr[i])return;if(rb.dataset.qr==='0'){delete arr[i].r;delete arr[i].rms;}else{arr[i].r=rb.dataset.qr;arr[i].rms=Date.now();}putQL(arr);qmSet(arr[i].ms,arr[i].sc,rb.dataset.qr==='0'?null:rb.dataset.qr);renderQ();var nb=document.querySelector('button[data-qo="'+i+'"]');if(nb)nb.click();};});
   $('qlv').scrollIntoView();};});
+ qBackupBind();
  var qd=$('qm_del');if(qd)qd.onclick=function(){if(!qd.dataset.sure){qd.dataset.sure='1';qd.textContent='Biztosan törlöd? Még egyszer';return;}var a=getQL();a.forEach(function(x){delete x.r;delete x.rms;});putQL(a);putQM([]);renderQ();};
  o.querySelectorAll('button[data-qx]').forEach(function(b){b.onclick=function(){var a=getQL();a.splice(+b.dataset.qx,1);putQL(a);renderQ();};});
  if(q('q_stop')){q('q_stop').onclick=qStop;}
