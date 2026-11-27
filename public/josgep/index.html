@@ -487,6 +487,24 @@ function putQL(a){try{localStorage.setItem('tablaQL',JSON.stringify(a));return t
 function qSaveLog(sm){var a=getQL(),A=ST.lastA||{};a.unshift({ms:Date.now(),title:sm.title,h:sm.html,text:sm.text,sc:(typeof A.score=='number'?A.score:null)});return putQL(a.slice(0,30));}
 var QRES={y:'bejött',p:'részben jött be',n:'nem jött be'};
 function qTally(a){var c={y:0,p:0,n:0,m:0};a.forEach(function(x){if(x.r&&c[x.r]!==undefined){c[x.r]++;c.m++;}});return c;}
+// ===== Mérés: találati arány a véletlenhez mérve (a jelölésekből, külön tárban, a napló 30-as korlátjától függetlenül) =====
+function getQM(){try{return JSON.parse(localStorage.getItem('tablaQM')||'[]')||[];}catch(e){return [];}}
+function putQM(a){try{localStorage.setItem('tablaQM',JSON.stringify(a.slice(0,500)));return true;}catch(e){return false;}}
+function qmAll(){var m={};getQM().forEach(function(x){m[x.ms]=x;});getQL().forEach(function(x){if(x.r)m[x.ms]={ms:x.ms,sc:(typeof x.sc=='number'?x.sc:null),r:x.r};});return Object.keys(m).map(function(k){return m[k];}).sort(function(a,b){return b.ms-a.ms;});}
+function qmSet(ms,sc,r){var a=getQM().filter(function(x){return x.ms!==ms;});if(r)a.unshift({ms:ms,sc:(typeof sc=='number'?sc:null),r:r});putQM(a);}
+function binomP(k,n){var pr=[],c=1,i;for(i=0;i<=n;i++){pr.push(c);c=c*(n-i)/(i+1);}var tot=Math.pow(2,n),obs=pr[k],s=0;for(i=0;i<=n;i++)if(pr[i]<=obs*(1+1e-9))s+=pr[i];return Math.min(1,s/tot);}
+function wilson(k,n){var z=1.96,p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return [Math.max(0,c-h),Math.min(1,c+h)];}
+function qMeasHtml(){var all=qmAll();if(!all.length)return '';putQM(all);
+ var pc=function(x){return String(Math.round(x*100)).replace('.',',')+'%';},dirs=all.filter(function(x){return typeof x.sc=='number'&&x.sc!==0&&(x.r==='y'||x.r==='n');}),
+ k=dirs.filter(function(x){return x.r==='y';}).length,n=dirs.length,part=all.filter(function(x){return x.r==='p';}).length,mix=all.filter(function(x){return typeof x.sc=='number'&&x.sc===0&&x.r!=='p';}).length,old=all.filter(function(x){return typeof x.sc!='number'&&x.r!=='p';}).length;
+ var h='<details class="card dark"><summary>Találati arány a véletlenhez mérve ('+n+' értékelhető)</summary><div class="sm">';
+ h+='<p><span class="chip calc">számolás</span> Jelölt kérdés: '+all.length+'. Értékelhető (a gép kedvező vagy kedvezőtlen ítéletet adott, és te „bejött" vagy „nem jött be" jelölést adtál): '+n+'. ';
+ if(n){var w=wilson(k,n),pv=binomP(k,n);h+='Bejött: '+k+' ('+pc(k/n)+'), 95%-os sáv: '+pc(w[0])+'–'+pc(w[1])+'. Pontos binomiális próba az 50%-os véletlennel szemben: p = '+String(pv.toFixed(3)).replace('.',',')+'.';}
+ h+=' Kihagyva: részben jött be ('+part+'), vegyes (0 pontos) ítélet ('+mix+'), pontszám nélküli régi bejegyzés ('+old+').</p>';
+ h+='<p><span class="chip ass">feltevés</span> „Bejött" azt jelenti: a gép ítélete (kedvező vagy kedvezőtlen) szerint lett. A véletlen mércéje 50%: ez csak akkor igaz, ha a kedvező és a kedvezőtlen valóság egyformán gyakori. Ha nem, a mérce elcsúszik.</p>';
+ h+='<p><b>Mit mond ez?</b> '+(n<30?'Még kevés az adat ('+n+'), ebből nem dönthető el, hogy van-e kapcsolat a gép ítélete és a valóság között.':(binomP(k,n)<0.05?'A találati arány eltér az 50%-tól, de ez egyetlen mérés, nem bizonyíték: a jelölés a te emlékeden múlik.':'Eltérés a véletlentől nem mutatható ki. Ez nem bizonyítja, hogy nincs kapcsolat, csak azt, hogy ennyi adatból nem látszik.'))+'</p>';
+ h+='<p class="note">Egy 60%-os találati arány kimutatásához az 50%-hoz képest kb. 190 értékelhető jelölés kell. Torzít, ha inkább arra emlékszel és azt jelölöd, ami bejött. A mérés külön tárban van, a napló 30-as korlátjától függetlenül, és csak a telefonban marad.</p>';
+ h+='<div class="row" style="margin-top:8px"><button class="btn" id="qm_del">Minden jelölés törlése</button></div><div class="note" id="qm_msg"></div></div></details>';return h;}
 function qLogHtml(){var a=getQL();if(!a.length)return '';var c=qTally(a);
  return '<div class="card dark"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Kérdésnapló</h3><span class="chip src">csak a kész anyag</span></div>'
  +(c.m?'<div class="note" style="margin:6px 0">Jelölve: '+c.m+' / '+a.length+'. Bejött: '+c.y+', részben: '+c.p+', nem jött be: '+c.n+'. Ez a te megítélésed: a gép nem látja, és a szabályokon nem változtat. '+(c.m<30?'Ennyi adatból még nem lehet következtetni.':'')+'</div>':'')
@@ -512,13 +530,14 @@ function renderQ(){var o=$('qbox');if(!o)return;if(ST.tab==='gep')document.query
  var ex='',sm0=null;
  if(QS.done&&!QS.on){sm0=qSumm();if(sm0){var sv=true;if(!QS.saved){sv=qSaveLog(sm0);QS.saved=true;}
   ex+='<div class="card dark" id="qsum"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Összesítő</h3><span class="chip ass">forrás + számolás + feltevés</span></div><div class="note" style="margin:4px 0">'+(sv?'Elmentve a Kérdésnaplóba (alul).':'Nem sikerült elmenteni (nincs hely), töröld a régi bejegyzéseket.')+'</div><div class="row" style="margin:8px 0"><button class="btn go" id="qs_cp">Másolás</button><button class="btn" id="qs_sh">Megosztás</button></div><div class="note" id="qs_msg"></div><div class="sum">'+sm0.html+'</div></div>';}}
- ex+=qLogHtml();
+ ex+=qLogHtml()+qMeasHtml();
  o.innerHTML=h+'</div>'+ex;
  var q=function(i){return $(i);};
  if(sm0){q('qs_cp').onclick=function(){qCopy(sm0.text,q('qs_msg'));};q('qs_sh').onclick=function(){if(navigator.share){navigator.share({title:'Kérdés összesítő',text:sm0.text}).catch(function(){});}else q('qs_msg').textContent='A megosztás ezen a böngészőn nem érhető el, használd a Másolás gombot.';};}
- o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="note" style="margin-top:10px">Mi lett belőle a valóságban? (A te megítélésed, bármikor átírhatod.)</div><div class="chips" id="qv_rs">'+['y','p','n'].map(function(k){return '<button data-qr="'+k+'"'+(x.r===k?' class="on"':'')+'>'+QRES[k]+'</button>';}).join('')+(x.r?'<button data-qr="0">Jelölés törlése</button>':'')+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};
-  $('qv_rs').querySelectorAll('button[data-qr]').forEach(function(rb){rb.onclick=function(){var arr=getQL(),i=+b.dataset.qo;if(!arr[i])return;if(rb.dataset.qr==='0'){delete arr[i].r;delete arr[i].rms;}else{arr[i].r=rb.dataset.qr;arr[i].rms=Date.now();}putQL(arr);renderQ();var nb=document.querySelector('button[data-qo="'+i+'"]');if(nb)nb.click();};});
+ o.querySelectorAll('button[data-qo]').forEach(function(b){b.onclick=function(){var x=getQL()[+b.dataset.qo];if(!x)return;$('qlv').innerHTML='<div class="sum" style="margin-top:10px">'+x.h+'</div><div class="note" style="margin-top:10px">Mi lett belőle a valóságban? „Bejött” = a gép ítélete (kedvező / kedvezőtlen) szerint lett. A te megítélésed, bármikor átírhatod.</div><div class="chips" id="qv_rs">'+['y','p','n'].map(function(k){return '<button data-qr="'+k+'"'+(x.r===k?' class="on"':'')+'>'+QRES[k]+'</button>';}).join('')+(x.r?'<button data-qr="0">Jelölés törlése</button>':'')+'</div><div class="row" style="margin-top:8px"><button class="btn" id="qv_cp">Másolás</button></div><div class="note" id="qv_msg"></div>';$('qv_cp').onclick=function(){qCopy(x.text,$('qv_msg'));};
+  $('qv_rs').querySelectorAll('button[data-qr]').forEach(function(rb){rb.onclick=function(){var arr=getQL(),i=+b.dataset.qo;if(!arr[i])return;if(rb.dataset.qr==='0'){delete arr[i].r;delete arr[i].rms;}else{arr[i].r=rb.dataset.qr;arr[i].rms=Date.now();}putQL(arr);qmSet(arr[i].ms,arr[i].sc,rb.dataset.qr==='0'?null:rb.dataset.qr);renderQ();var nb=document.querySelector('button[data-qo="'+i+'"]');if(nb)nb.click();};});
   $('qlv').scrollIntoView();};});
+ var qd=$('qm_del');if(qd)qd.onclick=function(){if(!qd.dataset.sure){qd.dataset.sure='1';qd.textContent='Biztosan törlöd? Még egyszer';return;}var a=getQL();a.forEach(function(x){delete x.r;delete x.rms;});putQL(a);putQM([]);renderQ();};
  o.querySelectorAll('button[data-qx]').forEach(function(b){b.onclick=function(){var a=getQL();a.splice(+b.dataset.qx,1);putQL(a);renderQ();};});
  if(q('q_stop')){q('q_stop').onclick=qStop;}
  if(q('q_go'))q('q_go').onclick=qStart;
